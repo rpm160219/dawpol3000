@@ -8,14 +8,28 @@ struct Color { uint8_t r, g, b, a; };
 constexpr Color rgb(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) { return {r, g, b, a}; }
 
 namespace pal {
+// 4 kolory = 4 enkodery
 constexpr Color bg    = rgb(0, 0, 0);
-constexpr Color blue  = rgb(70, 140, 255);
-constexpr Color green = rgb(60, 220, 120);
-constexpr Color white = rgb(236, 236, 236);
-constexpr Color red   = rgb(255, 72, 60);
-constexpr Color dim   = rgb(90, 90, 90);
-constexpr Color faint = rgb(38, 38, 38);
+constexpr Color blue  = rgb(64, 128, 255);
+constexpr Color green = rgb(40, 215, 110);
+constexpr Color white = rgb(235, 235, 235);
+constexpr Color red   = rgb(255, 62, 48);
 constexpr Color enc[4] = {blue, green, white, red};
+// Szarosci
+constexpr Color dim   = rgb(95, 95, 95);
+constexpr Color faint = rgb(38, 38, 38);
+constexpr Color dark  = rgb(18, 18, 18);
+// Elementy menu (belki, pigulki, listy)
+constexpr Color steel  = rgb(58, 86, 126);   // niebieskoszary
+constexpr Color tan    = rgb(170, 124, 72);  // brazowo-zloty
+constexpr Color silver = rgb(170, 170, 170); // jasnoszara belka
+constexpr Color pill   = rgb(120, 120, 120); // szara pigulka
+// Kolory sciezek
+constexpr Color purple = rgb(150, 95, 255);
+constexpr Color cyan   = rgb(40, 205, 230);
+constexpr Color yellow = rgb(240, 196, 60);
+constexpr Color pink   = rgb(255, 95, 170);
+constexpr Color track[8] = {blue, green, red, tan, purple, cyan, yellow, pink};
 }  // namespace pal
 
 class Canvas {

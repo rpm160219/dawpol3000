@@ -43,29 +43,38 @@ static inline float polyBlep(float t, float dt) {
 }
 
 void SawSynth::render(float* out, int n) {
-    for (auto& v : v_) {
-        if (v.stage == OFF) continue;
-        for (int i = 0; i < n; i++) {
-            switch (v.stage) {
-            case ATTACK: v.env += attack_; if (v.env >= 1.f) { v.env = 1.f; v.stage = DECAY; } break;
-            case DECAY: v.env += (sustain_ - v.env) * decay_; break;
-            case RELEASE: v.env -= v.env * release_; if (v.env < 1e-4f) { v.env = 0; v.stage = OFF; } break;
+    bool any = false;
+    for (auto& v : v_) if (v.stage != OFF) { any = true; break; }
+    if (!any) { vol_ = volT_; return; }
+    // Glosy sumowane do bufora mono, potem dodawane do wyjscia z glosnoscia sciezki.
+    float mono[256];
+    for (int off = 0; off < n; off += 256) {
+        int m = n - off < 256 ? n - off : 256;
+        for (int i = 0; i < m; i++) mono[i] = 0.f;
+        for (auto& v : v_) {
+            if (v.stage == OFF) continue;
+            for (int i = 0; i < m; i++) {
+                switch (v.stage) {
+                case ATTACK: v.env += attack_; if (v.env >= 1.f) { v.env = 1.f; v.stage = DECAY; } break;
+                case DECAY: v.env += (sustain_ - v.env) * decay_; break;
+                case RELEASE: v.env -= v.env * release_; if (v.env < 1e-4f) { v.env = 0; v.stage = OFF; } break;
+                }
+                float s = 2.f * v.phase - 1.f - polyBlep(v.phase, v.dt);
+                v.phase += v.dt;
+                if (v.phase >= 1.f) v.phase -= 1.f;
+                v.lp1 += (s - v.lp1) * lpK_;
+                v.lp2 += (v.lp1 - v.lp2) * lpK_;
+                mono[i] += v.lp2 * v.env * v.vel * 0.4f;
+                if (v.stage == OFF) break;
             }
-            float s = 2.f * v.phase - 1.f - polyBlep(v.phase, v.dt);
-            v.phase += v.dt;
-            if (v.phase >= 1.f) v.phase -= 1.f;
-            v.lp1 += (s - v.lp1) * lpK_;
-            v.lp2 += (v.lp1 - v.lp2) * lpK_;
-            float o = v.lp2 * v.env * v.vel * 0.4f;
-            out[i * 2] += o;
-            out[i * 2 + 1] += o;
-            if (v.stage == OFF) break;
         }
-    }
-    for (int i = 0; i < n; i++) {
-        vol_ += (volT_ - vol_) * volK_;
-        out[i * 2] *= vol_;
-        out[i * 2 + 1] *= vol_;
+        float* o = out + off * 2;
+        for (int i = 0; i < m; i++) {
+            vol_ += (volT_ - vol_) * volK_;
+            float x = mono[i] * vol_;
+            o[i * 2] += x;
+            o[i * 2 + 1] += x;
+        }
     }
 }
 

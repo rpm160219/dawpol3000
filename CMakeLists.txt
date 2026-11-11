@@ -12,12 +12,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 
 add_library(dpcore STATIC
-  core/gfx/canvas.cpp core/gfx/font.cpp
+  core/gfx/canvas.cpp core/gfx/font.cpp core/gfx/icons.cpp
   core/io/image_io.cpp
   core/synth/tone_synth.cpp core/synth/saw_synth.cpp
-  core/seq/pattern.cpp core/seq/sequencer.cpp
+  core/seq/pattern.cpp core/seq/project.cpp core/seq/sequencer.cpp
   core/audio/engine.cpp
-  core/ui/test_screen.cpp core/ui/piano_roll.cpp
+  core/ui/test_screen.cpp core/ui/piano_roll.cpp core/ui/arrange.cpp core/ui/dialogs.cpp
+  core/ui/widgets.cpp core/ui/app.cpp
   core/headless.cpp)
 target_include_directories(dpcore PUBLIC core)
 

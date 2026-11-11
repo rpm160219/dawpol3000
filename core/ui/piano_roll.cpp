@@ -1,5 +1,8 @@
 #include "ui/piano_roll.h"
 #include "gfx/font.h"
+#include "gfx/icons.h"
+#include "ui/app.h"
+#include "ui/widgets.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -27,32 +30,19 @@ static void lenName(char* b, int n, int ticks) {
     snprintf(b, n, "%d/%d", s, d);
 }
 
-void PianoRoll::init(AudioEngine* e) {
-    eng_ = e;
+Pattern& PianoRoll::pat() { return app_->project().patterns[pat_]; }
+int PianoRoll::steps() { return pat().lengthTicks / TICKS_PER_STEP; }
+int PianoRoll::noteAtCursor() { return pat().find(curStep_ * TICKS_PER_STEP, curPitch_); }
+
+void PianoRoll::open(int pattern, int track) {
+    if (pattern != pat_) { curStep_ = 0; }
+    pat_ = pattern;
+    track_ = track;
+    // ustaw kursor na pierwszej nucie, zeby od razu bylo cos widac
+    Pattern& p = pat();
+    if (p.count > 0 && noteAtCursor() < 0) { curPitch_ = p.notes[0].pitch; topPitch_ = curPitch_ + 7; }
+    if (curStep_ >= steps()) curStep_ = 0;
     scrollToCursor();
-    if (eng_) {
-        eng_->send(EC_TEMPO, 0, tempo_);
-        eng_->send(EC_VOLUME, 0, volume_);
-    }
-    publish();
-}
-
-void PianoRoll::loadDemo() {
-    pat_.clear();
-    const int T = TICKS_PER_STEP;
-    struct { int s, l, p, v; } d[] = {
-        {0, 4, 60, 110}, {0, 2, 67, 45}, {4, 2, 63, 75}, {6, 2, 67, 95},
-        {8, 6, 72, 127}, {12, 2, 74, 25}, {14, 2, 70, 100},
-    };
-    for (auto& n : d) pat_.add({(uint16_t)(n.s * T), (uint16_t)(n.l * T), (uint8_t)n.p, (uint8_t)n.v});
-    publish();
-}
-
-void PianoRoll::publish() {
-    if (!eng_) return;
-    eng_->patternBack() = pat_;
-    eng_->publishPattern();
-    dirty_ = false;
 }
 
 void PianoRoll::scrollToCursor() {
@@ -64,201 +54,203 @@ void PianoRoll::scrollToCursor() {
 }
 
 void PianoRoll::preview(int pitch, int vel) {
-    if (!eng_ || eng_->isPlaying()) return;
-    if (previewPitch_ >= 0) eng_->send(EC_NOTE_OFF, previewPitch_);
-    eng_->send(EC_NOTE_ON, pitch, vel / 127.f);
+    AudioEngine* e = app_->engine();
+    if (!e || e->isPlaying()) return;
+    stopPreview();
+    e->send(EC_NOTE_ON, track_, pitch, 0, vel / 127.f);
     previewPitch_ = pitch;
     previewLeft_ = 0.25f;
 }
 
+void PianoRoll::stopPreview() {
+    if (previewPitch_ >= 0 && app_->engine()) app_->engine()->send(EC_NOTE_OFF, track_, previewPitch_);
+    previewPitch_ = -1;
+}
+
 void PianoRoll::setLen(int idx, int len) {
-    Note& n = pat_.notes[idx];
-    int mx = pat_.maxLen(n.start, n.pitch, idx);
+    Pattern& p = pat();
+    Note& n = p.notes[idx];
+    int mx = p.maxLen(n.start, n.pitch, idx);
     if (len < TICKS_PER_STEP) len = TICKS_PER_STEP;
     if (len > mx) len = mx;
-    if (len != n.len) { n.len = (uint16_t)len; dirty_ = true; }
+    if (len != n.len) { n.len = (uint16_t)len; app_->markDirty(); }
     lastLen_ = len;
 }
 
-void PianoRoll::update(const InputState& in, float dt) {
-    btn_.update(in, dt);
-    if (in.btn[B_MENU] && in.btn[B_SELECT]) quit_ = true;
-
-    if (previewPitch_ >= 0 && (previewLeft_ -= dt) <= 0.f) {
-        if (eng_) eng_->send(EC_NOTE_OFF, previewPitch_);
-        previewPitch_ = -1;
-    }
+void PianoRoll::update(const Buttons& b, const InputState& in, float dt) {
+    Project& prj = app_->project();
+    Pattern& p = pat();
+    AudioEngine* eng = app_->engine();
+    if (previewPitch_ >= 0 && (previewLeft_ -= dt) <= 0.f) stopPreview();
 
     int sel = noteAtCursor();
-    bool xHeld = btn_.down(B_X), yHeld = btn_.down(B_Y);
+    bool xHeld = b.down(B_X), yHeld = b.down(B_Y);
+    int nsteps = steps();
 
     if (xHeld && sel >= 0) {
-        // X + lewo/prawo = dlugosc
-        if (btn_.repeat(B_RIGHT)) setLen(sel, pat_.notes[sel].len + TICKS_PER_STEP);
-        if (btn_.repeat(B_LEFT)) setLen(sel, pat_.notes[sel].len - TICKS_PER_STEP);
+        if (b.repeat(B_RIGHT)) setLen(sel, p.notes[sel].len + TICKS_PER_STEP);
+        if (b.repeat(B_LEFT)) setLen(sel, p.notes[sel].len - TICKS_PER_STEP);
     } else if (yHeld && sel >= 0) {
-        // Y + D-pad = przesun nute
-        Note n = pat_.notes[sel];
-        int ds = 0, dp = 0;
-        if (btn_.repeat(B_RIGHT)) ds = 1;
-        if (btn_.repeat(B_LEFT)) ds = -1;
-        if (btn_.repeat(B_UP)) dp = 1;
-        if (btn_.repeat(B_DOWN)) dp = -1;
-        if (ds || dp) {
-            int ns = n.start / TICKS_PER_STEP + ds, np = n.pitch + dp;
-            if (ns >= 0 && ns < STEPS_PER_BAR && np >= 0 && np <= 127) {
-                pat_.remove(sel);
+        Note n = p.notes[sel];
+        int ds = 0, dpt = 0;
+        if (b.repeat(B_RIGHT)) ds = 1;
+        if (b.repeat(B_LEFT)) ds = -1;
+        if (b.repeat(B_UP)) dpt = 1;
+        if (b.repeat(B_DOWN)) dpt = -1;
+        if (ds || dpt) {
+            int ns = n.start / TICKS_PER_STEP + ds, np = n.pitch + dpt;
+            if (ns >= 0 && ns < nsteps && np >= 0 && np <= 127) {
+                p.remove(sel);
                 Note m = n;
                 m.start = (uint16_t)(ns * TICKS_PER_STEP);
                 m.pitch = (uint8_t)np;
-                if (pat_.add(m) >= 0) {
+                if (p.add(m) >= 0) {
                     curStep_ = ns; curPitch_ = np;
-                    if (dp) preview(np, n.vel);
-                } else pat_.add(n);  // kolizja — cofnij
-                dirty_ = true;
-                scrollToCursor();
+                    if (dpt) preview(np, n.vel);
+                } else p.add(n);  // kolizja — cofnij
+                app_->markDirty();
             }
         }
     } else if (!xHeld && !yHeld) {
-        // Ruch kursora
-        if (btn_.repeat(B_RIGHT) && curStep_ < STEPS_PER_BAR - 1) curStep_++;
-        if (btn_.repeat(B_LEFT) && curStep_ > 0) curStep_--;
-        if (btn_.repeat(B_UP) && curPitch_ < 127) curPitch_++;
-        if (btn_.repeat(B_DOWN) && curPitch_ > 0) curPitch_--;
+        if (b.repeat(B_RIGHT) && curStep_ < nsteps - 1) curStep_++;
+        if (b.repeat(B_LEFT) && curStep_ > 0) curStep_--;
+        if (b.repeat(B_UP) && curPitch_ < 127) curPitch_++;
+        if (b.repeat(B_DOWN) && curPitch_ > 0) curPitch_--;
     }
-    if (btn_.pressed(B_L1)) curPitch_ = curPitch_ >= 12 ? curPitch_ - 12 : curPitch_;
-    if (btn_.pressed(B_R1)) curPitch_ = curPitch_ <= 115 ? curPitch_ + 12 : curPitch_;
+    if (b.pressed(B_L1) && curPitch_ >= 12) curPitch_ -= 12;
+    if (b.pressed(B_R1) && curPitch_ <= 115) curPitch_ += 12;
     scrollToCursor();
     sel = noteAtCursor();
 
-    if (btn_.pressed(B_A)) {
+    if (b.pressed(B_A)) {
         if (sel < 0) {
-            int idx = pat_.add({(uint16_t)(curStep_ * TICKS_PER_STEP), (uint16_t)lastLen_, (uint8_t)curPitch_, (uint8_t)lastVel_});
-            if (idx >= 0) { dirty_ = true; preview(curPitch_, lastVel_); }
-        } else preview(pat_.notes[sel].pitch, pat_.notes[sel].vel);
+            int idx = p.add({(uint16_t)(curStep_ * TICKS_PER_STEP), (uint16_t)lastLen_, (uint8_t)curPitch_, (uint8_t)lastVel_});
+            if (idx >= 0) { app_->markDirty(); preview(curPitch_, lastVel_); }
+        } else preview(p.notes[sel].pitch, p.notes[sel].vel);
         sel = noteAtCursor();
     }
-    if (btn_.pressed(B_B) && sel >= 0) { pat_.remove(sel); dirty_ = true; sel = -1; }
+    if (b.pressed(B_B) && sel >= 0) { p.remove(sel); app_->markDirty(); sel = -1; }
 
-    if (btn_.pressed(B_START) && eng_) {
-        if (previewPitch_ >= 0) { eng_->send(EC_NOTE_OFF, previewPitch_); previewPitch_ = -1; }
-        eng_->send(eng_->isPlaying() ? EC_STOP : EC_PLAY);
+    if (b.pressed(B_START) && eng) {
+        stopPreview();
+        if (eng->isPlaying()) eng->send(EC_STOP);
+        else eng->send(EC_PLAY_PATTERN, track_, 0, pat_);
     }
 
     // Enkodery
     int dl = encLen_.steps(in.axis[AX_LX], dt, 8.f);
     if (dl) {
-        if (sel >= 0) setLen(sel, pat_.notes[sel].len + dl * TICKS_PER_STEP);
+        if (sel >= 0) setLen(sel, p.notes[sel].len + dl * TICKS_PER_STEP);
         else {
             lastLen_ += dl * TICKS_PER_STEP;
             if (lastLen_ < TICKS_PER_STEP) lastLen_ = TICKS_PER_STEP;
-            if (lastLen_ > pat_.lengthTicks) lastLen_ = pat_.lengthTicks;
+            if (lastLen_ > p.lengthTicks) lastLen_ = p.lengthTicks;
         }
     }
     int dv = encVel_.steps(-in.axis[AX_LY], dt, 60.f);
     if (dv) {
-        int v = (sel >= 0 ? pat_.notes[sel].vel : lastVel_) + dv;
+        int v = (sel >= 0 ? p.notes[sel].vel : lastVel_) + dv;
         v = v < 1 ? 1 : (v > 127 ? 127 : v);
-        if (sel >= 0) { pat_.notes[sel].vel = (uint8_t)v; dirty_ = true; }
+        if (sel >= 0) { p.notes[sel].vel = (uint8_t)v; app_->markDirty(); }
         lastVel_ = v;
     }
-    float vol = volume_ + RelEncoder::delta(in.axis[AX_RX], dt, 0.8f);
+    Track& tr = prj.tracks[track_];
+    float vol = tr.volume + RelEncoder::delta(in.axis[AX_RX], dt, 0.8f);
     vol = vol < 0 ? 0 : (vol > 1 ? 1 : vol);
-    if (vol != volume_) { volume_ = vol; if (eng_) eng_->send(EC_VOLUME, 0, volume_); }
+    if (vol != tr.volume) { tr.volume = vol; app_->markDirty(); }
     int dtmp = encTempo_.steps(-in.axis[AX_RY], dt, 25.f);
     if (dtmp) {
-        tempo_ += dtmp;
-        tempo_ = tempo_ < 40 ? 40 : (tempo_ > 240 ? 240 : tempo_);
-        if (eng_) eng_->send(EC_TEMPO, 0, tempo_);
+        prj.bpm += dtmp;
+        prj.bpm = prj.bpm < 40 ? 40 : (prj.bpm > 240 ? 240 : prj.bpm);
+        app_->markDirty();
     }
-
-    if (dirty_) publish();
-}
-
-static void miniKnob(Canvas& c, float x, float y, float v, Color col, const char* label, const char* val) {
-    const float a0 = 0.75f * 3.14159265f, a1 = 2.25f * 3.14159265f, r = 14;
-    float cx = x + 16, cy = y + 18;
-    c.arc(cx, cy, r, a0, a1, 1.2f, pal::faint);
-    float av = a0 + (a1 - a0) * (v < 0 ? 0 : (v > 1 ? 1 : v));
-    if (v > 0.002f) c.arc(cx, cy, r, a0, av, 2.f, col);
-    c.fillCircle(cx + cosf(av) * r, cy + sinf(av) * r, 3.f, col);
-    drawText(c, x + 42, y + 2, label, 9, 1.1f, col);
-    drawText(c, x + 42, y + 18, val, 16, 1.5f, pal::white);
 }
 
 void PianoRoll::render(Canvas& c) {
     char b[64];
+    Project& prj = app_->project();
+    Pattern& p = pat();
+    AudioEngine* eng = app_->engine();
+    const Track& tr = prj.tracks[track_];
+    Color tc = pal::track[tr.color % 8];
     c.clear(pal::bg);
-    bool playing = eng_ && eng_->isPlaying();
+    bool playing = eng && eng->isPlaying();
     int sel = noteAtCursor();
+    int viewBar = curStep_ / STEPS_PER_BAR, viewStep0 = viewBar * STEPS_PER_BAR;
 
-    // Naglowek
-    drawText(c, 20, 13, "PATTERN 01", 13, 1.5f, pal::white);
+    // Naglowek: ikona sciezki, nazwa patternu, sciezka, takt, BPM
+    drawIcon(c, ICON_PATTERN, 18, 12, 18, tc);
+    drawText(c, 44, 15, p.name, 13, 1.5f, pal::white);
+    float tw = textWidth(p.name, 13);
+    drawText(c, 44 + tw + 12, 17, tr.name, 10, 1.3f, tc);
     char nn[16];
     noteName(nn, sizeof nn, curPitch_);
-    snprintf(b, sizeof b, "%s  %d.%d", nn, curStep_ / 4 + 1, curStep_ % 4 + 1);
-    drawText(c, 320, 15, b, 11, 1.3f, pal::dim, ALIGN_CENTER);
-    snprintf(b, sizeof b, "%.0f BPM", tempo_);
-    float tw = drawText(c, 620, 15, b, 11, 1.3f, pal::dim, ALIGN_RIGHT);
-    float ix = 620 - tw - 22;
-    if (playing) {
-        float tri[6] = {ix, 13.f, ix + 11, 19.5f, ix, 26.f};
-        c.polyline(tri, 3, 1.5f, pal::green, true);
-    } else c.rect(ix, 14, 11, 11, 1.5f, pal::dim);
-    c.line(20, 36, 620, 36, 1.f, pal::faint);
+    snprintf(b, sizeof b, "%s  BAR %d/%d", nn, viewBar + 1, p.bars());
+    drawText(c, 400, 17, b, 10, 1.3f, pal::dim, ALIGN_RIGHT);
+    drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);
+    snprintf(b, sizeof b, "%.0f", prj.bpm);
+    drawText(c, 572, 9, b, 24, 1.9f, pal::red, ALIGN_RIGHT);
+    drawText(c, 580, 22, "BPM", 10, 1.3f, pal::red);
+    c.line(20, 44, 620, 44, 1.f, pal::faint);
 
-    // Numery miarowe
+    // Numery miar (takt.miara)
     for (int beat = 0; beat < 4; beat++) {
-        snprintf(b, sizeof b, "%d", beat + 1);
-        drawText(c, GX + beat * 4 * SW + 3, 40, b, 8, 1.1f, pal::dim);
+        snprintf(b, sizeof b, "%d.%d", viewBar + 1, beat + 1);
+        drawText(c, GX + beat * 4 * SW + 3, 48, b, 7, 1.f, pal::dim);
+    }
+    // Pasek pozycji w patternie (ktory takt jest widoczny)
+    if (p.bars() > 1) {
+        float w = SW * STEPS_PER_BAR, x0 = GX, seg = w / p.bars();
+        for (int i = 0; i < p.bars(); i++)
+            c.fillRoundRect(x0 + i * seg + 1, GY + RH * ROWS + 6, seg - 2, 4, 2, i == viewBar ? pal::white : rgb(55, 55, 55));
     }
 
     const float GW = SW * STEPS_PER_BAR, GH = RH * ROWS;
     // Tlo wierszy jak klawiatura: biale klawisze minimalnie jasniejsze, czarne = czern.
-    const float KX = 40, KW = 18;  // mini-klawiatura po lewej
+    const float KX = 40, KW = 18;
     for (int r = 0; r < ROWS; r++) {
-        int p = topPitch_ - r;
+        int pt = topPitch_ - r;
         float y = GY + r * RH;
-        bool blk = isBlack(p);
+        bool blk = isBlack(pt);
         if (!blk) c.fillRect(GX, y, GW, RH, rgb(13, 13, 13));
-        // klawisz: bialy = jasny, czarny = ciemny z obrysem
         if (!blk) c.fillRoundRect(KX, y + 1, KW, RH - 2, 2.5f, rgb(175, 175, 175));
         else c.strokeRoundRect(KX + 0.5f, y + 1.5f, KW - 1, RH - 3, 2.5f, 1.f, rgb(70, 70, 70));
-        if (p == curPitch_) c.fillCircle(KX + KW + 6, y + RH * 0.5f, 2.5f, pal::white);
-        if (p % 12 == 0 || p == curPitch_) {
-            noteName(nn, sizeof nn, p);
-            drawText(c, KX - 7, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, p == curPitch_ ? pal::white : pal::dim, ALIGN_RIGHT);
+        if (pt == curPitch_) c.fillCircle(KX + KW + 6, y + RH * 0.5f, 2.5f, pal::white);
+        if (pt % 12 == 0 || pt == curPitch_) {
+            noteName(nn, sizeof nn, pt);
+            drawText(c, KX - 7, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, pt == curPitch_ ? pal::white : pal::dim, ALIGN_RIGHT);
         }
-        if (p % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(52, 52, 52));
+        if (pt % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(52, 52, 52));
     }
-    // Siatka: linie tylko na miarach, kropki na szesnastkach
-    for (int s2 = 0; s2 <= STEPS_PER_BAR; s2 += 4) {
-        float x = GX + s2 * SW;
-        c.line(x, GY, x, GY + GH, 1.f, (s2 % 16 == 0) ? rgb(70, 70, 70) : rgb(40, 40, 40));
-    }
+    for (int s2 = 0; s2 <= STEPS_PER_BAR; s2 += 4)
+        c.line(GX + s2 * SW, GY, GX + s2 * SW, GY + GH, 1.f, (s2 % 16 == 0) ? rgb(70, 70, 70) : rgb(40, 40, 40));
     for (int r = 0; r <= ROWS; r++)
         for (int s2 = 1; s2 < STEPS_PER_BAR; s2++)
             if (s2 % 4) c.fillCircle(GX + s2 * SW, GY + r * RH, 0.9f, rgb(60, 60, 60));
 
-    // Nuty: "pigulki", kolor = velocity (ciemna zielen -> zielen -> prawie biel)
-    for (int i = 0; i < pat_.count; i++) {
-        const Note& n = pat_.notes[i];
+    // Nuty (tylko widoczny takt; nuty wystajace z poprzedniego taktu tez)
+    const int t0 = viewStep0 * TICKS_PER_STEP, t1 = t0 + TICKS_PER_BAR;
+    for (int i = 0; i < p.count; i++) {
+        const Note& n = p.notes[i];
         int r = topPitch_ - n.pitch;
         if (r < 0 || r >= ROWS) continue;
-        float x = GX + (float)n.start / TICKS_PER_STEP * SW + 2;
-        float w = (float)n.len / TICKS_PER_STEP * SW - 4;
-        float y = GY + r * RH + 4, h = RH - 8;
+        if (n.start >= t1 || n.start + n.len <= t0) continue;
+        float x = GX + (float)(n.start - t0) / TICKS_PER_STEP * SW + 2;
+        float xe = GX + (float)(n.start + n.len - t0) / TICKS_PER_STEP * SW - 2;
+        if (x < GX) x = GX + 1;            // ciagnie sie z poprzedniego taktu
+        if (xe > GX + GW) xe = GX + GW - 1;  // ciagnie sie dalej
+        float w = xe - x, y = GY + r * RH + 4, h = RH - 8;
         Color col = velColor(n.vel);
         c.fillRoundRect(x, y, w, h, h * 0.5f, col);
         if (i == sel) {
             c.strokeRoundRect(x - 2, y - 2, w + 4, h + 4, h * 0.5f + 2, 1.5f, pal::white);
-            c.fillCircle(x + w - h * 0.5f, y + h * 0.5f, 3.f, pal::blue);  // uchwyt dlugosci (niebieski enkoder)
+            c.fillCircle(xe - h * 0.5f, y + h * 0.5f, 3.f, pal::blue);
         }
     }
 
     // Kursor (biale narozniki)
     {
-        float x = GX + curStep_ * SW, y = GY + (topPitch_ - curPitch_) * RH, k = 5;
+        float x = GX + (curStep_ - viewStep0) * SW, y = GY + (topPitch_ - curPitch_) * RH, k = 5;
         float pts[][4] = {{x, y + k, x, y}, {x, y, x + k, y}, {x + SW - k, y, x + SW, y}, {x + SW, y, x + SW, y + k},
                           {x, y + RH - k, x, y + RH}, {x, y + RH, x + k, y + RH},
                           {x + SW - k, y + RH, x + SW, y + RH}, {x + SW, y + RH, x + SW, y + RH - k}};
@@ -267,27 +259,36 @@ void PianoRoll::render(Canvas& c) {
         c.endStroke(pal::white);
     }
 
-    // Glowica odtwarzania
+    // Glowica: w trybie PATTERN pozycja w patternie; w SONG — jesli klip tego patternu gra na tej sciezce
     if (playing) {
-        float x = GX + (float)eng_->playTick() / TICKS_PER_STEP * SW;
-        c.line(x, GY, x, GY + GH, 1.5f, pal::red);
-        float tri[6] = {x - 4, GY - 7, x + 4, GY - 7, x, GY - 1};
-        c.polyline(tri, 3, 1.5f, pal::red, true);
+        int pt = -1, tick = eng->playTick();
+        if (eng->playMode() == Sequencer::PATTERN) pt = tick % p.lengthTicks;
+        else
+            for (int i = 0; i < prj.nClips; i++) {
+                const Clip& cl = prj.clips[i];
+                int st = cl.startBar * TICKS_PER_BAR;
+                if (cl.track == track_ && cl.pattern == pat_ && tick >= st && tick < st + p.lengthTicks) pt = tick - st;
+            }
+        if (pt >= t0 && pt < t1) {
+            float x = GX + (float)(pt - t0) / TICKS_PER_STEP * SW;
+            c.line(x, GY, x, GY + GH, 1.5f, pal::red);
+            float tri[6] = {x - 4, GY - 7, x + 4, GY - 7, x, GY - 1};
+            c.polyline(tri, 3, 1.5f, pal::red, true);
+        }
     }
 
     // Enkodery
-    c.line(20, 418, 620, 418, 1.f, pal::faint);
-    int len = sel >= 0 ? pat_.notes[sel].len : lastLen_;
-    int vel = sel >= 0 ? pat_.notes[sel].vel : lastVel_;
+    int len = sel >= 0 ? p.notes[sel].len : lastLen_;
+    int vel = sel >= 0 ? p.notes[sel].vel : lastVel_;
     char v0[16], v1[16], v2[16], v3[16];
     lenName(v0, sizeof v0, len);
     snprintf(v1, sizeof v1, "%d", vel);
-    snprintf(v2, sizeof v2, "%d", (int)lrintf(volume_ * 100));
-    snprintf(v3, sizeof v3, "%.0f", tempo_);
-    miniKnob(c, 20, 428, (float)len / pat_.lengthTicks, pal::blue, "LENGTH", v0);
-    miniKnob(c, 172, 428, vel / 127.f, pal::green, "VELOCITY", v1);
-    miniKnob(c, 324, 428, volume_, pal::white, "VOLUME", v2);
-    miniKnob(c, 476, 428, (tempo_ - 40) / 200.f, pal::red, "TEMPO", v3);
+    snprintf(v2, sizeof v2, "%d", (int)lrintf(tr.volume * 100));
+    snprintf(v3, sizeof v3, "%.0f", prj.bpm);
+    const char* labels[4] = {"LENGTH", "VELOCITY", "VOLUME", "BPM"};
+    const char* vals[4] = {v0, v1, v2, v3};
+    float pos[4] = {(float)len / TICKS_PER_BAR, vel / 127.f, tr.volume, (prj.bpm - 40) / 200.f};
+    encoderBar(c, labels, vals, pos);
 }
 
 }  // namespace dp

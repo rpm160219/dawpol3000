@@ -1,4 +1,4 @@
-// Pattern: lista nut w czasie (ticki). Na razie jeden kanal, jeden takt 4/4.
+// Pattern: nazwana lista nut w czasie (ticki), dlugosc 1..16 taktow 4/4.
 // Czas w tickach: PPQ = 96 na cwiercnute, siatka edycji = szesnastki (24 ticki).
 #pragma once
 #include <stdint.h>
@@ -8,6 +8,8 @@ namespace dp {
 static const int PPQ = 96;
 static const int TICKS_PER_STEP = PPQ / 4;  // szesnastka
 static const int STEPS_PER_BAR = 16;        // 4/4
+static const int TICKS_PER_BAR = STEPS_PER_BAR * TICKS_PER_STEP;
+static const int MAX_PATTERN_BARS = 16;
 
 struct Note {
     uint16_t start;  // tick poczatku
@@ -17,12 +19,16 @@ struct Note {
 };
 
 struct Pattern {
-    static const int MAX_NOTES = 256;
-    int lengthTicks = STEPS_PER_BAR * TICKS_PER_STEP;
+    static const int MAX_NOTES = 512;
+    char name[12] = "PATTERN";
+    int lengthTicks = TICKS_PER_BAR;
     int count = 0;
     Note notes[MAX_NOTES];
 
     void clear() { count = 0; }
+    int bars() const { return (lengthTicks + TICKS_PER_BAR - 1) / TICKS_PER_BAR; }
+    // Zmiana dlugosci; nuty za koncem znikaja, wystajace sa przycinane.
+    void setBars(int bars);
     // Nuta o danej wysokosci, ktora obejmuje tick (albo -1).
     int find(int tick, int pitch) const;
     // Dodaje nute (przycina, by nie nachodzila na nastepna o tej samej wysokosci). Zwraca indeks albo -1.

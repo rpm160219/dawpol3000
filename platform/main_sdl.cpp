@@ -7,7 +7,7 @@
 #include "gfx/canvas.h"
 #include "headless.h"
 #include "synth/tone_synth.h"
-#include "ui/piano_roll.h"
+#include "ui/app.h"
 #include "ui/test_screen.h"
 #include "controls_map.h"
 
@@ -24,7 +24,7 @@ static void audioCb(void*, Uint8* stream, int len) {
 }
 
 static void usage() {
-    printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [roll|test]] [--render-wav file.wav [seconds]]\n");
+    printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [arrange|track|pattern|roll|test]] [--render-wav file.wav [seconds]]\n");
 }
 
 int main(int argc, char** argv) {
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     bool fullscreen = false;
 #endif
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1], i + 2 < argc ? argv[i + 2] : "roll");
+        if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1], i + 2 < argc ? argv[i + 2] : "arrange");
         if (!strcmp(argv[i], "--render-wav") && i + 1 < argc) {
             float secs = (i + 2 < argc) ? (float)atof(argv[i + 2]) : 5.f;
             return headlessWav(argv[i + 1], secs > 0 ? secs : 5.f);
@@ -93,8 +93,9 @@ int main(int argc, char** argv) {
     Canvas canvas;
     TestScreen app;
     app.init(&gSynth);
-    PianoRoll roll;
-    roll.init(&gEngine);
+    static App app2;  // duzy obiekt (projekt) — nie na stosie
+    app2.init(&gEngine);
+    app2.loadDemo();
     InputState in;
     SDL_GameController* pad = nullptr;
     SDL_Joystick* joy = nullptr;
@@ -209,9 +210,9 @@ int main(int argc, char** argv) {
             if (app.quitRequested()) run = false;
             app.render(canvas, in, ai, fps);
         } else {
-            roll.update(in, dt);
-            if (roll.quitRequested()) run = false;
-            roll.render(canvas);
+            app2.update(in, dt);
+            if (app2.quitRequested()) run = false;
+            app2.render(canvas);
         }
         SDL_UpdateTexture(tex, nullptr, canvas.pixels(), Canvas::W * 4);
         SDL_RenderClear(ren);

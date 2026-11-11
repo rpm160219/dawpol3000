@@ -2,7 +2,7 @@
 #include "audio/engine.h"
 #include "gfx/canvas.h"
 #include "io/image_io.h"
-#include "ui/piano_roll.h"
+#include "ui/app.h"
 #include "ui/test_screen.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,23 +37,46 @@ static int testScreenPng(const char* path) {
     return savePng(c, path);
 }
 
+// Symuluje wcisniecie przycisku (jedna klatka wcisniety, jedna puszczony).
+static void tap(App& app, int btn) {
+    InputState in;
+    in.btn[btn] = true;
+    app.update(in, 0.016f);
+    in.btn[btn] = false;
+    app.update(in, 0.016f);
+}
+
 int headlessPng(const char* path, const char* screen) {
     if (screen && !strcmp(screen, "test")) return testScreenPng(path);
     static AudioEngine eng;
     eng.init(48000.f);
-    PianoRoll roll;
-    roll.init(&eng);
-    roll.loadDemo();
-    roll.setCursor(14, 70);
-    roll.setView(75);
-    InputState in;
-    roll.update(in, 0.016f);
-    in.btn[B_START] = true;  // play, i przewin troche, zeby byla widoczna glowica
-    roll.update(in, 0.016f);
+    static App app;
+    app.init(&eng);
+    app.loadDemo();
     float buf[2 * 256];
-    for (int i = 0; i < 1300; i++) eng.process(buf, 256);  // ~6.9 s -> srodek taktu
+    if (!strcmp(screen, "roll")) {
+        app.openPattern(1, 1);  // HOOK na sciezce LEAD
+        tap(app, B_SELECT);     // (neutralna klatka — zatwierdza przelaczenie ekranu)
+        app.roll.setCursor(14, 70);
+        app.roll.setView(75);
+        tap(app, B_START);
+        for (int i = 0; i < 160; i++) eng.process(buf, 256);
+    } else if (!strcmp(screen, "track")) {
+        app.arrange.setCursor(4, 0);
+        tap(app, B_A);  // ADD TRACK
+    } else if (!strcmp(screen, "pattern")) {
+        app.arrange.setCursor(2, 8);
+        tap(app, B_Y);  // nowy pattern na KEYS
+        tap(app, B_RIGHT);
+        tap(app, B_RIGHT);
+        tap(app, B_RIGHT);  // 4 takty
+    } else {  // arrange
+        app.arrange.setCursor(1, 6);
+        tap(app, B_START);
+        for (int i = 0; i < 700; i++) eng.process(buf, 256);  // ~3.7 s
+    }
     Canvas c;
-    roll.render(c);
+    app.render(c);
     return savePng(c, path);
 }
 
@@ -63,10 +86,10 @@ int headlessWav(const char* path, float seconds) {
     float* out = (float*)calloc((size_t)frames * 2 + block * 2, sizeof(float));
     static AudioEngine eng;
     eng.init((float)sr);
-    PianoRoll roll;
-    roll.init(&eng);
-    roll.loadDemo();
-    eng.send(EC_PLAY);
+    static App app;
+    app.init(&eng);
+    app.loadDemo();
+    eng.send(EC_PLAY_SONG);
     for (int pos = 0; pos < frames; pos += block) eng.process(out + (size_t)pos * 2, block);
     bool ok = writeWav16(path, out, frames, sr);
     free(out);

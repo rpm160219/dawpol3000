@@ -13,7 +13,7 @@ public:
     void noteOn(int pitch, float vel) override;
     void noteOff(int pitch) override;
     void allOff() override;
-    // Dodaje n ramek stereo do out (out wyzerowany przez wolajacego).
+    // DODAJE n ramek stereo do out (z glosnoscia sciezki). Bez aktywnych glosow nic nie liczy.
     void render(float* out, int n);
 
 private:

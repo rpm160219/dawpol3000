@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 01:40
+**Zmienione:**
+- Nowe moduły: `seq/project.*` (ścieżki 16 MIDI + 4 audio, pula patternów, klipy), `ui/app.*` (zarządzanie ekranami i projektem), `ui/view.h`, `ui/arrange.*` (ekran ARRANGE z BPM), `ui/dialogs.*` (NEW TRACK, NEW PATTERN), `ui/widgets.*` (belki, pigułki, pola, listy, edycja nazw), `gfx/icons.*` (ikony + ilustracje syntezatora i magnetofonu).
+- Zmienione: `seq/pattern` (nazwa, 1–16 taktów, 512 nut), `seq/sequencer` (tryby SONG i PATTERN, wiele ścieżek), `audio/engine` (migawka całego projektu, synth na ścieżkę, master + łagodny limiter), `synth/saw_synth` (dodaje do miksu z głośnością ścieżki, nic nie liczy bez nut), `ui/piano_roll` (pattern z projektu, wiele taktów), `gfx/canvas.h` (nowa paleta: kolory menu i ścieżek), `headless` (ekrany arrange/track/pattern/roll), `main_sdl.cpp` (start w ARRANGE z projektem demo).
+- Referencje Patryka skopiowane do `ref/`. Zaktualizowane `docs/ARCHITEKTURA.md` i CLAUDE.md (mapowanie L2/R2, paleta menu, stan).
+- Test przepływu (symulacja przycisków): dodanie ścieżki → pattern 3 takty → klip → nuty → klon klipu → odtwarzanie — OK. CPU na konsoli ~2.5% rdzenia.
+**Następny krok:** Patryk testuje na konsoli; potem zapis/odczyt projektu, usuwanie/zmiana nazwy ścieżek, mute/solo.
+**Wymaga od Patryka:** tak — test i ocena.
+
 ## 2026-11-12 03:20
 **Zmienione:**
 - `core/gfx/font.cpp` — dodany znak `#` (brakowało go, więc „C#5” rysowało się jako „C5”).

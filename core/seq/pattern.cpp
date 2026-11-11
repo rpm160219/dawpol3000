@@ -29,6 +29,17 @@ int Pattern::add(Note n) {
     return count++;
 }
 
+void Pattern::setBars(int b) {
+    if (b < 1) b = 1;
+    if (b > MAX_PATTERN_BARS) b = MAX_PATTERN_BARS;
+    lengthTicks = b * TICKS_PER_BAR;
+    for (int i = 0; i < count;) {
+        if (notes[i].start >= lengthTicks) { remove(i); continue; }
+        if (notes[i].start + notes[i].len > lengthTicks) notes[i].len = (uint16_t)(lengthTicks - notes[i].start);
+        i++;
+    }
+}
+
 void Pattern::remove(int i) {
     if (i < 0 || i >= count) return;
     notes[i] = notes[--count];
