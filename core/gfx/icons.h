@@ -16,6 +16,7 @@ enum IconId {
     ICON_METRONOME,
     ICON_LOOP,
     ICON_NOTE,      // nuta
+    ICON_PROJECT,   // notatnik (projekt)
     ICON_COUNT
 };
 
@@ -24,5 +25,6 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
 // Wieksze ilustracje do okien dialogowych.
 void drawSynthIllustration(Canvas& c, float x, float y, float w, float h);
 void drawTapeIllustration(Canvas& c, float x, float y, float w, float h);
+void drawNotebookIllustration(Canvas& c, float x, float y, float w, float h);
 
 }  // namespace dp

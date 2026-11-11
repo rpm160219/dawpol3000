@@ -8,7 +8,8 @@ Szkicownik muzyczny na Anbernic RG35XX Pro (Knulli), UI w duchu OP-1. Licencja: 
 
 Opis budowy programu: [docs/ARCHITEKTURA.md](docs/ARCHITEKTURA.md).
 
-Start w ekranie ARRANGE (projekt demo). L2 = ARRANGE, R2 = PIANO ROLL (na PC: klawisze 1 / 2).
+Zakładki PROJECT ↔ ARRANGE ↔ PIANO ROLL: L2 / R2 (na PC: klawisze 1 / 2). Start z ostatnim projektem.
+PROJECT: góra/dół = lista, X = nazwa, Y = zapisz, A = wczytaj / nowy, B = usuń. Projekty: `projects/<NAZWA>/project.dpp`.
 ARRANGE: strzałki = kursor, X(PC)/A(konsola) na „ADD TRACK” = nowa ścieżka, na klipie = otwórz pattern, na pustym = wstaw ostatni pattern;
 Y (konsola) = nowy pattern, B = usuń klip, X krótko = klon, X + ←/→ = przesuń klip, Enter/Start = play całości,
 Select = ustawienia ścieżki (nazwa, kolor, usuń), L1 = mute, R1 = solo.

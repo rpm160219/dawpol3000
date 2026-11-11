@@ -54,7 +54,17 @@ int headlessPng(const char* path, const char* screen) {
     app.init(&eng);
     app.loadDemo();
     float buf[2 * 256];
-    if (!strcmp(screen, "roll")) {
+    if (!strcmp(screen, "project")) {
+        // przykladowe projekty w out/projects_demo (makieta listy)
+        app.openStore("out/projects_demo");
+        app.loadDemo();
+        const char* names[] = {"SKETCH 01", "NIGHT BUS", "DEMO", "PROJECT 01"};
+        for (const char* n : names) { snprintf(app.project().name, 16, "%s", n); app.saveProject(); }
+        app.project().bpm = 128;
+        app.markDirty();
+        app.arrange.setCursor(0, 0);
+        tap(app, B_L2);  // ARRANGE -> PROJECT
+    } else if (!strcmp(screen, "roll")) {
         app.openPattern(1, 1);  // HOOK na sciezce LEAD
         tap(app, B_SELECT);     // (neutralna klatka — zatwierdza przelaczenie ekranu)
         app.roll.setCursor(14, 70);

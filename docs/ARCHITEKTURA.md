@@ -25,9 +25,12 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | Plik | Co robi |
 |---|---|
 | `gfx/canvas.*` | Bufor 640×480 RGBA i rasteryzer z antyaliasingiem: linie, łuki, koła, prostokąty, zaokrąglone prostokąty/„pigułki” (SDF). Kreski wsadowe (`beginStroke/strokeSeg/endStroke`), żeby nakładające się segmenty nie ciemniały. Paleta 4 kolorów enkoderów (`pal::`). |
-| `gfx/icons.*` | Ikony wektorowe (siatka 16×16, jedna grubość kreski, minimum detali — czytelne od 16 px) (klawiatura/MIDI, fala/audio, pattern, aranżacja, play/stop/rec, plus, taśma, metronom, pętla, nuta) i ilustracje do okien (syntezator, magnetofon). |
+| `gfx/icons.*` | Ikony wektorowe (siatka 16×16, jedna grubość kreski, minimum detali — czytelne od 16 px) (klawiatura/MIDI, fala/audio, pattern, aranżacja, play/stop/rec, plus, taśma, metronom, pętla, nuta) i ilustracje do okien (syntezator, magnetofon, notatnik) — wszystkie 196×150. |
 | `gfx/font.*` | Własny font kreskowy (wektorowy) na siatce 8×12, wygładzanie Chaikina. Wielkie litery, cyfry, interpunkcja. |
 | `io/image_io.*` | Zapis PNG (bez zlib) i WAV 16-bit — do trybu headless. |
+| `io/fs.*` | Pliki/katalogi (POSIX): istnienie, mkdir -p, usuwanie drzewa, lista podkatalogów od najnowszego. |
+| `io/project_file.*` | Format projektu `.dpp` — tekstowy, linia po linii (opis w nagłówku). Nieznane linie pomijane, wersja formatu w pierwszej linii. Zapis atomowy: `.tmp` → fsync → rename. |
+| `io/project_store.*` | Projekty na karcie: `projects/<NAZWA>/project.dpp` (później też `audio/*.wav`), lista, zapis/odczyt/usuwanie, ostatnio otwarty (`projects/_last.txt`). |
 | `util/spsc.h` | Kolejka lock-free jeden producent / jeden konsument. |
 | `util/triple_buffer.h` | Potrójny bufor bez blokad do przekazywania migawek danych (pattern) do audio. |
 | `synth/note_sink.h` | Interfejs instrumentu: `noteOn / noteOff / allOff` (wołany w wątku audio). |
@@ -41,7 +44,8 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `ui/buttons.h` | Wciśnięcie / puszczenie / auto-powtarzanie przycisków dla ekranów. |
 | `ui/encoder.h` | Analog jako enkoder względny: martwa strefa, krzywa, tryb ciągły i „ząbkowy”. |
 | `ui/view.h` | Bazowa klasa ekranu (update z wspólnym `Buttons`, render). |
-| `ui/app.*` | Właściciel projektu i ekranów: przekazuje wejście, przełącza ekrany (L2 = ARRANGE, R2 = PIANO ROLL), publikuje projekt do silnika, projekt demo. |
+| `ui/app.*` | Właściciel projektu i ekranów: zakładki PROJECT ↔ ARRANGE ↔ PIANO ROLL (L2/R2, kropki pod nagłówkiem), publikacja projektu do silnika, stan „niezapisane zmiany”, zapis/odczyt/nowy, autozapis przy wyjściu, start z ostatnim projektem (albo demo). |
+| `ui/project_view.*` | Ekran PROJECT (pierwsza zakładka): nazwa, statystyki, stan zapisu, lista projektów; zapis/wczytanie/nowy/usuń z potwierdzeniami. |
 | `ui/arrange.*` | Ekran ARRANGE: ścieżki, klipy z miniaturą nut, BPM w nagłówku, dodawanie ścieżek, wstawianie/klonowanie/przesuwanie/usuwanie klipów (sterowanie w nagłówku pliku). |
 | `ui/dialogs.*` | Okna NEW TRACK, TRACK (edycja: nazwa, kolor, usuwanie z potwierdzeniem) i NEW PATTERN w stylu menu (belki, ilustracja, pola, lista, pigułki akcji). |
 | `ui/widgets.*` | Wspólne elementy: belka nagłówka, pigułka z literą przycisku, pole wartości, lista, mini-gałka, pasek 4 enkoderów, edycja nazwy przyciskami. |
@@ -52,7 +56,7 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 ## Platforma (`platform/`)
 | Plik | Co robi |
 |---|---|
-| `main_sdl.cpp` | Okno/pełny ekran, tekstura, audio SDL (48 kHz float), zdarzenia pada i klawiatury, wybór ekranu. |
+| `main_sdl.cpp` | Okno/pełny ekran, tekstura, audio SDL (48 kHz float), zdarzenia pada i klawiatury, wybór ekranu. SIGTERM/SIGINT (np. Hotkey+Start w Knulli) = normalne wyjście z autozapisem. |
 | `controls_map.h` | **Jedyna** tabela mapowania: klawiatura, pad SDL, surowe kody RG35XX Pro. |
 
 ## Narzędzia (`tools/`)

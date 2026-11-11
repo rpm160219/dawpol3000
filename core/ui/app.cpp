@@ -1,10 +1,12 @@
 #include "ui/app.h"
+#include <stdio.h>
 #include <string.h>
 
 namespace dp {
 
 void App::init(AudioEngine* e) {
     eng_ = e;
+    projectView.attach(this);
     arrange.attach(this);
     roll.attach(this);
     trackDlg.attach(this);
@@ -22,6 +24,69 @@ void App::publish() {
 }
 
 void App::showArrange() { next_ = &arrange; }
+void App::showProject() { projectView.onShow(); next_ = &projectView; }
+
+void App::openStore(const char* root) {
+    store_.init(root);
+    static Project tmp;
+    if (store_.loadLast(tmp)) {
+        prj_ = tmp;
+        snprintf(savedAs_, sizeof savedAs_, "%s", prj_.name);
+        afterLoad();
+    } else {
+        loadDemo();
+    }
+}
+
+void App::afterLoad() {
+    if (eng_) eng_->send(EC_STOP);
+    lastPattern_ = -1;
+    lastTrack_ = 0;
+    for (int t = 0; t < prj_.nTracks; t++)
+        if (prj_.tracks[t].lastPattern >= 0) { lastPattern_ = prj_.tracks[t].lastPattern; lastTrack_ = t; break; }
+    arrange.setCursor(0, 0);
+    dirty_ = true;
+    publish();
+    modified_ = false;
+}
+
+bool App::isOwnSave(const char* name) const {
+    char a[64], b[64];
+    ProjectStore::folderName(name, a, sizeof a);
+    ProjectStore::folderName(savedAs_, b, sizeof b);
+    return savedAs_[0] && !strcmp(a, b);
+}
+
+bool App::saveProject() {
+    if (!store_.save(prj_)) return false;
+    snprintf(savedAs_, sizeof savedAs_, "%s", prj_.name);
+    modified_ = false;
+    return true;
+}
+
+bool App::loadProject(int index, char* err, int errLen) {
+    static Project tmp;
+    if (!store_.load(tmp, index, err, errLen)) return false;
+    prj_ = tmp;
+    snprintf(savedAs_, sizeof savedAs_, "%s", prj_.name);
+    afterLoad();
+    return true;
+}
+
+void App::newProject() {
+    prj_ = Project();
+    for (int i = 1; i < 1000; i++) {  // pierwsza wolna nazwa PROJECT NN
+        snprintf(prj_.name, sizeof prj_.name, "PROJECT %02d", i);
+        if (!store_.exists(prj_.name)) break;
+    }
+    savedAs_[0] = 0;
+    afterLoad();
+}
+
+void App::shutdown() {
+    if (store_.ready() && modified_) saveProject();
+    if (eng_) eng_->send(EC_STOP);
+}
 
 void App::openPattern(int pattern, int track) {
     if (pattern < 0 || pattern >= prj_.nPatterns) return;
@@ -56,16 +121,32 @@ void App::togglePlaySong() {
 void App::update(const InputState& in, float dt) {
     btn_.update(in, dt);
     if (in.btn[B_MENU] && in.btn[B_SELECT]) quit_ = true;
-    // Globalne przelaczanie ekranow (tylko poza oknami dialogowymi)
+    // Zakladki PROJECT | ARRANGE | PIANO ROLL (L2 = w lewo, R2 = w prawo); nie w oknach dialogowych
     bool dialog = cur_ == &trackDlg || cur_ == &patDlg;
-    if (!dialog && btn_.pressed(B_L2)) showArrange();
-    else if (!dialog && btn_.pressed(B_R2) && lastPattern_ >= 0) openPattern(lastPattern_, lastTrack_);
-    else cur_->update(btn_, in, dt);
+    bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
+    if (!dialog && btn_.pressed(B_L2)) {
+        if (cur_ == &roll) showArrange();
+        else if (cur_ == &arrange) showProject();
+    } else if (!dialog && btn_.pressed(B_R2)) {
+        if (cur_ == &projectView) showArrange();
+        else if (cur_ == &arrange && hasRoll) openPattern(lastPattern_, lastTrack_);
+    } else cur_->update(btn_, in, dt);
     if (next_) { cur_ = next_; next_ = nullptr; }
     if (dirty_) publish();
 }
 
-void App::render(Canvas& c) { cur_->render(c); }
+void App::render(Canvas& c) {
+    cur_->render(c);
+    // Wskaznik zakladek (3 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL
+    int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : -1));
+    if (tab >= 0) {
+        for (int i = 0; i < 3; i++) {
+            float x = 308 + i * 12, y = tab == 0 ? 60 : 38;
+            if (i == tab) c.fillCircle(x, y, 2.6f, pal::white);
+            else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
+        }
+    }
+}
 
 void App::loadDemo() {
     prj_ = Project();
@@ -94,8 +175,10 @@ void App::loadDemo() {
     prj_.addClip(keys, pk, 4);
     lastPattern_ = pl;
     lastTrack_ = lead;
+    savedAs_[0] = 0;
     dirty_ = true;
     publish();
+    modified_ = false;
 }
 
 }  // namespace dp

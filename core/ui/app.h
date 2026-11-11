@@ -1,27 +1,39 @@
 // App: wlasciciel projektu i ekranow. Kieruje wejscie do biezacego ekranu, po zmianach
-// publikuje migawke projektu do silnika audio.
+// publikuje migawke projektu do silnika audio. Zakladki (L2/R2): PROJECT | ARRANGE | PIANO ROLL.
 #pragma once
 #include "audio/engine.h"
+#include "io/project_store.h"
 #include "seq/project.h"
 #include "ui/arrange.h"
 #include "ui/dialogs.h"
 #include "ui/piano_roll.h"
+#include "ui/project_view.h"
 
 namespace dp {
 
 class App {
 public:
     void init(AudioEngine* e);
+    // Projekty na karcie: wczytuje ostatni (albo demo, gdy brak). Bez tego — tylko demo, bez zapisu.
+    void openStore(const char* root);
+    void shutdown();  // autozapis przy wyjsciu (gdy sa zmiany)
     void update(const InputState& in, float dt);
     void render(Canvas& c);
     bool quitRequested() const { return quit_; }
 
     Project& project() { return prj_; }
     AudioEngine* engine() { return eng_; }
-    void markDirty() { dirty_ = true; }
+    void markDirty() { dirty_ = true; modified_ = true; }
+    ProjectStore& store() { return store_; }
+    bool isModified() const { return modified_; }
+    bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
+    bool saveProject();
+    bool loadProject(int index, char* err, int errLen);
+    void newProject();
 
     // Nawigacja
     void showArrange();
+    void showProject();
     void openPattern(int pattern, int track);
     void openNewTrack();
     void openTrackEdit(int track);
@@ -30,6 +42,7 @@ public:
 
     void loadDemo();  // przykladowy projekt (headless, pierwsze uruchomienie)
 
+    ProjectView projectView;
     ArrangeView arrange;
     PianoRoll roll;
     TrackDialog trackDlg;
@@ -38,6 +51,10 @@ public:
 private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
+    ProjectStore store_;
+    char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
+    bool modified_ = false;
+    void afterLoad();
     Buttons btn_;
     View* cur_ = &arrange;
     View* next_ = nullptr;

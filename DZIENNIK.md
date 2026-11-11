@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 04:00
+**Zmienione:**
+- Nowe: `core/io/fs.*` (katalogi), `core/io/project_file.*` (format `.dpp`: tekstowy, wersjonowany, zapis atomowy z fsync), `core/io/project_store.*` (projekty w `projects/<NAZWA>/`, lista od najnowszego, ostatnio otwarty), `core/ui/project_view.*` (zakładka PROJECT).
+- `core/gfx/icons.*` — ilustracja notatnika (196×150, jak syntezator/magnetofon) i ikona projektu.
+- `core/ui/app.*` — zakładki PROJECT ↔ ARRANGE ↔ PIANO ROLL (L2/R2) z kropkami pod nagłówkiem, stan „niezapisane”, zapis/odczyt/nowy, autozapis przy wyjściu, start z ostatnim projektem.
+- `platform/main_sdl.cpp` — projekty w `projects/` (na konsoli `/userdata/dawpol3000/projects`), autozapis przy wyjściu, SIGTERM (Hotkey+Start) kończy program normalnie.
+- Headless: ekran `project`. Testy: zapis → nowy → odczyt daje identyczny projekt; autozapis i start z ostatnim projektem OK; zapis na karcie konsoli (exFAT) OK.
+- Dokumentacja, README, CLAUDE.md zaktualizowane; `projects/` w `.gitignore`.
+**Następny krok:** ocena Patryka; potem do wyboru: step seq/perkusja, pętla i markery, undo, prawdziwy syntezator.
+**Wymaga od Patryka:** tak — test na konsoli i wybór kolejnego kroku.
+
 ## 2026-11-12 03:10
 **Zmienione:**
 - `core/gfx/icons.cpp` — ilustracje narysowane od nowa na sztywnej siatce liczonej od obudowy: syntezator (galki mieszczą się w obrysie, usunięty kabel, poprawny układ czarnych klawiszy 2+3), magnetofon (4 wskaźniki VU równe i w osi, wycentrowane szpule, zamiast suwaków przyciski transportu).

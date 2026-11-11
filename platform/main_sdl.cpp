@@ -1,5 +1,6 @@
 // Warstwa platformy SDL2: okno, wejscie, audio. Plus tryby headless.
 #include <SDL.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,10 @@ static void audioCb(void*, Uint8* stream, int len) {
     if (gTestMode) gSynth.process((float*)stream, frames);
     else gEngine.process((float*)stream, frames);
 }
+
+// Hotkey+Start w Knulli robi "killall" (SIGTERM): konczymy normalnie, zeby zadzialal autozapis.
+static volatile sig_atomic_t gTerm = 0;
+static void onTerm(int) { gTerm = 1; }
 
 static void usage() {
     printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [arrange|track|pattern|roll|test]] [--render-wav file.wav [seconds]]\n");
@@ -48,6 +53,8 @@ int main(int argc, char** argv) {
         else { usage(); return 1; }
     }
 
+    signal(SIGTERM, onTerm);
+    signal(SIGINT, onTerm);
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) != 0) {
         fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return 1;
@@ -95,7 +102,7 @@ int main(int argc, char** argv) {
     app.init(&gSynth);
     static App app2;  // duzy obiekt (projekt) — nie na stosie
     app2.init(&gEngine);
-    app2.loadDemo();
+    app2.openStore("projects");  // katalog wzgledem biezacego (konsola: /userdata/dawpol3000/projects)
     InputState in;
     SDL_GameController* pad = nullptr;
     SDL_Joystick* joy = nullptr;
@@ -108,6 +115,7 @@ int main(int argc, char** argv) {
     float fps = 0;
     bool run = true;
     while (run) {
+        if (gTerm) run = false;
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -221,6 +229,8 @@ int main(int argc, char** argv) {
         if (dt < 0.012f) SDL_Delay(4);  // gdy brak vsync
     }
 
+    if (!gTestMode) app2.shutdown();  // autozapis
+    SDL_Delay(30);
     if (dev) SDL_CloseAudioDevice(dev);
     if (pad) SDL_GameControllerClose(pad);
     if (joy) SDL_JoystickClose(joy);

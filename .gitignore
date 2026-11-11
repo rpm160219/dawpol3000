@@ -5,3 +5,4 @@ roms/
 *.o
 tools/device.conf
 ref/
+projects/
