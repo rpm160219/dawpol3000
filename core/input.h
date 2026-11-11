@@ -15,7 +15,7 @@ struct InputState {
     float axis[AXIS_COUNT] = {};  // -1..1, Y w dol dodatnie
     static const int RAW_N = 4;
     char raw[RAW_N][48] = {};     // ostatnie surowe zdarzenia (do mapowania na konsoli)
-    char pad[64] = "BRAK PADA";
+    char pad[64] = "NO PAD";
     void logRaw(const char* s) {
         for (int i = RAW_N - 1; i > 0; i--) memcpy(raw[i], raw[i - 1], sizeof(raw[0]));
         strncpy(raw[0], s, sizeof(raw[0]) - 1);

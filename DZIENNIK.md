@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 01:05
+**Zmienione:** UI i logi programu po angielsku (`core/hello_app.cpp`, `core/input.h`, `platform/main_sdl.cpp`); wpisane kody przycisków RG35XX Pro (`platform/controls_map.h`); awaryjne wyjście Menu+Select na surowych kodach; `tools/knulli/DAW-POL 3000.sh.keys` — wyjście Hotkey+Start (Knulli zabija program); `tools/deploy.sh` wysyła też plik `.keys`. CLAUDE.md: zasada „aplikacja po angielsku”. Wymuszone zamknięcie zawieszonej aplikacji przez SSH.
+**Stan:** Patryk potwierdził — na konsoli działa obraz, dźwięk, przyciski, analogi.
+**Następny krok:** podpięcie GitHuba, potem etap 1 (makiety ekranu syntezatora).
+**Wymaga od Patryka:** tak — dodać klucz SSH na GitHubie i utworzyć puste prywatne repo.
+
 ## 2026-11-12 00:40
 **Zmienione:** `tools/ssh_env.sh` (wspólne SSH z hasłem z `tools/device.conf`, który jest poza gitem), `tools/deploy.sh`, `tools/log.sh`, `tools/dev.sh` (komenda na konsoli). Program wysłany na konsolę i dodany do menu Ports; test headless na konsoli OK (PNG zgodny z PC, WAV OK).
 **Ustalenia o konsoli:** Knulli = Batocera 42, kernel 4.9.170, glibc 2.40, SDL 2.32.8, karty ALSA: audiocodec / ahubdam / ahubhdmi, RAM 973 MB. `/userdata` na exFAT (fuseblk) → Dropbear odrzuca klucze SSH, logujemy się hasłem. Porty: `/userdata/roms/ports/*.sh`, przeładowanie listy: `curl http://127.0.0.1:1234/reloadgames`.

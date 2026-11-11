@@ -9,7 +9,7 @@ namespace dp {
 static const int kNoteBtn[8] = {B_LEFT, B_DOWN, B_RIGHT, B_UP, B_Y, B_B, B_A, B_X};
 static const int kMajor[8] = {0, 2, 4, 5, 7, 9, 11, 12};
 static const char* kNoteNames[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-static const char* kEncNames[4] = {"TON", "GLOS", "PAN", "DRIVE"};
+static const char* kEncNames[4] = {"TUNE", "VOL", "PAN", "DRIVE"};
 
 void HelloApp::init(ToneSynth* s) {
     syn_ = s;
@@ -86,7 +86,7 @@ void HelloApp::render(Canvas& c, const InputState& in, const AudioInfo& ai, floa
 
     // Naglowek
     drawText(c, 20, 14, "DAW-POL 3000", 13, 1.5f, pal::white);
-    snprintf(buf, sizeof buf, "ETAP 0  %2.0f FPS", fps);
+    snprintf(buf, sizeof buf, "STAGE 0  %2.0f FPS", fps);
     drawText(c, 620, 14, buf, 11, 1.3f, pal::dim, ALIGN_RIGHT);
     c.line(20, 40, 620, 40, 1.f, pal::faint);
 
@@ -99,7 +99,7 @@ void HelloApp::render(Canvas& c, const InputState& in, const AudioInfo& ai, floa
     drawText(c, 20 + fw + 12, 102, "HZ", 12, 1.3f, pal::dim);
     snprintf(buf, sizeof buf, "%s%d", kNoteNames[((midi_ % 12) + 12) % 12], midi_ / 12 - 1);
     drawText(c, 620, 60, buf, 30, 1.8f, gate ? pal::blue : pal::dim, ALIGN_RIGHT);
-    snprintf(buf, sizeof buf, "OKTAWA %d%s", octave_, drone_ ? "  DRONE" : "");
+    snprintf(buf, sizeof buf, "OCTAVE %d%s", octave_, drone_ ? "  DRONE" : "");
     drawText(c, 620, 102, buf, 11, 1.3f, pal::dim, ALIGN_RIGHT);
 
     // 4 enkodery
@@ -161,7 +161,7 @@ void HelloApp::render(Canvas& c, const InputState& in, const AudioInfo& ai, floa
         float ms = ai.rate ? 1000.f * ai.frames / ai.rate : 0;
         snprintf(buf, sizeof buf, "AUDIO %s %d HZ %d FR %.1f MS", ai.driver, ai.rate, ai.frames, ms);
     } else {
-        snprintf(buf, sizeof buf, "AUDIO: %s", ai.err[0] ? ai.err : "BRAK");
+        snprintf(buf, sizeof buf, "AUDIO: %s", ai.err[0] ? ai.err : "NONE");
     }
     drawText(c, 20, 448, buf, 9, 1.1f, ai.ok ? pal::dim : pal::red);
     drawText(c, 20, 464, in.pad, 9, 1.1f, pal::dim);

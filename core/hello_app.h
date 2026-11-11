@@ -23,7 +23,7 @@ public:
 
 private:
     ToneSynth* syn_ = nullptr;
-    float enc_[4] = {0.5f, 0.6f, 0.5f, 0.0f};  // TON, GLOS, PAN, DRIVE (0..1)
+    float enc_[4] = {0.5f, 0.6f, 0.5f, 0.0f};  // TUNE, VOL, PAN, DRIVE (0..1)
     float sent_[TP_COUNT];
     bool prev_[BTN_COUNT] = {};
     int octave_ = 4;

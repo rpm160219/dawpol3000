@@ -39,13 +39,19 @@ static const SDL_GameControllerAxis kPadR2 = SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
 
 // Surowy joystick RG35XX Pro (gdy SDL nie rozpozna go jako GameController).
 // DO UZUPELNIENIA po tescie na konsoli — numery odczytamy z ekranu testowego (RAW).
+// RG35XX Pro (Knulli, SDL: "Anbernic RG35XX-Pro Controller") — odczytane z konsoli:
+//   b3=B(SDL b) b4=A b5=X b6=Y b7=L1 b8=R1 b9=Select b10=Start b11=Menu b12=L3
+//   b13=L2 b14=R2 b15=R3, D-pad = hat 0, osie: 0/1 lewy analog, 2/3 prawy.
+// Konsola jest rozpoznawana jako GameController, wiec ta tabela to tylko zapas.
+static const int kRawQuitA = 11, kRawQuitB = 9;  // Menu + Select = wyjscie (surowo)
 struct RawBtnMap { int joyButton; int btn; };
 static const RawBtnMap kRawBtnMap[] = {
-    {-1, -1},
+    {4, B_A}, {3, B_B}, {5, B_X}, {6, B_Y}, {7, B_L1}, {8, B_R1}, {13, B_L2}, {14, B_R2},
+    {9, B_SELECT}, {10, B_START}, {11, B_MENU},
 };
 struct RawAxisMap { int joyAxis; int axis; float scale; };
 static const RawAxisMap kRawAxisMap[] = {
-    {0, AX_LX, 1.f}, {1, AX_LY, 1.f}, {3, AX_RX, 1.f}, {4, AX_RY, 1.f},
+    {0, AX_LX, 1.f}, {1, AX_LY, 1.f}, {2, AX_RX, 1.f}, {3, AX_RY, 1.f},
 };
 
 }  // namespace dp

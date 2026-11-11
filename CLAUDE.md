@@ -67,6 +67,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Linki od Patryka: dopisać tutaj po otrzymaniu i ocenić (licencja, język, zależności, koszt CPU, czy ma sens na 1 GB RAM).
 
 ## Styl wizualny
+- **Język aplikacji: angielski** (wszystkie napisy w UI, nazwy parametrów, komunikaty i logi programu). Komunikacja z Patrykiem i dokumentacja projektu — po polsku.
 - Czarne tło, cienkie linie, duże cienkie cyfry, dużo pustej przestrzeni.
 - 4 kolory = 4 „enkodery”: **niebieski, zielony, biały, czerwony** — każdy parametr na ekranie ma kolor swojego enkodera.
 - Inspiracja OP-1, ale **własne grafiki i ilustracje**. Nie kopiować 1:1 ekranów, ilustracji (bokser, krowa itp.), nazw ani logo Teenage Engineering. Nazwy silników/efektów własne.
@@ -104,13 +105,13 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - [ ] Druga karta microSD + Knulli wgrane, konsola w Wi-Fi, SSH działa
 - [x] ~~Sieć Bridged~~ — zostaje NAT (decyzja Patryka)
 - [ ] Claude Code w VM (działa ✓), git + SSH do GitHuba (brak klucza SSH i konfiguracji git)
-- [ ] Puste prywatne repo na GitHubie
+- [ ] Puste prywatne repo na GitHubie + dodany klucz SSH z VM (github.com/settings/keys)
 - [ ] Słuchawki na jacka do testów
 - [x] Hub USB-C z PD, interfejs audio USB, klawiatura MIDI USB — Patryk ma; testujemy w etapie 0 (zapytaj o modele)
 - [x] Nazwa projektu — DAW-POL 3000
 
 ## Aktualny stan
-- Etap: 0 (w toku) — program jest na konsoli, czeka na pierwsze uruchomienie z ekranem.
-- Działa: toolchain (desktop + ARM), ekran testowy, headless PNG/WAV (też na konsoli), deploy przez SSH z hasłem, wpis w Ports.
-- Do sprawdzenia na konsoli: czy obraz wychodzi (sterownik wideo), dźwięk (która karta ALSA), kody przycisków RG35XX (`kRawBtnMap`), latencja audio.
-- Następny krok: Patryk odpala Ports → DAW-POL 3000, ja czytam log i mapuję przyciski. Brak jeszcze: zdalne repo na GitHubie.
+- Etap: 0 — **działa na konsoli** (obraz, dźwięk, wszystkie przyciski i analogi; potwierdzone przez Patryka). Pad: „Anbernic RG35XX-Pro Controller”, rozpoznany jako GameController (kody surowe w `platform/controls_map.h`). Wideo SDL: mali, audio: alsa 48 kHz / 256 ramek.
+- UI przestawione na angielski. Wyjście: Menu+Select (też surowo) albo Hotkey+Start (plik `.keys` Knulli).
+- Do zrobienia w etapie 0: pomiar realnej latencji audio i obciążenia CPU, test mniejszego bufora (128), USB (hub, interfejs audio, MIDI) — po podaniu modeli.
+- Następny krok: GitHub (Patryk dodaje klucz + tworzy repo), potem etap 1 — makiety PNG ekranu syntezatora do akceptacji stylu.

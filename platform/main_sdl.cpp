@@ -18,7 +18,7 @@ static void audioCb(void*, Uint8* stream, int len) {
 }
 
 static void usage() {
-    printf("dawpol3000 [--fullscreen] [--frames N] [--render-png plik.png] [--render-wav plik.wav [sekundy]]\n");
+    printf("dawpol3000 [--fullscreen] [--frames N] [--render-png file.png] [--render-wav file.wav [seconds]]\n");
 }
 
 int main(int argc, char** argv) {
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
     SDL_Window* win = SDL_CreateWindow("DAW-POL 3000", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                        Canvas::W, Canvas::H, fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
-    if (!win) { fprintf(stderr, "Okno: %s\n", SDL_GetError()); return 1; }
+    if (!win) { fprintf(stderr, "Window: %s\n", SDL_GetError()); return 1; }
     SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!ren) ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
     if (!ren) { fprintf(stderr, "Renderer: %s\n", SDL_GetError()); return 1; }
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         ai.channels = have.channels;
         snprintf(ai.driver, sizeof ai.driver, "%s", SDL_GetCurrentAudioDriver());
         if (have.freq != 48000) gSynth.init((float)have.freq);
-        printf("Audio: %d Hz, %d ramek, %d kan.\n", have.freq, have.samples, have.channels);
+        printf("Audio: %d Hz, %d frames, %d ch\n", have.freq, have.samples, have.channels);
         SDL_PauseAudioDevice(dev, 0);
     } else {
         snprintf(ai.err, sizeof ai.err, "%s", SDL_GetError());
@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
     bool keyAxis[sizeof(kKeyAxis) / sizeof(kKeyAxis[0])] = {};
     float joyAxis[AXIS_COUNT] = {}, padAxis[AXIS_COUNT] = {};
     char line[48];
+    bool rawHeld[32] = {};
 
     Uint64 last = SDL_GetPerformanceCounter();
     float fps = 0;
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
                     joy = SDL_JoystickOpen(idx);
                     snprintf(in.pad, sizeof in.pad, "JOY: %s", SDL_JoystickName(joy));
                 }
-                printf("Urzadzenie %d: %s (controller=%d)\n", idx, SDL_JoystickNameForIndex(idx),
+                printf("Device %d: %s (controller=%d)\n", idx, SDL_JoystickNameForIndex(idx),
                        SDL_IsGameController(idx));
                 break;
             }
@@ -131,6 +132,8 @@ int main(int argc, char** argv) {
                 printf("%s\n", line);
                 if (!pad)
                     for (auto& m : kRawBtnMap) if (m.joyButton == e.jbutton.button) in.btn[m.btn] = down;
+                if (e.jbutton.button < 32) rawHeld[e.jbutton.button] = down;
+                if (rawHeld[kRawQuitA] && rawHeld[kRawQuitB]) run = false;
                 break;
             }
             case SDL_JOYHATMOTION:
