@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 00:40
+**Zmienione:** `tools/ssh_env.sh` (wspólne SSH z hasłem z `tools/device.conf`, który jest poza gitem), `tools/deploy.sh`, `tools/log.sh`, `tools/dev.sh` (komenda na konsoli). Program wysłany na konsolę i dodany do menu Ports; test headless na konsoli OK (PNG zgodny z PC, WAV OK).
+**Ustalenia o konsoli:** Knulli = Batocera 42, kernel 4.9.170, glibc 2.40, SDL 2.32.8, karty ALSA: audiocodec / ahubdam / ahubhdmi, RAM 973 MB. `/userdata` na exFAT (fuseblk) → Dropbear odrzuca klucze SSH, logujemy się hasłem. Porty: `/userdata/roms/ports/*.sh`, przeładowanie listy: `curl http://127.0.0.1:1234/reloadgames`.
+**Następny krok:** Patryk uruchamia Ports → DAW-POL 3000; czytam log (ekran, audio, pad), mapuję przyciski.
+**Wymaga od Patryka:** tak — uruchomić z menu i powiedzieć, co widać/słychać.
+
 ## 2026-11-12 00:10
 **Zmienione:** `tools/deploy.sh` (kopiuje program + wpis w menu Ports, zapamiętuje IP), `tools/knulli/DAW-POL 3000.sh` (uruchamianie z menu Ports, log do pliku), `tools/log.sh` (podgląd logu z konsoli). Patryk dostał instrukcję wgrania Knulli i włączenia SSH.
 **Następny krok:** pierwszy deploy na konsolę i test (ekran, dźwięk, przyciski).

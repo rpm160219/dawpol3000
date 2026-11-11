@@ -23,7 +23,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Debian w **VirtualBox** (wykryte: `systemd-detect-virt` = oracle; w planie było VMware), sieć **NAT** (IP VM 10.0.2.15) (Patryk nie chce Bridged — wolno działa). Połączenia wychodzące z VM do LAN przez NAT działają, więc SSH/scp z VM na konsolę powinno iść normalnie; konsola nie łączy się do VM (nie jest potrzebne). Jeśli SSH z VM nie dosięgnie konsoli — plan B: wbudowany w Windows `ssh`/`scp` przez folder współdzielony VirtualBox, plan C: kopiowanie na kartę SD. Claude Code działa w tej VM.
 - Toolchain: `gcc-aarch64-linux-gnu` + SDL2 dla arm64 (multiarch apt albo sysroot z urządzenia). CMake.
 - Build natywny x86_64 na desktop (okno 640×480) do szybkich iteracji.
-- Deploy: `scp` + uruchomienie przez `ssh` na konsoli; logi czytane przez ssh. Skrypt `tools/deploy.sh`.
+- Deploy: `tools/deploy.sh` (build ARM + scp + wpis w Ports), `tools/log.sh` (log z konsoli), `tools/dev.sh '<komenda>'` (komenda na konsoli). Konsola: IP 192.168.50.239, root, hasło w `tools/device.conf` (poza gitem). **Klucze SSH nie działają** (`/userdata` na exFAT → Dropbear odrzuca), stąd hasło przez SSH_ASKPASS. Komendy `!` w Claude Code nie mają okna na hasło.
+- Konsola (sprawdzone): Knulli = Batocera 42, kernel 4.9.170, glibc 2.40, SDL 2.32.8, ALSA: audiocodec/ahubdam/ahubhdmi, RAM 973 MB. Program w `/userdata/dawpol3000`, starter w `/userdata/roms/ports/DAW-POL 3000.sh`, odświeżenie listy: `curl http://127.0.0.1:1234/reloadgames`. Jest PortMaster.
 - Repo: prywatne na GitHubie Patryka.
 
 ## Architektura
@@ -109,7 +110,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - [x] Nazwa projektu — DAW-POL 3000
 
 ## Aktualny stan
-- Etap: 0 (w toku) — część na komputerze gotowa, czeka na konsolę.
-- Działa: toolchain (desktop + ARM), ekran testowy (ton sterowany D-padem/ABXY, 4 gałki na analogach, oscyloskop, podgląd przycisków/osi, surowe kody padu), tryb headless PNG/WAV, `tools/build.sh`, `tools/deploy.sh`, lokalne repo git.
-- Do sprawdzenia na konsoli: glibc ≥ 2.38 i SDL2 na Knulli, sterownik wideo (KMSDRM?), kody przycisków RG35XX (tabela `kRawBtnMap`), latencja audio, ścieżka i uruchamianie przez Ports.
-- Następny krok: Patryk ocenia `out/etap0.png` i `out/etap0.wav`; wgranie Knulli na kartę (instrukcja), Wi-Fi, IP konsoli → deploy. Brak jeszcze: klucz SSH do GitHuba i zdalne repo.
+- Etap: 0 (w toku) — program jest na konsoli, czeka na pierwsze uruchomienie z ekranem.
+- Działa: toolchain (desktop + ARM), ekran testowy, headless PNG/WAV (też na konsoli), deploy przez SSH z hasłem, wpis w Ports.
+- Do sprawdzenia na konsoli: czy obraz wychodzi (sterownik wideo), dźwięk (która karta ALSA), kody przycisków RG35XX (`kRawBtnMap`), latencja audio.
+- Następny krok: Patryk odpala Ports → DAW-POL 3000, ja czytam log i mapuję przyciski. Brak jeszcze: zdalne repo na GitHubie.

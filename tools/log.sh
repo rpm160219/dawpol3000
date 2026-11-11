@@ -1,5 +1,4 @@
 #!/bin/sh
 # Podglad logu z konsoli: ./tools/log.sh
-cd "$(dirname "$0")/.."
-. tools/device.conf
-ssh "${DEVICE_USER:-root}@$DEVICE_IP" "cat /userdata/dawpol3000/log.txt"
+. "$(dirname "$0")/ssh_env.sh"
+dssh "cat /userdata/dawpol3000/log.txt"
