@@ -58,6 +58,29 @@ void Canvas::rect(float x, float y, float w, float h, float lw, Color c) {
     polyline(p, 4, lw, c, true);
 }
 
+// Odleglosc ze znakiem od zaokraglonego prostokata (ujemna w srodku).
+static inline float sdRoundRect(float px, float py, float cx, float cy, float hw, float hh, float r) {
+    float qx = fabsf(px - cx) - (hw - r), qy = fabsf(py - cy) - (hh - r);
+    float ox = qx > 0 ? qx : 0, oy = qy > 0 ? qy : 0;
+    float in = qx > qy ? qx : qy;
+    return sqrtf(ox * ox + oy * oy) + (in < 0 ? in : 0) - r;
+}
+
+void Canvas::roundRect(float x, float y, float w, float h, float r, float lw, Color c) {
+    if (w <= 0 || h <= 0) return;
+    if (r > w * 0.5f) r = w * 0.5f;
+    if (r > h * 0.5f) r = h * 0.5f;
+    float cx = x + w * 0.5f, cy = y + h * 0.5f, ext = lw > 0 ? lw : 0;
+    int x0 = (int)clampf(floorf(x - ext - 1), 0, W), x1 = (int)clampf(ceilf(x + w + ext + 1), 0, W);
+    int y0 = (int)clampf(floorf(y - ext - 1), 0, H), y1 = (int)clampf(ceilf(y + h + ext + 1), 0, H);
+    for (int j = y0; j < y1; j++)
+        for (int i = x0; i < x1; i++) {
+            float d = sdRoundRect(i + 0.5f, j + 0.5f, cx, cy, w * 0.5f, h * 0.5f, r);
+            float a = lw > 0 ? clampf(lw * 0.5f + 0.5f - fabsf(d), 0, 1) : clampf(0.5f - d, 0, 1);
+            if (a > 0) blend(j * W + i, c, a);
+        }
+}
+
 void Canvas::beginStroke() { dx0_ = W; dy0_ = H; dx1_ = -1; dy1_ = -1; }
 
 void Canvas::strokeSeg(float x0, float y0, float x1, float y1, float w) {

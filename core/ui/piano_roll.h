@@ -28,6 +28,7 @@ public:
     bool quitRequested() const { return quit_; }
     void loadDemo();                       // przykladowa melodia (testy, headless)
     void setCursor(int step, int pitch) { curStep_ = step; curPitch_ = pitch; scrollToCursor(); }
+    void setView(int topPitch) { topPitch_ = topPitch; scrollToCursor(); }
 
 private:
     AudioEngine* eng_ = nullptr;

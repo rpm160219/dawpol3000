@@ -69,7 +69,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 
 ## Styl wizualny
 - **Język aplikacji: angielski** (wszystkie napisy w UI, nazwy parametrów, komunikaty i logi programu). Komunikacja z Patrykiem i dokumentacja projektu — po polsku.
-- Czarne tło, cienkie linie, duże cienkie cyfry, dużo pustej przestrzeni.
+- Czarne tło, cienkie linie, duże cienkie cyfry, dużo pustej przestrzeni. Zaokrąglone kształty („pigułki”), siatki z kropek zamiast gęstych linii.
+- Grafiki wzorcowe od Patryka: folder `ref/` (poza gitem — mogą być cudze materiały; tylko inspiracja, nie kopiujemy 1:1). Ikony/ilustracje rysujemy wektorowo w kodzie; obrazki z generatorów (np. Gemini) tylko jako szkic do przerysowania.
 - 4 kolory = 4 „enkodery”: **niebieski, zielony, biały, czerwony** — każdy parametr na ekranie ma kolor swojego enkodera.
 - Inspiracja OP-1, ale **własne grafiki i ilustracje**. Nie kopiować 1:1 ekranów, ilustracji (bokser, krowa itp.), nazw ani logo Teenage Engineering. Nazwy silników/efektów własne.
 

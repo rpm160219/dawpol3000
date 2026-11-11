@@ -21,7 +21,7 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 
 | Plik | Co robi |
 |---|---|
-| `gfx/canvas.*` | Bufor 640×480 RGBA i rasteryzer z antyaliasingiem: linie, łuki, koła, prostokąty. Kreski wsadowe (`beginStroke/strokeSeg/endStroke`), żeby nakładające się segmenty nie ciemniały. Paleta 4 kolorów enkoderów (`pal::`). |
+| `gfx/canvas.*` | Bufor 640×480 RGBA i rasteryzer z antyaliasingiem: linie, łuki, koła, prostokąty, zaokrąglone prostokąty/„pigułki” (SDF). Kreski wsadowe (`beginStroke/strokeSeg/endStroke`), żeby nakładające się segmenty nie ciemniały. Paleta 4 kolorów enkoderów (`pal::`). |
 | `gfx/font.*` | Własny font kreskowy (wektorowy) na siatce 8×12, wygładzanie Chaikina. Wielkie litery, cyfry, interpunkcja. |
 | `io/image_io.*` | Zapis PNG (bez zlib) i WAV 16-bit — do trybu headless. |
 | `util/spsc.h` | Kolejka lock-free jeden producent / jeden konsument. |
@@ -35,7 +35,7 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `ui/input.h` | Logiczne przyciski i osie (niezależne od sprzętu). |
 | `ui/buttons.h` | Wciśnięcie / puszczenie / auto-powtarzanie przycisków dla ekranów. |
 | `ui/encoder.h` | Analog jako enkoder względny: martwa strefa, krzywa, tryb ciągły i „ząbkowy”. |
-| `ui/piano_roll.*` | Ekran PIANO ROLL (opis sterowania w nagłówku pliku). |
+| `ui/piano_roll.*` | Ekran PIANO ROLL (opis sterowania w nagłówku pliku). Nuty jako „pigułki”, kolor = velocity (ciemna zieleń → zieleń → mięta), siatka z kropek, mini-klawiatura. |
 | `ui/test_screen.*` | Ekran testu sprzętu (etap 0): ton, gałki, oscyloskop, podgląd przycisków i surowych kodów. Uruchamiany `--test`. |
 | `headless.*` | Tryb bez okna: `--render-png plik [roll|test]`, `--render-wav plik [sekundy]`. |
 

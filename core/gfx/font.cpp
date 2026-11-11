@@ -45,6 +45,7 @@ static const char* glyph(char ch) {
     case 'X': return "008c 800c";
     case 'Y': return "004680 464c";
     case 'Z': return "00800c8c";
+    case '#': return "323a 525a 1474 1878";
     case '-': return "1676";
     case '+': return "2666 4448";
     case '.': return "4b4c";

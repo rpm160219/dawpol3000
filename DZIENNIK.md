@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 03:20
+**Zmienione:**
+- `core/gfx/font.cpp` — dodany znak `#` (brakowało go, więc „C#5” rysowało się jako „C5”).
+- `core/gfx/canvas.*` — zaokrąglone prostokąty (wypełnienie i obrys, SDF z antyaliasingiem).
+- `core/ui/piano_roll.*` — styl bliżej OP-1: nuty jako pigułki, **kolor nuty zależy od velocity** (ciemna zieleń → zieleń → mięta, zieleń = kolor enkodera VELOCITY), siatka z kropek + linie tylko na miarach, mini-klawiatura z zaokrąglonymi klawiszami, biały kursor, zaznaczona nuta w białej obwódce z niebieskim uchwytem długości, głowica z trójkątem; `setView()` do ustawienia widoku.
+- Folder `ref/` na grafiki wzorcowe (w `.gitignore`). CLAUDE.md: zasady stylu (pigułki, kropki) i grafik wzorcowych.
+**Następny krok:** Patryk ocenia nowy wygląd i podsyła grafiki wzorcowe do `ref/`.
+**Wymaga od Patryka:** tak — ocena i grafiki.
+
 ## 2026-11-12 02:50
 **Zmienione:** `core/ui/piano_roll.cpp` — poprawione kolory wierszy (były odwrócone: czarne klawisze jaśniejsze); teraz białe klawisze jaśniejsze, czarne ciemne, wiersz kursora delikatnie zielony (nie myli się z klawiszem); dodany pasek mini-klawiatury po lewej i znacznik kursora; mocniejsza linia na granicy oktawy (B/C) i słabsza między E/F. Wysłane na konsolę.
 **Następny krok:** Patryk sprawdza na konsoli; potem wiele taktów i kanałów, step seq.

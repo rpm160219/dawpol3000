@@ -44,7 +44,8 @@ int headlessPng(const char* path, const char* screen) {
     PianoRoll roll;
     roll.init(&eng);
     roll.loadDemo();
-    roll.setCursor(8, 72);
+    roll.setCursor(14, 70);
+    roll.setView(75);
     InputState in;
     roll.update(in, 0.016f);
     in.btn[B_START] = true;  // play, i przewin troche, zeby byla widoczna glowica

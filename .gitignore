@@ -4,3 +4,4 @@ out/
 roms/
 *.o
 tools/device.conf
+ref/

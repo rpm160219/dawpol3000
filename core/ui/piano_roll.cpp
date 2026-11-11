@@ -12,6 +12,15 @@ static const char* kNames[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"
 static bool isBlack(int p) { int k = p % 12; return k == 1 || k == 3 || k == 6 || k == 8 || k == 10; }
 static void noteName(char* b, int n, int p) { snprintf(b, n, "%s%d", kNames[p % 12], p / 12 - 1); }
 
+// Kolor nuty wg velocity: 1 = ciemna zielen, 64 = zielen enkodera VELOCITY, 127 = jasna mieta.
+static Color velColor(int v) {
+    float t = (v - 1) / 126.f;
+    Color a = rgb(22, 70, 44), m = pal::green, b = rgb(205, 255, 222);
+    Color p = t < 0.5f ? a : m, q = t < 0.5f ? m : b;
+    float k = t < 0.5f ? t * 2 : (t - 0.5f) * 2;
+    return rgb((uint8_t)(p.r + (q.r - p.r) * k), (uint8_t)(p.g + (q.g - p.g) * k), (uint8_t)(p.b + (q.b - p.b) * k));
+}
+
 static void lenName(char* b, int n, int ticks) {
     int s = ticks / TICKS_PER_STEP, d = 16;
     while (s % 2 == 0 && d > 1) { s /= 2; d /= 2; }
@@ -32,8 +41,8 @@ void PianoRoll::loadDemo() {
     pat_.clear();
     const int T = TICKS_PER_STEP;
     struct { int s, l, p, v; } d[] = {
-        {0, 4, 60, 110}, {0, 2, 67, 90}, {4, 2, 63, 95}, {6, 2, 67, 90},
-        {8, 6, 72, 120}, {12, 2, 74, 80}, {14, 2, 70, 100},
+        {0, 4, 60, 110}, {0, 2, 67, 45}, {4, 2, 63, 75}, {6, 2, 67, 95},
+        {8, 6, 72, 127}, {12, 2, 74, 25}, {14, 2, 70, 100},
     };
     for (auto& n : d) pat_.add({(uint16_t)(n.s * T), (uint16_t)(n.l * T), (uint8_t)n.p, (uint8_t)n.v});
     publish();
@@ -205,68 +214,65 @@ void PianoRoll::render(Canvas& c) {
     }
 
     const float GW = SW * STEPS_PER_BAR, GH = RH * ROWS;
-    // Wiersze jak klawiatura pianina: biale klawisze jasniejsze, czarne ciemne.
-    // Wiersz kursora: delikatny zielony (kolor kursora), zeby nie mylil sie z klawiszem.
-    const float KX = 44, KW = 14;  // pasek mini-klawiatury po lewej
+    // Tlo wierszy jak klawiatura: biale klawisze minimalnie jasniejsze, czarne = czern.
+    const float KX = 40, KW = 18;  // mini-klawiatura po lewej
     for (int r = 0; r < ROWS; r++) {
         int p = topPitch_ - r;
         float y = GY + r * RH;
         bool blk = isBlack(p);
-        c.fillRect(GX, y, GW, RH, blk ? rgb(6, 6, 6) : rgb(22, 22, 22));
-        if (p == curPitch_) c.fillRect(GX, y, GW, RH, rgb(60, 220, 120, 26));
-        // klawisz
-        c.fillRect(KX, y + 0.5f, KW, RH - 1, blk ? rgb(30, 30, 30) : rgb(200, 200, 200));
-        if (p == curPitch_) c.fillRect(KX + KW + 1, y + 3, 3, RH - 6, pal::green);
+        if (!blk) c.fillRect(GX, y, GW, RH, rgb(13, 13, 13));
+        // klawisz: bialy = jasny, czarny = ciemny z obrysem
+        if (!blk) c.fillRoundRect(KX, y + 1, KW, RH - 2, 2.5f, rgb(175, 175, 175));
+        else c.strokeRoundRect(KX + 0.5f, y + 1.5f, KW - 1, RH - 3, 2.5f, 1.f, rgb(70, 70, 70));
+        if (p == curPitch_) c.fillCircle(KX + KW + 6, y + RH * 0.5f, 2.5f, pal::white);
         if (p % 12 == 0 || p == curPitch_) {
             noteName(nn, sizeof nn, p);
-            drawText(c, KX - 6, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, p == curPitch_ ? pal::green : pal::dim, ALIGN_RIGHT);
+            drawText(c, KX - 7, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, p == curPitch_ ? pal::white : pal::dim, ALIGN_RIGHT);
         }
-        // linie miedzy wierszami: mocniejsza miedzy B i C (granica oktawy) oraz E i F
-        if (p % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(70, 70, 70));
-        else if (p % 12 == 5) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(34, 34, 34));
+        if (p % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(52, 52, 52));
     }
-    // Pionowe linie: kroki, miary, takt
-    for (int s = 0; s <= STEPS_PER_BAR; s++) {
-        float x = GX + s * SW;
-        Color col = (s % 4 == 0) ? rgb(64, 64, 64) : rgb(26, 26, 26);
-        c.line(x, GY, x, GY + GH, 1.f, col);
+    // Siatka: linie tylko na miarach, kropki na szesnastkach
+    for (int s2 = 0; s2 <= STEPS_PER_BAR; s2 += 4) {
+        float x = GX + s2 * SW;
+        c.line(x, GY, x, GY + GH, 1.f, (s2 % 16 == 0) ? rgb(70, 70, 70) : rgb(40, 40, 40));
     }
-    c.line(GX, GY, GX + GW, GY, 1.f, rgb(64, 64, 64));
-    c.line(GX, GY + GH, GX + GW, GY + GH, 1.f, rgb(64, 64, 64));
+    for (int r = 0; r <= ROWS; r++)
+        for (int s2 = 1; s2 < STEPS_PER_BAR; s2++)
+            if (s2 % 4) c.fillCircle(GX + s2 * SW, GY + r * RH, 0.9f, rgb(60, 60, 60));
 
-    // Nuty
+    // Nuty: "pigulki", kolor = velocity (ciemna zielen -> zielen -> prawie biel)
     for (int i = 0; i < pat_.count; i++) {
         const Note& n = pat_.notes[i];
         int r = topPitch_ - n.pitch;
         if (r < 0 || r >= ROWS) continue;
         float x = GX + (float)n.start / TICKS_PER_STEP * SW + 2;
         float w = (float)n.len / TICKS_PER_STEP * SW - 4;
-        float y = GY + r * RH + 3, h = RH - 6;
-        bool isSel = i == sel;
-        Color base = isSel ? pal::blue : pal::white;
-        Color fill = base;
-        fill.a = (uint8_t)(24 + n.vel * 0.6f);  // jasnosc = velocity
-        c.fillRect(x, y, w, h, fill);
-        c.rect(x, y, w, h, isSel ? 1.6f : 1.1f, base);
+        float y = GY + r * RH + 4, h = RH - 8;
+        Color col = velColor(n.vel);
+        c.fillRoundRect(x, y, w, h, h * 0.5f, col);
+        if (i == sel) {
+            c.strokeRoundRect(x - 2, y - 2, w + 4, h + 4, h * 0.5f + 2, 1.5f, pal::white);
+            c.fillCircle(x + w - h * 0.5f, y + h * 0.5f, 3.f, pal::blue);  // uchwyt dlugosci (niebieski enkoder)
+        }
     }
 
-    // Kursor (narozniki)
+    // Kursor (biale narozniki)
     {
-        float x = GX + curStep_ * SW, y = GY + (topPitch_ - curPitch_) * RH, k = 6;
-        Color cc = pal::green;
+        float x = GX + curStep_ * SW, y = GY + (topPitch_ - curPitch_) * RH, k = 5;
         float pts[][4] = {{x, y + k, x, y}, {x, y, x + k, y}, {x + SW - k, y, x + SW, y}, {x + SW, y, x + SW, y + k},
                           {x, y + RH - k, x, y + RH}, {x, y + RH, x + k, y + RH},
                           {x + SW - k, y + RH, x + SW, y + RH}, {x + SW, y + RH, x + SW, y + RH - k}};
         c.beginStroke();
-        for (auto& q : pts) c.strokeSeg(q[0], q[1], q[2], q[3], 1.6f);
-        c.endStroke(cc);
+        for (auto& q : pts) c.strokeSeg(q[0], q[1], q[2], q[3], 1.5f);
+        c.endStroke(pal::white);
     }
 
     // Glowica odtwarzania
     if (playing) {
         float x = GX + (float)eng_->playTick() / TICKS_PER_STEP * SW;
-        c.line(x, GY - 4, x, GY + GH + 4, 1.5f, pal::red);
-        c.fillCircle(x, GY - 6, 3.f, pal::red);
+        c.line(x, GY, x, GY + GH, 1.5f, pal::red);
+        float tri[6] = {x - 4, GY - 7, x + 4, GY - 7, x, GY - 1};
+        c.polyline(tri, 3, 1.5f, pal::red, true);
     }
 
     // Enkodery

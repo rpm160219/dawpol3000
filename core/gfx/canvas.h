@@ -31,6 +31,9 @@ public:
     void fillRect(float x, float y, float w, float h, Color c);
     void fillCircle(float cx, float cy, float r, Color c);
     void rect(float x, float y, float w, float h, float lw, Color c);  // obrys
+    // Zaokraglony prostokat (r = promien naroznika; r = h/2 daje "pigulke").
+    void fillRoundRect(float x, float y, float w, float h, float r, Color c) { roundRect(x, y, w, h, r, 0, c); }
+    void strokeRoundRect(float x, float y, float w, float h, float r, float lw, Color c) { roundRect(x, y, w, h, r, lw, c); }
 
     void line(float x0, float y0, float x1, float y1, float w, Color c);
     void polyline(const float* xy, int n, float w, Color c, bool closed = false);
@@ -48,6 +51,7 @@ private:
     float* cov_;
     int dx0_, dy0_, dx1_, dy1_;
     void blend(int idx, Color c, float a);
+    void roundRect(float x, float y, float w, float h, float r, float lw, Color c);  // lw <= 0: wypelnienie
 };
 
 }  // namespace dp
