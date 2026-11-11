@@ -30,6 +30,7 @@ public:
     void clear(Color c);
     void fillRect(float x, float y, float w, float h, Color c);
     void fillCircle(float cx, float cy, float r, Color c);
+    void rect(float x, float y, float w, float h, float lw, Color c);  // obrys
 
     void line(float x0, float y0, float x1, float y1, float w, Color c);
     void polyline(const float* xy, int n, float w, Color c, bool closed = false);

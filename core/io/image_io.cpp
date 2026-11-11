@@ -1,4 +1,4 @@
-#include "image_io.h"
+#include "io/image_io.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

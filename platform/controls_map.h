@@ -1,7 +1,7 @@
 // JEDNA tabela mapowania sterowania. Zmieniac tu po testach na konsoli.
 #pragma once
 #include <SDL.h>
-#include "../core/input.h"
+#include "ui/input.h"
 
 namespace dp {
 

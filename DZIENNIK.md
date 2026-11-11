@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 02:30
+**Zmienione:**
+- Reorganizacja `core/` na foldery: `gfx/` (canvas, font), `io/` (PNG/WAV), `util/` (spsc, triple_buffer), `synth/` (note_sink, saw_synth, tone_synth), `seq/` (pattern, sequencer), `audio/` (engine), `ui/` (input, buttons, encoder, piano_roll, test_screen).
+- Nowe: `seq/pattern` (nuty w tickach, PPQ 96, 1 takt 4/4), `seq/sequencer` (odtwarzanie z dokładnością do próbki), `synth/saw_synth` (piła polyBLEP, 8 głosów), `audio/engine` (łączy sekwencer i instrument, komendy lock-free), `util/triple_buffer.h` (pattern UI→audio), `ui/piano_roll` (ekran edycji), `ui/buttons.h`, `ui/encoder.h`.
+- `docs/ARCHITEKTURA.md` — opis wątków, przepływu danych i każdego modułu. README — sterowanie piano rolla.
+- `platform/main_sdl.cpp` — domyślnie piano roll, `--test` = ekran testu sprzętu; headless `--render-png plik [roll|test]`.
+- Wysłane na konsolę. Wyniki: `out/pianoroll.png`, `out/pianoroll.wav` (8 s demo). CPU na konsoli ~1.5% rdzenia.
+**Następny krok:** Patryk testuje piano roll na konsoli; potem wiele taktów i kanałów, step seq.
+**Wymaga od Patryka:** tak — test na konsoli i ocena.
+
 ## 2026-11-12 01:20
 **Zmienione:** podpięte repo GitHub (`origin` = git@github.com:rpm160219/dawpol3000.git), wysłana cała historia; CLAUDE.md — adres repo i zasada „commit + push po każdym kroku”.
 **Następny krok:** etap 1 — makiety PNG ekranu syntezatora (osc → filtr → ADSR) do oceny stylu.

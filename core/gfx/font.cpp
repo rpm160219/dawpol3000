@@ -1,7 +1,7 @@
 // Glify na siatce 8 x 12 (x: 0..8, y: 0..12, y w dol). Kazda kreska to ciag punktow
 // zapisanych jako pary znakow (0-9, a-f = 10-15), kreski oddzielone spacja.
 // Prefiks '~' = kreska wygladzana (Chaikin), domknieta gdy pierwszy punkt == ostatni.
-#include "font.h"
+#include "gfx/font.h"
 #include <ctype.h>
 #include <string.h>
 

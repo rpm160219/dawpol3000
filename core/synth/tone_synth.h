@@ -2,7 +2,7 @@
 #pragma once
 #include <atomic>
 #include <stdint.h>
-#include "spsc.h"
+#include "util/spsc.h"
 
 namespace dp {
 

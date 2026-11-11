@@ -1,4 +1,4 @@
-#include "tone_synth.h"
+#include "synth/tone_synth.h"
 #include <math.h>
 
 namespace dp {

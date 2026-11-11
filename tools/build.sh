@@ -13,7 +13,7 @@ else
   # Awaryjnie bez CMake (tylko desktop).
   [ "$T" = arm ] && { echo "Do builda ARM potrzebny cmake + aarch64-linux-gnu-g++"; exit 1; }
   mkdir -p build
-  g++ -std=c++17 -O2 -Wall -Wextra -fno-exceptions -fno-rtti $(sdl2-config --cflags) \
-    core/*.cpp platform/main_sdl.cpp -o build/dawpol3000 $(sdl2-config --libs) -lpthread -lm
+  g++ -std=c++17 -O2 -Wall -Wextra -fno-exceptions -fno-rtti -Icore $(sdl2-config --cflags) \
+    core/*.cpp core/*/*.cpp platform/main_sdl.cpp -o build/dawpol3000 $(sdl2-config --libs) -lpthread -lm
 fi
 echo "OK"

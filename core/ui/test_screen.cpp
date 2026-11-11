@@ -1,5 +1,5 @@
-#include "hello_app.h"
-#include "font.h"
+#include "ui/test_screen.h"
+#include "gfx/font.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -11,17 +11,17 @@ static const int kMajor[8] = {0, 2, 4, 5, 7, 9, 11, 12};
 static const char* kNoteNames[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 static const char* kEncNames[4] = {"TUNE", "VOL", "PAN", "DRIVE"};
 
-void HelloApp::init(ToneSynth* s) {
+void TestScreen::init(ToneSynth* s) {
     syn_ = s;
     for (int i = 0; i < TP_COUNT; i++) sent_[i] = -12345.f;
 }
 
-void HelloApp::send(int p, float v) {
+void TestScreen::send(int p, float v) {
     if (sent_[p] == v) return;
     if (syn_ && syn_->send((uint8_t)p, v)) sent_[p] = v;
 }
 
-void HelloApp::update(const InputState& in, float dt) {
+void TestScreen::update(const InputState& in, float dt) {
     auto pressed = [&](int b) { return in.btn[b] && !prev_[b]; };
 
     if (pressed(B_L1) && octave_ > 1) octave_--;
@@ -80,7 +80,7 @@ static void knob(Canvas& c, float cx, float cy, float r, float v, Color col, con
     drawText(c, cx, cy + r + 14, label, 11, 1.3f, col, ALIGN_CENTER);
 }
 
-void HelloApp::render(Canvas& c, const InputState& in, const AudioInfo& ai, float fps) {
+void TestScreen::render(Canvas& c, const InputState& in, const AudioInfo& ai, float fps) {
     char buf[128];
     c.clear(pal::bg);
 

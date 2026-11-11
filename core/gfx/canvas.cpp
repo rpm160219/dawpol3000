@@ -1,4 +1,4 @@
-#include "canvas.h"
+#include "gfx/canvas.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,6 +51,11 @@ void Canvas::fillCircle(float cx, float cy, float r, Color c) {
             float a = clampf(r + 0.5f - sqrtf(dx * dx + dy * dy), 0, 1);
             if (a > 0) blend(j * W + i, c, a);
         }
+}
+
+void Canvas::rect(float x, float y, float w, float h, float lw, Color c) {
+    float p[8] = {x, y, x + w, y, x + w, y + h, x, y + h};
+    polyline(p, 4, lw, c, true);
 }
 
 void Canvas::beginStroke() { dx0_ = W; dy0_ = H; dx1_ = -1; dy1_ = -1; }

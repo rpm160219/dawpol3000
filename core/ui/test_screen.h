@@ -1,8 +1,8 @@
 // Etap 0: ekran testowy — ton, 4 enkodery, oscyloskop, stan przyciskow i osi.
 #pragma once
-#include "canvas.h"
-#include "input.h"
-#include "tone_synth.h"
+#include "gfx/canvas.h"
+#include "ui/input.h"
+#include "synth/tone_synth.h"
 
 namespace dp {
 
@@ -13,7 +13,7 @@ struct AudioInfo {
     char err[96] = "";
 };
 
-class HelloApp {
+class TestScreen {
 public:
     void init(ToneSynth* s);
     void update(const InputState& in, float dt);

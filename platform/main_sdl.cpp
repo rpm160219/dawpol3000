@@ -3,22 +3,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../core/canvas.h"
-#include "../core/headless.h"
-#include "../core/hello_app.h"
-#include "../core/tone_synth.h"
+#include "audio/engine.h"
+#include "gfx/canvas.h"
+#include "headless.h"
+#include "synth/tone_synth.h"
+#include "ui/piano_roll.h"
+#include "ui/test_screen.h"
 #include "controls_map.h"
 
 using namespace dp;
 
-static ToneSynth gSynth;
+static ToneSynth gSynth;     // ekran testowy
+static AudioEngine gEngine;  // glowny silnik
+static bool gTestMode = false;
 
 static void audioCb(void*, Uint8* stream, int len) {
-    gSynth.process((float*)stream, len / (int)(sizeof(float) * 2));
+    int frames = len / (int)(sizeof(float) * 2);
+    if (gTestMode) gSynth.process((float*)stream, frames);
+    else gEngine.process((float*)stream, frames);
 }
 
 static void usage() {
-    printf("dawpol3000 [--fullscreen] [--frames N] [--render-png file.png] [--render-wav file.wav [seconds]]\n");
+    printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [roll|test]] [--render-wav file.wav [seconds]]\n");
 }
 
 int main(int argc, char** argv) {
@@ -30,7 +36,7 @@ int main(int argc, char** argv) {
     bool fullscreen = false;
 #endif
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1]);
+        if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1], i + 2 < argc ? argv[i + 2] : "roll");
         if (!strcmp(argv[i], "--render-wav") && i + 1 < argc) {
             float secs = (i + 2 < argc) ? (float)atof(argv[i + 2]) : 5.f;
             return headlessWav(argv[i + 1], secs > 0 ? secs : 5.f);
@@ -38,6 +44,7 @@ int main(int argc, char** argv) {
         if (!strcmp(argv[i], "--frames") && i + 1 < argc) frames = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--fullscreen")) fullscreen = true;
         else if (!strcmp(argv[i], "--window")) fullscreen = false;
+        else if (!strcmp(argv[i], "--test")) gTestMode = true;
         else { usage(); return 1; }
     }
 
@@ -61,6 +68,7 @@ int main(int argc, char** argv) {
     // Audio: 48 kHz, float, stereo.
     AudioInfo ai;
     gSynth.init(48000.f);
+    gEngine.init(48000.f);
     SDL_AudioSpec want = {}, have = {};
     want.freq = 48000;
     want.format = AUDIO_F32SYS;
@@ -74,7 +82,7 @@ int main(int argc, char** argv) {
         ai.frames = have.samples;
         ai.channels = have.channels;
         snprintf(ai.driver, sizeof ai.driver, "%s", SDL_GetCurrentAudioDriver());
-        if (have.freq != 48000) gSynth.init((float)have.freq);
+        if (have.freq != 48000) { gSynth.init((float)have.freq); gEngine.init((float)have.freq); }
         printf("Audio: %d Hz, %d frames, %d ch\n", have.freq, have.samples, have.channels);
         SDL_PauseAudioDevice(dev, 0);
     } else {
@@ -83,8 +91,10 @@ int main(int argc, char** argv) {
     }
 
     Canvas canvas;
-    HelloApp app;
+    TestScreen app;
     app.init(&gSynth);
+    PianoRoll roll;
+    roll.init(&gEngine);
     InputState in;
     SDL_GameController* pad = nullptr;
     SDL_Joystick* joy = nullptr;
@@ -194,9 +204,15 @@ int main(int argc, char** argv) {
         if (dt > 0.1f) dt = 0.1f;
         fps = fps * 0.95f + (dt > 0 ? 1.f / dt : 0) * 0.05f;
 
-        app.update(in, dt);
-        if (app.quitRequested()) run = false;
-        app.render(canvas, in, ai, fps);
+        if (gTestMode) {
+            app.update(in, dt);
+            if (app.quitRequested()) run = false;
+            app.render(canvas, in, ai, fps);
+        } else {
+            roll.update(in, dt);
+            if (roll.quitRequested()) run = false;
+            roll.render(canvas);
+        }
         SDL_UpdateTexture(tex, nullptr, canvas.pixels(), Canvas::W * 4);
         SDL_RenderClear(ren);
         SDL_RenderCopy(ren, tex, nullptr, nullptr);

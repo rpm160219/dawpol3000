@@ -30,6 +30,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 ## Architektura
 - **C++17 w stylu „C z klasami”** (bo większość bibliotek DSP jest w C++): bez wyjątków i alokacji w wątku audio, bez ciężkiego STL w ścieżce audio. SDL2 tylko jako cienka warstwa platformy: okno/framebuffer, input, audio callback.
 - Silniki i efekty to w dużej mierze **portowane gotowe open source** (patrz sekcja „Biblioteki DSP”), opakowane we wspólny interfejs `Engine` / `Effect` (process(block), 4 parametry pod enkodery + parametry ukryte, rysowanie własnego ekranu).
+- **Dokumentacja modułów**: każdy moduł w osobnym pliku/folderze w `core/` (gfx, io, util, synth, seq, audio, ui), opis w nagłówku pliku + tabela w `docs/ARCHITEKTURA.md`. Przy każdej zmianie struktury aktualizować ten dokument.
 - **Rdzeń niezależny od platformy**: `core/` renderuje UI do bufora 640×480 RGBA i audio do bufora float. Tryb headless (`--render-png`, `--render-wav`) do testów bez urządzenia — tak wysyłamy Patrykowi makiety i próbki.
 - **Własny rasteryzer**: linie z antyaliasingiem (grubość ~1.5–2 px), łuki/okręgi, krzywe; własny cienki font wektorowy (stroke font), duże cyfry. Żadnych bitmap UI.
 - **Audio**: 48 kHz, float, osobny wątek, bufor 128–256 ramek (zmierzyć latencję w etapie 0). Komunikacja UI→audio przez lock-free ring buffer komend; zero alokacji i locków w wątku audio.
@@ -111,8 +112,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - [x] Nazwa projektu — DAW-POL 3000
 
 ## Aktualny stan
-- Etap: 0 — **działa na konsoli** (obraz, dźwięk, wszystkie przyciski i analogi; potwierdzone przez Patryka). Pad: „Anbernic RG35XX-Pro Controller”, rozpoznany jako GameController (kody surowe w `platform/controls_map.h`). Wideo SDL: mali, audio: alsa 48 kHz / 256 ramek.
-- UI przestawione na angielski. Wyjście: Menu+Select (też surowo) albo Hotkey+Start (plik `.keys` Knulli).
-- Do zrobienia w etapie 0: pomiar realnej latencji audio i obciążenia CPU, test mniejszego bufora (128), USB (hub, interfejs audio, MIDI) — po podaniu modeli.
-- GitHub podpięty (push działa).
-- Następny krok: etap 1 — makiety PNG ekranu syntezatora do akceptacji stylu.
+- Etap: 2 (przyspieszony na prośbę Patryka) — **sekwencer: piano roll** + testowy syntezator piły. Etap 1 (właściwy synth i makiety stylu) później.
+- Działa: piano roll 1 takt 4/4 (siatka 1/16): wstawianie/usuwanie, zmiana długości (X+←/→ albo niebieski enkoder), przesuwanie (Y+D-pad), velocity, tempo, głośność, play/stop z głowicą; sekwencer w wątku audio z dokładnością do próbki; piła 8 głosów. CPU na konsoli ~1.5% rdzenia. Ekran testu sprzętu pod `--test`.
+- Etap 0 — zostało: pomiar latencji, test USB (audio/MIDI).
+- Następny krok: ocena piano rolla przez Patryka na konsoli; potem: dłuższe patterny (wiele taktów), wiele kanałów (channel rack), step sequencer, zapis patternu.

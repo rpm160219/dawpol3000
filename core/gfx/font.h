@@ -1,6 +1,6 @@
 // Wlasny cienki font wektorowy (kreskowy). Tylko wielkie litery, cyfry, interpunkcja.
 #pragma once
-#include "canvas.h"
+#include "gfx/canvas.h"
 
 namespace dp {
 

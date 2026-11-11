@@ -12,8 +12,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 
 add_library(dpcore STATIC
-  core/canvas.cpp core/font.cpp core/image_io.cpp core/tone_synth.cpp
-  core/hello_app.cpp core/headless.cpp)
+  core/gfx/canvas.cpp core/gfx/font.cpp
+  core/io/image_io.cpp
+  core/synth/tone_synth.cpp core/synth/saw_synth.cpp
+  core/seq/pattern.cpp core/seq/sequencer.cpp
+  core/audio/engine.cpp
+  core/ui/test_screen.cpp core/ui/piano_roll.cpp
+  core/headless.cpp)
 target_include_directories(dpcore PUBLIC core)
 
 add_executable(dawpol3000 platform/main_sdl.cpp)
