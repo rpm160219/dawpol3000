@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 00:10
+**Zmienione:** `tools/deploy.sh` (kopiuje program + wpis w menu Ports, zapamiętuje IP), `tools/knulli/DAW-POL 3000.sh` (uruchamianie z menu Ports, log do pliku), `tools/log.sh` (podgląd logu z konsoli). Patryk dostał instrukcję wgrania Knulli i włączenia SSH.
+**Następny krok:** pierwszy deploy na konsolę i test (ekran, dźwięk, przyciski).
+**Wymaga od Patryka:** tak — karta z Knulli, Wi-Fi, IP konsoli.
+
 ## 2026-11-11 23:55
 **Zmienione:** `platform/main_sdl.cpp` — logi wypisywane od razu linia po linii (potrzebne do czytania logów z konsoli przez SSH). Uruchomiona wersja desktop do testu przez Patryka.
 **Następny krok:** ocena okna/dźwięku przez Patryka; potem Knulli na karcie i IP konsoli.
