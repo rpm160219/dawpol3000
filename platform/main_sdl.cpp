@@ -22,6 +22,7 @@ static void usage() {
 }
 
 int main(int argc, char** argv) {
+    setvbuf(stdout, nullptr, _IOLBF, 0);  // logi od razu widoczne (np. przez ssh)
     int frames = 256;
 #ifdef __aarch64__
     bool fullscreen = true;

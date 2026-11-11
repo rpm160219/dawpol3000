@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-11 23:55
+**Zmienione:** `platform/main_sdl.cpp` — logi wypisywane od razu linia po linii (potrzebne do czytania logów z konsoli przez SSH). Uruchomiona wersja desktop do testu przez Patryka.
+**Następny krok:** ocena okna/dźwięku przez Patryka; potem Knulli na karcie i IP konsoli.
+**Wymaga od Patryka:** tak — ocena i info o karcie z Knulli.
+
 ## 2026-11-11 23:45
 **Zmienione:**
 - Toolchain zainstalowany (cmake, aarch64-linux-gnu-g++, SDL2 arm64) — buduje się desktop i ARM.
