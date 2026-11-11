@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 03:10
+**Zmienione:**
+- `core/gfx/icons.cpp` — ilustracje narysowane od nowa na sztywnej siatce liczonej od obudowy: syntezator (galki mieszczą się w obrysie, usunięty kabel, poprawny układ czarnych klawiszy 2+3), magnetofon (4 wskaźniki VU równe i w osi, wycentrowane szpule, zamiast suwaków przyciski transportu).
+- `core/ui/dialogs.cpp` — ikony na liście TYPE wyrównane do środka wierszy (MIDI/AUDIO); nowe proporcje ilustracji.
+- `core/ui/arrange.cpp` — miniatury nut w klipach mapowane dokładnie na oś taktów i przycinane do klipu; siatka (kropki taktów) rysowana pod klipami, klipy z nieprzezroczystym tłem (kropki nie udają nut).
+**Następny krok:** ocena Patryka; potem zapis/odczyt projektu.
+**Wymaga od Patryka:** tak — test na konsoli.
+
 ## 2026-11-12 02:30
 **Zmienione:**
 - `core/gfx/icons.cpp` — ikony przerysowane od nowa (siatka 16×16, jedna grubość kreski, zaokrąglone końce, mniej detali): klawiatura 3+2 klawisze, fala = jeden okres sinusa, aranżacja = 3 rzędy kresek, czytelniejsze play/pętla/metronom/taśma.

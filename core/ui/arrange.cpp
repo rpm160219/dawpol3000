@@ -95,8 +95,10 @@ void ArrangeView::update(const Buttons& b, const InputState& in, float dt) {
     scroll();
 }
 
-// Miniatura nut patternu w klipie.
-static void clipNotes(Canvas& c, const Pattern& pt, float x, float y, float w, float h, Color col) {
+// Miniatura nut patternu w klipie. x0..x1 = pelny klip na osi czasu (bez marginesow), wiec nuty
+// leza dokladnie na liniach taktow; [clipL, clipR] = widoczna czesc (nic nie wychodzi poza klip).
+static void clipNotes(Canvas& c, const Pattern& pt, float x0, float x1, float clipL, float clipR, float y, float h,
+                      Color col) {
     if (pt.count == 0) return;
     int lo = 127, hi = 0;
     for (int i = 0; i < pt.count; i++) {
@@ -105,12 +107,17 @@ static void clipNotes(Canvas& c, const Pattern& pt, float x, float y, float w, f
     }
     int span = hi - lo < 6 ? 6 : hi - lo;
     float base = lo - (span - (hi - lo)) * 0.5f;
+    float w = x1 - x0;
     c.beginStroke();
     for (int i = 0; i < pt.count; i++) {
         const Note& n = pt.notes[i];
-        float nx = x + w * n.start / pt.lengthTicks, nw = w * n.len / pt.lengthTicks;
+        float a = x0 + w * n.start / pt.lengthTicks + 1.5f;
+        float e = x0 + w * (n.start + n.len) / pt.lengthTicks - 1.5f;
+        if (a < clipL + 2) a = clipL + 2;
+        if (e > clipR - 2) e = clipR - 2;
+        if (e < a) continue;
         float ny = y + h - h * (n.pitch - base) / span;
-        c.strokeSeg(nx + 1, ny, nx + nw - 1 > nx + 1 ? nx + nw - 1 : nx + 1, ny, 1.4f);
+        c.strokeSeg(a, ny, e, ny, 1.3f);
     }
     c.endStroke(col);
 }
@@ -186,22 +193,6 @@ void ArrangeView::render(Canvas& c) {
         }
         // tlo rzedu
         c.fillRect(TX, y + 1, TEND - TX, TRACK_H - 2, cur ? rgb(16, 16, 16) : rgb(8, 8, 8));
-        // klipy
-        for (int i = 0; i < p.nClips; i++) {
-            const Clip& cl = p.clips[i];
-            if (cl.track != t) continue;
-            int bars = p.clipBars(cl);
-            float x0 = TX + (cl.startBar - firstBar_) * barW(), x1 = x0 + bars * barW();
-            if (x1 < TX || x0 > TEND) continue;
-            float cx0 = x0 < TX ? TX : x0, cx1 = x1 > TEND ? TEND : x1;
-            float cy = y + 3, ch = TRACK_H - 6;
-            c.fillRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, rgb(tc.r, tc.g, tc.b, 50));
-            c.strokeRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, 1.2f, tc);
-            const Pattern& pt = p.patterns[cl.pattern];
-            bool label = (x1 - x0) > textWidth(pt.name, 7) + 10 && x0 >= TX;
-            if (label) drawText(c, x0 + 6, cy + 3, pt.name, 7, 1.f, pal::white);
-            clipNotes(c, pt, x0 + 4, cy + (label ? 12 : 4), (x1 - x0) - 8, ch - (label ? 15 : 8), tc);
-        }
     }
     // Linie taktow
     for (int i = 0; i <= vb; i++) {
@@ -210,6 +201,30 @@ void ArrangeView::render(Canvas& c) {
         float yb = TY + (p.nTracks - topTrack_ < ROWS ? p.nTracks - topTrack_ : ROWS) * TRACK_H;
         if (bar % 4 == 0) c.line(x, TY, x, yb, 1.f, rgb(48, 48, 48));
         else for (float yy = TY + TRACK_H * 0.5f; yy < yb; yy += TRACK_H) c.fillCircle(x, yy, 0.9f, rgb(60, 60, 60));
+    }
+    // Klipy (na wierzchu siatki)
+    for (int r = 0; r < ROWS; r++) {
+        int t = topTrack_ + r;
+        if (t >= p.nTracks) break;
+        float y = TY + r * TRACK_H;
+        const Track& tr = p.tracks[t];
+        Color tc0 = pal::track[tr.color % 8];
+        Color tc = p.audible(t) ? tc0 : rgb(tc0.r / 3, tc0.g / 3, tc0.b / 3);
+        for (int i = 0; i < p.nClips; i++) {
+            const Clip& cl = p.clips[i];
+            if (cl.track != t) continue;
+            int bars = p.clipBars(cl);
+            float x0 = TX + (cl.startBar - firstBar_) * barW(), x1 = x0 + bars * barW();
+            if (x1 < TX || x0 > TEND) continue;
+            float cx0 = x0 < TX ? TX : x0, cx1 = x1 > TEND ? TEND : x1;
+            float cy = y + 3, ch = TRACK_H - 6;
+            c.fillRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, rgb(tc.r / 5, tc.g / 5, tc.b / 5));
+            c.strokeRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, 1.2f, tc);
+            const Pattern& pt = p.patterns[cl.pattern];
+            bool label = (x1 - x0) > textWidth(pt.name, 7) + 10 && x0 >= TX;
+            if (label) drawText(c, x0 + 6, cy + 3, pt.name, 7, 1.f, pal::white);
+            clipNotes(c, pt, x0, x1, cx0, cx1, cy + (label ? 12 : 4), ch - (label ? 15 : 8), tc);
+        }
     }
     // Kursor
     if (curTrack_ < p.nTracks) {

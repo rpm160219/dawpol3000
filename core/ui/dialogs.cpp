@@ -69,8 +69,8 @@ void TrackDialog::renderEdit(Canvas& c) {
     c.clear(pal::bg);
     headerBar(c, LBX, BY, LBW, BH, "TRACK", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "COLOR", pal::tan);
-    if (type_ == TRACK_MIDI) drawSynthIllustration(c, 28, 84, 190, 170);
-    else drawTapeIllustration(c, 28, 84, 190, 170);
+    if (type_ == TRACK_MIDI) drawSynthIllustration(c, 24, 84, 196, 150);
+    else drawTapeIllustration(c, 24, 84, 196, 150);
     nameBox(c, 236, 104, 152, 50, "NAME", name_, &ed_, pal::steel);
     Color tc = pal::track[color_];
     drawIcon(c, type_ == TRACK_MIDI ? ICON_KEYS : ICON_WAVE, 236, 186, 22, tc);
@@ -126,8 +126,8 @@ void TrackDialog::render(Canvas& c) {
     c.clear(pal::bg);
     headerBar(c, LBX, BY, LBW, BH, "NEW TRACK", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "TYPE", pal::tan);
-    if (type_ == TRACK_MIDI) drawSynthIllustration(c, 28, 84, 190, 170);
-    else drawTapeIllustration(c, 28, 84, 190, 170);
+    if (type_ == TRACK_MIDI) drawSynthIllustration(c, 24, 84, 196, 150);
+    else drawTapeIllustration(c, 24, 84, 196, 150);
     nameBox(c, 236, 104, 152, 50, "NAME", name_, &ed_, pal::steel);
     char b[48];
     snprintf(b, sizeof b, "MIDI  %d/%d", p.countTracks(TRACK_MIDI), MAX_MIDI_TRACKS);
@@ -140,8 +140,11 @@ void TrackDialog::render(Canvas& c) {
     const char* items[2] = {"MIDI", "AUDIO"};
     bool dis[2] = {!p.canAddTrack(TRACK_MIDI), !p.canAddTrack(TRACK_AUDIO)};
     listBox(c, RBX + 6, 72, RBW - 12, 330, items, 2, type_, 0, pal::tan, dis);
-    drawIcon(c, ICON_KEYS, RBX + RBW - 50, 80, 22, type_ == TRACK_MIDI ? pal::tan : rgb(90, 70, 50));
-    drawIcon(c, ICON_WAVE, RBX + RBW - 50, 114, 22, type_ == TRACK_AUDIO ? pal::tan : rgb(90, 70, 50));
+    for (int r = 0; r < 2; r++) {
+        float rowMid = 72 + 6 + r * 30 + 9;  // srodek wiersza listy (listBox: rowH 30, tekst 18)
+        drawIcon(c, r == 0 ? ICON_KEYS : ICON_WAVE, RBX + RBW - 48, rowMid - 10, 20,
+                 type_ == r ? pal::tan : rgb(90, 70, 50));
+    }
     pills(c, "NAME", "TYPE", "CREATE", "CANCEL");
 }
 
@@ -193,7 +196,7 @@ void PatternDialog::render(Canvas& c) {
     c.clear(pal::bg);
     headerBar(c, LBX, BY, LBW, BH, "NEW PATTERN", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "PATTERNS", pal::tan);
-    drawSynthIllustration(c, 28, 84, 190, 170);
+    drawSynthIllustration(c, 24, 84, 196, 150);
 
     bool isNew = sel_ == 0;
     const Pattern* ex = isNew ? nullptr : &p.patterns[sel_ - 1];

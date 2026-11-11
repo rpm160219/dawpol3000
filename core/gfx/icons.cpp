@@ -95,72 +95,81 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
     c.endStroke(col);
 }
 
-// Ilustracja: maly syntezator (obudowa, ekran z nutami, 4 kolorowe galki, klawiatura, kabel).
+// Ilustracja: maly syntezator. Wszystko liczone od obudowy (x, y, w, h) z wewnetrznym
+// marginesem, wiec zaden element nie wychodzi poza obrys.
 void drawSynthIllustration(Canvas& c, float x, float y, float w, float h) {
-    Color body = rgb(150, 150, 150);
-    float bh = h * 0.78f;
-    c.strokeRoundRect(x, y, w, bh, 8, 1.6f, body);
-    // ekran
-    float sx = x + 12, sy = y + 12, sw = w * 0.42f, sh = bh * 0.36f;
-    c.strokeRoundRect(sx, sy, sw, sh, 4, 1.2f, rgb(90, 90, 90));
-    c.fillRoundRect(sx + 6, sy + sh * 0.22f, sw * 0.3f, 4, 2, pal::green);
-    c.fillRoundRect(sx + sw * 0.4f, sy + sh * 0.5f, sw * 0.45f, 4, 2, rgb(150, 245, 190));
-    c.fillRoundRect(sx + sw * 0.18f, sy + sh * 0.74f, sw * 0.22f, 4, 2, rgb(25, 110, 60));
-    // 4 galki w kolorach enkoderow
+    const Color body = rgb(150, 150, 150), mid = rgb(105, 105, 105);
+    const float pad = 10;
+    c.strokeRoundRect(x, y, w, h, 8, 1.6f, body);
+    float ix = x + pad, iw = w - 2 * pad;  // obszar wewnetrzny
+    // gorny rzad: ekran (lewo) + 4 galki (prawo)
+    float topY = y + pad, topH = h * 0.32f;
+    float sw = iw * 0.42f;
+    c.strokeRoundRect(ix, topY, sw, topH, 4, 1.2f, mid);
+    float nh = 4;
+    c.fillRoundRect(ix + sw * 0.12f, topY + topH * 0.25f - nh * 0.5f, sw * 0.30f, nh, 2, pal::green);
+    c.fillRoundRect(ix + sw * 0.45f, topY + topH * 0.50f - nh * 0.5f, sw * 0.42f, nh, 2, rgb(150, 245, 190));
+    c.fillRoundRect(ix + sw * 0.22f, topY + topH * 0.75f - nh * 0.5f, sw * 0.22f, nh, 2, rgb(25, 110, 60));
+    float kx0 = ix + sw + pad, kw = (ix + iw) - kx0;  // obszar galek
+    float cell = kw / 4.f;
+    float r = cell * 0.5f - 3;
+    if (r > topH * 0.5f - 2) r = topH * 0.5f - 2;
     for (int i = 0; i < 4; i++) {
-        float kx = sx + sw + 18 + i * ((w - sw - 36) / 3.f), ky = sy + sh * 0.5f;
-        float r = 9;
-        c.circle(kx, ky, r, 1.5f, pal::enc[i]);
-        float a = -PI * 0.5f + (i - 1.5f) * 0.7f;
-        c.line(kx, ky, kx + cosf(a) * (r - 2), ky + sinf(a) * (r - 2), 1.5f, pal::enc[i]);
+        float cx = kx0 + cell * (i + 0.5f), cy = topY + topH * 0.5f;
+        c.circle(cx, cy, r, 1.5f, pal::enc[i]);
+        float ang = -PI * 0.5f + (i - 1.5f) * 0.6f;
+        c.line(cx, cy, cx + cosf(ang) * (r - 2.5f), cy + sinf(ang) * (r - 2.5f), 1.5f, pal::enc[i]);
     }
-    // przyciski
-    for (int i = 0; i < 8; i++) c.fillCircle(x + 18 + i * ((w - 36) / 7.f), y + bh * 0.58f, 2.2f, i == 0 ? pal::red : rgb(110, 110, 110));
-    // klawiatura
-    float ky = y + bh * 0.68f, kh = bh * 0.26f, kx0 = x + 10, kw = w - 20;
-    int nw = 14;
-    c.rect(kx0, ky, kw, kh, 1.2f, body);
-    for (int i = 1; i < nw; i++) c.line(kx0 + i * kw / nw, ky, kx0 + i * kw / nw, ky + kh, 1.f, rgb(110, 110, 110));
+    // rzad przyciskow
+    float by = topY + topH + h * 0.10f;
+    for (int i = 0; i < 8; i++) c.fillCircle(ix + 3 + i * (iw - 6) / 7.f, by, 2.2f, i == 0 ? pal::red : mid);
+    // klawiatura (2 oktawy = 14 bialych)
+    float ky = by + h * 0.09f, kh = (y + h - pad) - ky;
+    const int nw = 14;
+    float wk = iw / nw;
+    c.strokeRoundRect(ix, ky, iw, kh, 2, 1.2f, body);
+    for (int i = 1; i < nw; i++) c.line(ix + i * wk, ky + kh * 0.58f, ix + i * wk, ky + kh, 1.f, mid);
     for (int i = 0; i < nw - 1; i++) {
         int k = i % 7;
-        if (k == 2 || k == 6) continue;
-        c.fillRect(kx0 + (i + 1) * kw / nw - 2.5f, ky, 5, kh * 0.58f, body);
+        if (k == 2 || k == 6) continue;  // brak czarnego miedzy E-F i H-C
+        c.fillRect(ix + (i + 1) * wk - wk * 0.3f, ky, wk * 0.6f, kh * 0.58f, body);
     }
-    // kabel
-    float cab[2 * 24];
-    for (int i = 0; i < 24; i++) {
-        float t = i / 23.f;
-        cab[i * 2] = x + w - 6 - t * w * 0.85f;
-        cab[i * 2 + 1] = y + bh + sinf(t * PI) * h * 0.2f;
-    }
-    c.polyline(cab, 24, 1.3f, rgb(130, 95, 60));
 }
 
-// Ilustracja: magnetofon (szpule, wskazniki VU, suwaki).
+// Ilustracja: magnetofon — 4 wskazniki VU w jednej osi, dwie szpule z tasma, przyciski transportu.
 void drawTapeIllustration(Canvas& c, float x, float y, float w, float h) {
-    Color body = rgb(150, 150, 150);
-    c.strokeRoundRect(x, y, w, h * 0.85f, 8, 1.6f, body);
-    for (int i = 0; i < 4; i++) {  // VU
-        float vx = x + 12 + i * (w - 24) / 4.f, vw = (w - 24) / 4.f - 6;
-        c.rect(vx, y + 10, vw, 14, 1.f, rgb(200, 200, 200));
-        c.line(vx + vw * 0.5f, y + 22, vx + vw * (0.3f + 0.12f * i), y + 13, 1.2f, pal::red);
+    const Color body = rgb(150, 150, 150), mid = rgb(105, 105, 105);
+    const float pad = 10;
+    c.strokeRoundRect(x, y, w, h, 8, 1.6f, body);
+    float ix = x + pad, iw = w - 2 * pad;
+    // VU: 4 rowne pola z rowna przerwa, wskazowka z osia na srodku dolnej krawedzi
+    const int nv = 4;
+    float gap = 6, vw = (iw - gap * (nv - 1)) / nv, vh = h * 0.16f, vy = y + pad;
+    for (int i = 0; i < nv; i++) {
+        float vx = ix + i * (vw + gap);
+        c.strokeRoundRect(vx, vy, vw, vh, 2, 1.f, rgb(200, 200, 200));
+        float px = vx + vw * 0.5f, py = vy + vh - 2;
+        float ang = -PI * 0.5f + (i - 1.5f) * 0.25f;
+        c.line(px, py, px + cosf(ang) * (vh - 5), py + sinf(ang) * (vh - 5), 1.2f, pal::red);
     }
-    float ry = y + h * 0.45f, r = h * 0.2f;
-    for (int k = 0; k < 2; k++) {  // szpule
-        float cx = x + w * (0.3f + 0.4f * k);
+    // szpule
+    float ry = vy + vh + h * 0.30f, r = h * 0.21f;
+    float cx0 = x + w * 0.29f, cx1 = x + w * 0.71f;
+    for (int k = 0; k < 2; k++) {
+        float cx = k ? cx1 : cx0;
         c.circle(cx, ry, r, 1.6f, pal::tan);
-        c.circle(cx, ry, r * 0.3f, 1.2f, pal::tan);
-        for (int s = 0; s < 3; s++) {
-            float a = s * 2.f * PI / 3.f + k;
-            c.line(cx + cosf(a) * r * 0.3f, ry + sinf(a) * r * 0.3f, cx + cosf(a) * r * 0.85f, ry + sinf(a) * r * 0.85f, 1.f, pal::tan);
+        c.circle(cx, ry, r * 0.28f, 1.2f, pal::tan);
+        for (int sp = 0; sp < 3; sp++) {
+            float a = sp * 2.f * PI / 3.f - PI * 0.5f;
+            c.line(cx + cosf(a) * r * 0.28f, ry + sinf(a) * r * 0.28f, cx + cosf(a) * r * 0.8f, ry + sinf(a) * r * 0.8f, 1.f, pal::tan);
         }
     }
-    c.line(x + w * 0.3f, ry + r, x + w * 0.7f, ry + r, 1.4f, pal::tan);
-    for (int i = 0; i < 4; i++) {  // suwaki
-        float fx = x + 20 + i * 18, fy = y + h * 0.68f;
-        c.line(fx, fy, fx, fy + h * 0.12f, 1.f, rgb(110, 110, 110));
-        c.fillRect(fx - 4, fy + 3 + i * 2, 8, 3, pal::red);
-    }
+    c.line(cx0, ry + r, cx1, ry + r, 1.4f, pal::tan);
+    // przyciski transportu (rowne, wycentrowane)
+    const int nb = 4;
+    float bw = iw * 0.16f, bgap = (iw - nb * bw) / (nb + 1), bh = h * 0.09f, byy = y + h - pad - bh;
+    for (int i = 0; i < nb; i++)
+        c.strokeRoundRect(ix + bgap + i * (bw + bgap), byy, bw, bh, 3, 1.1f, i == 3 ? pal::red : mid);
 }
 
 }  // namespace dp
