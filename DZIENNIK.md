@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 02:50
+**Zmienione:** `core/ui/piano_roll.cpp` — poprawione kolory wierszy (były odwrócone: czarne klawisze jaśniejsze); teraz białe klawisze jaśniejsze, czarne ciemne, wiersz kursora delikatnie zielony (nie myli się z klawiszem); dodany pasek mini-klawiatury po lewej i znacznik kursora; mocniejsza linia na granicy oktawy (B/C) i słabsza między E/F. Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza na konsoli; potem wiele taktów i kanałów, step seq.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 02:30
 **Zmienione:**
 - Reorganizacja `core/` na foldery: `gfx/` (canvas, font), `io/` (PNG/WAV), `util/` (spsc, triple_buffer), `synth/` (note_sink, saw_synth, tone_synth), `seq/` (pattern, sequencer), `audio/` (engine), `ui/` (input, buttons, encoder, piano_roll, test_screen).

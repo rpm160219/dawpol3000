@@ -6,7 +6,7 @@
 namespace dp {
 
 // Uklad ekranu
-static const float GX = 64, GY = 52, SW = 35, RH = 22;  // siatka: x, y, szer. kroku, wys. wiersza
+static const float GX = 66, GY = 52, SW = 35, RH = 22;  // siatka: x, y, szer. kroku, wys. wiersza
 static const int ROWS = 16;
 static const char* kNames[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 static bool isBlack(int p) { int k = p % 12; return k == 1 || k == 3 || k == 6 || k == 8 || k == 10; }
@@ -205,17 +205,25 @@ void PianoRoll::render(Canvas& c) {
     }
 
     const float GW = SW * STEPS_PER_BAR, GH = RH * ROWS;
-    // Wiersze (czarne klawisze ciemniejsze tlo) + nazwy C
+    // Wiersze jak klawiatura pianina: biale klawisze jasniejsze, czarne ciemne.
+    // Wiersz kursora: delikatny zielony (kolor kursora), zeby nie mylil sie z klawiszem.
+    const float KX = 44, KW = 14;  // pasek mini-klawiatury po lewej
     for (int r = 0; r < ROWS; r++) {
         int p = topPitch_ - r;
         float y = GY + r * RH;
-        if (isBlack(p)) c.fillRect(GX, y, GW, RH, rgb(14, 14, 16));
-        if (p == curPitch_) c.fillRect(GX, y, GW, RH, rgb(24, 24, 24));
+        bool blk = isBlack(p);
+        c.fillRect(GX, y, GW, RH, blk ? rgb(6, 6, 6) : rgb(22, 22, 22));
+        if (p == curPitch_) c.fillRect(GX, y, GW, RH, rgb(60, 220, 120, 26));
+        // klawisz
+        c.fillRect(KX, y + 0.5f, KW, RH - 1, blk ? rgb(30, 30, 30) : rgb(200, 200, 200));
+        if (p == curPitch_) c.fillRect(KX + KW + 1, y + 3, 3, RH - 6, pal::green);
         if (p % 12 == 0 || p == curPitch_) {
             noteName(nn, sizeof nn, p);
-            drawText(c, GX - 8, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, p == curPitch_ ? pal::white : pal::dim, ALIGN_RIGHT);
+            drawText(c, KX - 6, y + RH * 0.5f - 4.5f, nn, 9, 1.1f, p == curPitch_ ? pal::green : pal::dim, ALIGN_RIGHT);
         }
-        if (p % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(48, 48, 48));
+        // linie miedzy wierszami: mocniejsza miedzy B i C (granica oktawy) oraz E i F
+        if (p % 12 == 0) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(70, 70, 70));
+        else if (p % 12 == 5) c.line(GX, y + RH, GX + GW, y + RH, 1.f, rgb(34, 34, 34));
     }
     // Pionowe linie: kroki, miary, takt
     for (int s = 0; s <= STEPS_PER_BAR; s++) {
