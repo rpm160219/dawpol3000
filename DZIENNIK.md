@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 01:20
+**Zmienione:** podpięte repo GitHub (`origin` = git@github.com:rpm160219/dawpol3000.git), wysłana cała historia; CLAUDE.md — adres repo i zasada „commit + push po każdym kroku”.
+**Następny krok:** etap 1 — makiety PNG ekranu syntezatora (osc → filtr → ADSR) do oceny stylu.
+**Wymaga od Patryka:** nie (tylko ocena makiet, gdy będą).
+
 ## 2026-11-12 01:05
 **Zmienione:** UI i logi programu po angielsku (`core/hello_app.cpp`, `core/input.h`, `platform/main_sdl.cpp`); wpisane kody przycisków RG35XX Pro (`platform/controls_map.h`); awaryjne wyjście Menu+Select na surowych kodach; `tools/knulli/DAW-POL 3000.sh.keys` — wyjście Hotkey+Start (Knulli zabija program); `tools/deploy.sh` wysyła też plik `.keys`. CLAUDE.md: zasada „aplikacja po angielsku”. Wymuszone zamknięcie zawieszonej aplikacji przez SSH.
 **Stan:** Patryk potwierdził — na konsoli działa obraz, dźwięk, przyciski, analogi.

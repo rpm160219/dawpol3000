@@ -25,7 +25,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Build natywny x86_64 na desktop (okno 640×480) do szybkich iteracji.
 - Deploy: `tools/deploy.sh` (build ARM + scp + wpis w Ports), `tools/log.sh` (log z konsoli), `tools/dev.sh '<komenda>'` (komenda na konsoli). Konsola: IP 192.168.50.239, root, hasło w `tools/device.conf` (poza gitem). **Klucze SSH nie działają** (`/userdata` na exFAT → Dropbear odrzuca), stąd hasło przez SSH_ASKPASS. Komendy `!` w Claude Code nie mają okna na hasło.
 - Konsola (sprawdzone): Knulli = Batocera 42, kernel 4.9.170, glibc 2.40, SDL 2.32.8, ALSA: audiocodec/ahubdam/ahubhdmi, RAM 973 MB. Program w `/userdata/dawpol3000`, starter w `/userdata/roms/ports/DAW-POL 3000.sh`, odświeżenie listy: `curl http://127.0.0.1:1234/reloadgames`. Jest PortMaster.
-- Repo: prywatne na GitHubie Patryka.
+- Repo: prywatne na GitHubie — `git@github.com:rpm160219/dawpol3000.git`, gałąź `main`. Każdy zatwierdzony krok: commit + push.
 
 ## Architektura
 - **C++17 w stylu „C z klasami”** (bo większość bibliotek DSP jest w C++): bez wyjątków i alokacji w wątku audio, bez ciężkiego STL w ścieżce audio. SDL2 tylko jako cienka warstwa platformy: okno/framebuffer, input, audio callback.
@@ -104,8 +104,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 ## Do zrobienia przez Patryka (stan na start)
 - [ ] Druga karta microSD + Knulli wgrane, konsola w Wi-Fi, SSH działa
 - [x] ~~Sieć Bridged~~ — zostaje NAT (decyzja Patryka)
-- [ ] Claude Code w VM (działa ✓), git + SSH do GitHuba (brak klucza SSH i konfiguracji git)
-- [ ] Puste prywatne repo na GitHubie + dodany klucz SSH z VM (github.com/settings/keys)
+- [x] Claude Code w VM, git + SSH do GitHuba
+- [x] Prywatne repo: github.com/rpm160219/dawpol3000 (push po SSH z VM)
 - [ ] Słuchawki na jacka do testów
 - [x] Hub USB-C z PD, interfejs audio USB, klawiatura MIDI USB — Patryk ma; testujemy w etapie 0 (zapytaj o modele)
 - [x] Nazwa projektu — DAW-POL 3000
@@ -114,4 +114,5 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Etap: 0 — **działa na konsoli** (obraz, dźwięk, wszystkie przyciski i analogi; potwierdzone przez Patryka). Pad: „Anbernic RG35XX-Pro Controller”, rozpoznany jako GameController (kody surowe w `platform/controls_map.h`). Wideo SDL: mali, audio: alsa 48 kHz / 256 ramek.
 - UI przestawione na angielski. Wyjście: Menu+Select (też surowo) albo Hotkey+Start (plik `.keys` Knulli).
 - Do zrobienia w etapie 0: pomiar realnej latencji audio i obciążenia CPU, test mniejszego bufora (128), USB (hub, interfejs audio, MIDI) — po podaniu modeli.
-- Następny krok: GitHub (Patryk dodaje klucz + tworzy repo), potem etap 1 — makiety PNG ekranu syntezatora do akceptacji stylu.
+- GitHub podpięty (push działa).
+- Następny krok: etap 1 — makiety PNG ekranu syntezatora do akceptacji stylu.
