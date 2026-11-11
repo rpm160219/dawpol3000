@@ -36,6 +36,12 @@ void App::openNewTrack() {
     next_ = &trackDlg;
 }
 
+void App::openTrackEdit(int track) {
+    if (track < 0 || track >= prj_.nTracks) return;
+    trackDlg.openEdit(track);
+    next_ = &trackDlg;
+}
+
 void App::openNewPattern(int track, int bar) {
     patDlg.open(track, bar);
     next_ = &patDlg;

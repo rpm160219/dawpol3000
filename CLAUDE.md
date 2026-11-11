@@ -116,7 +116,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 
 ## Aktualny stan
 - Etap: 2/3 (sekwencer + arrange, przyspieszone na prośbę Patryka). Etap 1 (właściwy synth) później.
-- Działa: ARRANGE (ścieżki max 16 MIDI + 4 audio, klipy patternów z miniaturą nut, BPM w nagłówku, wstawianie/klonowanie/przesuwanie/usuwanie klipów, play całej aranżacji w pętli), okna NEW TRACK i NEW PATTERN (nazwa, długość 1–16 taktów, wybór istniejącego patternu), PIANO ROLL wielotaktowy, testowa piła na każdej ścieżce, łagodny limiter. Ikony i ilustracje wektorowe. CPU na konsoli ~2.5% rdzenia przy 3 ścieżkach.
+- Działa: ARRANGE (ścieżki max 16 MIDI + 4 audio, zmiana nazwy/koloru i usuwanie ścieżki (Select), mute/solo (L1/R1) ze wskaźnikami M/S, klipy patternów z miniaturą nut, BPM w nagłówku, wstawianie/klonowanie/przesuwanie/usuwanie klipów, play całej aranżacji w pętli), okna NEW TRACK i NEW PATTERN (nazwa, długość 1–16 taktów, wybór istniejącego patternu), PIANO ROLL wielotaktowy, testowa piła na każdej ścieżce, łagodny limiter. Ikony i ilustracje wektorowe. CPU na konsoli ~2.5% rdzenia przy 3 ścieżkach.
 - Ścieżki AUDIO: na razie puste (klipy audio dojdą z nagrywaniem z taśmy).
-- Brakuje: zapisu projektu (po wyjściu wszystko znika — start zawsze z projektem demo), usuwania/zmiany nazwy ścieżek, mute/solo, pętli/markerów, step seq, właściwych instrumentów.
-- Następny krok: ocena Patryka na konsoli; potem zapis/odczyt projektu i zarządzanie ścieżkami.
+- Brakuje: zapisu projektu (po wyjściu wszystko znika — start zawsze z projektem demo), pętli/markerów, step seq, właściwych instrumentów.
+- Następny krok: ocena Patryka na konsoli; potem zapis/odczyt projektu.

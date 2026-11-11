@@ -70,7 +70,15 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_RIGHT);
         tap(app, B_RIGHT);
         tap(app, B_RIGHT);  // 4 takty
+    } else if (!strcmp(screen, "trackedit")) {
+        app.arrange.setCursor(1, 0);
+        tap(app, B_SELECT);  // ustawienia sciezki LEAD
+        tap(app, B_DOWN);    // kolor
     } else {  // arrange
+        app.project().tracks[2].mute = true;   // KEYS wyciszone
+        app.project().tracks[1].solo = true;   // LEAD solo
+        app.project().tracks[0].solo = true;   // BASS solo
+        app.markDirty();
         app.arrange.setCursor(1, 6);
         tap(app, B_START);
         for (int i = 0; i < 700; i++) eng.process(buf, 256);  // ~3.7 s

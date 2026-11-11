@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 02:30
+**Zmienione:**
+- `core/gfx/icons.cpp` — ikony przerysowane od nowa (siatka 16×16, jedna grubość kreski, zaokrąglone końce, mniej detali): klawiatura 3+2 klawisze, fala = jeden okres sinusa, aranżacja = 3 rzędy kresek, czytelniejsze play/pętla/metronom/taśma.
+- `core/seq/project.*` — mute/solo na ścieżce, `audible()`, `removeTrack()` (z klipami).
+- `core/seq/sequencer.cpp`, `core/audio/engine.*` — mute/solo w trybie SONG (nie wyzwala nut, wycisza grające).
+- `core/ui/dialogs.*` — okno TRACK (edycja): nazwa, kolor z listy z próbkami, usuwanie (Y dwa razy), OK/CANCEL.
+- `core/ui/arrange.*` — Select = ustawienia ścieżki, L1 = mute, R1 = solo; wskaźniki M (żółty) / S (cyjan) przy nazwie; wyciszone ścieżki przygaszone. `core/ui/app.*` — `openTrackEdit()`.
+- Headless: ekran `trackedit`. Dokumentacja, README, CLAUDE.md zaktualizowane. Testy: zmiana nazwy, kolor, mute/solo (cisza po ~10 ms), usuwanie — OK.
+**Następny krok:** ocena Patryka; potem zapis/odczyt projektu.
+**Wymaga od Patryka:** tak — test na konsoli.
+
 ## 2026-11-12 01:40
 **Zmienione:**
 - Nowe moduły: `seq/project.*` (ścieżki 16 MIDI + 4 audio, pula patternów, klipy), `ui/app.*` (zarządzanie ekranami i projektem), `ui/view.h`, `ui/arrange.*` (ekran ARRANGE z BPM), `ui/dialogs.*` (NEW TRACK, NEW PATTERN), `ui/widgets.*` (belki, pigułki, pola, listy, edycja nazw), `gfx/icons.*` (ikony + ilustracje syntezatora i magnetofonu).

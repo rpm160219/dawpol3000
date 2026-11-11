@@ -71,6 +71,9 @@ void ArrangeView::update(const Buttons& b, const InputState& in, float dt) {
         app_->openNewPattern(curTrack_, curBar_);
     if (b.pressed(B_B) && clip >= 0) { p.removeClip(clip); app_->markDirty(); }
     if (b.pressed(B_START)) app_->togglePlaySong();
+    if (onTrack && b.pressed(B_SELECT) && !b.down(B_MENU)) app_->openTrackEdit(curTrack_);
+    if (onTrack && b.pressed(B_L1)) { p.tracks[curTrack_].mute = !p.tracks[curTrack_].mute; app_->markDirty(); }
+    if (onTrack && b.pressed(B_R1)) { p.tracks[curTrack_].solo = !p.tracks[curTrack_].solo; app_->markDirty(); }
 
     // Enkodery
     if (onTrack) {
@@ -159,13 +162,28 @@ void ArrangeView::render(Canvas& c) {
             break;
         }
         const Track& tr = p.tracks[t];
-        Color tc = pal::track[tr.color % 8];
+        bool aud = p.audible(t);
+        Color tc0 = pal::track[tr.color % 8];
+        Color tc = aud ? tc0 : rgb(tc0.r / 3, tc0.g / 3, tc0.b / 3);
         bool midi = tr.type == TRACK_MIDI;
         drawIcon(c, midi ? ICON_KEYS : ICON_WAVE, LX, y + 5, 18, tc);
-        drawText(c, LX + 26, y + 6, tr.name, 10, 1.3f, cur ? pal::white : rgb(170, 170, 170));
-        // pasek glosnosci pod nazwa
-        c.line(LX + 26, y + 21, LX + 26 + 90, y + 21, 1.f, pal::faint);
-        c.line(LX + 26, y + 21, LX + 26 + 90 * tr.volume, y + 21, 1.6f, cur ? pal::blue : rgb(70, 70, 70));
+        drawText(c, LX + 26, y + 5, tr.name, 9, 1.2f, cur ? pal::white : (aud ? rgb(170, 170, 170) : pal::dim));
+        // pasek glosnosci + wskazniki M (mute) i S (solo)
+        c.line(LX + 26, y + 21, LX + 26 + 72, y + 21, 1.f, pal::faint);
+        c.line(LX + 26, y + 21, LX + 26 + 72 * tr.volume, y + 21, 1.6f, cur ? pal::blue : rgb(70, 70, 70));
+        const char* ms[2] = {"M", "S"};
+        bool on[2] = {tr.mute, tr.solo};
+        Color onc[2] = {pal::yellow, pal::cyan};
+        for (int k = 0; k < 2; k++) {
+            float bx = LX + 104 + k * 18, by = y + 15, bw = 14, bh = 11;
+            if (on[k]) {
+                c.fillRoundRect(bx, by, bw, bh, 3, onc[k]);
+                drawText(c, bx + bw * 0.5f, by + 2.5f, ms[k], 6, 1.2f, rgb(0, 0, 0), ALIGN_CENTER);
+            } else {
+                c.strokeRoundRect(bx, by, bw, bh, 3, 1.f, rgb(60, 60, 60));
+                drawText(c, bx + bw * 0.5f, by + 2.5f, ms[k], 6, 1.f, rgb(80, 80, 80), ALIGN_CENTER);
+            }
+        }
         // tlo rzedu
         c.fillRect(TX, y + 1, TEND - TX, TRACK_H - 2, cur ? rgb(16, 16, 16) : rgb(8, 8, 8));
         // klipy

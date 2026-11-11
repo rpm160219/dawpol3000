@@ -24,6 +24,7 @@ public:
     void showArrange();
     void openPattern(int pattern, int track);
     void openNewTrack();
+    void openTrackEdit(int track);
     void openNewPattern(int track, int bar);
     void togglePlaySong();
 

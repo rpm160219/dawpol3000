@@ -18,7 +18,16 @@ void AudioEngine::applyProject() {
     seq_.setProject(&p);
     seq_.setTempo(p.bpm);
     for (int i = 0; i < MAX_TRACKS; i++) synth_[i].setVolume(i < p.nTracks ? p.tracks[i].volume : 0.f);
+    applyMutes();
     master_ = p.masterVol;
+}
+
+// Mute/solo dziala w trybie SONG (w piano rollu slychac edytowana sciezke zawsze).
+void AudioEngine::applyMutes() {
+    const Project& p = prj_.front();
+    bool song = seq_.mode() == Sequencer::SONG;
+    for (int i = 0; i < p.nTracks && i < MAX_TRACKS; i++)
+        synth_[i].setVolume(!song || p.audible(i) ? p.tracks[i].volume : 0.f);
 }
 
 void AudioEngine::process(float* out, int frames) {
@@ -29,8 +38,8 @@ void AudioEngine::process(float* out, int frames) {
         switch (c.type) {
         case EC_NOTE_ON: if (c.track < MAX_TRACKS) synth_[c.track].noteOn(c.pitch, c.value); break;
         case EC_NOTE_OFF: if (c.track < MAX_TRACKS) synth_[c.track].noteOff(c.pitch); break;
-        case EC_PLAY_SONG: seq_.playSong(sinks_); break;
-        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); break;
+        case EC_PLAY_SONG: seq_.playSong(sinks_); applyMutes(); break;
+        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); applyMutes(); break;
         case EC_STOP: seq_.stop(sinks_); break;
         }
     }

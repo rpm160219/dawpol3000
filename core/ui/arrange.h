@@ -8,6 +8,8 @@
 //   Y              nowy pattern w miejscu kursora (okno NEW PATTERN)
 //   B              usun klip
 //   X (krotko)     sklonuj klip za nim;  X + lewo/prawo = przesun klip
+//   Select         ustawienia sciezki (nazwa, kolor, usuwanie)
+//   L1 / R1        mute / solo sciezki (male wskazniki M i S przy nazwie)
 //   Start          play / stop calej aranzacji
 //   R2             piano roll ostatniego patternu
 // Enkodery: niebieski = VOLUME sciezki, zielony = ZOOM, bialy = MASTER, czerwony = BPM.

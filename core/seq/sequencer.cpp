@@ -94,10 +94,12 @@ void Sequencer::processTick(NoteSink** sinks) {
     } else {
         int len = prj_->songBars() * TICKS_PER_BAR;
         tick_ = (int)(abs_ % len);
+        bool aud[MAX_TRACKS];
+        for (int t = 0; t < prj_->nTracks; t++) aud[t] = prj_->audible(t);
         for (int i = 0; i < prj_->nClips; i++) {
             const Clip& c = prj_->clips[i];
             if (c.pattern >= prj_->nPatterns || c.track >= prj_->nTracks) continue;
-            if (prj_->tracks[c.track].type != TRACK_MIDI) continue;
+            if (prj_->tracks[c.track].type != TRACK_MIDI || !aud[c.track]) continue;
             const Pattern& p = prj_->patterns[c.pattern];
             int start = c.startBar * TICKS_PER_BAR;
             if (tick_ >= start && tick_ < start + p.lengthTicks) trigger(c.track, p, tick_ - start, sinks);

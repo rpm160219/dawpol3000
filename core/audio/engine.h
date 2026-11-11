@@ -40,6 +40,7 @@ private:
     std::atomic<int> tickOut_{0}, modeOut_{0};
     std::atomic<bool> playingOut_{false};
     void applyProject();
+    void applyMutes();
 };
 
 }  // namespace dp

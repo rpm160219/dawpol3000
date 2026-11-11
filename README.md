@@ -10,7 +10,8 @@ Opis budowy programu: [docs/ARCHITEKTURA.md](docs/ARCHITEKTURA.md).
 
 Start w ekranie ARRANGE (projekt demo). L2 = ARRANGE, R2 = PIANO ROLL (na PC: klawisze 1 / 2).
 ARRANGE: strzałki = kursor, X(PC)/A(konsola) na „ADD TRACK” = nowa ścieżka, na klipie = otwórz pattern, na pustym = wstaw ostatni pattern;
-Y (konsola) = nowy pattern, B = usuń klip, X krótko = klon, X + ←/→ = przesuń klip, Enter/Start = play całości.
+Y (konsola) = nowy pattern, B = usuń klip, X krótko = klon, X + ←/→ = przesuń klip, Enter/Start = play całości,
+Select = ustawienia ścieżki (nazwa, kolor, usuń), L1 = mute, R1 = solo.
 
 Piano roll — klawiatura na PC (konsola: te same funkcje na D-padzie/ABXY/analogach):
 strzałki = kursor, X = wstaw nutę (A na konsoli), Z = usuń (B), S + ←/→ = długość (X), A + strzałki = przesuń (Y),

@@ -5,89 +5,94 @@ namespace dp {
 
 static const float PI = 3.14159265f;
 
+// Zasady: siatka 16x16, jedna grubosc kreski, zaokraglone konce, minimum detali
+// (czytelne od 16 px). Wypelnienia tylko tam, gdzie kreska bylaby za gesta.
 void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float lw) {
-    float u = s / 16.f;  // ikona projektowana na siatce 16x16
+    float u = s / 16.f;
     auto X = [&](float v) { return x + v * u; };
     auto Y = [&](float v) { return y + v * u; };
+    auto seg = [&](float x0, float y0, float x1, float y1) { c.strokeSeg(X(x0), Y(y0), X(x1), Y(y1), lw); };
+    c.beginStroke();
     switch (id) {
-    case ICON_KEYS: {
-        c.strokeRoundRect(X(1), Y(3), 14 * u, 10 * u, 1.5f * u, lw, col);
-        for (int i = 1; i < 4; i++) c.line(X(1 + i * 3.5f), Y(8.5f), X(1 + i * 3.5f), Y(13), lw * 0.8f, col);
-        for (int i = 0; i < 3; i++) c.fillRoundRect(X(3.6f + i * 3.5f), Y(3), 1.8f * u, 5.5f * u, 0.6f * u, col);
-        break;
+    case ICON_KEYS: {  // 3 biale klawisze + 2 czarne
+        c.endStroke(col);
+        c.strokeRoundRect(X(1.5f), Y(3), 13 * u, 10 * u, 1.5f * u, lw, col);
+        c.beginStroke();
+        seg(6.17f, 9, 6.17f, 13);
+        seg(10.83f, 9, 10.83f, 13);
+        c.endStroke(col);
+        c.fillRect(X(5.2f), Y(3), 1.9f * u, 6.2f * u, col);
+        c.fillRect(X(9.9f), Y(3), 1.9f * u, 6.2f * u, col);
+        return;
     }
-    case ICON_WAVE: {
-        float p[2 * 33];
-        for (int i = 0; i <= 32; i++) {
-            float t = i / 32.f;
-            float env = sinf(t * PI);
-            p[i * 2] = X(1 + t * 14);
-            p[i * 2 + 1] = Y(8 - sinf(t * PI * 6) * 5.5f * env);
+    case ICON_WAVE: {  // jeden okres sinusa
+        float px = X(1.5f), py = Y(8);
+        for (int i = 1; i <= 24; i++) {
+            float t = i / 24.f;
+            float nx = X(1.5f + t * 13), ny = Y(8 - 4.5f * sinf(t * 2 * PI));
+            c.strokeSeg(px, py, nx, ny, lw);
+            px = nx; py = ny;
         }
-        c.polyline(p, 33, lw, col);
         break;
     }
-    case ICON_PATTERN: {
-        c.strokeRoundRect(X(1), Y(1.5f), 14 * u, 13 * u, 1.5f * u, lw, col);
-        c.fillRoundRect(X(3), Y(4), 4 * u, 2 * u, u, col);
-        c.fillRoundRect(X(7.5f), Y(7), 5.5f * u, 2 * u, u, col);
-        c.fillRoundRect(X(4), Y(10.5f), 3 * u, 2 * u, u, col);
+    case ICON_PATTERN: {  // ramka + 3 kreski nut
+        c.endStroke(col);
+        c.strokeRoundRect(X(1.5f), Y(1.5f), 13 * u, 13 * u, 2 * u, lw, col);
+        c.beginStroke();
+        seg(4.5f, 5, 7, 5);
+        seg(7.5f, 8, 11.5f, 8);
+        seg(5.5f, 11, 8, 11);
         break;
     }
-    case ICON_ARRANGE: {
-        c.fillRoundRect(X(1), Y(2), 7 * u, 3 * u, 1.5f * u, col);
-        c.fillRoundRect(X(9), Y(2), 6 * u, 3 * u, 1.5f * u, col);
-        c.strokeRoundRect(X(4), Y(6.5f), 9 * u, 3 * u, 1.5f * u, lw, col);
-        c.fillRoundRect(X(1), Y(11), 5 * u, 3 * u, 1.5f * u, col);
-        c.strokeRoundRect(X(7), Y(11), 8 * u, 3 * u, 1.5f * u, lw, col);
+    case ICON_ARRANGE: {  // trzy rzedy klipow
+        seg(2, 3.5f, 7, 3.5f); seg(9.5f, 3.5f, 14, 3.5f);
+        seg(5, 8, 11.5f, 8);
+        seg(2, 12.5f, 5, 12.5f); seg(7.5f, 12.5f, 14, 12.5f);
         break;
     }
-    case ICON_PLAY: {
-        float t[6] = {X(4), Y(2.5f), X(13.5f), Y(8), X(4), Y(13.5f)};
-        c.polyline(t, 3, lw, col, true);
-        break;
-    }
-    case ICON_STOP: c.strokeRoundRect(X(3), Y(3), 10 * u, 10 * u, 1.5f * u, lw, col); break;
-    case ICON_REC: c.fillCircle(X(8), Y(8), 5 * u, col); break;
-    case ICON_PLUS: {
+    case ICON_PLAY: seg(5, 3, 13, 8); seg(13, 8, 5, 13); seg(5, 13, 5, 3); break;
+    case ICON_STOP:
+        c.endStroke(col);
+        c.strokeRoundRect(X(4), Y(4), 8 * u, 8 * u, 1.2f * u, lw, col);
+        return;
+    case ICON_REC: c.endStroke(col); c.fillCircle(X(8), Y(8), 4.5f * u, col); return;
+    case ICON_PLUS:
+        c.endStroke(col);
         c.circle(X(8), Y(8), 6.5f * u, lw, col);
-        c.line(X(8), Y(4.5f), X(8), Y(11.5f), lw, col);
-        c.line(X(4.5f), Y(8), X(11.5f), Y(8), lw, col);
+        c.beginStroke();
+        seg(8, 5, 8, 11); seg(5, 8, 11, 8);
+        break;
+    case ICON_TAPE: {  // dwie szpule + tasma
+        c.endStroke(col);
+        c.circle(X(4.5f), Y(7), 3 * u, lw, col);
+        c.circle(X(11.5f), Y(7), 3 * u, lw, col);
+        c.fillCircle(X(4.5f), Y(7), 0.9f * u, col);
+        c.fillCircle(X(11.5f), Y(7), 0.9f * u, col);
+        c.beginStroke();
+        seg(4.5f, 10, 11.5f, 10);
         break;
     }
-    case ICON_TAPE: {
-        c.circle(X(4.5f), Y(7), 3.5f * u, lw, col);
-        c.circle(X(11.5f), Y(7), 3.5f * u, lw, col);
-        c.fillCircle(X(4.5f), Y(7), 1.f * u, col);
-        c.fillCircle(X(11.5f), Y(7), 1.f * u, col);
-        c.line(X(4.5f), Y(10.5f), X(11.5f), Y(10.5f), lw, col);
-        c.line(X(2), Y(14), X(14), Y(14), lw, col);
+    case ICON_METRONOME:
+        seg(4, 14, 6.5f, 2); seg(6.5f, 2, 9.5f, 2); seg(9.5f, 2, 12, 14); seg(12, 14, 4, 14);
+        seg(8, 11, 10.3f, 5);
         break;
-    }
-    case ICON_METRONOME: {
-        float t[8] = {X(5), Y(14), X(6.5f), Y(2), X(9.5f), Y(2), X(11), Y(14)};
-        c.polyline(t, 4, lw, col, true);
-        c.line(X(8), Y(11), X(12.5f), Y(4), lw, col);
+    case ICON_LOOP:  // zaokraglona petla ze strzalka
+        c.endStroke(col);
+        c.strokeRoundRect(X(2), Y(4.5f), 12 * u, 7.5f * u, 3.5f * u, lw, col);
+        c.fillRect(X(6.5f), Y(4.5f) - lw, 3 * u, lw * 2, pal::bg);  // przerwa na grot
+        c.beginStroke();
+        seg(8, 2.5f, 10, 4.5f); seg(10, 4.5f, 8, 6.5f);
         break;
-    }
-    case ICON_LOOP: {
-        c.arc(X(8), Y(8), 5.5f * u, PI * 0.15f, PI * 0.95f, lw, col);
-        c.arc(X(8), Y(8), 5.5f * u, PI * 1.15f, PI * 1.95f, lw, col);
-        float a1[6] = {X(1.5f), Y(6), X(2.6f), Y(9), X(5), Y(7.5f)};
-        c.polyline(a1, 3, lw, col);
-        float a2[6] = {X(14.5f), Y(10), X(13.4f), Y(7), X(11), Y(8.5f)};
-        c.polyline(a2, 3, lw, col);
+    case ICON_NOTE:
+        c.endStroke(col);
+        c.fillCircle(X(5.5f), Y(12), 2.3f * u, col);
+        c.beginStroke();
+        seg(7.6f, 12, 7.6f, 2.5f);
+        seg(7.6f, 2.5f, 11.5f, 5.5f);
         break;
-    }
-    case ICON_NOTE: {
-        c.fillCircle(X(5.5f), Y(12), 2.5f * u, col);
-        c.line(X(7.8f), Y(12), X(7.8f), Y(2), lw, col);
-        float f[6] = {X(7.8f), Y(2), X(12.5f), Y(5), X(12.5f), Y(8.5f)};
-        c.polyline(f, 3, lw, col);
-        break;
-    }
     default: break;
     }
+    c.endStroke(col);
 }
 
 // Ilustracja: maly syntezator (obudowa, ekran z nutami, 4 kolorowe galki, klawiatura, kabel).

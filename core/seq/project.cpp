@@ -25,6 +25,24 @@ int Project::addTrack(int type, const char* nm) {
     return nTracks++;
 }
 
+void Project::removeTrack(int t) {
+    if (t < 0 || t >= nTracks) return;
+    for (int i = 0; i < nClips;) {
+        if (clips[i].track == t) { removeClip(i); continue; }
+        if (clips[i].track > t) clips[i].track--;
+        i++;
+    }
+    for (int i = t; i < nTracks - 1; i++) tracks[i] = tracks[i + 1];
+    nTracks--;
+}
+
+bool Project::audible(int t) const {
+    if (t < 0 || t >= nTracks || tracks[t].mute) return false;
+    bool anySolo = false;
+    for (int i = 0; i < nTracks; i++) if (tracks[i].solo) anySolo = true;
+    return !anySolo || tracks[t].solo;
+}
+
 int Project::addPattern(const char* nm, int bars) {
     if (nPatterns >= MAX_PATTERNS) return -1;
     Pattern& p = patterns[nPatterns];

@@ -17,6 +17,7 @@ struct Track {
     uint8_t color = 0;       // indeks w pal::track
     char name[12] = "TRACK";
     float volume = 0.8f;
+    bool mute = false, solo = false;
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };
 
@@ -40,6 +41,8 @@ struct Project {
     int countTracks(int type) const;
     bool canAddTrack(int type) const;
     int addTrack(int type, const char* name);         // indeks albo -1
+    void removeTrack(int t);                          // usuwa tez jej klipy
+    bool audible(int t) const;                        // uwzglednia mute i solo
     int addPattern(const char* name, int bars);       // indeks albo -1
     int clipBars(const Clip& c) const { return patterns[c.pattern].bars(); }
     int clipAt(int track, int bar) const;             // klip obejmujacy takt albo -1
