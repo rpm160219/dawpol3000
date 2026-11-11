@@ -16,6 +16,15 @@ static const int NZOOM = 5;
 float ArrangeView::barW() const { return kZoom[zoom_]; }
 int ArrangeView::visibleBars() const { return (int)((TEND - TX) / barW()); }
 
+int ArrangeView::highlightedPattern(int* track) const {
+    const Project& p = app_->project();
+    if (curTrack_ >= p.nTracks || p.tracks[curTrack_].type != TRACK_MIDI) return -1;
+    *track = curTrack_;
+    int clip = p.clipAt(curTrack_, curBar_);
+    if (clip >= 0) return p.clips[clip].pattern;
+    return p.tracks[curTrack_].lastPattern;
+}
+
 void ArrangeView::scroll() {
     int vb = visibleBars();
     if (curBar_ < firstBar_) firstBar_ = curBar_;
@@ -129,17 +138,10 @@ void ArrangeView::render(Canvas& c) {
     c.clear(pal::bg);
     bool playing = eng && eng->isPlaying() && eng->playMode() == Sequencer::SONG;
 
-    // Naglowek: ikona, nazwa projektu, pozycja, BPM
-    drawIcon(c, ICON_ARRANGE, 18, 12, 18, pal::white);
-    drawText(c, 44, 15, p.name, 13, 1.5f, pal::white);
+    // Naglowek (wspolny z PIANO ROLL): pozycja = glowica przy odtwarzaniu, inaczej kursor
     int songTick = playing ? eng->playTick() : curBar_ * TICKS_PER_BAR;
-    snprintf(b, sizeof b, "BAR %d.%d", songTick / TICKS_PER_BAR + 1, (songTick % TICKS_PER_BAR) / PPQ + 1);
-    drawText(c, 300, 17, b, 11, 1.3f, pal::dim, ALIGN_CENTER);
-    drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);
-    snprintf(b, sizeof b, "%.0f", p.bpm);
-    drawText(c, 572, 9, b, 24, 1.9f, pal::red, ALIGN_RIGHT);
-    drawText(c, 580, 22, "BPM", 10, 1.3f, pal::red);
-    c.line(20, 44, 620, 44, 1.f, pal::faint);
+    screenHeader(c, ICON_ARRANGE, pal::white, p.name, "", pal::white, songTick / TICKS_PER_BAR + 1,
+                 (songTick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
 
     // Numery taktow
     int vb = visibleBars();
@@ -221,8 +223,8 @@ void ArrangeView::render(Canvas& c) {
             c.fillRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, rgb(tc.r / 5, tc.g / 5, tc.b / 5));
             c.strokeRoundRect(cx0 + 1, cy, cx1 - cx0 - 2, ch, 5, 1.2f, tc);
             const Pattern& pt = p.patterns[cl.pattern];
-            bool label = (x1 - x0) > textWidth(pt.name, 7) + 10 && x0 >= TX;
-            if (label) drawText(c, x0 + 6, cy + 3, pt.name, 7, 1.f, pal::white);
+            // nazwa przycieta do widocznej czesci klipu
+            bool label = (cx1 - cx0) > 16 && drawTextFit(c, cx0 + 6, cy + 3, pt.name, 7, 1.f, pal::white, cx1 - cx0 - 11);
             clipNotes(c, pt, x0, x1, cx0, cx1, cy + (label ? 12 : 4), ch - (label ? 15 : 8), tc);
         }
     }

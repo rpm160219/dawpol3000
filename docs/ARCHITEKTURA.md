@@ -25,7 +25,7 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | Plik | Co robi |
 |---|---|
 | `gfx/canvas.*` | Bufor 640×480 RGBA i rasteryzer z antyaliasingiem: linie, łuki, koła, prostokąty, zaokrąglone prostokąty/„pigułki” (SDF). Kreski wsadowe (`beginStroke/strokeSeg/endStroke`), żeby nakładające się segmenty nie ciemniały. Paleta 4 kolorów enkoderów (`pal::`). |
-| `gfx/icons.*` | Ikony wektorowe (siatka 16×16, jedna grubość kreski, minimum detali — czytelne od 16 px) (klawiatura/MIDI, fala/audio, pattern, aranżacja, play/stop/rec, plus, taśma, metronom, pętla, nuta) i ilustracje do okien (syntezator, magnetofon, notatnik) — wszystkie 196×150. |
+| `gfx/icons.*` | Ikony wektorowe (siatka 16×16, jedna grubość kreski, minimum detali — czytelne od 16 px) (klawiatura/MIDI, fala/audio, pattern, aranżacja, play/stop/rec, plus, taśma, metronom, pętla, nuta) i ilustracje do okien (syntezator, magnetofon, dyskietka) — wszystkie w polu 196×150. |
 | `gfx/font.*` | Własny font kreskowy (wektorowy) na siatce 8×12, wygładzanie Chaikina. Wielkie litery, cyfry, interpunkcja. |
 | `io/image_io.*` | Zapis PNG (bez zlib) i WAV 16-bit — do trybu headless. |
 | `io/fs.*` | Pliki/katalogi (POSIX): istnienie, mkdir -p, usuwanie drzewa, lista podkatalogów od najnowszego. |
@@ -48,7 +48,7 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `ui/project_view.*` | Ekran PROJECT (pierwsza zakładka): nazwa, statystyki, stan zapisu, lista projektów; zapis/wczytanie/nowy/usuń z potwierdzeniami. |
 | `ui/arrange.*` | Ekran ARRANGE: ścieżki, klipy z miniaturą nut, BPM w nagłówku, dodawanie ścieżek, wstawianie/klonowanie/przesuwanie/usuwanie klipów (sterowanie w nagłówku pliku). |
 | `ui/dialogs.*` | Okna NEW TRACK, TRACK (edycja: nazwa, kolor, usuwanie z potwierdzeniem) i NEW PATTERN w stylu menu (belki, ilustracja, pola, lista, pigułki akcji). |
-| `ui/widgets.*` | Wspólne elementy: belka nagłówka, pigułka z literą przycisku, pole wartości, lista, mini-gałka, pasek 4 enkoderów, edycja nazwy przyciskami. |
+| `ui/widgets.*` | Wspólne elementy: nagłówek ekranów ARRANGE/PIANO ROLL (ten sam układ, pozycja „BAR takt.miara”), tekst przycinany do szerokości, belka nagłówka, pigułka z literą przycisku, pole wartości, lista, mini-gałka, pasek 4 enkoderów, edycja nazwy przyciskami. |
 | `ui/piano_roll.*` | Ekran PIANO ROLL: pattern z projektu, wiele taktów (widok 1 taktu + pasek pozycji), nuty jako pigułki, kolor = velocity, podgląd nut na instrumencie ścieżki (sterowanie w nagłówku pliku). |
 | `ui/test_screen.*` | Ekran testu sprzętu (etap 0): ton, gałki, oscyloskop, podgląd przycisków i surowych kodów. Uruchamiany `--test`. |
 | `headless.*` | Tryb bez okna: `--render-png plik [arrange|track|pattern|roll|test]`, `--render-wav plik [sekundy]` (cała aranżacja demo). |

@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 04:30
+**Zmienione:**
+- `core/gfx/icons.*` — dyskietka zamiast notatnika (ilustracja w polu 196×150 + mała ikona projektu).
+- `core/ui/widgets.*` — wspólny `screenHeader` (ARRANGE i PIANO ROLL: ten sam układ, „BAR takt.miara” w tym samym miejscu) i `drawTextFit` (tekst przycinany do szerokości).
+- `core/ui/arrange.*` — nazwy klipów przycinane do widocznej części klipu przy każdym zoomie; `highlightedPattern()`.
+- `core/ui/app.cpp` — R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
+- `core/ui/piano_roll.cpp` — nagłówek ze wspólnego `screenHeader` (pozycja kursora/głowicy jako takt.miara zamiast „BAR 1/2”), mniejsze etykiety miar nad siatką.
+**Następny krok:** ocena Patryka; potem wybór: step seq/perkusja, pętla/markery, undo, syntezator.
+**Wymaga od Patryka:** tak — test i wybór kolejnego kroku.
+
 ## 2026-11-12 04:00
 **Zmienione:**
 - Nowe: `core/io/fs.*` (katalogi), `core/io/project_file.*` (format `.dpp`: tekstowy, wersjonowany, zapis atomowy z fsync), `core/io/project_store.*` (projekty w `projects/<NAZWA>/`, lista od najnowszego, ostatnio otwarty), `core/ui/project_view.*` (zakładka PROJECT).

@@ -90,13 +90,10 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
         seg(7.6f, 12, 7.6f, 2.5f);
         seg(7.6f, 2.5f, 11.5f, 5.5f);
         break;
-    case ICON_PROJECT:  // notatnik ze spirala i liniami
-        c.endStroke(col);
-        c.strokeRoundRect(X(2.5f), Y(2.5f), 11 * u, 12 * u, 1.5f * u, lw, col);
-        c.beginStroke();
-        for (int i = 0; i < 3; i++) seg(5 + i * 3, 1, 5 + i * 3, 4);
-        seg(5, 8, 11, 8);
-        seg(5, 11, 9, 11);
+    case ICON_PROJECT:  // dyskietka
+        seg(2, 2, 12, 2); seg(12, 2, 14, 4); seg(14, 4, 14, 14); seg(14, 14, 2, 14); seg(2, 14, 2, 2);
+        seg(5, 2, 5, 6); seg(5, 6, 11, 6); seg(11, 6, 11, 2);
+        seg(4.5f, 9.5f, 11.5f, 9.5f); seg(11.5f, 9.5f, 11.5f, 14); seg(4.5f, 9.5f, 4.5f, 14);
         break;
     default: break;
     }
@@ -180,39 +177,26 @@ void drawTapeIllustration(Canvas& c, float x, float y, float w, float h) {
         c.strokeRoundRect(ix + bgap + i * (bw + bgap), byy, bw, bh, 3, 1.1f, i == 3 ? pal::red : mid);
 }
 
-// Ilustracja: notatnik szkicow — spirala, pieciolinie z nutami w kolorach enkoderow, zakladka.
-void drawNotebookIllustration(Canvas& c, float x, float y, float w, float h) {
-    const Color body = rgb(150, 150, 150), mid = rgb(70, 70, 70);
-    const float pad = 10;
-    float top = y + 8;  // miejsce na spirale
-    c.strokeRoundRect(x, top, w, h - 8, 8, 1.6f, body);
-    // spirala: rowno rozlozone kolka przechodzace przez gorna krawedz
-    const int nr = 9;
-    float step = (w - 2 * pad) / (nr - 1);
-    for (int i = 0; i < nr; i++) {
-        float cx = x + pad + i * step;
-        c.strokeRoundRect(cx - 3, y, 6, 16, 3, 1.3f, body);
-    }
-    // zakladka
-    float bx = x + w - pad - 22;
-    float rib[10] = {bx, top, bx, top + h * 0.42f, bx + 6, top + h * 0.36f, bx + 12, top + h * 0.42f, bx + 12, top};
-    c.polyline(rib, 5, 1.4f, pal::red);
-    // dwie pieciolinie
-    float ix = x + pad + 4, iw = w - 2 * pad - 8 - 30;
-    for (int st = 0; st < 2; st++) {
-        float sy = top + 22 + st * (h - 8 - 32) * 0.5f, gap = 5;
-        for (int l = 0; l < 5; l++) c.line(ix, sy + l * gap, ix + iw, sy + l * gap, 1.f, mid);
-        // nuty: glowki (kolka) + laski, kolory 4 enkoderow
-        static const int pos[2][5] = {{6, 4, 5, 2, 3}, {3, 5, 7, 4, 6}};
-        for (int k = 0; k < 5; k++) {
-            float nx = ix + 14 + k * (iw - 24) / 4.f, ny = sy + pos[st][k] * gap * 0.5f;
-            Color nc = pal::enc[(k + st) % 4];
-            c.fillCircle(nx, ny, 3.2f, nc);
-            c.line(nx + 3, ny, nx + 3, ny - 15, 1.2f, nc);
-        }
-    }
-    // dolna linia "podpisu"
-    c.line(ix, y + h - pad - 4, ix + iw * 0.5f, y + h - pad - 4, 1.2f, mid);
+// Ilustracja: dyskietka 3.5". Kwadrat wycentrowany w polu w x h (to samo pole co inne ilustracje).
+void drawFloppyIllustration(Canvas& c, float x, float y, float w, float h) {
+    const Color body = rgb(150, 150, 150), mid = rgb(80, 80, 80);
+    float s = h < w ? h : w;
+    float fx = x + (w - s) * 0.5f, fy = y + (h - s) * 0.5f, ch = s * 0.09f;
+    // obudowa ze scietym prawym gornym rogiem
+    float o[10] = {fx, fy, fx + s - ch, fy, fx + s, fy + ch, fx + s, fy + s, fx, fy + s};
+    c.polyline(o, 5, 1.6f, body, true);
+    // metalowa zasuwka z okienkiem
+    float zx = fx + s * 0.24f, zw = s * 0.50f, zh = s * 0.34f;
+    c.strokeRoundRect(zx, fy, zw, zh, 3, 1.4f, body);
+    c.fillRoundRect(zx + zw * 0.62f, fy + zh * 0.16f, zw * 0.2f, zh * 0.66f, 2, mid);
+    // etykieta: pasek w 4 kolorach enkoderow + linie do pisania
+    float lx = fx + s * 0.12f, ly = fy + s * 0.46f, lw = s * 0.76f, lh = s * 0.54f - 6;
+    c.strokeRoundRect(lx, ly, lw, lh, 4, 1.4f, body);
+    for (int i = 0; i < 4; i++) c.fillRect(lx + 6 + i * (lw - 12) / 4.f, ly + 7, (lw - 12) / 4.f, 4, pal::enc[i]);
+    for (int i = 0; i < 3; i++) c.line(lx + 8, ly + 24 + i * 12, lx + lw - 8, ly + 24 + i * 12, 1.f, mid);
+    // otwory zabezpieczenia
+    c.strokeRoundRect(fx + 5, fy + s - 15, 8, 8, 1.5f, 1.1f, body);
+    c.fillRoundRect(fx + s - 13, fy + s - 15, 8, 8, 1.5f, body);
 }
 
 }  // namespace dp

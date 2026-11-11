@@ -91,7 +91,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Lewy analog X/Y = enkoder niebieski/zielony, prawy analog X/Y = biały/czerwony. Tryb względny: wychylenie = prędkość zmiany wartości (z martwą strefą i krzywą przyspieszenia).
 - W PATTERN/ARRANGE: D-pad = kursor (kroki/ścieżki/klipy), A = wstaw/przełącz, B = usuń, X/Y = narzędzia (kopiuj, klonuj), analogi = enkodery (wartości, zoom/scroll). Poniższe mapowanie nut dotyczy trybu grania (KEYS).
 - D-pad + ABXY = 8 nut skali (skala/tonacja wybieralna), L1/R1 = oktawa −/+.
-- L2/R2 = zakładki w lewo/prawo: PROJECT ↔ ARRANGE ↔ PIANO ROLL (docelowo też SYNTH, DRUM, TAPE, MIXER). Start = play/stop, Select = rec (później). Menu+Select = wyjście.
+- L2/R2 = zakładki w lewo/prawo: PROJECT ↔ ARRANGE ↔ PIANO ROLL (docelowo też SYNTH, DRUM, TAPE, MIXER). R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
+- Pozycja w nagłówkach zawsze w formacie „BAR takt.miara”, w tym samym miejscu (wspólny `screenHeader`). Teksty w klipach/polach przycinane do obrysu (`drawTextFit`). Start = play/stop, Select = rec (później). Menu+Select = wyjście.
 - W oknach dialogowych: A = zatwierdź, B = anuluj, X = edycja nazwy (góra/dół litera, lewo/prawo pozycja); pigułki na dole pokazują literę przycisku.
 - Mapowanie trzymać w jednej tabeli (łatwo przestawić po testach na urządzeniu).
 

@@ -178,25 +178,18 @@ void PianoRoll::render(Canvas& c) {
     int sel = noteAtCursor();
     int viewBar = curStep_ / STEPS_PER_BAR, viewStep0 = viewBar * STEPS_PER_BAR;
 
-    // Naglowek: ikona sciezki, nazwa patternu, sciezka, takt, BPM
-    drawIcon(c, ICON_PATTERN, 18, 12, 18, tc);
-    drawText(c, 44, 15, p.name, 13, 1.5f, pal::white);
-    float tw = textWidth(p.name, 13);
-    drawText(c, 44 + tw + 12, 17, tr.name, 10, 1.3f, tc);
+    // Naglowek (wspolny z ARRANGE): pozycja w patternie = glowica przy odtwarzaniu, inaczej kursor
     char nn[16];
-    noteName(nn, sizeof nn, curPitch_);
-    snprintf(b, sizeof b, "%s  BAR %d/%d", nn, viewBar + 1, p.bars());
-    drawText(c, 400, 17, b, 10, 1.3f, pal::dim, ALIGN_RIGHT);
-    drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);
-    snprintf(b, sizeof b, "%.0f", prj.bpm);
-    drawText(c, 572, 9, b, 24, 1.9f, pal::red, ALIGN_RIGHT);
-    drawText(c, 580, 22, "BPM", 10, 1.3f, pal::red);
-    c.line(20, 44, 620, 44, 1.f, pal::faint);
+    int posTick = curStep_ * TICKS_PER_STEP;
+    bool rollPlaying = playing && eng->playMode() == Sequencer::PATTERN;
+    if (rollPlaying) posTick = eng->playTick() % p.lengthTicks;
+    screenHeader(c, ICON_PATTERN, tc, p.name, tr.name, tc, posTick / TICKS_PER_BAR + 1,
+                 (posTick % TICKS_PER_BAR) / PPQ + 1, playing, prj.bpm);
 
     // Numery miar (takt.miara)
     for (int beat = 0; beat < 4; beat++) {
         snprintf(b, sizeof b, "%d.%d", viewBar + 1, beat + 1);
-        drawText(c, GX + beat * 4 * SW + 3, 48, b, 7, 1.f, pal::dim);
+        drawText(c, GX + beat * 4 * SW + 3, 45.5f, b, 5.5f, 1.f, pal::dim);
     }
     // Pasek pozycji w patternie (ktory takt jest widoczny)
     if (p.bars() > 1) {

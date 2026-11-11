@@ -75,7 +75,7 @@ void ProjectView::render(Canvas& c) {
     c.clear(pal::bg);
     headerBar(c, LBX, BY, LBW, BH, "PROJECT", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "PROJECTS", pal::tan);
-    drawNotebookIllustration(c, 24, 84, 196, 150);
+    drawFloppyIllustration(c, 24, 84, 196, 150);
     nameBox(c, 236, 104, 152, 50, "NAME", p.name, &ed_, pal::steel);
 
     snprintf(b, sizeof b, "%d TRACKS", p.nTracks);

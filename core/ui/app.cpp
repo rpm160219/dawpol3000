@@ -129,7 +129,11 @@ void App::update(const InputState& in, float dt) {
         else if (cur_ == &arrange) showProject();
     } else if (!dialog && btn_.pressed(B_R2)) {
         if (cur_ == &projectView) showArrange();
-        else if (cur_ == &arrange && hasRoll) openPattern(lastPattern_, lastTrack_);
+        else if (cur_ == &arrange) {
+            int t = 0, pt = arrange.highlightedPattern(&t);  // pattern pod kursorem
+            if (pt >= 0) openPattern(pt, t);
+            else if (hasRoll) openPattern(lastPattern_, lastTrack_);
+        }
     } else cur_->update(btn_, in, dt);
     if (next_) { cur_ = next_; next_ = nullptr; }
     if (dirty_) publish();

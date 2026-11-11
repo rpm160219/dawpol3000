@@ -1,5 +1,7 @@
 #include "ui/widgets.h"
 #include "gfx/font.h"
+#include "gfx/icons.h"
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
@@ -58,6 +60,35 @@ void listBox(Canvas& c, float x, float y, float w, float h, const char* const* i
         float th = h * rows / n, ty = y + (h - th) * first / (float)(n - rows);
         c.line(x + w, ty, x + w, ty + th, 3.f, col);
     }
+}
+
+void screenHeader(Canvas& c, int icon, Color iconCol, const char* title, const char* sub, Color subCol, int bar,
+                  int beat, bool playing, float bpm) {
+    char b[32];
+    drawIcon(c, (IconId)icon, 18, 12, 18, iconCol);
+    drawText(c, 44, 15, title, 13, 1.5f, pal::white);
+    if (sub && *sub) drawText(c, 44 + textWidth(title, 13) + 12, 17, sub, 10, 1.3f, subCol);
+    snprintf(b, sizeof b, "BAR %d.%d", bar, beat);
+    drawText(c, 392, 17, b, 11, 1.3f, playing ? pal::white : pal::dim, ALIGN_RIGHT);
+    drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);
+    snprintf(b, sizeof b, "%.0f", bpm);
+    drawText(c, 572, 9, b, 24, 1.9f, pal::red, ALIGN_RIGHT);
+    drawText(c, 580, 22, "BPM", 10, 1.3f, pal::red);
+    c.line(20, 44, 620, 44, 1.f, pal::faint);
+}
+
+bool drawTextFit(Canvas& c, float x, float y, const char* s, float size, float width, Color col, float maxW) {
+    char buf[64];
+    int n = 0;
+    for (; s[n] && n < 63; n++) {
+        buf[n] = s[n];
+        buf[n + 1] = 0;
+        if (textWidth(buf, size) > maxW) break;
+    }
+    buf[n] = 0;
+    if (n == 0) return false;
+    drawText(c, x, y, buf, size, width, col);
+    return true;
 }
 
 void miniKnob(Canvas& c, float x, float y, float v, Color col, const char* label, const char* val) {

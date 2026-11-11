@@ -15,6 +15,12 @@ void valueBox(Canvas& c, float x, float y, float w, float h, const char* label, 
 // Lista z duzym tekstem; sel = zaznaczony, first = pierwszy widoczny, rows = ile miesci sie w h.
 void listBox(Canvas& c, float x, float y, float w, float h, const char* const* items, int n, int sel, int first,
              Color col, const bool* disabled = nullptr);
+// Wspolny naglowek ekranow ARRANGE / PIANO ROLL (ten sam uklad i pozycje):
+// ikona + tytul (+ podtytul w kolorze), pozycja "BAR t.m" na srodku, play/stop, BPM po prawej.
+void screenHeader(Canvas& c, int icon, Color iconCol, const char* title, const char* sub, Color subCol, int bar,
+                  int beat, bool playing, float bpm);
+// Tekst przyciety do szerokosci maxW (zwraca false, gdy nie miesci sie nawet 1 znak).
+bool drawTextFit(Canvas& c, float x, float y, const char* s, float size, float width, Color col, float maxW);
 // Mala galka enkodera z podpisem i wartoscia (pasek na dole ekranu).
 void miniKnob(Canvas& c, float x, float y, float v, Color col, const char* label, const char* val);
 // Pasek 4 enkoderow na dole ekranu.
