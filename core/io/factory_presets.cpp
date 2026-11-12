@@ -622,9 +622,28 @@ static const FactoryPreset kAether[] = {
     {"UFO", CAT_FX, 1, "k 20000 18000 32767 0 env 0.1 1 1 1 tilt 0 0 32767 lfo1 4 3 0.4 6 0 0"},
 };
 
+// ARC: oryginal (op1r, ultralazr) nie ma presetow — 12 wlasnych z galek silnika (strona 2: push RATIO COUPLING
+// BRIGHTNESS; RATIO 8192 = 1:1, 23000 = 3:2, 16000 = 5:4, 32500 = 2:1) i obwiedni.
+static const FactoryPreset kArc[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"STREET LAMP", CAT_LEAD, 1, "k 12000 6000 5000 9000 env 0.01 0.3 0.9 0.3"},
+    {"CLEAN SINE", CAT_LEAD, 1, "k 0 0 0 0 env 0.02 0.3 1 0.3"},
+    {"REED ARC", CAT_LEAD, 1, "k 18000 9000 3000 4000 env 0.01 0.3 0.9 0.25"},
+    {"SCREAMER", CAT_LEAD, 1, "k 30000 12000 6000 12000 env 0.005 0.3 0.9 0.2"},
+    {"DUDDELL TUNE", CAT_KEYS, 1, "k 14000 4000 8000 16000 env 0.005 0.6 0.6 0.4"},
+    {"FIFTH LAMPS", CAT_PAD, 1, "k 14000 6000 6000 6000 push 23000 9000 8192 env 0.4 1 0.9 1.2"},
+    {"BEATING PAIR", CAT_PAD, 1, "k 10000 3000 4000 4000 push 8600 4000 8192 env 0.6 1 0.9 1.5"},
+    {"CHAOS COUPLE", CAT_FX, 1, "k 30000 10000 10000 10000 push 16000 32767 14000 env 0.05 0.5 1 0.6"},
+    {"SPUTTER", CAT_FX, 1, "k 16000 8000 14000 32767 env 0.001 0.5 1 0.4"},
+    {"PLASMA HISS", CAT_FX, 1, "k 8000 4000 32767 12000 env 0.2 0.5 1 1"},
+    {"DARK OCTAVE", CAT_BASS, 1, "k 20000 14000 2000 8000 push 32500 16000 2000 env 0.005 0.4 0.8 0.2 oct -1"},
+    {"BRIGHT BUZZ", CAT_LEAD, 1, "k 24000 16000 4000 6000 push 8192 0 30000 env 0.005 0.3 0.9 0.2"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "arc")) { *n = sizeof kArc / sizeof kArc[0]; *engine = ENG_ARC; return kArc; }
     if (!__builtin_strcmp(eng, "aether")) { *n = sizeof kAether / sizeof kAether[0]; *engine = ENG_AETHER; return kAether; }
     if (!__builtin_strcmp(eng, "blot")) { *n = sizeof kBlot / sizeof kBlot[0]; *engine = ENG_BLOT; return kBlot; }
     if (!__builtin_strcmp(eng, "bloodmoon")) { *n = sizeof kBlood / sizeof kBlood[0]; *engine = ENG_BLOOD; return kBlood; }

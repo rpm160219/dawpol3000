@@ -3,6 +3,7 @@
 #include "synth/mixtur_dsp.h"
 #include "synth/hollowsaint_dsp.h"
 #include "synth/blot_dsp.h"
+#include "synth/arc_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -138,6 +139,12 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
+                }
+            } else if (t.engine == ENG_ARC && alt_) {  // ARC + L3: RATIO (0 = 1:1), COUPLING, BRIGHTNESS (0 = neutralnie)
+                if (i < 3 && d != 0.f) {
+                    if (i != 1 && t.push[i] <= 0) t.push[i] = 8192;
+                    knob(t.push[i]);
+                    if (i != 1 && t.push[i] < 1) t.push[i] = 1;
                 }
             } else if (t.engine == ENG_AETHER && alt_) {  // AETHER + L3: DEAD ZONE, TILT RANGE, VIB RATE (0 = 8192)
                 if (i < 3 && d != 0.f) {
@@ -448,6 +455,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_ARC) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ar_.draw(c, words, shown, e ? e->arcCore(track_) : nullptr, k == K_SOUND && alt_);
     } else if (t.engine == ENG_AETHER) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -596,6 +609,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_ARC) { hint = alt_ ? "L3 = CURRENT / CARBON / HISS / STRIKE" : "L3 = RATIO / COUPLING / BRIGHTNESS"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_AETHER) { hint = alt_ ? "L3 = ORBIT / FORM / SPACE / DEPTH" : "L3 = DEAD ZONE / TILT RANGE / VIB RATE"; if (alt_) hc = pal::blue; }
     if (k == K_TILT) hint = "VIRTUAL TILT SENSOR (THE OP-1 IS TILTED)";
     if (k == K_SOUND && t.engine == ENG_BLOT) { hint = alt_ ? "L3 = CUTOFF / RES / ENV MOD" : "L3 = WAVE / ACCENT / DRIVE"; if (alt_) hc = pal::blue; }
@@ -735,7 +749,23 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_TILT) {  // AETHER: wirtualne przechylenie
+    if (k == K_SOUND && t.engine == ENG_ARC) {  // ARC: prad (mu), wegiel, szum plazmy, zaplon
+        static const char* L[4] = {"CURRENT", "CARBON", "HISS", "STRIKE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        if (alt_) {
+            const int r14 = arcRatioQ14(t.push[0]);
+            static const struct { int q; const char* t; } det[] = {{8192, "1:2"}, {10923, "2:3"}, {12288, "3:4"}, {16384, "1:1"},
+                {20480, "5:4"}, {21845, "4:3"}, {24576, "3:2"}, {27307, "5:3"}, {32768, "2:1"}};
+            snprintf(v[0], 16, "%.2f", r14 / 16384.f);
+            for (const auto& dd : det) if (dd.q == r14) snprintf(v[0], 16, "%s", dd.t);
+            labels[0] = "RATIO"; pos[0] = (t.push[0] > 0 ? t.push[0] : 8192) / 32767.f;
+            labels[1] = "COUPLING"; if (t.push[1] <= 0) snprintf(v[1], 16, "OFF"); else snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767);
+            pos[1] = t.push[1] / 32767.f;
+            const int wb = t.push[2] > 0 ? t.push[2] : 8192;
+            labels[2] = "BRIGHTNESS"; snprintf(v[2], 16, "%+d", (wb - 8192) * 100 / 24575); pos[2] = wb / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_TILT) {  // AETHER: wirtualne przechylenie
         labels[0] = "PITCH TILT"; snprintf(v[0], 16, "%+d", (int)lrintf(t.tilt[0] * 60.f / 32767.f)); pos[0] = (t.tilt[0] + 32767) / 65534.f;
         labels[1] = "VOL TILT"; snprintf(v[1], 16, "%d", (int)lrintf(t.tilt[1] * 30.f / 32767.f)); pos[1] = t.tilt[1] / 32767.f;
         labels[2] = "SHAKE"; snprintf(v[2], 16, "%d", (t.tilt[2] * 100 + 16383) / 32767); pos[2] = t.tilt[2] / 32767.f;

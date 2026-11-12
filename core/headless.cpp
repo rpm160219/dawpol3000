@@ -417,6 +417,20 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "arc") || !strcmp(screen, "arcp2")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_ARC;
+        engineDefaultKnobs(ENG_ARC, tr.knob);
+        tr.knob[0] = 20000; tr.push[1] = 9000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "arcp2")) app.synth.setAlt(true);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
     } else if (!strcmp(screen, "aetherengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

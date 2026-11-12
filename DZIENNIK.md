@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:13
+**Zmienione — port silnika ARC (op1r, ultralazr), 1:1; lista silników alfabetycznie:**
+- `core/ui/dialogs.cpp` — lista silników na karcie ENGINE (okno TRACK / NEW TRACK) w kolejności alfabetycznej (indeksy silników bez zmian; strzałki i przewijanie po nowej kolejności).
+- `third_party/op1r_arc/` — oryginalne `arc.c`, tablice, kalibracja, geometria, `duddell.svg`, generatory, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `seq/seq_text.h`; `duddell_art.h`.
+- `core/synth/arc_dsp.*` — arc.c jako C, stan głosu i dane ekranu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 19, sam silnik (AMP ENV), wyjście −3 dB (był ok. 3 dB głośniejszy od reszty).
+- `core/ui/arc_screen*` — ekran 1:1 (portret fazowy, elektrody, łuk, iskry; bez tarcz) + ilustracja; `core/ui/synth_view.*` — CURRENT / CARBON / HISS / STRIKE, L3: RATIO (zapadki 1:2 … 2:1) / COUPLING / BRIGHTNESS.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `arc`, 13 presetów (oryginał nie ma żadnych).
+- `tests/arc_match.cpp`, `tools/test_arc.sh`; wszystkie skrypty testów linkują ARC.
+- Testy: ARC bit w bit (0 różnic), wszystkie 20 testów 0 różnic; CPU na konsoli 9,5% przy 6 głosach (z 2. lampą). Wysłane na konsolę.
+**Następny krok:** Patryk testuje ARC i kolejność listy.
+**Wymaga od Patryka:** tak — odsłuch / ocena.
+
 ## 2026-11-12 19:56
 **Zmienione — port silnika AETHER (op1r, pcppcp), 1:1 + wirtualny czujnik przechylenia (wybór Patryka: strona TILT + modulacja):**
 - `third_party/op1r_aether/` — oryginalne `aether.c`, geometria, `aether.svg`, `orbit-1.svg`, generator, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `aether_art.h`.

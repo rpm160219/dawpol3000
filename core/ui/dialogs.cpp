@@ -17,6 +17,7 @@
 #include "ui/bloodmoon_screen.h"
 #include "ui/blot_screen.h"
 #include "ui/aether_screen.h"
+#include "ui/arc_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -37,7 +38,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 21;
+static const int NENG = 22;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -99,16 +100,44 @@ static const EngineInfo kEngines[NENG] = {
     {"AETHER", "TILT THEREMIN",
      {"PORT OF THE OP1R AETHER ENGINE", "BY PCPPCP, BIT-EXACT. A THEREMIN", "PLAYED BY TILTING THE OP-1: HERE", "A VIRTUAL TILT ON THE TILT PAGE,",
       "MOVABLE BY MOD ENV AND LFOS.", "SINE TO REEDY, SHAKE = VIBRATO.", "L3: DEAD ZONE, RANGE, VIB RATE."}},
+    {"ARC", "SINGING ARC LAMP",
+     {"PORT OF THE OP1R ARC ENGINE", "BY ULTRALAZR, BIT-EXACT. DUDDELL'S", "SINGING ARC (1899): A VAN DER POL", "LAMP FROM CLEAN SINE TO A",
+      "SCREAMING RELAXATION BUZZ, PLASMA", "HISS, STRIKES, A COUPLED 2ND LAMP.", "L3: RATIO, COUPLING, BRIGHTNESS."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
+// kolejnosc na liscie: alfabetycznie po nazwie (indeksy silnikow w kEngines bez zmian)
+static int engOrder(int pos) {
+    static int ord[NENG];
+    static bool ready = false;
+    if (!ready) {
+        for (int i = 0; i < NENG; i++) ord[i] = i;
+        for (int i = 1; i < NENG; i++)
+            for (int j = i; j > 0 && strcmp(kEngines[ord[j]].name, kEngines[ord[j - 1]].name) < 0; j--) {
+                const int x = ord[j]; ord[j] = ord[j - 1]; ord[j - 1] = x;
+            }
+        ready = true;
+    }
+    return ord[pos];
+}
+static int engPos(int idx) {
+    for (int p = 0; p < NENG; p++) if (engOrder(p) == idx) return p;
+    return 0;
+}
+// nastepny / poprzedni silnik w kolejnosci listy
+static int engStep(int idx, int d) {
+    int p = engPos(idx) + d;
+    p = p < 0 ? 0 : (p > NENG - 1 ? NENG - 1 : p);
+    return engOrder(p);
+}
+
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 20 ? ENG_SAW : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 21 ? ENG_SAW : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) {  // nowy silnik: domyslne galki i strona 2 (np. SUPERSAW: filtr otwarty)
         engineDefaultKnobs(e, t.knob);
         engineDefaultPush(e, t.push);
@@ -160,8 +189,8 @@ void TrackDialog::updateEdit(const Buttons& b) {
     if (b.pressed(B_L2) && card_ > 0) card_--;
     if (b.pressed(B_R2) && card_ < 1 && midi) card_++;
     if (card_ == 1) {  // ENGINE
-        if (b.repeat(B_DOWN) && engSel_ < NENG - 1) engSel_++;
-        if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
+        if (b.repeat(B_DOWN)) engSel_ = engStep(engSel_, 1);
+        if (b.repeat(B_UP)) engSel_ = engStep(engSel_, -1);
         if (b.pressed(B_B)) app_->showArrange();
         if (b.pressed(B_A)) {
             Track& t = p.tracks[edit_];
@@ -262,11 +291,13 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     // przewijana lista: 6 pozycji w normalnym rozmiarze, zaznaczenie trzymane w polu widzenia
     const int VIS = 6;
-    int top = engSel_ - 2;
+    const int selPos = engPos(engSel_);
+    int top = selPos - 2;
     top = top > NENG - VIS ? NENG - VIS : top;
     top = top < 0 ? 0 : top;
-    for (int i = top; i < top + VIS && i < NENG; i++) {
-        float y = 80 + (i - top) * 54;
+    for (int ps = top; ps < top + VIS && ps < NENG; ps++) {
+        const int i = engOrder(ps);
+        float y = 80 + (ps - top) * 54;
         bool sel = i == engSel_;
         if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
@@ -293,6 +324,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 17) drawBloodIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 18) drawBlotIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 19) drawAetherIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 20) drawArcIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
@@ -304,7 +336,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ < 10) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 10 || engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 14) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
+    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 19) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  TILT, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 18) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV, GLIDE", 7, 1.f, pal::dim);
     else if (engSel_ == 13) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);
@@ -322,8 +354,8 @@ void TrackDialog::update(const Buttons& b, const InputState&, float) {
     if (b.pressed(B_L2) && card_ > 0) card_--;
     if (b.pressed(B_R2) && card_ < 1 && type_ == TRACK_MIDI) card_++;
     if (card_ == 1) {
-        if (b.repeat(B_DOWN) && engSel_ < NENG - 1) engSel_++;
-        if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
+        if (b.repeat(B_DOWN)) engSel_ = engStep(engSel_, 1);
+        if (b.repeat(B_UP)) engSel_ = engStep(engSel_, -1);
     } else {
         int nt = type_;
     if (b.repeat(B_UP) || b.repeat(B_DOWN) || b.repeat(B_LEFT) || b.repeat(B_RIGHT)) nt = 1 - type_;
