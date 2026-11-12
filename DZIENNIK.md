@@ -2,8 +2,9 @@
 
 ## 2026-11-12 07:35
 **Zmienione:** `core/ui/piano_roll.*` — warstwy menu zaznaczania (R3) przełączane L2/R2 zamiast L1/R1 (L2 = warstwa 1, R2 = warstwa 2); `core/ui/app.cpp` — gdy menu R3 jest otwarte, L2/R2 nie zmieniają zakładek. README, CLAUDE.md, ARCHITEKTURA.md zaktualizowane. Test: R2 w menu zmienia warstwę i zostaje w piano rollu; po wyjściu z menu L2 przechodzi do ARRANGE.
+`tools/deploy.sh` — wysyłka pod tymczasową nazwę i podmiana (`mv`), bo nadpisanie działającego programu na konsoli się nie udawało.
 **Następny krok:** ocena Patryka; potem step seq/perkusja albo syntezator.
-**Wymaga od Patryka:** tak — ocena.
+**Wymaga od Patryka:** tak — ocena (aplikację uruchomić ponownie, żeby weszła nowa wersja).
 
 ## 2026-11-12 07:20
 **Zmienione:** poprawka mojej pomyłki — `core/ui/app.cpp`: kropki zakładek (PROJECT/ARRANGE/PIANO ROLL) wróciły pod nagłówek; `core/ui/piano_roll.cpp`: kropki warstw paska R3 (L1/R1) przywrócone i przeniesione na dół ekranu (wcześniej leżały na linii). CLAUDE.md — opis położenia obu wskaźników.
