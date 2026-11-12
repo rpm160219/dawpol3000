@@ -7,7 +7,9 @@
 
 namespace dp {
 
-static float S = 2.f, OX = 0.f, OY = 44.f;  // ekran OP-1 -> nasz (ilustracja ustawia inne)
+// ekran OP-1 -> nasz: 1,85x z marginesami 24 px po bokach (scena siega krawedzi 320 px — przy 2x wskazniki
+// dotykaly prawej krawedzi ekranu); ilustracja ustawia inne
+static float S = 1.85f, OX = 24.f, OY = 50.f;
 #define QP(v) ((int32_t)((v) * 1024))
 
 static int16_t SIN_T[8192];

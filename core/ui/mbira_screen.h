@@ -2,7 +2,7 @@
 // Kalimba w trzech czwartych z kciukiem na jezyczku i cztery wskazniki po prawej. Na zywo jak w oryginale: zapalone
 // kreski wskaznikow (STRIKE, TINE, BOX, BUZZ — galki jak slysza je glosy; strona 2: napisy RING / DOUBLE / WAH i ich
 // wartosci), gdy dzwieczy: biale luki drgan przy czubku jezyczka, kregi z otworu, czerwone kreski przy kapslach (BUZZ).
-// Ekran OP-1 320x160 skalowany 2x. Rysowanie w kolejnosci dokumentu (statyczny poczatek w cache).
+// Ekran OP-1 320x160 skalowany 1,85x z marginesami (scena siega obu krawedzi). Rysowanie w kolejnosci dokumentu (statyczny poczatek w cache).
 #pragma once
 #include <stdint.h>
 #include "gfx/canvas.h"

@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 09:30
+**Zmienione:** `core/ui/mbira_screen.*` — ekran MBIRA skalowany 1,85× z marginesami 24 px (przy 2× scena sięgała obu krawędzi, wskaźniki dotykały prawej krawędzi ekranu; uwaga Patryka). `core/ui/splash.cpp` — usunięty podpis o silnikach z ekranu startowego (atrybucja trafi do zakładki CREDITS na końcu).
+**Następny krok:** port REACTOR z op1r.
+**Wymaga od Patryka:** nie.
+
 ## 2026-11-13 09:00
 **Zmienione:**
 - `core/io/factory_presets.cpp` — 20 nowych presetów MBIRA (wersja 2) z MOD ENV, LFO i stroną 2 (RING/DOUBLE/WAH); poziomy sprawdzone; `factoryInstrument()` — brzmienie z presetu fabrycznego po nazwie.

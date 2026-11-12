@@ -129,7 +129,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - TAFFY (port 1:1 z op1r, CZ phase distortion, ekran „bubblegum”): gałki WAVE/DCW/ENV/RES, druga obwiednia = DCW ENV, ta sama infrastruktura co WAVETABLE (ADSR, MOD ENV, 2 LFO, VOICE), ilustracja na karcie ENGINE = twarz z oryginalnego SVG z ustami, nićmi gumy i gwiazdkami; ~7% rdzenia przy 6 głosach.
 - WAVETABLE+ (tryb rozszerzony): 2 oscylatory, sub, filtr LP24/LP12/BP/HP + drive, cele LFO W1/W2/P1/P2/LV1/LV2 (WAVE = obie fale naraz); ~10% rdzenia przy 6 głosach.
 - Presety instrumentów osobno dla silnika (`presets/wavetable/`, `presets/wavetableplus/`, `presets/taffy/`; zestawy fabryczne w `core/io/factory_presets.cpp`: 37 / 45 / 41, kategorie z ikonami); głosy POLY/MONO, glide, unison, AGE.
-- Brakuje: ekran „about” z atrybucją, kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.
+- Brakuje: zakładka CREDITS z atrybucją (decyzja Patryka: na końcu prac; podpis z ekranu startowego usunięty), kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.
 - PEW (port 1:1 z op1r, organy z 9 suwakami + Leslie, ekran „jazz club”): gałki REGISTER/PERCUSSION/DRIVE/LESLIE, strona BARS (wysunięcie suwaków LOW/MID/HIGH), bez drugiej obwiedni (decyzja Patryka), 31 presetów w `presets/pew/`; ~5,6% rdzenia przy 6 głosach.
 - Ekran startowy z nazwą programu (~4,5 s, dowolny przycisk pomija).
 - ELG (port 1:1 z op1r, dron z 3 piłami, ekran „łoś”): „sam silnik” — gałki INTERVAL/DETUNE/TIMBRE/MOVEMENT (L3 = czerwona gałka SYNC: ruch w tempie, OFF / 1/1 … 1/128T), tylko obwiednia głośności, strony SOUND / AMP ENV / PRESETS (31 presetów); ~7,6% rdzenia przy 6 głosach.

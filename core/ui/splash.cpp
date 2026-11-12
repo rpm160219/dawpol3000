@@ -37,7 +37,6 @@ void drawSplash(Canvas& c, float t) {
     const float a3 = ramp(t, 1.1f, 1.7f) * out;
     drawText(c, 320, 360, "POCKET SKETCHBOOK DAW", 10, 1.3f, fade(rgb(150, 150, 150), a3), ALIGN_CENTER);
     for (int i = 0; i < 4; i++) c.fillCircle(296 + i * 16, 396, 3.5f, fade(pal::enc[i], a3));
-    drawText(c, 320, 448, "ENGINES BY HUNDEKRAFT (OP1R)  -  GPL-3.0", 7, 1.f, fade(rgb(80, 80, 80), a3), ALIGN_CENTER);
 }
 
 }  // namespace dp
