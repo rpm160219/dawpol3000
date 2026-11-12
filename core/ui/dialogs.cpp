@@ -226,15 +226,23 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
-    for (int i = 0; i < NENG; i++) {
-        float y = 68 + i * 24;
+    // przewijana lista: 6 pozycji w normalnym rozmiarze, zaznaczenie trzymane w polu widzenia
+    const int VIS = 6;
+    int top = engSel_ - 2;
+    top = top > NENG - VIS ? NENG - VIS : top;
+    top = top < 0 ? 0 : top;
+    for (int i = top; i < top + VIS && i < NENG; i++) {
+        float y = 80 + (i - top) * 54;
         bool sel = i == engSel_;
-        if (sel) c.fillRoundRect(16, y - 4, 236, 24, 7, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
+        if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
-        drawText(c, 30, y, kEngines[i].name, 10, 1.3f, col);
-        drawText(c, 30, y + 13, kEngines[i].sub, 5.5f, 1.f, sel ? pal::white : pal::dim);
-        if (i == cur) c.fillCircle(238, y + 7, 3.5f, pal::green);  // silnik zapisany na sciezce
+        drawText(c, 30, y, kEngines[i].name, 16, 1.8f, col);
+        drawText(c, 30, y + 22, kEngines[i].sub, 8, 1.1f, sel ? pal::white : pal::dim);
+        if (i == cur) c.fillCircle(238, y + 14, 4.f, pal::green);  // silnik zapisany na sciezce
     }
+    // strzalki: jest cos powyzej / ponizej
+    if (top > 0) { c.line(128, 66, 134, 60, 1.5f, pal::dim); c.line(134, 60, 140, 66, 1.5f, pal::dim); }
+    if (top + VIS < NENG) { c.line(128, 400, 134, 406, 1.5f, pal::dim); c.line(134, 406, 140, 400, 1.5f, pal::dim); }
     c.line(258, 70, 258, 410, 1.5f, pal::steel);
     if (engSel_ == 4) drawElgIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 5) drawEvaIllustration(c, 280, 68, 336, 190);
@@ -252,8 +260,8 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 9) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 11) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);
-    else if (engSel_ < 11) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ < 10) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 10 || engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 414, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');

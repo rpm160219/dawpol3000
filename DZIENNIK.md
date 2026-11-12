@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:40
+**Zmienione (uwaga Patryka):** `core/ui/dialogs.cpp` — lista silników na karcie ENGINE znowu w normalnym rozmiarze (jak na początku), przewijana: 6 pozycji naraz, zaznaczenie zawsze widoczne, strzałki ^ / v gdy jest coś wyżej/niżej. Podpis SID: FENV zamiast AMP. Wysłane na konsolę.
+**Następny krok:** Patryk testuje VAPORA, OCTAVE i listę; ewentualnie build pod Windows (wymaga jednej komendy z hasłem sudo).
+**Wymaga od Patryka:** tak — odsłuch / ocena.
+
 ## 2026-11-12 18:15
 **Zmienione — port silnika VAPORA (op1r, AiAAAA), wybór Patryka: 1:1 + modulacja + FILTER ENV, presety 15 + 15, OCTAVE dla wszystkich silników:**
 - `third_party/op1r_vapora/` — oryginalne `vapora.c`, `vapora_dsp.c/.h`, tablice PADsynth, kod ekranu `vapora_screen.c` z nagłówkami, `vapora.svg`, `plugin.json`, `presets.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`, `seq/seq_text.h`.

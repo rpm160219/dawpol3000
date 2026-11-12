@@ -144,4 +144,5 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - MONOLIT (port 1:1 z op1r, bas/lead: 3 piły + sub, filtr drabinkowy): makra SHAPE/CUTOFF/CONTOUR/HEAT, L3 = BODY/VEL/AGE, strony SOUND / VOICE (tylko MODE i GLIDE) / AMP ENV / FILTER ENV (na CUTOFF) / MOD ENV / LFO 1 / LFO 2 / PRESETS, wyjście −3 dB, 32 presety (12 + 20); C (`monolit_dsp.c`); ~13% rdzenia. Demo z partią ACID (v5, ~24% rdzenia).
 - VAPORA (port 1:1 z op1r, AiAAAA — pad PADsynth, ekran oceanu ze słońcem): MORPH/THICKNESS/BRIGHTNESS/MOTION, L3 = CHARACTER (14 widm) / INTERVAL / SUN (wzór słońca, tylko obraz) / SPEED, strony SOUND / AMP ENV / FILTER ENV (na BRIGHTNESS) / MOD ENV / LFO 1 / LFO 2 / PRESETS, 31 presetów (INIT + 15 z oryginału + 15 nowych), wyjście +9,5 dB; ekran = oryginalny kod C; C (`vapora_dsp.c`); ~5,5% rdzenia. Demo z partią TIDE (v6, ~27% rdzenia).
 - OCTAVE instrumentu (−3..+3) dla wszystkich silników: L1/R1 w SYNTH, zapis w projekcie/presecie (`oct`); 4 basy MONOLIT dostały oktawę −1 jak w oryginale (presety fabryczne v3 zastępują stare).
-- Następny krok: Patryk testuje VAPORA i OCTAVE.
+- Karta ENGINE: przewijana lista silników w pełnym rozmiarze (6 widocznych).
+- Następny krok: Patryk testuje VAPORA i OCTAVE; opcjonalnie build pod Windows (mingw-w64, wymaga sudo).
