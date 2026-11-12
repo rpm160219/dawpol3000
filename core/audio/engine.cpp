@@ -34,7 +34,10 @@ void AudioEngine::applyProject() {
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];
         }
         wt_[i].setKnobs(t.knob);
-        wt_[i].setEnvelope(t.env[0], t.env[1], t.env[2], t.env[3]);
+        // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
+        wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3]);
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3]);
+        for (int l = 0; l < 2; l++) wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest);
     }
     applyMutes();
     master_ = p.masterVol;

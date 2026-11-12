@@ -32,6 +32,7 @@ public:
     // Dla ekranu instrumentu: roznica faz oscylatorow i liczba grajacych glosow WAVETABLE na sciezce
     uint32_t wtDrift(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].drift() : 0; }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
+    int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }
     float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione
     void process(float* out, int frames);

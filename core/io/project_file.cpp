@@ -31,6 +31,11 @@ bool saveProjectFile(const Project& p, const char* path) {
         if (t.type == TRACK_MIDI)
             fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f", t.engine == ENG_SAW ? "saw" : "wavetable",
                     t.knob[0], t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
+        if (t.type == TRACK_MIDI) {
+            fprintf(f, " fenv %.4f %.4f %.4f %.4f", t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3]);
+            for (int l = 0; l < 2; l++)
+                fprintf(f, " lfo%d %d %.4f %.4f %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest);
+        }
         fputc('\n', f);
     }
     fputc('\n', f);
@@ -114,6 +119,15 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
                     for (int j = 0; j < 4; j++) { int x = atoi(tok[i + 1 + j]); t.knob[j] = (int16_t)(x < 0 ? 0 : x > 32767 ? 32767 : x); }
                 if (!strcmp(tok[i], "env"))
                     for (int j = 0; j < 4; j++) t.env[j] = (float)atof(tok[i + 1 + j]);
+                if (!strcmp(tok[i], "fenv"))
+                    for (int j = 0; j < 4; j++) t.fenv[j] = (float)atof(tok[i + 1 + j]);
+                if (!strcmp(tok[i], "lfo1") || !strcmp(tok[i], "lfo2")) {
+                    Lfo& L = t.lfo[tok[i][3] - '1'];
+                    L.shape = (uint8_t)(atoi(tok[i + 1]) % LFO_SHAPES);
+                    L.rate = (float)atof(tok[i + 2]);
+                    L.depth = (float)atof(tok[i + 3]);
+                    L.dest = (uint8_t)(atoi(tok[i + 4]) % LFO_DESTS);
+                }
             }
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {
             curPat = p.nPatterns++;

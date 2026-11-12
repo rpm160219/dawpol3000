@@ -12,6 +12,15 @@ const char* engineName(int e) {
     }
 }
 
+const char* lfoShapeName(int s) {
+    static const char* n[LFO_SHAPES] = {"SINE", "TRIANGLE", "SAW", "SQUARE", "RANDOM"};
+    return s >= 0 && s < LFO_SHAPES ? n[s] : "?";
+}
+const char* lfoDestName(int d) {
+    static const char* n[LFO_DESTS] = {"WAVE", "DETUNE", "CUTOFF", "RESONANCE", "PITCH", "VOLUME"};
+    return d >= 0 && d < LFO_DESTS ? n[d] : "?";
+}
+
 int Project::countTracks(int type) const {
     int n = 0;
     for (int i = 0; i < nTracks; i++) if (tracks[i].type == type) n++;

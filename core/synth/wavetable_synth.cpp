@@ -30,7 +30,46 @@ void WavetableSynth::init(float outRate) {
     zp_ = 0;
     fifoPos_ = BLOCK / 2;
     volK_ = 1.f - expf(-1.f / (0.01f * outRate));
+    fade_ = 1.f / (0.002f * voiceRate_);  // ~2 ms
+    for (int i = 0; i < 4; i++) modKnob_[i].store(knobs_[i]);
     setEnvelope(0.005f, 0.4f, 0.75f, 0.3f);
+    setFilterEnv(0.005f, 0.3f, 0.f, 0.f);
+}
+
+void WavetableSynth::setFilterEnv(float a, float d, float s, float amount) {
+    const float br = voiceRate_ / BLOCK;  // bloki na sekunde
+    fA_ = a > 0 ? 1.f / (a * br) : 2.f;
+    fD_ = d > 0 ? 1.f - expf(-5.f / (d * br)) : 1.f;
+    fS_ = s < 0 ? 0 : (s > 1 ? 1 : s);
+    fAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
+}
+
+void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest) {
+    if (i < 0 || i > 1) return;
+    lfo_[i].shape = shape;
+    lfo_[i].rate = rate;
+    lfo_[i].depth = depth < 0 ? 0 : (depth > 1 ? 1 : depth);
+    lfo_[i].dest = dest;
+}
+
+// Wartosc LFO -1..1, faza przesuwana o jeden blok glosu.
+float WavetableSynth::lfoValue(LfoState& l) {
+    double prev = l.ph;
+    l.ph += l.rate * BLOCK / voiceRate_;
+    if (l.ph >= 1.0) {
+        l.ph -= floor(l.ph);
+        l.seed = l.seed * 1664525u + 1013904223u;  // nowa wartosc losowa co cykl
+        l.rnd = (int32_t)(l.seed >> 8) / 8388608.f - 1.f;
+    }
+    (void)prev;
+    float p = (float)l.ph;
+    switch (l.shape) {
+    case 0: return sinf(6.2831853f * p);
+    case 1: return p < 0.5f ? 4.f * p - 1.f : 3.f - 4.f * p;
+    case 2: return 1.f - 2.f * p;
+    case 3: return p < 0.5f ? 1.f : -1.f;
+    default: return l.rnd;
+    }
 }
 
 void WavetableSynth::setKnobs(const int16_t k[4]) {
@@ -38,6 +77,7 @@ void WavetableSynth::setKnobs(const int16_t k[4]) {
 }
 
 void WavetableSynth::setEnvelope(float a, float d, float s, float r) {
+    relT_ = r;
     atk_ = a > 0 ? 1.f / (a * voiceRate_) : 2.f;
     dec_k_ = d > 0 ? 1.f - expf(-5.f / (d * voiceRate_)) : 1.f;  // ~ -43 dB po czasie d
     sus_ = s < 0 ? 0 : (s > 1 ? 1 : s);
@@ -54,7 +94,20 @@ void WavetableSynth::noteOn(int pitch, float vel) {
         if (slot < 0) { slot = 0; for (int i = 1; i < VOICES; i++) if (v_[i].age < v_[slot].age) slot = i; }
     }
     Voice& v = v_[slot];
+    v.age = ++age_;
+    if (v.stage != OFF && v.env > 1e-3f) {  // glos jeszcze brzmi: najpierw wycisz (~2 ms), potem nowa nuta
+        v.stage = FADE;
+        v.pendPitch = pitch;
+        v.pendVel = vel;
+        return;
+    }
+    startVoice(slot, pitch, vel);
+}
+
+void WavetableSynth::startVoice(int slot, int pitch, float vel) {
+    Voice& v = v_[slot];
     v.pitch = pitch;
+    v.pendPitch = -1;
     v.vel = (int)lrintf(vel * 127.f);
     if (v.vel < 1) v.vel = 1;
     if (v.vel > 127) v.vel = 127;
@@ -63,20 +116,27 @@ void WavetableSynth::noteOn(int pitch, float vel) {
     v.stage = ATTACK;
     v.env = atk_ >= 1.f ? 1.f : 0.f;
     if (v.env >= 1.f) v.stage = DECAY;
-    v.age = ++age_;
+    v.fstage = ATTACK;
+    v.fenv = 0;
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
 }
 
 void WavetableSynth::noteOff(int pitch) {
-    for (auto& v : v_)
-        if (v.stage != OFF && v.stage != RELEASE && v.pitch == pitch) {
+    for (auto& v : v_) {
+        if (v.stage == FADE && v.pendPitch == pitch) { v.pendPitch = -1; continue; }  // puszczona przed startem
+        if (v.stage != OFF && v.stage != RELEASE && v.stage != FADE && v.pitch == pitch) {
             v.stage = RELEASE;
+            v.fstage = RELEASE;
             if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; }
         }
+    }
 }
 
 void WavetableSynth::allOff() {
-    for (auto& v : v_) if (v.stage != OFF) { v.stage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
+    for (auto& v : v_) {
+        v.pendPitch = -1;
+        if (v.stage != OFF) { v.stage = RELEASE; v.fstage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
+    }
 }
 
 // Jeden blok glosow (128 probek przy 96 kHz) -> 64 probki wyjscia.
@@ -87,23 +147,56 @@ void WavetableSynth::renderBlock() {
     int16_t out[BLOCK];
     int act = 0, loud = -1;
     float loudEnv = -1;
+    // LFO raz na blok (wspolne dla glosow sciezki)
+    // cele 0..3 = galki silnika, 4 = PITCH (glebokosc 1 = +-1 oktawa), 5 = VOLUME (tremolo: 1 - glebokosc .. 1)
+    float mod[6] = {0, 0, 0, 0, 0, 0};
+    float trem = 1.f;
+    for (int l = 0; l < 2; l++) {
+        float val = lfoValue(lfo_[l]);
+        if (lfo_[l].depth <= 0) continue;
+        if (lfo_[l].dest == 5) trem *= 1.f - lfo_[l].depth * 0.5f * (1.f - val);
+        else mod[lfo_[l].dest] += val * lfo_[l].depth;
+    }
+    const float pitchMul = mod[4] != 0 ? powf(2.f, mod[4]) : 1.f;
+    int16_t vk[8];
+    int16_t loudK[4] = {knobs_[0], knobs_[1], knobs_[2], knobs_[3]};
     for (int vi = 0; vi < VOICES; vi++) {
         Voice& v = v_[vi];
         if (v.stage == OFF) continue;
         act++;
-        for (int i = 0; i < BLOCK; i++) pitchBuf[i] = v.inc;
-        wavetable_dsp_render(ST(st_, vi), out, knobs_, pitchBuf, v.vel);
+        // obwiednia filtra (na blok)
+        switch (v.fstage) {
+        case ATTACK: v.fenv += fA_; if (v.fenv >= 1.f) { v.fenv = 1.f; v.fstage = DECAY; } break;
+        case DECAY: v.fenv += (fS_ - v.fenv) * fD_; break;
+        case RELEASE: v.fenv -= v.fenv * (relT_ > 0 ? 1.f - expf(-5.f * BLOCK / (relT_ * voiceRate_)) : 1.f); break;
+        default: break;
+        }
+        // galki glosu = galki sciezki + LFO + obwiednia filtra (przy zerowych modulacjach — bez zmian)
+        for (int i = 0; i < 8; i++) vk[i] = knobs_[i];
+        for (int i = 0; i < 4; i++) {
+            float m = mod[i] + (i == 2 ? fAmt_ * v.fenv : 0.f);
+            if (m != 0.f) {
+                int x = knobs_[i] + (int)lrintf(m * 32767.f);
+                vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
+            }
+        }
+        uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)v.inc * pitchMul) : v.inc;
+        for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+        wavetable_dsp_render(ST(st_, vi), out, vk, pitchBuf, v.vel);
         for (int i = 0; i < BLOCK; i++) {
             switch (v.stage) {
             case ATTACK: v.env += atk_; if (v.env >= 1.f) { v.env = 1.f; v.stage = DECAY; } break;
             case DECAY: v.env += (sus_ - v.env) * dec_k_; if (fabsf(v.env - sus_) < 1e-4f) { v.env = sus_; v.stage = SUSTAIN; } break;
             case SUSTAIN: break;
             case RELEASE: v.env -= v.env * rel_k_; if (v.env < 1e-4f) { v.env = 0; v.stage = OFF; } break;
+            case FADE: v.env -= fade_; if (v.env <= 0.f) { v.env = 0; v.stage = OFF; } break;
             }
-            sum[i] += (double)out[i] * v.env;
+            sum[i] += trem != 1.f ? (double)out[i] * v.env * trem : (double)out[i] * v.env;
         }
-        if (v.env > loudEnv) { loudEnv = v.env; loud = vi; }
+        if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel);  // po wyciszeniu
+        if (v.env > loudEnv) { loudEnv = v.env; loud = vi; for (int i = 0; i < 4; i++) loudK[i] = vk[i]; }
     }
+    for (int i = 0; i < 4; i++) modKnob_[i].store(loudK[i], std::memory_order_relaxed);
     if (loud >= 0) drift_.store(ST(st_, loud)->ph2 - ST(st_, loud)->ph1, std::memory_order_relaxed);
     active_.store(act, std::memory_order_relaxed);
     // decymacja 2:1 (jak dec_block w harnessie: ta sama kolejnosc sumowania -> wynik identyczny)
@@ -124,15 +217,19 @@ void WavetableSynth::renderBlock() {
 void WavetableSynth::render(float* out, int n) {
     bool any = false;
     for (auto& v : v_) if (v.stage != OFF) { any = true; break; }
-    if (!any && fifoPos_ >= BLOCK / 2) {
+    if (any) flush_ = 2;  // po ostatnim glosie jeszcze 2 bloki ciszy: ogon filtra decymujacego wybrzmiewa (bez klika)
+    if (!any && fifoPos_ >= BLOCK / 2 && flush_ == 0) {
         vol_ = volT_;
         active_.store(0, std::memory_order_relaxed);
-        // ogon decymatora wygasa po ciszy — wyzeruj, zeby kolejna nuta startowala czysto
-        for (int i = 0; i < 2 * TAPS; i++) z_[i] = 0;
         return;
     }
     for (int i = 0; i < n; i++) {
-        if (fifoPos_ >= BLOCK / 2) renderBlock();
+        if (fifoPos_ >= BLOCK / 2) {
+            bool live = false;
+            for (auto& v : v_) if (v.stage != OFF) { live = true; break; }
+            if (!live && flush_ > 0) flush_--;
+            renderBlock();
+        }
         vol_ += (volT_ - vol_) * volK_;
         float x = fifo_[fifoPos_++] * vol_;
         float ax = x < 0 ? -x : x;

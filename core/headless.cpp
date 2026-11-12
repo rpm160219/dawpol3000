@@ -92,10 +92,17 @@ int headlessPng(const char* path, const char* screen) {
         app.roll.setSelectLayer(1);
         app.roll.selectRect(4, 63, 9, 72);
         app.roll.setCursor(9, 72);
-    } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv")) {
+    } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv") || !strcmp(screen, "synthfenv") ||
+               !strcmp(screen, "synthlfo")) {
+        Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "synthfenv")) { tr.fenv[1] = 0.6f; tr.fenv[2] = 0.3f; tr.fenv[3] = 0.5f; }
+        if (!strcmp(screen, "synthlfo")) { tr.lfo[0].depth = 0.35f; tr.lfo[0].rate = 3.f; tr.lfo[0].dest = DEST_WAVE; }
+        app.markDirty();
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "synthenv")) app.synth.setPage(1);
+        if (!strcmp(screen, "synthfenv")) app.synth.setPage(2);
+        if (!strcmp(screen, "synthlfo")) app.synth.setPage(3);
         InputState in;
         in.btn[B_A] = true;  // trzymana nuta
         app.update(in, 0.016f);

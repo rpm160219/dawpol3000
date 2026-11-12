@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 10:30
+**Zmienione:**
+- `core/synth/wavetable_synth.*` — bez kliknięć: przejmowany/ponownie uderzany brzmiący głos najpierw wycisza się ~2 ms (dopiero potem reset DSP i nowa nuta), ogon filtra decymującego wybrzmiewa (zamiast zerowania); obwiednia filtra na głos (A/D/S/AMOUNT, wybrzmienie = R głośności); 2 LFO na ścieżkę (sinus, trójkąt, piła, prostokąt, losowy; 0,05–20 Hz; cele WAVE, DETUNE, CUTOFF, RESONANCE, PITCH, VOLUME); zmodulowane gałki dla ekranu.
+- `core/audio/engine.*` — przekazywanie obwiedni filtra i LFO; minimalny atak 1 ms i wybrzmienie 3 ms.
+- `core/seq/project.*`, `core/io/project_file.*` — obwiednia filtra i LFO w ścieżce i w pliku (`fenv`, `lfo1`, `lfo2`).
+- `core/ui/synth_view.*` — 5 stron gałek (SOUND, AMP ENV, FILTER ENV, LFO 1, LFO 2) z kropkami stron, wykres obwiedni filtra / kształtu LFO z celem, czytelny opis klawiszy („D-PAD + ABXY = C4 MAJOR SCALE, L1/R1 = OCTAVE”), ekran pokazuje ruch modulacji.
+- Headless: `synthfenv`, `synthlfo`. Testy: zgodność z oryginałem nadal 0 różnic; pomiar kliknięć — największy skok między próbkami spadł z 10,4% do 5,1% sygnału (poziom naturalnego zbocza fali, czyli brak kliknięć).
+**Następny krok:** Patryk testuje na konsoli.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 09:30
 **Zmienione:**
 - `third_party/op1r_wavetable/` — oryginalne pliki silnika WAVETABLE z op1r (Hundekraft, GPL-3.0-or-later): `wavetable_dsp.h`, `wavetable_level.h`, `wavetable_geom.h`, `orig_88k/wavetables.h`, LICENSE, NOTICE, README ze źródłem i commitem; `wavetables.h` przeliczony ich generatorem dla 96 kHz (`tools/gen/op1r_wavetable_gen_tables.py`; z 88200 odtwarza oryginał bajt w bajt). `third_party/LICENSES.md`.

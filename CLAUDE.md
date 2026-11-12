@@ -92,7 +92,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - W PATTERN/ARRANGE: D-pad = kursor (kroki/ścieżki/klipy), A = wstaw/przełącz, B = usuń, X/Y = narzędzia (kopiuj, klonuj), analogi = enkodery (wartości, zoom/scroll). Poniższe mapowanie nut dotyczy trybu grania (KEYS).
 - D-pad + ABXY = 8 nut skali (skala/tonacja wybieralna), L1/R1 = oktawa −/+.
 - L2/R2 = zakładki w lewo/prawo: PROJECT ↔ ARRANGE ↔ PIANO ROLL ↔ SYNTH (docelowo też DRUM, TAPE, MIXER).
-- SYNTH: D-pad + ABXY = nuty skali, L1/R1 = oktawa, Select = strona gałek SOUND/ENVELOPE. Silnik ścieżki wybiera się L1/R1 w oknach NEW TRACK / TRACK. R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
+- SYNTH: D-pad + ABXY = nuty skali, L1/R1 = oktawa klawiszy, Select = następna strona gałek (SOUND, AMP ENV, FILTER ENV, LFO 1, LFO 2). Silnik ścieżki wybiera się L1/R1 w oknach NEW TRACK / TRACK. R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
 - L3 (klik lewej gałki) = pasek NARZĘDZI w ARRANGE i PIANO ROLL: B UNDO, A REDO, Y IN/OUT (raz = IN na kursorze, drugi raz = OUT i włącza pętlę), X LOOP wł/wył; L3 ponownie = wyjście. Pętla w ARRANGE w taktach (wyłączona = utwór gra raz), w PIANO ROLL w krokach patternu.
 - R3 (klik prawej gałki) = tryb ZAZNACZANIA w piano rollu, 2 warstwy (L2/R2 — w tym menu nie zmieniają zakładek): 1) B SELECT / A DELETE / Y COPY / X PASTE; 2) B TRANSPOSE (trzymaj + góra/dół) / A MOVE (trzymaj + krzyżak) / Y OCTAVE (trzymaj + góra/dół) / X DUPLICATE; R3 ponownie = wyjście. (Y/X w warstwie 2 dobrane przez Claude — do potwierdzenia przez Patryka.)
 - Paski akcji (L3/R3) zawsze tym samym elementem `actionBar`: 4 pigułki w kolumnach gałek, kolejność B, A, Y, X, kolory steel / czerwony / tan / szary. Na PC: U = L3, O = R3. RG35XX: L3 = przycisk 12, R3 = 15.
@@ -122,6 +122,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 
 ## Aktualny stan
 - Etap: 4 (silniki) rozpoczęty — **WAVETABLE z op1r przeniesiony 1:1** (DSP zgodny bit w bit z oryginałem, ekran przeniesiony). Etapy 2/3 (sekwencer, arrange) działają.
+- WAVETABLE ma też obwiednię filtra i 2 LFO z wyborem celu (dodatki DAW-POL; przy zerowych ustawieniach brzmi bit w bit jak oryginał).
 - Działa: PROJECT (zapis/odczyt `.dpp`, autozapis), ARRANGE (16 MIDI + 4 audio, klipy, VU, mute/solo, 32 kolory, pętla IN/OUT), PIANO ROLL (wielotaktowy, zaznaczanie 2 warstwy, pętla), SYNTH (WAVETABLE: 4 gałki + ADSR, ekran oscyloskopowy), undo/redo, paski akcji L3/R3.
 - WAVETABLE: ~1,4% rdzenia na głos (6 głosów/ścieżkę ≈ 8%); ~5 w pełni obciążonych ścieżek mieści się w budżecie 50%.
 - Brakuje: ekran „about” z atrybucją, kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.

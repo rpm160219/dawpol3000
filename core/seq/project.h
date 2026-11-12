@@ -14,6 +14,16 @@ enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
 enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_COUNT };
 const char* engineName(int e);
+// LFO: ksztalty i cele modulacji
+enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
+enum LfoDest : uint8_t { DEST_WAVE, DEST_DETUNE, DEST_CUTOFF, DEST_RESO, DEST_PITCH, DEST_VOLUME, LFO_DESTS };
+const char* lfoShapeName(int s);
+const char* lfoDestName(int d);
+struct Lfo {
+    uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
+    float rate = 2.f;    // Hz (0.05 .. 20)
+    float depth = 0.f;   // 0..1
+};
 
 struct Track {
     uint8_t type = TRACK_MIDI;
@@ -25,6 +35,9 @@ struct Track {
     uint8_t engine = ENG_WAVETABLE;
     int16_t knob[4] = {16384, 8192, 20000, 8192};
     float env[4] = {0.005f, 0.4f, 0.75f, 0.3f};
+    // Obwiednia filtra: A, D (s), S (0..1), AMOUNT (-1..1, ulamek zakresu CUTOFF); wybrzmienie = R obwiedni glosnosci
+    float fenv[4] = {0.005f, 0.3f, 0.f, 0.f};
+    Lfo lfo[2];
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };
 
