@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:33
+**Zmienione — port silnika BLOODMOON (op1r, Nola Drift), 1:1 + AMP ENV:**
+- `third_party/op1r_bloodmoon/` — oryginalne `bloodmoon.c`, `moon.c`, geometria, SVG, generator, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `bloodmoon_art.h`.
+- `core/synth/bloodmoon_dsp.*` — oba pliki jako C, stan głosu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 16, sam silnik (AMP ENV).
+- `core/ui/bloodmoon_screen.*` — ekran 1:1 (księżyc, rozeta, dzwony, gwiazdy; bez dublujących napisów) + ilustracja; `core/ui/synth_view.*` — BLOOD / ECLIPSE / HAUNTING / MOONRISE (Hz); `core/ui/dialogs.cpp` — BLOODMOON na liście.
+- `tools/gen/svg_to_art2.py` — koło z wypełnieniem i obrysem rysuje oba (wcześniej obrys ginął — księżyc był bez czerwonej obwódki).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `bloodmoon`, 9 presetów (8 autorki).
+- `tests/bloodmoon_match.cpp`, `tools/test_bloodmoon.sh`; wszystkie skrypty testów linkują BLOODMOON.
+- Testy: BLOODMOON bit w bit (0 różnic), wszystkie 17 testów 0 różnic; CPU na konsoli 5,7% przy 6 głosach. Wysłane na konsolę.
+**Następny krok:** Patryk testuje BLOODMOON.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 19:23
 **Zmienione — port silnika HOLLOW SAINT (op1r, build kennel), 1:1 bez dodatków:**
 - `third_party/op1r_hollowsaint/` — oryginalne `hollow_saint.c`, geometria, `hollow_saint.svg`, `plugin.json`, `presets.py`, generator ekranu, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `hollow_saint_art.h`.

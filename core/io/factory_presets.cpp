@@ -572,9 +572,24 @@ static const FactoryPreset kHollow[] = {
     {"DUSTY BELL", CAT_BELL, 1, "k 0 8000 0 32767 push 1260 28000 2340 env 0.05 1.5 0.8 2.5 relic 1"},
 };
 
+// BLOODMOON: 8 presetow oryginalu (presets/*.aif autorki: galki i oktawa 1:1, ADSR OP-1 -> sekundy (v / 8192)^1,5;
+// efekty OP-1 pominiete).
+static const FactoryPreset kBlood[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"BLOOD RITE", CAT_PAD, 1, "k 32767 26000 16000 12000 env 0.001 1.851 0.61 1.773"},
+    {"CATHEDRAL", CAT_KEYS, 1, "k 14000 20000 7000 9000 env 0.048 0.722 0.793 1.773"},
+    {"CRYPT DRONE", CAT_PAD, 1, "k 30000 0 9000 2500 env 0.627 0.965 1.0 2.472 oct -1"},
+    {"FUNERAL BELL", CAT_BELL, 1, "k 9000 32767 2500 4000 env 0.001 1.152 0.183 2.234"},
+    {"HOLLOW SAINT", CAT_KEYS, 1, "k 0 12000 3500 6000 env 0.019 0.722 0.732 1.152"},
+    {"MOON TREMOR", CAT_LEAD, 1, "k 18000 16000 32767 30000 env 0.001 0.722 0.916 0.627"},
+    {"SUNKEN PIPES", CAT_PAD, 1, "k 26000 4000 13000 1500 env 0.125 0.722 1.0 2.234 oct -1"},
+    {"WITCH CHOIR", CAT_PAD, 1, "k 20000 9000 22000 7500 env 0.222 0.722 0.855 1.938"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "bloodmoon")) { *n = sizeof kBlood / sizeof kBlood[0]; *engine = ENG_BLOOD; return kBlood; }
     if (!__builtin_strcmp(eng, "hollowsaint")) { *n = sizeof kHollow / sizeof kHollow[0]; *engine = ENG_HOLLOW; return kHollow; }
     if (!__builtin_strcmp(eng, "brass")) { *n = sizeof kBrass / sizeof kBrass[0]; *engine = ENG_BRASS; return kBrass; }
     if (!__builtin_strcmp(eng, "mixtur")) { *n = sizeof kMixtur / sizeof kMixtur[0]; *engine = ENG_MIXTUR; return kMixtur; }

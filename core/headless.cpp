@@ -375,6 +375,24 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "blood")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_BLOOD;
+        engineDefaultKnobs(ENG_BLOOD, tr.knob);
+        tr.knob[2] = 20000; tr.knob[3] = 24000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "bloodengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 17; i++) tap(app, B_DOWN);  // BLOODMOON
     } else if (!strcmp(screen, "hollowengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

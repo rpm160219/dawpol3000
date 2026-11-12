@@ -67,10 +67,13 @@ for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
         add_poly([float(attr(tag, k)) for k in ('x1', 'y1', 'x2', 'y2')], tag, False)
     elif name == 'circle':
         fill, stroke = attr(tag, 'fill', 'none'), attr(tag, 'stroke', 'none')
-        filled = fill != 'none'
-        order.append((2, len(circles)))
-        circles.append((float(attr(tag, 'cx')), float(attr(tag, 'cy')), float(attr(tag, 'r')), col(fill if filled else stroke),
-                        int(filled), float(attr(tag, 'stroke-width', '1')), group))
+        cx, cy, r, w = float(attr(tag, 'cx')), float(attr(tag, 'cy')), float(attr(tag, 'r')), float(attr(tag, 'stroke-width', '1'))
+        if fill != 'none':  # wypelnienie, a na nim obrys (gdy jest oba)
+            order.append((2, len(circles)))
+            circles.append((cx, cy, r, col(fill), 1, w, group))
+        if stroke != 'none':
+            order.append((2, len(circles)))
+            circles.append((cx, cy, r, col(stroke), 0, w, group))
     group = gsave
 print('/* wygenerowane przez tools/gen/svg_to_art2.py z %s (grafika: autorzy op1r, GPL-3.0-or-later) */' % src.split('/')[-1])
 print('#pragma once')

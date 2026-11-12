@@ -425,6 +425,9 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_BLOOD) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        bm_.draw(c, shown);
     } else if (t.engine == ENG_HOLLOW) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -694,7 +697,13 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_HOLLOW) {  // HOLLOW SAINT: burdon, struny, brzeczyk kola, katedra
+    if (k == K_SOUND && t.engine == ENG_BLOOD) {  // BLOODMOON: harmoniczne, dzwon, wibrato, tempo wibrata
+        static const char* L[4] = {"BLOOD", "ECLIPSE", "HAUNTING", "MOONRISE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        if (t.knob[1] <= 0) snprintf(v[1], 16, "OFF");
+        const float hz = 0.15f + ((t.knob[3] * t.knob[3]) >> 15) * 8.85f / 32767.f;  // 0,15 .. 9 Hz, krzywa kwadratowa
+        snprintf(v[3], 16, "%.2fHZ", hz);
+    } else if (k == K_SOUND && t.engine == ENG_HOLLOW) {  // HOLLOW SAINT: burdon, struny, brzeczyk kola, katedra
         static const char* L[4] = {"DRONE", "STRINGS", "WHEEL BUZZ", "CATHEDRAL"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         if (t.knob[0] <= 0) snprintf(v[0], 16, "OFF");

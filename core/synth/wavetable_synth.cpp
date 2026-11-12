@@ -15,6 +15,7 @@
 #include "synth/mixtur_dsp.h"
 #include "synth/brass_dsp.h"
 #include "synth/hollowsaint_dsp.h"
+#include "synth/bloodmoon_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -125,6 +126,7 @@ void WavetableSynth::init(float outRate) {
     if (!mxt_) mxt_ = mixturCreate();
     if (!brs_) brs_ = brassCreate();
     if (!hls_) hls_ = hollowCreate();
+    if (!bld_) bld_ = bloodCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -440,6 +442,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 13) mixturNoteOn(mxt_, slot, knobs_);
     else if (kind_ == 14) brassNoteOn(brs_, slot, knobs_);
     else if (kind_ == 15) hollowNoteOn(hls_, slot, knobs_);
+    else if (kind_ == 16) bloodNoteOn(bld_, slot, knobs_);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -511,6 +514,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 16)  // BLOODMOON: puszczony klawisz (wibrato wygasa)
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) bloodNoteOff(bld_, vi);
     if (kind_ == 15)  // HOLLOW SAINT: puszczony klawisz (smyczek sie unosi)
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) hollowNoteOff(hls_, vi);
@@ -614,7 +620,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 15) {  // HOLLOW SAINT (oryginalny DSP op1r): obwiednia (AMP ENV), zegar taktu z transportu, RELIC
+        if (kind_ == 16) {  // BLOODMOON (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            bloodRender(bld_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 15) {  // HOLLOW SAINT (oryginalny DSP op1r): obwiednia (AMP ENV), zegar taktu z transportu, RELIC
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             const double half = voiceRate_ * 0.5, bpm = tBpm_ < 30.f ? 30.0 : tBpm_;  // probki "44,1 kHz" glosu
             const double lenS = half * 60.0 / bpm;

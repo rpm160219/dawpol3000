@@ -23,7 +23,8 @@ gcc -std=gnu11 -O2 -Icore -c core/synth/supersaw_dsp.c -o "$T/ssw.o"
 gcc -std=gnu11 -O2 -Icore -c core/synth/mixtur_dsp.c -o "$T/mxw.o"
 gcc -std=gnu11 -O2 -Icore -c core/synth/brass_dsp.c -o "$T/brw.o"
 gcc -std=gnu11 -O2 -Icore -c core/synth/hollowsaint_dsp.c -o "$T/hsw.o"
+gcc -std=gnu11 -O2 -Icore -c core/synth/bloodmoon_dsp.c -o "$T/bmw.o"
 g++ -std=c++17 -O2 -Icore tests/elg_match.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp "$T/eva.o" "$T/mbira.o" "$T/reactor.o" "$T/oxbow.o" "$T/oxbow_plus.o" "$T/sidw.o" "$T/sidd.o" "$T/mono.o" \
-    "$T/vapw.o" "$T/vapd.o" "$T/ssw.o" "$T/mxw.o" "$T/brw.o" "$T/hsw.o" core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
+    "$T/vapw.o" "$T/vapd.o" "$T/ssw.o" "$T/mxw.o" "$T/brw.o" "$T/hsw.o" "$T/bmw.o" core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
 "$T/match" "$T/ref.raw"
 rm -rf "$T"
