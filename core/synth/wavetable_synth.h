@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -54,6 +54,7 @@ public:
     const ::BrassCore* brass() const { return brs_; }
     const ::HollowCore* hollow() const { return hls_; }
     const ::BloodCore* blood() const { return bld_; }
+    const ::BlotCore* blot() const { return blt_; }
     void setRelic(bool on) { relic_ = on; }  // HOLLOW SAINT: tasma Lo-Fi Relic
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
     int kind() const { return kind_; }
@@ -133,6 +134,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::BlotCore* blt_ = nullptr;  // BLOT: glosy tej sciezki (C)
     ::BloodCore* bld_ = nullptr;  // BLOODMOON: glosy tej sciezki (C)
     ::HollowCore* hls_ = nullptr;  // HOLLOW SAINT: caly stan silnika tej sciezki (C)
     bool relic_ = false;

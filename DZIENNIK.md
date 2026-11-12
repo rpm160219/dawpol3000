@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:43
+**Zmienione — port silnika BLOT (op1r, pcppcp), 1:1:**
+- `third_party/op1r_blot/` — oryginalne `blot.c`, `blot_tables.h`, `blot.svg`, `gen_tables.py`, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`.
+- `core/synth/blot_dsp.*` — blot.c jako C (DSP + ekran), stan głosu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 17, AMP ENV + MODE/GLIDE (slide 303 to w oryginale portamento OP-1), bez MOD ENV / LFO, wyjście +6 dB (oryginał był ok. 6–9 dB ciszej od reszty).
+- `core/ui/blot_screen.*` — ekran smileya 1:1 (bez dolnego rzędu z napisami) + ilustracja; `core/ui/synth_view.*` — CUTOFF (Hz) / RESONANCE / ENV MOD (oktawy) / DECAY (ms), L3: WAVE / ACCENT / DRIVE, strony SOUND / VOICE / AMP ENV / PRESETS; `core/ui/dialogs.cpp` — BLOT na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `blot`, 15 presetów (oryginał nie ma żadnych).
+- `tests/blot_match.cpp`, `tools/test_blot.sh`; wszystkie skrypty testów linkują BLOT.
+- Testy: BLOT bit w bit (0 różnic, z akcentem), wszystkie 18 testów 0 różnic; CPU na konsoli 10,4% przy 6 głosach. Wysłane na konsolę.
+**Następny krok:** Patryk testuje BLOT.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 19:33
 **Zmienione — port silnika BLOODMOON (op1r, Nola Drift), 1:1 + AMP ENV:**
 - `third_party/op1r_bloodmoon/` — oryginalne `bloodmoon.c`, `moon.c`, geometria, SVG, generator, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `bloodmoon_art.h`.

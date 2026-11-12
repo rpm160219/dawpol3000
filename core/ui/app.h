@@ -35,7 +35,7 @@ public:
     PresetStore& presets() { return presets_; }
     // presety wg silnika sciezki: WAVETABLE, WAVETABLE+ (osobny katalog), TAFFY
     PresetStore& presetsFor(int engine, bool alt) {
-        return engine == ENG_TAFFY ? presetsTf_ : (engine == ENG_PEW ? presetsPw_ : (engine == ENG_ELG ? presetsEl_ : (engine == ENG_EVA ? presetsEv_ : (engine == ENG_MBIRA ? presetsMb_ : (engine == ENG_REACTOR ? presetsRx_ : (engine == ENG_OXBOW ? (alt ? presetsObp_ : presetsOb_) : (engine == ENG_SID ? presetsSid_ : (engine == ENG_MONOLIT ? presetsMn_ : (engine == ENG_VAPORA ? presetsVp_ : (engine == ENG_SUPERSAW ? presetsSs_ : (engine == ENG_MIXTUR ? presetsMx_ : (engine == ENG_BRASS ? presetsBr_ : (engine == ENG_HOLLOW ? presetsHs_ : (engine == ENG_BLOOD ? presetsBm_ : (alt ? presetsWp_ : presets_)))))))))))))));
+        return engine == ENG_TAFFY ? presetsTf_ : (engine == ENG_PEW ? presetsPw_ : (engine == ENG_ELG ? presetsEl_ : (engine == ENG_EVA ? presetsEv_ : (engine == ENG_MBIRA ? presetsMb_ : (engine == ENG_REACTOR ? presetsRx_ : (engine == ENG_OXBOW ? (alt ? presetsObp_ : presetsOb_) : (engine == ENG_SID ? presetsSid_ : (engine == ENG_MONOLIT ? presetsMn_ : (engine == ENG_VAPORA ? presetsVp_ : (engine == ENG_SUPERSAW ? presetsSs_ : (engine == ENG_MIXTUR ? presetsMx_ : (engine == ENG_BRASS ? presetsBr_ : (engine == ENG_HOLLOW ? presetsHs_ : (engine == ENG_BLOOD ? presetsBm_ : (engine == ENG_BLOT ? presetsBl_ : (alt ? presetsWp_ : presets_))))))))))))))));
     }
     void openPresets(const char* root) {
         presetsWp_.init(root, "wavetableplus");  // najpierw: przenosi presety WAVETABLE+ ze wspolnego katalogu
@@ -56,6 +56,7 @@ public:
         presetsBr_.init(root, "brass");
         presetsHs_.init(root, "hollowsaint");
         presetsBm_.init(root, "bloodmoon");
+        presetsBl_.init(root, "blot");
     }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
@@ -88,7 +89,7 @@ private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
     ProjectStore store_;
-    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_, presetsOb_, presetsObp_, presetsSid_, presetsMn_, presetsVp_, presetsSs_, presetsMx_, presetsBr_, presetsHs_, presetsBm_;
+    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_, presetsOb_, presetsObp_, presetsSid_, presetsMn_, presetsVp_, presetsSs_, presetsMx_, presetsBr_, presetsHs_, presetsBm_, presetsBl_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia

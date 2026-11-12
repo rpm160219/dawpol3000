@@ -586,9 +586,30 @@ static const FactoryPreset kBlood[] = {
     {"WITCH CHOIR", CAT_PAD, 1, "k 20000 9000 22000 7500 env 0.222 0.722 0.855 1.938"},
 };
 
+// BLOT: oryginal (op1r, pcppcp) nie ma presetow — 14 wlasnych: k CUTOFF RES ENV-MOD DECAY, push WAVE ACCENT DRIVE,
+// MONO + GLIDE jako slide 303 (akcent: nuty z velocity >= 100).
+static const FactoryPreset kBlot[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"ACID CLASSIC", CAT_BASS, 1, "k 7000 26000 20000 9000 voice 1 0.06 0 0 env 0.002 0.3 1 0.05"},
+    {"SQUELCH", CAT_BASS, 1, "k 6000 31000 24000 12000 voice 1 0.06 0 0 env 0.002 0.3 1 0.05 push 0 26000 6000"},
+    {"SQUARE ACID", CAT_BASS, 1, "k 8000 27000 18000 10000 voice 1 0.06 0 0 env 0.002 0.3 1 0.05 push 32767 20000 0"},
+    {"DEEP 303", CAT_BASS, 1, "k 4000 18000 14000 16000 voice 1 0.05 0 0 env 0.002 0.3 1 0.08 oct -1"},
+    {"RUBBER BASS", CAT_BASS, 1, "k 5000 12000 22000 6000 voice 1 0.03 0 0 env 0.002 0.3 1 0.06"},
+    {"DIRTY ACID", CAT_BASS, 1, "k 9000 28000 22000 10000 voice 1 0.06 0 0 env 0.002 0.3 1 0.05 push 0 24000 26000"},
+    {"LONG SWEEP", CAT_LEAD, 1, "k 6000 27000 26000 30000 voice 1 0.1 0 0 env 0.003 0.5 1 0.2"},
+    {"SCREAM LEAD", CAT_LEAD, 1, "k 14000 30000 20000 18000 voice 1 0.08 0 0 env 0.003 0.3 1 0.15 push 16384 26000 32767"},
+    {"POLY ACID", CAT_KEYS, 1, "k 9000 24000 18000 9000 env 0.002 0.3 0.7 0.15"},
+    {"BLIP", CAT_PLUCK, 1, "k 10000 22000 26000 2000 env 0.001 0.2 0 0.08"},
+    {"FAT SQUARE", CAT_BASS, 1, "k 12000 16000 10000 12000 voice 1 0.04 0 0 env 0.002 0.3 1 0.08 push 32767 20000 16000 oct -1"},
+    {"WARM PAD", CAT_PAD, 1, "k 14000 10000 6000 32767 env 0.4 1 0.8 1.2"},
+    {"ZAP", CAT_FX, 1, "k 2000 30000 32767 3000 env 0.001 0.15 0 0.08"},
+    {"RESO DRONE", CAT_FX, 1, "k 12000 32000 8000 32767 env 0.5 1 1 2 push 16384 20000 10000"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "blot")) { *n = sizeof kBlot / sizeof kBlot[0]; *engine = ENG_BLOT; return kBlot; }
     if (!__builtin_strcmp(eng, "bloodmoon")) { *n = sizeof kBlood / sizeof kBlood[0]; *engine = ENG_BLOOD; return kBlood; }
     if (!__builtin_strcmp(eng, "hollowsaint")) { *n = sizeof kHollow / sizeof kHollow[0]; *engine = ENG_HOLLOW; return kHollow; }
     if (!__builtin_strcmp(eng, "brass")) { *n = sizeof kBrass / sizeof kBrass[0]; *engine = ENG_BRASS; return kBrass; }

@@ -33,12 +33,13 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : 0);
         wt_[i].setRelic(t.relic);
         wt_[i].setOctave(t.octave);
         wt_[i].setSsFilter((32767 - t.push[0]) / 32767.f, t.push[1] / 32767.f, t.push[2]);  // SUPERSAW: push = zamkniecie filtra, RES, typ
         synth_[i].setOctave(t.octave);
         const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
+        const bool noMod = bare || e == ENG_BLOT;  // BLOT: sam silnik + MODE/GLIDE (slide 303 = portamento gospodarza)
         const bool simple = bare || e == ENG_MIXTUR || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
         const bool sidFenv = e == ENG_SID || e == ENG_VAPORA;  // VAPORA: obwiednia filtra na BRIGHTNESS (galka 2)
          // SID: obwiednia filtra na CUTOFF (galka 2), bez trybow glosu  // OXBOW+: tryby glosu jak WAVETABLE+
@@ -63,20 +64,20 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // SUPERSAW: obwiednia na filtr DAW-POL  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || e == ENG_BLOT || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // SUPERSAW: obwiednia na filtr DAW-POL  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);
-        else if (e == ENG_MONOLIT || e == ENG_SUPERSAW) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT, SUPERSAW: tylko MODE i GLIDE
+        else if (e == ENG_MONOLIT || e == ENG_SUPERSAW || e == ENG_BLOT) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT, SUPERSAW: tylko MODE i GLIDE
         else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
-        wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], bare ? 0.f : t.menvAmt, t.menvDest);
+        wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], noMod ? 0.f : t.menvAmt, t.menvDest);
         {
             const WtExt& x = t.ext;
             wt_[i].setExt(x.osc[1].wave, x.osc[0].semi, x.osc[1].semi, x.osc[0].cents, x.osc[1].cents, x.osc[0].level,
                           x.osc[1].level, x.sub, x.fmode, x.drive);
         }
         for (int l = 0; l < 2; l++)
-            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, bare || (e == ENG_MIXTUR && l == 1) ? 0.f : t.lfo[l].depth,  // MIXTUR: jedno LFO
+            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, noMod || (e == ENG_MIXTUR && l == 1) ? 0.f : t.lfo[l].depth,  // MIXTUR: jedno LFO
                           t.lfo[l].dest, t.lfo[l].sync,
                           lfoDivBeats(t.lfo[l].div));
     }
