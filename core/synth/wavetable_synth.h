@@ -34,6 +34,8 @@ public:
                 int fmode, float drive);
     // Obwiednia filtra: a, d, r w s; s 0..1; amount -1..1 (ulamek zakresu CUTOFF)
     void setFilterEnv(float a, float d, float s, float r, float amount);
+    // Obwiednia modulacji: a, d, r w s; s 0..1; amount -1..1; cel (LfoDest)
+    void setModEnv(float a, float d, float s, float r, float amount, int dest);
     // LFO i (0/1): ksztalt (LfoShape), Hz, glebokosc 0..1, cel (LfoDest); sync: cykl = beats cwiercnut
     void setLfo(int i, int shape, float rate, float depth, int dest, bool sync = false, float beats = 1.f);
     // Transport (watek audio, przed kazdym odcinkiem): czy gra, pozycja w cwiercnutach, tempo
@@ -58,7 +60,7 @@ private:
         uint32_t inc = 0, age = 0;
         float env = 0;
         int pendPitch = -1;   // nuta czekajaca na koniec wyciszania (FADE)
-        float pendVel = 0, pendDet = 0;
+        float pendVel = 0, pendDet = 0, pendFrom = -1;
         float pitchCur = 60, pitchTgt = 60;  // wysokosc (poltony) — portamento
         float det = 0;                       // rozstrojenie unison (centy)
         float ageP = 0, ageTp = 0, ageC = 0, ageTc = 0;  // dryf AGE (losowy, powolny)
@@ -66,6 +68,8 @@ private:
         int fstage = OFF;     // obwiednia filtra (licz. raz na blok)
         float fenv = 0;
         float gate = 0;       // 0..1, rampa 3 ms (dla AMOUNT obwiedni glosnosci)
+        int mstage = OFF;     // obwiednia modulacji (na blok)
+        float menv = 0, mvolPrev = 1;  // mvolPrev: interpolacja celu VOL probka po probce
     };
     struct LfoState {
         int shape = 0, dest = 2;
@@ -82,6 +86,8 @@ private:
     LfoState lfo_[2];
     float fA_ = 0, fD_ = 0, fS_ = 0, fR_ = 1, fAmt_ = 0;  // obwiednia filtra (przyrost/wspolczynnik na blok)
     float envAmt_ = 1.f, gateK_ = 0;
+    float mA_ = 2, mD_ = 1, mS_ = 0, mR_ = 1, mAmt_ = 0;
+    int mDest_ = 4;
     float fade_ = 0;                            // przyrost wyciszania na probke
     std::atomic<int16_t> modKnob_[5];
     // tryb rozszerzony
@@ -91,7 +97,7 @@ private:
     float cents_[2] = {-4.f, 4.f}, lvl_[2] = {1.f, 1.f}, sub_ = 0.f, drive_ = 0.f;
     alignas(8) unsigned char sx_[VOICES][128];  // stan glosu trybu rozszerzonego
     void renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel);
-    void startVoice(int slot, int pitch, float vel, float det = 0.f);
+    void startVoice(int slot, int pitch, float vel, float det = 0.f, float from = -1.f);  // from = start glide
     bool mono_ = false;
     float glide_ = 0, glideK_ = 1, unison_ = 0, age_ = 0;
     int lastPitch_ = -1;

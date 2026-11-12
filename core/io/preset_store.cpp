@@ -17,6 +17,9 @@ void PresetStore::initInstrument(Track& t) {
     t.envAmt = d.envAmt;
     memcpy(t.fenv, d.fenv, sizeof t.fenv);
     t.fenvAmt = d.fenvAmt;
+    memcpy(t.menv, d.menv, sizeof t.menv);
+    t.menvAmt = d.menvAmt;
+    t.menvDest = d.menvDest;
     t.lfo[0] = d.lfo[0];
     t.lfo[1] = d.lfo[1];
     t.alt = d.alt;

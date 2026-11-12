@@ -71,6 +71,10 @@ struct Track {
     // Obwiednia filtra: A, D, S, R + AMOUNT (-1..1, ulamek zakresu CUTOFF)
     float fenv[4] = {0.005f, 0.3f, 0.f, 0.3f};
     float fenvAmt = 0.f;
+    // Obwiednia modulacji (MOD ENV): A, D, S, R + AMOUNT (-1..1) i cel (jak w LFO)
+    float menv[4] = {0.001f, 0.2f, 0.f, 0.2f};
+    float menvAmt = 0.f;
+    uint8_t menvDest = DEST_PITCH;
     Lfo lfo[2];
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;

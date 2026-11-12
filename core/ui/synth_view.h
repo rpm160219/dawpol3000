@@ -4,8 +4,10 @@
 //   D-pad + ABXY   odsluch: 8 stopni skali C-dur od C4 (bez opisu na ekranie)
 //   R3             tryb silnika: ORYGINAL 1:1 <-> ROZSZERZONY (2 niezalezne oscylatory, sub, tryby filtra)
 //   Select         nastepna strona galek:
-//                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> LFO 1 -> LFO 2 -> PRESETS
-//                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
+//                                 LFO 2 -> PRESETS
+// MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
 // VOICE: MODE (POLY/MONO), GLIDE (portamento), UNISON (rozstrojenie stosu w MONO), AGE (dryf "vintage").
 // PRESETS: kategorie (lewo) i presety (prawo); lewo/prawo = kolumna, gora/dol = wybor,
 //          A = wczytaj, X = zapisz (nazwa, kategoria = zaznaczona), B = usun (dwa razy), Y = INIT.
@@ -28,19 +30,21 @@ namespace dp {
 
 class SynthView : public View {
 public:
+    enum Kind { K_SOUND, K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2, K_VOICE, K_PRESETS, K_MENV };
     void open(int track);
     int track() const { return track_; }
     void update(const Buttons& b, const InputState& in, float dt) override;
     void render(Canvas& c) override;
     void setPage(int p) { page_ = p; }  // (testy/headless)
     void setAlt(bool a) { alt_ = a; }
+    void setPageKind(int kind);  // (testy/headless) strona po rodzaju (Kind) w biezacym trybie
 
 private:
-    enum Kind { K_SOUND, K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2, K_VOICE, K_PRESETS };
     int track_ = 0, page_ = 0, octave_ = 4;
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
-    int pageCount(bool ext) const { return ext ? 9 : 7; }
+    int pageCount(bool ext) const { return ext ? 10 : 8; }
+    RelEncoder stepMDest_;
     RelEncoder stepVMode_;
     // przegladarka presetow
     int catSel_ = 0, preSel_ = 0, preFirst_ = 0, focus_ = 1;  // catSel_ 0 = ALL, 1.. = kategorie

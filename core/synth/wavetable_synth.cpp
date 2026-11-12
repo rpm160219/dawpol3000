@@ -144,6 +144,7 @@ void WavetableSynth::monoOn(int pitch, float vel) {
     for (int i = 0; i < nStack_; i++) if (stack_[i] == pitch) { for (int j = i; j < nStack_ - 1; j++) stack_[j] = stack_[j + 1]; nStack_--; break; }
     if (nStack_ < 16) stack_[nStack_++] = pitch;
     const int n = unison_ > 0 ? VOICES : 1;
+    const float from = glide_ > 0 && lastPitch_ >= 0 ? (float)lastPitch_ : (float)pitch;  // wspolny start glide stosu
     bool held = false;
     for (int i = 0; i < n; i++) if (v_[i].stage == ATTACK || v_[i].stage == DECAY || v_[i].stage == SUSTAIN) held = true;
     for (int i = 0; i < n; i++) {
@@ -151,9 +152,10 @@ void WavetableSynth::monoOn(int pitch, float vel) {
         Voice& v = v_[i];
         if (held && v.stage != OFF && v.stage != RELEASE && v.stage != FADE) { setPitchTarget(v, pitch); v.det = det; continue; }
         v.age = ++age_counter_;
-        if (v.stage != OFF && v.env > 1e-3f) { v.stage = FADE; v.pendPitch = pitch; v.pendVel = vel; v.pendDet = det; }
-        else startVoice(i, pitch, vel, det);
+        if (v.stage != OFF && v.env > 1e-3f) { v.stage = FADE; v.pendPitch = pitch; v.pendVel = vel; v.pendDet = det; v.pendFrom = from; }
+        else startVoice(i, pitch, vel, det, from);
     }
+    lastPitch_ = pitch;
 }
 
 void WavetableSynth::monoOff(int pitch) {
@@ -170,7 +172,7 @@ void WavetableSynth::monoOff(int pitch) {
         if (v.stage == FADE) { v.pendPitch = -1; continue; }
         if (v.stage != OFF && v.stage != RELEASE) {
             v.stage = RELEASE;
-            v.fstage = RELEASE;
+            v.fstage = RELEASE; v.mstage = RELEASE;
             if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; }
         }
     }
@@ -239,6 +241,16 @@ void WavetableSynth::renderExtVoice(int vi, int16_t* out, int16_t* vk, const flo
     }
     modKnob_[4].store((int16_t)k0b, std::memory_order_relaxed);
     vk[0] = (int16_t)k0;  // ekran: fala OSC 1 po modulacji W1 / W1+2
+}
+
+void WavetableSynth::setModEnv(float a, float d, float s, float r, float amount, int dest) {
+    const float br = voiceRate_ / BLOCK;
+    mA_ = a > 0 ? 1.f / (a * br) : 2.f;
+    mD_ = d > 0 ? 1.f - expf(-5.f / (d * br)) : 1.f;
+    mS_ = s < 0 ? 0 : (s > 1 ? 1 : s);
+    mR_ = r > 0 ? 1.f - expf(-5.f / (r * br)) : 1.f;
+    mAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
+    mDest_ = dest;
 }
 
 void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest, bool sync, float beats) {
@@ -315,19 +327,21 @@ void WavetableSynth::noteOn(int pitch, float vel) {
         v.pendPitch = pitch;
         v.pendVel = vel;
         v.pendDet = 0;
+        v.pendFrom = -1;
         return;
     }
     startVoice(slot, pitch, vel);
 }
 
-void WavetableSynth::startVoice(int slot, int pitch, float vel, float det) {
+void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float from) {
     Voice& v = v_[slot];
     v.pitch = pitch;
     v.pendPitch = -1;
     v.det = det;
     v.pitchTgt = (float)pitch;  // portamento: start od ostatnio granej wysokosci
-    v.pitchCur = glide_ > 0 && lastPitch_ >= 0 ? (float)lastPitch_ : (float)pitch;
-    lastPitch_ = pitch;
+    if (from >= 0) v.pitchCur = from;  // MONO/unison: wspolny punkt startu
+    else v.pitchCur = glide_ > 0 && lastPitch_ >= 0 ? (float)lastPitch_ : (float)pitch;
+    if (from < 0) lastPitch_ = pitch;
     v.vel = (int)lrintf(vel * 127.f);
     if (v.vel < 1) v.vel = 1;
     if (v.vel > 127) v.vel = 127;
@@ -338,6 +352,9 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det) {
     if (v.env >= 1.f) v.stage = DECAY;
     v.fstage = ATTACK;
     v.fenv = 0;
+    v.mstage = ATTACK;
+    v.menv = 0;
+    v.mvolPrev = mAmt_ != 0.f && mDest_ == DEST_VOLUME ? (mAmt_ > 0 ? 1.f - mAmt_ : 1.f) : 1.f;
     v.gate = 0;
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
     wtExtOn(SX(sx_, slot));
@@ -349,7 +366,7 @@ void WavetableSynth::noteOff(int pitch) {
         if (v.stage == FADE && v.pendPitch == pitch) { v.pendPitch = -1; continue; }  // puszczona przed startem
         if (v.stage != OFF && v.stage != RELEASE && v.stage != FADE && v.pitch == pitch) {
             v.stage = RELEASE;
-            v.fstage = RELEASE;
+            v.fstage = RELEASE; v.mstage = RELEASE;
             if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; }
         }
     }
@@ -358,7 +375,7 @@ void WavetableSynth::noteOff(int pitch) {
 void WavetableSynth::allOff() {
     for (auto& v : v_) {
         v.pendPitch = -1;
-        if (v.stage != OFF) { v.stage = RELEASE; v.fstage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
+        if (v.stage != OFF) { v.stage = RELEASE; v.fstage = RELEASE; v.mstage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
     }
 }
 
@@ -382,7 +399,7 @@ void WavetableSynth::renderBlock() {
         if (lfo_[l].dest == DEST_VOLUME) trem *= 1.f - lfo_[l].depth * 0.5f * (1.f - val);
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
-    const float pitchMul = mod[DEST_PITCH] != 0 ? powf(2.f, mod[DEST_PITCH]) : 1.f;
+
     int16_t vk[8];
     int16_t loudK[4] = {knobs_[0], knobs_[1], knobs_[2], knobs_[3]};
     int newest = -1;
@@ -397,10 +414,25 @@ void WavetableSynth::renderBlock() {
         case RELEASE: v.fenv -= v.fenv * fR_; break;
         default: break;
         }
-        // galki glosu = galki sciezki + LFO + obwiednia filtra (przy zerowych modulacjach — bez zmian)
+        // obwiednia modulacji (na blok) i modulacje tego glosu = LFO + MOD ENV
+        switch (v.mstage) {
+        case ATTACK: v.menv += mA_; if (v.menv >= 1.f) { v.menv = 1.f; v.mstage = DECAY; } break;
+        case DECAY: v.menv += (mS_ - v.menv) * mD_; break;
+        case RELEASE: v.menv -= v.menv * mR_; break;
+        default: break;
+        }
+        float vm[LFO_DESTS];
+        for (int i = 0; i < LFO_DESTS; i++) vm[i] = mod[i];
+        float mvol = 1.f;
+        if (mAmt_ != 0.f) {
+            if (mDest_ == DEST_VOLUME) mvol = mAmt_ > 0 ? 1.f - mAmt_ + mAmt_ * v.menv : 1.f + mAmt_ * v.menv;
+            else if (mDest_ < LFO_DESTS) vm[mDest_] += mAmt_ * v.menv;
+        }
+        const float pitchMul = vm[DEST_PITCH] != 0 ? powf(2.f, vm[DEST_PITCH]) : 1.f;  // glebokosc 1 = +-1 oktawa
+        // galki glosu = galki sciezki + LFO + obwiednie (przy zerowych modulacjach — bez zmian)
         for (int i = 0; i < 8; i++) vk[i] = knobs_[i];
         for (int i = 0; i < 4; i++) {
-            float m = mod[i] + (i == 2 ? fAmt_ * v.fenv : 0.f);
+            float m = vm[i] + (i == 2 ? fAmt_ * v.fenv : 0.f);
             if (m != 0.f) {
                 int x = knobs_[i] + (int)lrintf(m * 32767.f);
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
@@ -423,7 +455,7 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (alt_) renderExtVoice(vi, out, vk, mod, inc, v.vel);
+        if (alt_) renderExtVoice(vi, out, vk, vm, inc, v.vel);
         else {
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             wavetable_dsp_render(ST(st_, vi), out, vk, pitchBuf, v.vel);
@@ -448,9 +480,11 @@ void WavetableSynth::renderBlock() {
                 }
             }
             if (trem != 1.f || tremPrev_ != 1.f) g *= tremPrev_ + (trem - tremPrev_) * (i + 1) * (1.f / BLOCK);
+            if (mvol != 1.f || v.mvolPrev != 1.f) g *= v.mvolPrev + (mvol - v.mvolPrev) * (i + 1) * (1.f / BLOCK);
             sum[i] += (double)out[i] * g;
         }
-        if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel, v.pendDet);  // po wyciszeniu
+        v.mvolPrev = mvol;
+        if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel, v.pendDet, v.pendFrom);  // po wyciszeniu
         if (v.env > loudEnv) { loudEnv = v.env; loud = vi; }
         if (newest < 0 || v.age > v_[newest].age) { newest = vi; for (int i = 0; i < 4; i++) loudK[i] = vk[i]; }
     }

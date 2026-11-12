@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 17:30
+**Zmienione:**
+- `core/synth/wavetable_synth.*` — naprawiony glide w unisonie: przy starcie nuty tylko pierwszy z 6 głosów zaczynał od poprzedniej wysokości (pozostałe od razu na docelowej), teraz cały stos ma wspólny punkt startu (pomiar: unison podjeżdża identycznie jak pojedynczy głos; przed poprawką 5 głosów skakało od razu na 440 Hz).
+- Nowa obwiednia **MOD ENV** (na głos): A/D/S/R + AMOUNT ±100% + cel (te same co LFO, w tym PTCH, CUT, WAVE, W1/W2, P1/P2, LV1/LV2, VOL); modulacje liczone per głos (LFO + MOD ENV), cel VOL interpolowany próbka po próbce (bez kliknięć) — `core/synth/wavetable_synth.*`, `core/seq/project.h`, `core/io/project_file.cpp`, `core/io/preset_store.cpp`, `core/audio/engine.cpp`.
+- `core/ui/synth_view.*` — strona MOD ENV (po FILTER ENV); L3 zamienia białą/czerwoną gałkę na DEST + AMOUNT; wykres i opis celu; wybór strony po rodzaju (`setPageKind`) w trybie headless.
+- Testy: oryginał 0 różnic; MOD ENV → PTCH (skok i powrót do 220 Hz), → VOL bez kliknięć; MOD ENV zapisuje się w presecie i projekcie.
+**Następny krok:** Patryk testuje.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 16:30
 **Zmienione:**
 - Strona **VOICE** w SYNTH: MODE (POLY/MONO — stos nut, legato bez ponownego startu obwiedni, powrót do trzymanej nuty), GLIDE (portamento 5 ms–2 s, POLY i MONO), UNISON (w MONO 6 głosów na nutę, rozstrojenie symetryczne do ±50 c), AGE (jak „vintage” Prophet-6/OB-6: stały charakter głosu + powolny losowy dryf strojenia i filtra) — `core/synth/wavetable_synth.*`, `core/seq/project.*`, `core/audio/engine.cpp`.

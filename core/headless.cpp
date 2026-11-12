@@ -99,12 +99,14 @@ int headlessPng(const char* path, const char* screen) {
         app.markDirty();
         app.openSynth(1);
         idle(app);
-        app.synth.setPage(!strcmp(screen, "voice") ? 1 : 6);
+        app.synth.setPageKind(!strcmp(screen, "voice") ? SynthView::K_VOICE : SynthView::K_PRESETS);
         if (!strcmp(screen, "presets")) { tap(app, B_LEFT); tap(app, B_DOWN); tap(app, B_DOWN); tap(app, B_DOWN); tap(app, B_RIGHT); tap(app, B_A); tap(app, B_DOWN); }
         idle(app);
     } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv") || !strcmp(screen, "synthfenv") ||
-               !strcmp(screen, "synthlfo") || !strcmp(screen, "synthext") || !strcmp(screen, "synthfilt")) {
+               !strcmp(screen, "synthlfo") || !strcmp(screen, "synthext") || !strcmp(screen, "synthfilt") ||
+               !strcmp(screen, "synthmenv")) {
         Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "synthmenv")) { tr.menv[1] = 0.25f; tr.menvAmt = -0.4f; tr.menvDest = DEST_PITCH; }
         if (!strcmp(screen, "synthext") || !strcmp(screen, "synthfilt")) {
             tr.alt = true; tr.knob[0] = 9400; tr.ext.osc[1].wave = 26000; tr.ext.osc[1].semi = 7; tr.ext.osc[1].level = 0.7f;
             tr.ext.sub = 0.4f; tr.ext.fmode = !strcmp(screen, "synthfilt") ? FLT_BP : FLT_LP24; tr.knob[3] = 18000;
@@ -116,11 +118,12 @@ int headlessPng(const char* path, const char* screen) {
         app.markDirty();
         app.openSynth(1);
         idle(app);
-        if (!strcmp(screen, "synthenv")) app.synth.setPage(1);
-        if (!strcmp(screen, "synthfenv")) { app.synth.setPage(2); app.synth.setAlt(true); }
-        if (!strcmp(screen, "synthlfo")) app.synth.setPage(3);
-        if (!strcmp(screen, "synthext")) app.synth.setPage(1);
-        if (!strcmp(screen, "synthfilt")) app.synth.setPage(2);
+        if (!strcmp(screen, "synthenv")) app.synth.setPageKind(SynthView::K_AMP);
+        if (!strcmp(screen, "synthfenv")) { app.synth.setPageKind(SynthView::K_FENV); app.synth.setAlt(true); }
+        if (!strcmp(screen, "synthlfo")) app.synth.setPageKind(SynthView::K_LFO1);
+        if (!strcmp(screen, "synthmenv")) { app.synth.setPageKind(SynthView::K_MENV); app.synth.setAlt(true); }
+        if (!strcmp(screen, "synthext")) app.synth.setPageKind(SynthView::K_OSC2);
+        if (!strcmp(screen, "synthfilt")) app.synth.setPageKind(SynthView::K_FILTER);
         InputState in;
         in.btn[B_A] = true;  // trzymana nuta
         app.update(in, 0.016f);

@@ -28,10 +28,17 @@ static void waveName(char* out, int n, int32_t k) {
 }
 
 SynthView::Kind SynthView::kind(bool ext) const {
-    static const Kind orig[7] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_LFO1, K_LFO2, K_PRESETS};
-    static const Kind extk[9] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind orig[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind extk[10] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     int n = pageCount(ext), p = page_ < n ? page_ : n - 1;
     return ext ? extk[p] : orig[p];
+}
+
+void SynthView::setPageKind(int kd) {
+    const Track& t = app_->project().tracks[track_];
+    bool ext = t.engine == ENG_WAVETABLE && t.alt;
+    for (int p = 0; p < pageCount(ext); p++) { page_ = p; if (kind(ext) == kd) return; }
+    page_ = 0;
 }
 
 void SynthView::open(int track) {
@@ -151,6 +158,20 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             } else if (d != 0.f) { t.ext.drive = clamp01(t.ext.drive + d); changed = true; }
             break;
         }
+        case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
+            if (alt_ && i == 2) {
+                int nd = ext ? LFO_DESTS : DEST_W1;
+                int st = stepMDest_.steps(ax, dt, 4.f);
+                if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
+                break;
+            }
+            if (d == 0.f) break;
+            if (alt_ && i == 3) { float a = t.menvAmt + d * 2.f; t.menvAmt = a < -1 ? -1 : (a > 1 ? 1 : a); }
+            else if (i == 2) t.menv[2] = clamp01(t.menv[2] + d);
+            else { float kk = clamp01(envKnob(t.menv[i]) + d); t.menv[i] = kk <= 0 ? 0.f : envTime(kk); }
+            changed = true;
+            break;
+        }
         case K_AMP:
         case K_FENV: {  // A D S R (L3: R -> AMOUNT)
             if (d == 0.f) break;
@@ -247,7 +268,7 @@ void SynthView::render(Canvas& c) {
     if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 
     // lewy dol: strona galek
-    static const char* kPage[10] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS"};
+    static const char* kPage[11] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
     drawText(c, 20, 342, kPage[k], 13, 1.5f, pc);
     int np = pageCount(ext);
@@ -260,6 +281,7 @@ void SynthView::render(Canvas& c) {
     const char* hint = nullptr;
     Color hc = rgb(80, 80, 80);
     if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
+    else if (k == K_MENV) { hint = alt_ ? "L3 = SUSTAIN + RELEASE" : "L3 = DEST + AMOUNT"; if (alt_) hc = pal::red; }
     else if (k == K_OSC1) { hint = alt_ ? "L3 = LEVEL" : "L3 = SUB OSC"; if (alt_) hc = pal::red; }
     else if (k == K_LFO1 || k == K_LFO2) {
         bool sy = t.lfo[k - K_LFO1].sync;
@@ -272,7 +294,11 @@ void SynthView::render(Canvas& c) {
         drawText(c, 20, 398, ext ? "R3 = ORIGINAL 1:1" : "R3 = EXTENDED (2 OSC)", 7, 1.f, rgb(80, 80, 80));
 
     // prawy dol: grafika strony
-    if (k == K_FENV) {
+    if (k == K_MENV) {
+        drawEnvelope(c, t.menv, true, 400, 342, 200, 46);
+        snprintf(b, sizeof b, "-> %s %+d%%", lfoDestName(t.menvDest), (int)lrintf(t.menvAmt * 100));
+        drawText(c, 600, 394, b, 8, 1.1f, t.menvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
+    } else if (k == K_FENV) {
         drawEnvelope(c, t.fenv, true, 400, 342, 200, 46);
         snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.fenvAmt * 100));
         drawText(c, 600, 394, b, 8, 1.1f, t.fenvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
@@ -379,6 +405,20 @@ void SynthView::render(Canvas& c) {
         labels[0] = "CUTOFF"; labels[1] = "RES"; labels[2] = "MODE"; labels[3] = "DRIVE";
         pos[0] = t.knob[2] / 32767.f; pos[1] = t.knob[3] / 32767.f; pos[2] = t.ext.fmode / (float)(FLT_MODES - 1);
         pos[3] = t.ext.drive;
+    } else if (k == K_MENV) {
+        static const char* LA[4] = {"ATTACK", "DECAY", "SUSTAIN", "RELEASE"};
+        for (int i = 0; i < 4; i++) {
+            labels[i] = LA[i];
+            if (i == 2 && !alt_) { snprintf(v[i], 16, "%d", (int)lrintf(t.menv[2] * 100)); pos[i] = t.menv[2]; }
+            else if (i == 2) { labels[i] = "DEST"; snprintf(v[i], 16, "%s", lfoDestName(t.menvDest)); pos[i] = t.menvDest / (float)(LFO_DESTS - 1); }
+            else if (i == 3 && alt_) { labels[i] = "AMOUNT"; snprintf(v[i], 16, "%+d", (int)lrintf(t.menvAmt * 100)); pos[i] = 0.5f + t.menvAmt * 0.5f; }
+            else {
+                float s = t.menv[i];
+                if (s < 1.f) snprintf(v[i], 16, "%.0fMS", s * 1000.f);
+                else snprintf(v[i], 16, "%.1fS", s);
+                pos[i] = envKnob(s);
+            }
+        }
     } else if (k == K_AMP || k == K_FENV) {
         const float* ev = k == K_FENV ? t.fenv : t.env;
         static const char* LA[4] = {"ATTACK", "DECAY", "SUSTAIN", "RELEASE"};
