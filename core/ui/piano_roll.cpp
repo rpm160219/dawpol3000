@@ -413,7 +413,7 @@ void PianoRoll::render(Canvas& c) {
     Pattern& p = pat();
     AudioEngine* eng = app_->engine();
     const Track& tr = prj.tracks[track_];
-    Color tc = pal::track[tr.color % 8];
+    Color tc = pal::track[tr.color % pal::TRACK_COLORS];
     c.clear(pal::bg);
     bool playing = eng && eng->isPlaying();
     int sel = noteAtCursor();

@@ -5,6 +5,8 @@
 namespace dp {
 
 void AudioEngine::init(float sr) {
+    sr_ = sr;
+    for (int i = 0; i < MAX_TRACKS; i++) { level_[i] = 0; levelOut_[i].store(0.f); }
     seq_.init(sr);
     for (int i = 0; i < MAX_TRACKS; i++) {
         synth_[i].init(sr);
@@ -56,6 +58,13 @@ void AudioEngine::process(float* out, int frames) {
         float x = out[i] * master_, a = fabsf(x);
         if (a > 0.8f) x = copysignf(0.8f + 0.2f * tanhf((a - 0.8f) * 5.f), x);
         out[i] = x;
+    }
+    // VU: szczyt bloku, opadanie ~24 dB/s
+    float fall = powf(10.f, -24.f / 20.f * frames / sr_);
+    for (int i = 0; i < MAX_TRACKS; i++) {
+        float pk = synth_[i].takePeak();
+        level_[i] = pk > level_[i] * fall ? pk : level_[i] * fall;
+        levelOut_[i].store(level_[i], std::memory_order_relaxed);
     }
     tickOut_.store(seq_.tick(), std::memory_order_relaxed);
     modeOut_.store((int)seq_.mode(), std::memory_order_relaxed);

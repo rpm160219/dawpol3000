@@ -29,7 +29,17 @@ constexpr Color purple = rgb(150, 95, 255);
 constexpr Color cyan   = rgb(40, 205, 230);
 constexpr Color yellow = rgb(240, 196, 60);
 constexpr Color pink   = rgb(255, 95, 170);
-constexpr Color track[8] = {blue, green, red, tan, purple, cyan, yellow, pink};
+// 32 kolory sciezek; pierwsze 8 bez zmian (zgodnosc ze starymi projektami)
+constexpr int TRACK_COLORS = 32;
+constexpr Color track[TRACK_COLORS] = {
+    blue, green, red, tan, purple, cyan, yellow, pink,
+    rgb(255, 140, 40),  rgb(170, 230, 50),  rgb(0, 180, 160),   rgb(100, 100, 235),  // pomarancz, limonka, morski, indygo
+    rgb(230, 60, 200),  rgb(120, 240, 190), rgb(250, 128, 114), rgb(180, 160, 255),  // magenta, mieta, losos, lawenda
+    rgb(110, 190, 255), rgb(230, 180, 30),  rgb(150, 160, 60),  rgb(240, 110, 140),  // niebo, zloto, oliwka, roz
+    rgb(255, 110, 80),  rgb(60, 230, 230),  rgb(190, 80, 255),  rgb(255, 190, 140),  // koral, akwa, fiolet, brzoskwinia
+    rgb(50, 190, 110),  rgb(100, 140, 190), rgb(220, 30, 70),   rgb(255, 170, 0),    // zielen morska, stal, karmazyn, bursztyn
+    rgb(210, 255, 60),  rgb(30, 210, 200),  rgb(220, 120, 220), rgb(210, 190, 140),  // seledyn, turkus, orchidea, piasek
+};
 }  // namespace pal
 
 class Canvas {

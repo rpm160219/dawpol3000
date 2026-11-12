@@ -137,6 +137,21 @@ static void clipNotes(Canvas& c, const Pattern& pt, float x0, float x1, float cl
     c.endStroke(col);
 }
 
+// Segmentowy VU: -48..0 dB, zielony -> zolty (-12 dB) -> czerwony (-3 dB); nieaktywne segmenty ciemne.
+static void vuMeter(Canvas& c, float x, float y, float w, float level) {
+    const int segs = 18;
+    float db = level > 1e-5f ? 20.f * log10f(level) : -100.f;
+    float v = (db + 48.f) / 48.f;
+    int lit = (int)(v * segs + 0.5f);
+    float sw = w / segs;
+    for (int i = 0; i < segs; i++) {
+        float sdb = -48.f + 48.f * (i + 1) / segs;
+        Color on = sdb > -3.f ? pal::red : (sdb > -12.f ? pal::yellow : pal::green);
+        Color col = i < lit ? on : rgb(28, 28, 28);
+        c.fillRect(x + i * sw, y, sw - 1.f, 2.5f, col);
+    }
+}
+
 void ArrangeView::render(Canvas& c) {
     Project& p = app_->project();
     AudioEngine* eng = app_->engine();
@@ -193,14 +208,15 @@ void ArrangeView::render(Canvas& c) {
         }
         const Track& tr = p.tracks[t];
         bool aud = p.audible(t);
-        Color tc0 = pal::track[tr.color % 8];
+        Color tc0 = pal::track[tr.color % pal::TRACK_COLORS];
         Color tc = aud ? tc0 : rgb(tc0.r / 3, tc0.g / 3, tc0.b / 3);
         bool midi = tr.type == TRACK_MIDI;
         drawIcon(c, midi ? ICON_KEYS : ICON_WAVE, LX, y + 5, 18, tc);
         drawText(c, LX + 26, y + 5, tr.name, 9, 1.2f, cur ? pal::white : (aud ? rgb(170, 170, 170) : pal::dim));
-        // pasek glosnosci + wskazniki M (mute) i S (solo)
-        c.line(LX + 26, y + 21, LX + 26 + 72, y + 21, 1.f, pal::faint);
-        c.line(LX + 26, y + 21, LX + 26 + 72 * tr.volume, y + 21, 1.6f, cur ? pal::blue : rgb(70, 70, 70));
+        // pasek glosnosci + VU pod nim + wskazniki M (mute) i S (solo)
+        c.line(LX + 26, y + 19, LX + 26 + 72, y + 19, 1.f, pal::faint);
+        c.line(LX + 26, y + 19, LX + 26 + 72 * tr.volume, y + 19, 1.6f, cur ? pal::blue : rgb(70, 70, 70));
+        vuMeter(c, LX + 26, y + 22.5f, 72, eng ? eng->trackLevel(t) : 0.f);
         const char* ms[2] = {"M", "S"};
         bool on[2] = {tr.mute, tr.solo};
         Color onc[2] = {pal::yellow, pal::cyan};
@@ -239,7 +255,7 @@ void ArrangeView::render(Canvas& c) {
         if (t >= p.nTracks) break;
         float y = TY + r * TRACK_H;
         const Track& tr = p.tracks[t];
-        Color tc0 = pal::track[tr.color % 8];
+        Color tc0 = pal::track[tr.color % pal::TRACK_COLORS];
         Color tc = p.audible(t) ? tc0 : rgb(tc0.r / 3, tc0.g / 3, tc0.b / 3);
         for (int i = 0; i < p.nClips; i++) {
             const Clip& cl = p.clips[i];

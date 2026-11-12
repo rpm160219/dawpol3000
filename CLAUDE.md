@@ -70,7 +70,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 ## Styl wizualny
 - **Język aplikacji: angielski** (wszystkie napisy w UI, nazwy parametrów, komunikaty i logi programu). Komunikacja z Patrykiem i dokumentacja projektu — po polsku.
 - Czarne tło, cienkie linie, duże cienkie cyfry, dużo pustej przestrzeni. Zaokrąglone kształty („pigułki”), siatki z kropek zamiast gęstych linii.
-- Paleta menu (wzór OP-1 Field): belki nagłówków jasnoszare/tan z ciemnym napisem, pigułki akcji steel/tan/szary/czerwony, listy w kolorze tan. Kolory ścieżek: niebieski, zielony, czerwony, tan, fiolet, cyjan, żółty, róż (`pal::track`).
+- Paleta menu (wzór OP-1 Field): belki nagłówków jasnoszare/tan z ciemnym napisem, pigułki akcji steel/tan/szary/czerwony, listy w kolorze tan. Kolory ścieżek: 32 barwy (`pal::track`, pierwsze 8: niebieski, zielony, czerwony, tan, fiolet, cyjan, żółty, róż — bez zmian dla zgodności), wybór z siatki 4×8.
 - Ilustracje w oknach dialogowych: zawsze 196×150 przy (24, 84), elementy liczone od obudowy.
 - Grafiki wzorcowe od Patryka: folder `ref/` (poza gitem — mogą być cudze materiały; tylko inspiracja, nie kopiujemy 1:1). Ikony/ilustracje rysujemy wektorowo w kodzie; obrazki z generatorów (np. Gemini) tylko jako szkic do przerysowania.
 - 4 kolory = 4 „enkodery”: **niebieski, zielony, biały, czerwony** — każdy parametr na ekranie ma kolor swojego enkodera.
@@ -121,7 +121,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 
 ## Aktualny stan
 - Etap: 2/3 (sekwencer + arrange, przyspieszone na prośbę Patryka). Etap 1 (właściwy synth) później.
-- Działa: ARRANGE (ścieżki max 16 MIDI + 4 audio, zmiana nazwy/koloru i usuwanie ścieżki (Select), mute/solo (L1/R1) ze wskaźnikami M/S, klipy patternów z miniaturą nut, BPM w nagłówku, wstawianie/klonowanie/przesuwanie/usuwanie klipów, play całej aranżacji w pętli), okna NEW TRACK i NEW PATTERN (nazwa, długość 1–16 taktów, wybór istniejącego patternu), PIANO ROLL wielotaktowy, testowa piła na każdej ścieżce, łagodny limiter. Ikony i ilustracje wektorowe. CPU na konsoli ~2.5% rdzenia przy 3 ścieżkach.
+- Działa: ARRANGE (ścieżki max 16 MIDI + 4 audio, VU na każdej ścieżce, zmiana nazwy/koloru i usuwanie ścieżki (Select), mute/solo (L1/R1) ze wskaźnikami M/S, klipy patternów z miniaturą nut, BPM w nagłówku, wstawianie/klonowanie/przesuwanie/usuwanie klipów, play całej aranżacji w pętli), okna NEW TRACK i NEW PATTERN (nazwa, długość 1–16 taktów, wybór istniejącego patternu), PIANO ROLL wielotaktowy, testowa piła na każdej ścieżce, łagodny limiter. Ikony i ilustracje wektorowe. CPU na konsoli ~2.5% rdzenia przy 3 ścieżkach.
 - Ścieżki AUDIO: na razie puste (klipy audio dojdą z nagrywaniem z taśmy).
 - Projekty: zakładka PROJECT (zapis/wczytanie/nowy/usuń), format tekstowy `.dpp` w `projects/<NAZWA>/` (na konsoli `/userdata/dawpol3000/projects`), start z ostatnim projektem, autozapis przy wyjściu (też Hotkey+Start).
 - Undo/redo (32 kroki), pętla IN/OUT (utwór i pattern, zapisywana w projekcie), zaznaczanie w piano rollu (R3: zaznacz, prostokąt, usuń, kopiuj, wklej).

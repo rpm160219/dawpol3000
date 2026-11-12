@@ -27,6 +27,8 @@ public:
     int playTick() const { return tickOut_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playingOut_.load(std::memory_order_relaxed); }
     int playMode() const { return modeOut_.load(std::memory_order_relaxed); }  // Sequencer::Mode
+    // Poziom sciezki do VU (0..1, szczyt z opadaniem ~24 dB/s, po glosnosci sciezki, przed masterem).
+    float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione
     void process(float* out, int frames);
 
@@ -37,6 +39,9 @@ private:
     SawSynth synth_[MAX_TRACKS];
     NoteSink* sinks_[MAX_TRACKS];
     float master_ = 0.8f;
+    float level_[MAX_TRACKS] = {};
+    std::atomic<float> levelOut_[MAX_TRACKS];
+    float sr_ = 48000.f;
     std::atomic<int> tickOut_{0}, modeOut_{0};
     std::atomic<bool> playingOut_{false};
     void applyProject();

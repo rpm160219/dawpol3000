@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 08:00
+**Zmienione:**
+- `core/gfx/canvas.h` — 32 kolory ścieżek (8 dotychczasowych + 24 nowe); `core/io/project_file.cpp`, `core/seq/project.*`, ekrany — obsługa 32 barw.
+- `core/ui/dialogs.*` — wybór koloru ścieżki z siatki 4×8 (krzyżak), zamiast listy nazw.
+- `core/synth/saw_synth.*` — pomiar szczytu ścieżki; `core/audio/engine.*` — poziomy ścieżek (szczyt + opadanie ~24 dB/s) do VU, przekazywane atomowo.
+- `core/ui/arrange.cpp` — segmentowy VU (−48..0 dB, zielony/żółty od −12 dB/czerwony od −3 dB) pod paskiem głośności każdej ścieżki.
+**Następny krok:** ocena Patryka; potem step seq/perkusja albo syntezator.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 07:35
 **Zmienione:** `core/ui/piano_roll.*` — warstwy menu zaznaczania (R3) przełączane L2/R2 zamiast L1/R1 (L2 = warstwa 1, R2 = warstwa 2); `core/ui/app.cpp` — gdy menu R3 jest otwarte, L2/R2 nie zmieniają zakładek. README, CLAUDE.md, ARCHITEKTURA.md zaktualizowane. Test: R2 w menu zmienia warstwę i zostaje w piano rollu; po wyjściu z menu L2 przechodzi do ARRANGE.
 `tools/deploy.sh` — wysyłka pod tymczasową nazwę i podmiana (`mv`), bo nadpisanie działającego programu na konsoli się nie udawało.

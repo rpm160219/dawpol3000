@@ -31,18 +31,23 @@ void TrackDialog::open() {
 void TrackDialog::openEdit(int track) {
     Project& p = app_->project();
     edit_ = track;
-    color_ = p.tracks[track].color % 8;
+    color_ = p.tracks[track].color % pal::TRACK_COLORS;
     type_ = p.tracks[track].type;
     memcpy(name_, p.tracks[track].name, sizeof name_);
     confirmDelete_ = false;
 }
 
-static const char* kColorNames[8] = {"BLUE", "GREEN", "RED", "TAN", "PURPLE", "CYAN", "YELLOW", "PINK"};
 
 void TrackDialog::updateEdit(const Buttons& b) {
     Project& p = app_->project();
-    if (b.repeat(B_DOWN)) { color_ = (color_ + 1) % 8; confirmDelete_ = false; }
-    if (b.repeat(B_UP)) { color_ = (color_ + 7) % 8; confirmDelete_ = false; }
+    // siatka kolorow 4 kolumny x 8 wierszy
+    const int cols = 4, n = pal::TRACK_COLORS;
+    int nc = color_;
+    if (b.repeat(B_RIGHT) && color_ % cols < cols - 1) nc++;
+    if (b.repeat(B_LEFT) && color_ % cols > 0) nc--;
+    if (b.repeat(B_DOWN) && color_ + cols < n) nc += cols;
+    if (b.repeat(B_UP) && color_ - cols >= 0) nc -= cols;
+    if (nc != color_) { color_ = nc; confirmDelete_ = false; }
     if (b.pressed(B_X)) ed_.begin(name_);
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_Y)) {
@@ -83,15 +88,16 @@ void TrackDialog::renderEdit(Canvas& c) {
     if (confirmDelete_) drawText(c, 28, 300, "PRESS Y AGAIN TO DELETE TRACK + CLIPS", 10, 1.4f, pal::red);
     else drawText(c, 28, 300, "Y = DELETE TRACK", 10, 1.3f, pal::dim);
     if (ed_.active()) drawText(c, 28, 330, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 9, 1.2f, pal::steel);
-    // lista kolorow z probkami
+    // siatka 32 kolorow (4 x 8), wybrany w bialej obwodce
     const float lx = RBX + 6, ly = 72, lw = RBW - 12;
     c.line(lx, ly, lx, ly + 330, 2.f, pal::steel);
     c.line(lx + lw, ly, lx + lw, ly + 330, 2.f, rgb(70, 70, 70));
-    for (int i = 0; i < 8; i++) {
-        float ry = ly + 8 + i * 38;
-        if (i == color_) c.fillRoundRect(lx + 8, ry - 5, lw - 16, 30, 6, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 40));
-        c.fillRoundRect(lx + 18, ry, 20, 20, 5, pal::track[i]);
-        drawText(c, lx + 50, ry + 3, kColorNames[i], 14, 1.6f, i == color_ ? rgb(245, 210, 160) : pal::tan);
+    const int cols = 4;
+    const float cell = 46, gx = lx + (lw - cols * cell) * 0.5f, gy = ly + 10, sw = 32;
+    for (int i = 0; i < pal::TRACK_COLORS; i++) {
+        float cx = gx + (i % cols) * cell + (cell - sw) * 0.5f, cy = gy + (i / cols) * 39 + 2;
+        c.fillRoundRect(cx, cy, sw, sw - 4, 6, pal::track[i]);
+        if (i == color_) c.strokeRoundRect(cx - 4, cy - 4, sw + 8, sw + 4, 9, 2.f, pal::white);
     }
     pillButton(c, 16, PY, 140, PH, "NAME", pal::steel, 'X');
     pillButton(c, 170, PY, 140, PH, confirmDelete_ ? "SURE?" : "DELETE", pal::tan, 'Y');
@@ -205,7 +211,7 @@ void PatternDialog::render(Canvas& c) {
     snprintf(b, sizeof b, "%d", isNew ? bars_ : ex->bars());
     valueBox(c, 236, 196, 84, 56, "LENGTH", b, (isNew ? bars_ : ex->bars()) == 1 ? "BAR" : "BARS", pal::tan, isNew);
     const Track& tr = p.tracks[track_];
-    drawIcon(c, ICON_KEYS, 28, 290, 18, pal::track[tr.color % 8]);
+    drawIcon(c, ICON_KEYS, 28, 290, 18, pal::track[tr.color % pal::TRACK_COLORS]);
     snprintf(b, sizeof b, "%s  -  BAR %d", tr.name, bar_ + 1);
     drawText(c, 54, 294, b, 11, 1.4f, pal::white);
     drawText(c, 28, 322, "4/4  -  16 STEPS PER BAR", 10, 1.3f, pal::dim);

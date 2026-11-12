@@ -1,4 +1,5 @@
 #include "io/project_file.h"
+#include "gfx/canvas.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,7 +99,7 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             t.type = !strcmp(tok[1], "audio") ? TRACK_AUDIO : TRACK_MIDI;
             snprintf(t.name, sizeof t.name, "%s", tok[2]);
             const char* v;
-            if ((v = kv(tok, n, 3, "color"))) t.color = (uint8_t)(atoi(v) & 7);
+            if ((v = kv(tok, n, 3, "color"))) t.color = (uint8_t)(atoi(v) % pal::TRACK_COLORS);
             if ((v = kv(tok, n, 3, "vol"))) t.volume = (float)atof(v);
             if ((v = kv(tok, n, 3, "mute"))) t.mute = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;

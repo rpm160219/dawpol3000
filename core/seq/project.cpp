@@ -20,7 +20,7 @@ int Project::addTrack(int type, const char* nm) {
     Track& t = tracks[nTracks];
     t = Track();
     t.type = (uint8_t)type;
-    t.color = (uint8_t)(nTracks % 8);
+    t.color = (uint8_t)(nTracks % 32);
     snprintf(t.name, sizeof t.name, "%s", nm);
     return nTracks++;
 }

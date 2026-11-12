@@ -14,7 +14,7 @@ enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 
 struct Track {
     uint8_t type = TRACK_MIDI;
-    uint8_t color = 0;       // indeks w pal::track
+    uint8_t color = 0;       // indeks w pal::track (0..31)
     char name[12] = "TRACK";
     float volume = 0.8f;
     bool mute = false, solo = false;

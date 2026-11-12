@@ -72,6 +72,8 @@ void SawSynth::render(float* out, int n) {
         for (int i = 0; i < m; i++) {
             vol_ += (volT_ - vol_) * volK_;
             float x = mono[i] * vol_;
+            float ax = x < 0 ? -x : x;
+            if (ax > peak_) peak_ = ax;
             o[i * 2] += x;
             o[i * 2 + 1] += x;
         }

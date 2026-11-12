@@ -2,7 +2,7 @@
 //
 // NEW TRACK:   gora/dol = typ (MIDI/AUDIO), X = edycja nazwy, A = utworz, B = anuluj.
 //              Po utworzeniu sciezki MIDI od razu otwiera sie NEW PATTERN.
-// TRACK (edycja, Select na sciezce w ARRANGE): X = nazwa, gora/dol = kolor,
+// TRACK (edycja, Select na sciezce w ARRANGE): X = nazwa, krzyzak = kolor (siatka 4x8 = 32),
 //              Y dwa razy = usun sciezke, A = OK, B = anuluj.
 // NEW PATTERN: gora/dol = nowy albo istniejacy pattern z listy, lewo/prawo (lub niebieski
 //              enkoder) = dlugosc w taktach, X = edycja nazwy, A = utworz / uzyj, B = anuluj.
