@@ -476,6 +476,7 @@ static const FactoryPreset kVapora[] = {
 
 // SUPERSAW: oryginal (op1r, przyklad pcppcp) nie ma presetow — 24 wlasne: k DETUNE MORPH SUB DRIVE, MONO/glide, LFO.
 // Wersja 2: bez UNISON i AGE (usuniete z VOICE, decyzja Patryka) — zastepuje presety, ktore ich uzywaly.
+// Wersja 3: filtr DAW-POL (push ZAMKNIECIE RES TYP, fenv na CUTOFF, cel LFO 6 = CUT) — 9 presetow z filtrem.
 static const FactoryPreset kSupersaw[] = {
     {"INIT", CAT_OTHER, 1, ""},
     {"TRANCE LEAD", CAT_LEAD, 2, "k 20000 0 8000 8000 voice 1 0.04 0 0 env 0.005 0.3 0.85 0.3"},
@@ -502,6 +503,15 @@ static const FactoryPreset kSupersaw[] = {
     {"WOBBLE BASS", CAT_BASS, 1, "k 6000 16000 24000 20000 voice 1 0 0 0 env 0.002 0.3 0.9 0.1 lfo1 0 2 0.5 1 1 5 oct -1"},
     {"RISER", CAT_FX, 1, "k 32767 0 0 8000 env 3 0.1 1 1 menv 4 0.1 1 1 0.5 4"},
     {"SIREN", CAT_FX, 1, "k 10000 32767 0 12000 env 0.05 0.1 1 0.5 lfo1 1 0.5 0.3 4 0 0"},
+    {"FILTER PLUCK", CAT_PLUCK, 3, "k 16000 0 8000 6000 push 26000 8000 0 env 0.001 0.6 0 0.4 fenv 0.001 0.3 0 0.3 0.6"},
+    {"TRANCE PLUCK", CAT_PLUCK, 3, "k 22000 0 6000 8000 push 22000 12000 0 env 0.001 0.5 0 0.4 fenv 0.001 0.25 0 0.25 0.55"},
+    {"SWEEP PAD", CAT_PAD, 3, "k 20000 0 10000 4000 push 20000 10000 0 env 1 1 0.9 2 lfo1 1 0.08 0.35 6 0 0"},
+    {"PUMP PAD", CAT_PAD, 3, "k 20000 0 8000 6000 push 18000 14000 0 env 0.005 0.3 1 0.3 lfo1 2 4 0.5 6 1 5"},
+    {"THIN AIR", CAT_PAD, 3, "k 24000 0 0 4000 push 12000 8000 3 env 0.8 1 0.9 2"},
+    {"ACID SAW", CAT_BASS, 3, "k 4000 0 8000 16000 push 24000 26000 1 voice 1 0.06 0 0 env 0.002 0.3 0.9 0.1 fenv 0.001 0.2 0 0.15 0.5 oct -1"},
+    {"WARM BASS", CAT_BASS, 3, "k 6000 0 24000 6000 push 20000 4000 0 voice 1 0.03 0 0 env 0.003 0.3 0.9 0.1 oct -1"},
+    {"WAH LEAD", CAT_LEAD, 3, "k 16000 6000 8000 12000 push 16000 22000 2 voice 1 0.05 0 0 env 0.01 0.3 0.9 0.3 lfo1 0 3 0.3 6 0 0"},
+    {"FILTER RISE", CAT_FX, 3, "k 32767 0 4000 8000 push 30000 18000 0 env 2 0.1 1 1 fenv 4 0.1 1 1 0.9"},
 };
 
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji

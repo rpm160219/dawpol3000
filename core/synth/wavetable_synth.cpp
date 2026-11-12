@@ -231,6 +231,39 @@ void WavetableSynth::setExt(int16_t wave2, int semi1, int semi2, float cents1, f
     drive_ = drive;
 }
 
+// SUPERSAW: filtr DAW-POL za oryginalnym silnikiem — SVF z rownaniami trapezowymi (Simper / Cytomic), LP24 = dwa stopnie
+// (Butterworth przy RES 0, rezonans w drugim). Czestotliwosc jak w odczycie galki: 30 Hz .. 16 kHz wykladniczo.
+// Sterowanie na blok z wygladzeniem (~3 ms), stan liczony zawsze (bez skoku przy otwieraniu z pozycji "otwarty").
+void WavetableSynth::ssFilter(int vi, const int16_t* in, float* out, float cut, float res) {
+    SsFilt& f = ssf_[vi];
+    if (!f.ready) { f = SsFilt{0, 0, 0, 0, cut, res, true}; }
+    f.cut += (cut - f.cut) * 0.35f;
+    f.res += (res - f.res) * 0.35f;
+    const float hz = 30.f * powf(16000.f / 30.f, f.cut < 0 ? 0 : (f.cut > 1 ? 1 : f.cut));
+    const float g = tanf((float)M_PI * hz / voiceRate_);
+    const float r = f.res < 0 ? 0 : (f.res > 1 ? 1 : f.res);
+    const float k2 = ssMode_ == 0 ? 0.765f * (1.f - r) + 0.1f * r : 1.414f * (1.f - r) + 0.1f * r;  // RES max: Q 10
+    const float inG = ssMode_ == 2 ? 1.f : 1.f - (ssMode_ == 0 ? 0.4f : 0.55f) * r;  // kompensacja glosnosci rezonansu
+    const float k1 = 1.848f;
+    const float a1 = 1.f / (1.f + g * (g + k2)), a2 = g * a1, a3 = g * a2;
+    const float b1 = 1.f / (1.f + g * (g + k1)), b2 = g * b1, b3 = g * b2;
+    float s1 = f.s1, s2 = f.s2, s3 = f.s3, s4 = f.s4;
+    for (int i = 0; i < BLOCK; i++) {
+        float x = (float)in[i] * inG;
+        if (ssMode_ == 0) {  // pierwszy stopien LP (bez rezonansu)
+            const float v3 = x - s4, v1 = b1 * s3 + b2 * v3, v2 = s4 + b2 * s3 + b3 * v3;
+            s3 = 2.f * v1 - s3; s4 = 2.f * v2 - s4;
+            x = v2;
+        }
+        const float v3 = x - s2, v1 = a1 * s1 + a2 * v3, v2 = s2 + a2 * s1 + a3 * v3;
+        s1 = 2.f * v1 - s1; s2 = 2.f * v2 - s2;
+        float y = ssMode_ <= 1 ? v2 : (ssMode_ == 2 ? v1 * k2 * (1.f + 2.f * r) : x - k2 * v1 - v2);  // BP: waski przy RES — podbicie
+        y = y > 60000.f ? 60000.f : (y < -60000.f ? -60000.f : y);
+        out[i] = y;
+    }
+    f.s1 = s1; f.s2 = s2; f.s3 = s3; f.s4 = s4;
+}
+
 // Jeden blok glosu w trybie rozszerzonym. vk = galki po modulacji (0 fala OSC 1, 2 CUTOFF, 3 RES).
 void WavetableSynth::renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel) {
     WtExtState* s = SX(sx_, vi);
@@ -398,7 +431,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
     else if (kind_ == 9) sidNoteOn(sid_, slot, knobs_);
     else if (kind_ == 11) vaporaNoteOn(vpr_, slot, knobs_);
-    else if (kind_ == 12) supersawNoteOn(ssw_, slot, knobs_);
+    else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) monolitNoteOff(mnl_, i);
@@ -453,6 +486,7 @@ void WavetableSynth::renderBlock() {
     for (int i = 0; i < BLOCK; i++) sum[i] = 0;
     uint32_t pitchBuf[BLOCK];
     int16_t out[BLOCK];
+    float fbuf[BLOCK];
     int act = 0, loud = -1;
     float loudEnv = -1;
     // LFO raz na blok (wspolne dla glosow sciezki)
@@ -498,6 +532,7 @@ void WavetableSynth::renderBlock() {
     for (int vi = 0; vi < VOICES; vi++) {
         Voice& v = v_[vi];
         if (v.stage == OFF) continue;
+        bool useF = false;  // SUPERSAW z filtrem: wyjscie z fbuf
         act++;
         // obwiednia filtra (na blok)
         switch (v.fstage) {
@@ -524,7 +559,7 @@ void WavetableSynth::renderBlock() {
         // galki glosu = galki sciezki + LFO + obwiednie (przy zerowych modulacjach — bez zmian)
         for (int i = 0; i < 8; i++) vk[i] = knobs_[i];
         for (int i = 0; i < 4; i++) {
-            float m = vm[i] + (i == (kind_ == 1 || kind_ == 10 ? 1 : 2) ? fAmt_ * v.fenv : 0.f);  // jasnosc: DCW / CUTOFF MONOLIT (1), CUTOFF (2)
+            float m = vm[i] + (i == (kind_ == 1 || kind_ == 10 ? 1 : (kind_ == 12 ? -1 : 2)) ? fAmt_ * v.fenv : 0.f);  // SUPERSAW: obwiednia na filtr (nizej)  // jasnosc: DCW / CUTOFF MONOLIT (1), CUTOFF (2)
             if (m != 0.f) {
                 int x = knobs_[i] + (int)lrintf(m * 32767.f);
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
@@ -556,6 +591,9 @@ void WavetableSynth::renderBlock() {
         if (kind_ == 12) {  // SUPERSAW (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             supersawRender(ssw_, vi, out, vk, pitchBuf, v.vel);
+            const float fc = ssCut_ + vm[DEST_W1] + fAmt_ * v.fenv, fr = ssRes_ + vm[DEST_W2];
+            ssFilter(vi, out, fbuf, fc, fr);
+            useF = !(fc >= 1.f && fr <= 0.f && ssf_[vi].cut >= 0.999f && ssf_[vi].res <= 0.001f);  // otwarty = oryginal bit w bit
         } else if (kind_ == 11) {  // VAPORA (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             vaporaRender(vpr_, vi, out, vk, pitchBuf, v.vel);
@@ -629,7 +667,7 @@ void WavetableSynth::renderBlock() {
             if (trem != 1.f || tremPrev_ != 1.f) g *= tremPrev_ + (trem - tremPrev_) * (i + 1) * (1.f / BLOCK);
             if (mvol != 1.f || v.mvolPrev != 1.f) g *= v.mvolPrev + (mvol - v.mvolPrev) * (i + 1) * (1.f / BLOCK);
             if (mono_ && unison_ > 0) g *= 0.4082f;  // unison: 6 glosow ~ glosnosc jednego (1/sqrt(6))
-            sum[i] += (double)out[i] * g;
+            sum[i] += (useF ? (double)fbuf[i] : (double)out[i]) * g;
         }
         v.mvolPrev = mvol;
         if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel, v.pendDet, v.pendFrom);  // po wyciszeniu

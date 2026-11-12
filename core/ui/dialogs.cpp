@@ -85,7 +85,11 @@ static int engineIndexOf(const Track& t) {
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
     int e = idx == 14 ? ENG_SAW : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
-    if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
+    if (e != t.engine) {  // nowy silnik: domyslne galki i strona 2 (np. SUPERSAW: filtr otwarty)
+        engineDefaultKnobs(e, t.knob);
+        t.push[0] = t.push[1] = t.push[2] = 0;
+        t.preset[0] = 0;
+    }
     const bool wasObp = t.engine == ENG_OXBOW && t.alt;
     t.engine = (uint8_t)e;
     t.alt = idx == 1 || idx == 9;  // WAVETABLE+, OXBOW+

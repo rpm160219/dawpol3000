@@ -57,6 +57,8 @@ const char* destNameFor(int engine, int d) {
     if (engine == ENG_VAPORA && d >= 0 && d < 4) return vpn[d];
     static const char* ssn[4] = {"DTUN", "MRPH", "SUB", "DRV"};
     if (engine == ENG_SUPERSAW && d >= 0 && d < 4) return ssn[d];
+    if (engine == ENG_SUPERSAW && d == DEST_W1) return "CUT";  // filtr DAW-POL
+    if (engine == ENG_SUPERSAW && d == DEST_W2) return "RES";
     if (engine == ENG_OXBOW && d >= 0 && d < 4) return obn[d];
     if (engine == ENG_OXBOW && d == DEST_W1) return "PW1";  // OXBOW+: szerokosc pulsu zamiast fali
     if (engine == ENG_OXBOW && d == DEST_W2) return "PW2";

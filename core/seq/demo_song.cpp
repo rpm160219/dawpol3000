@@ -45,7 +45,7 @@ void buildDemoAllEngines(Project& p) {
     const int chip = track(p, "CHIP", "sid", "PULSE KEYS", 10, 0.3f);        // SID
     const int acid = track(p, "ACID", "monolit", "ACID GLIDE", 11, 0.35f);  // MONOLIT (MONO + glide)
     const int tide = track(p, "TIDE", "vapora", "A FIFTH TIDE", 12, 0.45f);  // VAPORA (pad z kwinta)
-    const int saws = track(p, "SAWS", "supersaw", "CHORD STAB", 13, 0.45f);  // SUPERSAW (akordy na off-beat)
+    const int saws = track(p, "SAWS", "supersaw", "TRANCE PLUCK", 13, 0.45f);  // SUPERSAW (akordy na off-beat, filtr z obwiednia)
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
     int pd = p.addPattern("DRONE", 4);

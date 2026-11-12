@@ -316,7 +316,7 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "supersaw") || !strcmp(screen, "supersawvoice")) {
+    } else if (!strcmp(screen, "supersaw") || !strcmp(screen, "supersawvoice") || !strcmp(screen, "supersawfilter")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_SUPERSAW;
         engineDefaultKnobs(ENG_SUPERSAW, tr.knob);
@@ -327,6 +327,7 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "supersawvoice")) app.synth.setPageKind(SynthView::K_VOICE);
+        if (!strcmp(screen, "supersawfilter")) { tr.push[0] = 14000; tr.push[1] = 20000; tr.push[2] = 0; tr.fenvAmt = 0.5f; app.markDirty(); idle(app); app.synth.setAlt(true); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

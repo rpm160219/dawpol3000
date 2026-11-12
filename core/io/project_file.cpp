@@ -35,7 +35,7 @@ void writeInstrument(FILE* f, const Track& t) {
                 o.cents1, o.level[0], o.level[1], o.pw[0], o.pw[1], o.noise, o.sync, o.xmod, o.envPitch, o.keytrk, o.velflt,
                 o.vint, o.ftype, o.drive);
     }
-    if (t.engine == ENG_PEW || t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_SID || t.engine == ENG_MONOLIT || t.engine == ENG_VAPORA) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
+    if (t.engine == ENG_PEW || t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_SID || t.engine == ENG_MONOLIT || t.engine == ENG_VAPORA || t.engine == ENG_SUPERSAW) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
     if (t.octave) fprintf(f, " oct %d", t.octave);
     if (t.engine == ENG_VAPORA && t.sun) fprintf(f, " vsun %d", t.sun);
     if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);

@@ -35,6 +35,9 @@ public:
     // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
     // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
     void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA, 6 REACTOR, 7 OXBOW, 8 OXBOW+, 9 SID, 10 MONOLIT
+    // SUPERSAW: filtr za oryginalnym silnikiem (DAW-POL). cut 0..1 (1 = otwarty: bez filtra, brzmienie 1:1), res 0..1,
+    // mode 0 LP24, 1 LP12, 2 BP, 3 HP. Modulacja: obwiednia filtra i cele CUT (W1) / RES (W2).
+    void setSsFilter(float cut, float res, int mode) { ssCut_ = cut; ssRes_ = res; ssMode_ = mode & 3; }
     void setOctave(int o) { octSemi_ = 12 * (o < -3 ? -3 : (o > 3 ? 3 : o)); }  // OCTAVE instrumentu (-3..+3): tylko wysokosc dzwieku, nuty klawiszy bez zmian
     void setPush(const int16_t p[3]) { for (int i = 0; i < 3; i++) knobs_[5 + i] = p[i] < 0 ? 0 : p[i]; }  // PEW: strona 2
     const PewCore* pew() const { return pew_; }
@@ -155,6 +158,10 @@ private:
     Voice v_[VOICES];
     alignas(8) unsigned char st_[VOICES][96];  // WavetableState z wavetable_dsp.h (rozmiar sprawdzany w .cpp)
     int octSemi_ = 0;
+    float ssCut_ = 1.f, ssRes_ = 0.f;
+    int ssMode_ = 0;
+    struct SsFilt { float s1, s2, s3, s4, cut, res; bool ready; } ssf_[6] = {};
+    void ssFilter(int vi, const int16_t* in, float* out, float cut, float res);
     int16_t knobs_[8] = {16384, 8192, 20000, 8192, 0, 0, 0, 0};
     float atk_ = 0, dec_k_ = 0, sus_ = 1, rel_k_ = 0;  // przyrosty/wspolczynniki na probke glosu
 
