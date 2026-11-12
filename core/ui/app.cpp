@@ -300,7 +300,7 @@ void App::update(const InputState& in, float dt) {
             else if (hasRoll) openPattern(lastPattern_, lastTrack_);
         }
     } else if (tools_) toolsUpdate(in, dt);
-    else if (!btn_.pressed(B_L3)) cur_->update(btn_, in, dt);
+    else if (!(toolsView && btn_.pressed(B_L3))) cur_->update(btn_, in, dt);  // L3 w SYNTH trafia do ekranu
     if (next_) { cur_ = next_; next_ = nullptr; }
     if (tools_ && cur_ != &arrange && cur_ != &roll) tools_ = false;
     if (dirty_) publish();

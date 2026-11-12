@@ -35,9 +35,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     Track& t = p.tracks[track_];
     AudioEngine* e = app_->engine();
 
-    if (b.pressed(B_L1) && octave_ > 1) octave_--;
-    if (b.pressed(B_R1) && octave_ < 7) octave_++;
     if (b.pressed(B_SELECT) && !b.down(B_MENU)) page_ = (page_ + 1) % PAGES;
+    if (b.pressed(B_L3)) alt_ = !alt_;
     if (b.pressed(B_START)) app_->togglePlaySong();
 
     // granie nut z przyciskow
@@ -70,19 +69,15 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             if (v != t.knob[i]) { t.knob[i] = (int16_t)v; changed = true; }
             break;
         }
-        case 1: {  // AMP ENV
+        case 1:
+        case 2: {  // AMP ENV / FILTER ENV: A D S R (L3: R -> AMOUNT)
             if (d == 0.f) break;
-            float k = i == 2 ? t.env[2] : envKnob(t.env[i]);
-            k = clamp01(k + d);
-            t.env[i] = i == 2 ? k : (k <= 0 ? 0.f : envTime(k));
-            changed = true;
-            break;
-        }
-        case 2: {  // FILTER ENV: A D S AMOUNT
-            if (d == 0.f) break;
-            if (i == 3) { float a = t.fenv[3] + d * 2.f; t.fenv[3] = a < -1 ? -1 : (a > 1 ? 1 : a); }
-            else if (i == 2) t.fenv[2] = clamp01(t.fenv[2] + d);
-            else { float k = clamp01(envKnob(t.fenv[i]) + d); t.fenv[i] = k <= 0 ? 0.f : envTime(k); }
+            float* ev = page_ == 1 ? t.env : t.fenv;
+            if (i == 3 && alt_) {
+                if (page_ == 1) t.envAmt = clamp01(t.envAmt + d);
+                else { float a = t.fenvAmt + d * 2.f; t.fenvAmt = a < -1 ? -1 : (a > 1 ? 1 : a); }
+            } else if (i == 2) ev[2] = clamp01(ev[2] + d);
+            else { float k = clamp01(envKnob(ev[i]) + d); ev[i] = k <= 0 ? 0.f : envTime(k); }
             changed = true;
             break;
         }
@@ -147,28 +142,23 @@ void SynthView::render(Canvas& c) {
     screenHeader(c, ICON_KEYS, tc, engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
                  (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
 
-    // lewy dol: oktawa klawiszy i strona galek
+    // lewy dol: strona galek
     static const char* kPage[PAGES] = {"SOUND", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2"};
-    drawText(c, 20, 340, kPage[page_], 13, 1.5f, pal::white);
+    drawText(c, 20, 342, kPage[page_], 13, 1.5f, pal::white);
     for (int i = 0; i < PAGES; i++) {
         float x = 24 + i * 12;
-        if (i == page_) c.fillCircle(x, 364, 2.6f, pal::white);
-        else c.circle(x, 364, 2.2f, 1.f, rgb(90, 90, 90));
+        if (i == page_) c.fillCircle(x, 366, 2.6f, pal::white);
+        else c.circle(x, 366, 2.2f, 1.f, rgb(90, 90, 90));
     }
-    drawText(c, 86, 360, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
-    int lo = 12 * (octave_ + 1);
-    char nn[8];
-    static const char* NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    snprintf(nn, sizeof nn, "%s%d", NN[lo % 12], lo / 12 - 1);
-    snprintf(b, sizeof b, "KEYS: D-PAD + ABXY = %s MAJOR SCALE   L1/R1 = OCTAVE %d", nn, octave_);
-    drawText(c, 20, 384, b, 7, 1.f, pal::dim);
+    drawText(c, 86, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
+    if (page_ == 1 || page_ == 2)
+        drawText(c, 20, 384, alt_ ? "L3 = RELEASE" : "L3 = AMOUNT", 7, 1.f, alt_ ? pal::red : rgb(80, 80, 80));
 
     // prawy dol: grafika strony (obwiednie / LFO)
     if (page_ == 2) {
-        float fe[4] = {t.fenv[0], t.fenv[1], t.fenv[2], t.env[3]};
-        drawEnvelope(c, fe, true, 400, 342, 200, 46);
-        snprintf(b, sizeof b, "CUTOFF %+d%%", (int)lrintf(t.fenv[3] * 100));
-        drawText(c, 600, 394, b, 8, 1.1f, t.fenv[3] == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
+        drawEnvelope(c, t.fenv, true, 400, 342, 200, 46);
+        snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.fenvAmt * 100));
+        drawText(c, 600, 394, b, 8, 1.1f, t.fenvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
     } else if (page_ >= 3) {
         const Lfo& L = t.lfo[page_ - 3];
         float pts[2 * 81];
@@ -194,7 +184,8 @@ void SynthView::render(Canvas& c) {
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
     } else {
         drawEnvelope(c, t.env, page_ == 1, 400, 342, 200, 46);
-        drawText(c, 600, 394, "AMP ENV", 8, 1.1f, page_ == 1 ? pal::white : pal::dim, ALIGN_RIGHT);
+        snprintf(b, sizeof b, "AMOUNT %d%%", (int)lrintf(t.envAmt * 100));
+        drawText(c, 600, 394, b, 8, 1.1f, page_ == 1 ? pal::white : pal::dim, ALIGN_RIGHT);
     }
 
     // galki
@@ -217,12 +208,14 @@ void SynthView::render(Canvas& c) {
     } else if (page_ <= 2) {
         const float* ev = page_ == 2 ? t.fenv : t.env;
         static const char* LA[4] = {"ATTACK", "DECAY", "SUSTAIN", "RELEASE"};
-        static const char* LF[4] = {"F.ATTACK", "F.DECAY", "F.SUSTAIN", "AMOUNT"};
         for (int i = 0; i < 4; i++) {
-            labels[i] = page_ == 2 ? LF[i] : LA[i];
+            labels[i] = LA[i];
             if (i == 2) { snprintf(v[i], 16, "%d", (int)lrintf(ev[2] * 100)); pos[i] = ev[2]; }
-            else if (i == 3 && page_ == 2) { snprintf(v[i], 16, "%+d", (int)lrintf(ev[3] * 100)); pos[i] = 0.5f + ev[3] * 0.5f; }
-            else {
+            else if (i == 3 && alt_) {
+                labels[i] = "AMOUNT";
+                if (page_ == 1) { snprintf(v[i], 16, "%d", (int)lrintf(t.envAmt * 100)); pos[i] = t.envAmt; }
+                else { snprintf(v[i], 16, "%+d", (int)lrintf(t.fenvAmt * 100)); pos[i] = 0.5f + t.fenvAmt * 0.5f; }
+            } else {
                 float s = ev[i];
                 if (s < 1.f) snprintf(v[i], 16, "%.0fMS", s * 1000.f);
                 else snprintf(v[i], 16, "%.1fS", s);

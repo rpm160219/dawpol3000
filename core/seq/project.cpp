@@ -13,11 +13,11 @@ const char* engineName(int e) {
 }
 
 const char* lfoShapeName(int s) {
-    static const char* n[LFO_SHAPES] = {"SINE", "TRIANGLE", "SAW", "SQUARE", "RANDOM"};
+    static const char* n[LFO_SHAPES] = {"SINE", "TRI", "SAW", "SQR", "RND"};
     return s >= 0 && s < LFO_SHAPES ? n[s] : "?";
 }
 const char* lfoDestName(int d) {
-    static const char* n[LFO_DESTS] = {"WAVE", "DETUNE", "CUTOFF", "RESONANCE", "PITCH", "VOLUME"};
+    static const char* n[LFO_DESTS] = {"WAVE", "DTUN", "CUT", "RES", "PTCH", "VOL"};
     return d >= 0 && d < LFO_DESTS ? n[d] : "?";
 }
 

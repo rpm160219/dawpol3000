@@ -32,7 +32,8 @@ bool saveProjectFile(const Project& p, const char* path) {
             fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f", t.engine == ENG_SAW ? "saw" : "wavetable",
                     t.knob[0], t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
         if (t.type == TRACK_MIDI) {
-            fprintf(f, " fenv %.4f %.4f %.4f %.4f", t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3]);
+            fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
+                    t.fenvAmt);
             for (int l = 0; l < 2; l++)
                 fprintf(f, " lfo%d %d %.4f %.4f %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest);
         }
@@ -119,8 +120,14 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
                     for (int j = 0; j < 4; j++) { int x = atoi(tok[i + 1 + j]); t.knob[j] = (int16_t)(x < 0 ? 0 : x > 32767 ? 32767 : x); }
                 if (!strcmp(tok[i], "env"))
                     for (int j = 0; j < 4; j++) t.env[j] = (float)atof(tok[i + 1 + j]);
-                if (!strcmp(tok[i], "fenv"))
-                    for (int j = 0; j < 4; j++) t.fenv[j] = (float)atof(tok[i + 1 + j]);
+                if (!strcmp(tok[i], "envamt")) t.envAmt = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "fenv")) {
+                    // nowy zapis: A D S R AMOUNT; pierwsza wersja (A D S AMOUNT, bez R) — rozpoznawana po 4 liczbach
+                    bool five = i + 5 < n && (tok[i + 5][0] == '-' || tok[i + 5][0] == '.' || (tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9'));
+                    for (int j = 0; j < 3; j++) t.fenv[j] = (float)atof(tok[i + 1 + j]);
+                    if (five) { t.fenv[3] = (float)atof(tok[i + 4]); t.fenvAmt = (float)atof(tok[i + 5]); }
+                    else { t.fenv[3] = t.env[3]; t.fenvAmt = (float)atof(tok[i + 4]); }
+                }
                 if (!strcmp(tok[i], "lfo1") || !strcmp(tok[i], "lfo2")) {
                     Lfo& L = t.lfo[tok[i][3] - '1'];
                     L.shape = (uint8_t)(atoi(tok[i + 1]) % LFO_SHAPES);

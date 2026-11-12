@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 11:30
+**Zmienione (przegląd kodu obwiedni i LFO po uwadze Patryka):**
+- `core/synth/wavetable_synth.*` — LFO biegnie w czasie rzeczywistym także w ciszy (wcześniej stał między frazami, więc każda fraza „startowała” go od miejsca, gdzie skończyła poprzednia); SUSTAIN śledzi gałkę w trakcie nuty; szybkie powtórzenie tej samej nuty w trakcie wyciszania nie zajmuje drugiego głosu; obwiednia filtra ma własne RELEASE; AMOUNT obwiedni głośności (0 = stała głośność przy trzymaniu, rampa bramki 3 ms); ekran dostaje modulację ostatnio uderzonej nuty (zamiast „najgłośniejszej”, która skakała między głosami).
+- `core/seq/project.*`, `core/io/project_file.*` — `envAmt`, obwiednia filtra A/D/S/R + `fenvAmt`; wczytywanie pierwszej wersji zapisu (A D S AMOUNT) zachowane; skrócone nazwy kształtów i celów LFO.
+- `core/ui/synth_view.*` — L3 na stronach obwiedni zamienia RELEASE ↔ AMOUNT; usunięte napisy o klawiszach i zmiana oktawy; `core/ui/app.cpp` — L3 trafia do zakładki SYNTH.
+- Testy: zgodność z oryginałem 0 różnic; LFO po 0,25 s ciszy w poprawnej fazie; 3× ta sama nuta = 1 głos; SUSTAIN w trakcie nuty; AMOUNT 0 = stała głośność i cisza po puszczeniu; stary plik OK; brak kliknięć.
+**Następny krok:** Patryk testuje na konsoli.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 10:30
 **Zmienione:**
 - `core/synth/wavetable_synth.*` — bez kliknięć: przejmowany/ponownie uderzany brzmiący głos najpierw wycisza się ~2 ms (dopiero potem reset DSP i nowa nuta), ogon filtra decymującego wybrzmiewa (zamiast zerowania); obwiednia filtra na głos (A/D/S/AMOUNT, wybrzmienie = R głośności); 2 LFO na ścieżkę (sinus, trójkąt, piła, prostokąt, losowy; 0,05–20 Hz; cele WAVE, DETUNE, CUTOFF, RESONANCE, PITCH, VOLUME); zmodulowane gałki dla ekranu.
