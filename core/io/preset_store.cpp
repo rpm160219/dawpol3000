@@ -36,6 +36,7 @@ void PresetStore::init(const char* root, const char* engineDir) {
     snprintf(eng_, sizeof eng_, "%s", engineDir);
     snprintf(dir_, sizeof dir_, "%s/%s", root_, eng_);
     fs::makeDirs(dir_);
+    if (!strcmp(eng_, "wavetableplus")) migrateFromWavetable();
     refresh();
     writeFactory();  // dopisuje brakujace presety z nowszych wersji zestawu
     refresh();
@@ -130,182 +131,59 @@ bool PresetStore::remove(int i) {
     return ok;
 }
 
-// Pozycje fal w galce WAVE (0..32767): SINE, WARM, TRI, SAW, SQUARE, PULSE, VOCAL, DIGITAL
-static const int16_t W_SINE = 0, W_WARM = 4681, W_TRI = 9362, W_SAW = 14043, W_SQR = 18724, W_PULSE = 23405,
-                     W_VOCAL = 28086, W_DIGI = 32767;
+struct FactoryPreset { const char* name; int cat; int ver; const char* inst; };
+const FactoryPreset* factoryList(const char* eng, int* n, int* engine);  // factory_presets.cpp
 
-// Zestaw fabryczny. ver = wersja zestawu, w ktorej preset doszedl.
-void PresetStore::writeFactory() {
-    if (!strcmp(eng_, "taffy")) { writeFactoryTaffy(); return; }
-    char mark[400];
-    snprintf(mark, sizeof mark, "%s/_factory_v%d", dir_, FACTORY_VERSION);
+// Przenosi presety WAVETABLE+ (alt 1) z katalogu WAVETABLE do wlasnego (rozdzielenie presetow, raz).
+void PresetStore::migrateFromWavetable() {
+    char src[300], mark[400];
+    snprintf(src, sizeof src, "%s/wavetable", root_);
+    snprintf(mark, sizeof mark, "%s/_split_done", dir_);
     if (fs::exists(mark)) return;
-    struct F { const char* name; int cat; int ver; void (*set)(Track&); };
-    static const F list[] = {
-        {"INIT", CAT_OTHER, 1, [](Track&) {}},
-        {"SUB BASS", CAT_BASS, 1, [](Track& t) {
-             t.alt = true; t.knob[0] = 9400; t.knob[2] = 9000; t.knob[3] = 6000; t.ext.osc[1].semi = -12;
-             t.ext.osc[1].level = 0.6f; t.ext.sub = 0.7f; t.mono = true; t.glide = 0.04f;
-             t.env[0] = 0.002f; t.env[1] = 0.3f; t.env[2] = 0.7f; t.env[3] = 0.08f; }},
-        {"ACID", CAT_BASS, 1, [](Track& t) {
-             t.knob[0] = 14000; t.knob[1] = 0; t.knob[2] = 5000; t.knob[3] = 26000; t.mono = true; t.glide = 0.09f;
-             t.fenv[0] = 0.002f; t.fenv[1] = 0.18f; t.fenv[2] = 0.f; t.fenv[3] = 0.1f; t.fenvAmt = 0.55f;
-             t.env[1] = 0.25f; t.env[2] = 0.6f; t.env[3] = 0.05f; }},
-        {"SUPERSAW", CAT_LEAD, 1, [](Track& t) {
-             t.alt = true; t.knob[0] = 14000; t.knob[2] = 26000; t.knob[3] = 4000; t.ext.osc[1].wave = 14000;
-             t.mono = true; t.unison = 22.f; t.glide = 0.03f; t.env[2] = 0.9f; t.env[3] = 0.25f; }},
-        {"VOCAL LEAD", CAT_LEAD, 1, [](Track& t) {
-             t.knob[0] = 28000; t.knob[1] = 6000; t.knob[2] = 22000; t.knob[3] = 12000; t.mono = true; t.glide = 0.06f;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.5f; t.lfo[0].depth = 0.012f; t.lfo[0].dest = DEST_PITCH; }},
-        {"WARM PAD", CAT_PAD, 1, [](Track& t) {
-             t.knob[0] = 4700; t.knob[1] = 22000; t.knob[2] = 16000; t.knob[3] = 6000; t.env[0] = 0.6f;
-             t.env[1] = 1.5f; t.env[2] = 0.8f; t.env[3] = 1.5f; t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 0.3f;
-             t.lfo[0].depth = 0.15f; t.lfo[0].dest = DEST_WAVE; t.age = 0.3f; }},
-        {"OLD PROPHET", CAT_PAD, 1, [](Track& t) {
-             t.alt = true; t.knob[0] = 14000; t.knob[2] = 15000; t.knob[3] = 9000; t.ext.osc[1].wave = 18700;
-             t.ext.osc[0].cents = -7; t.ext.osc[1].cents = 7; t.env[0] = 0.25f; t.env[1] = 1.f; t.env[2] = 0.7f;
-             t.env[3] = 0.8f; t.fenv[0] = 0.3f; t.fenv[1] = 1.2f; t.fenv[2] = 0.2f; t.fenv[3] = 0.8f; t.fenvAmt = 0.3f;
-             t.age = 0.7f; }},
-        {"GLASS KEYS", CAT_KEYS, 1, [](Track& t) {
-             t.knob[0] = 23400; t.knob[1] = 4000; t.knob[2] = 24000; t.knob[3] = 8000; t.env[0] = 0.002f;
-             t.env[1] = 0.9f; t.env[2] = 0.25f; t.env[3] = 0.5f; }},
-        {"PLUCK", CAT_PLUCK, 1, [](Track& t) {
-             t.knob[0] = 14000; t.knob[2] = 6000; t.knob[3] = 10000; t.env[0] = 0.001f; t.env[1] = 0.35f;
-             t.env[2] = 0.f; t.env[3] = 0.25f; t.fenv[0] = 0.001f; t.fenv[1] = 0.15f; t.fenv[2] = 0.f; t.fenv[3] = 0.2f;
-             t.fenvAmt = 0.6f; }},
-        {"DIGI BELL", CAT_BELL, 1, [](Track& t) {
-             t.alt = true; t.knob[0] = 32767; t.knob[2] = 28000; t.ext.osc[1].wave = 0; t.ext.osc[1].semi = 19;
-             t.ext.osc[1].level = 0.5f; t.env[0] = 0.001f; t.env[1] = 1.8f; t.env[2] = 0.f; t.env[3] = 1.5f; }},
-        {"WOBBLE", CAT_FX, 1, [](Track& t) {
-             t.knob[0] = 16000; t.knob[2] = 10000; t.knob[3] = 20000; t.mono = true; t.lfo[0].shape = LFO_SINE;
-             t.lfo[0].sync = true; t.lfo[0].div = 5; t.lfo[0].depth = 0.45f; t.lfo[0].dest = DEST_CUTOFF; }},
-        // ---- wersja 2: presety trybu rozszerzonego (2 OSC, sub, tryby filtra, MONO/UNISON, GLIDE, AGE, MOD ENV) ----
-        {"HOOVER", CAT_LEAD, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_SAW; t.ext.osc[1].wave = W_SAW; t.ext.osc[1].semi = -12; t.ext.osc[1].level = 0.8f;
-             t.ext.osc[0].cents = -9; t.ext.osc[1].cents = 9; t.knob[2] = 24000; t.knob[3] = 6000; t.ext.fmode = FLT_LP12;
-             t.mono = true; t.unison = 30.f; t.glideSync = true; t.glideDiv = 7;
-             t.menv[0] = 0.001f; t.menv[1] = 0.25f; t.menv[2] = 0.f; t.menv[3] = 0.2f; t.menvAmt = -0.18f; t.menvDest = DEST_PITCH;
-             t.env[2] = 0.9f; t.env[3] = 0.3f; }},
-        {"REESE", CAT_BASS, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_SAW; t.ext.osc[1].wave = W_SAW; t.ext.osc[0].cents = -14; t.ext.osc[1].cents = 14;
-             t.ext.sub = 0.5f; t.knob[2] = 11000; t.knob[3] = 7000; t.mono = true; t.glide = 0.03f;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 0.25f; t.lfo[0].depth = 0.08f; t.lfo[0].dest = DEST_W2;
-             t.env[0] = 0.003f; t.env[2] = 1.f; t.env[3] = 0.1f; }},
-        {"KICK DRUM", CAT_FX, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_SINE; t.ext.osc[1].level = 0.f; t.ext.osc[0].cents = 0; t.ext.sub = 0.6f;
-             t.knob[2] = 20000; t.knob[3] = 0; t.mono = true; t.ext.drive = 0.4f;
-             t.menv[0] = 0.001f; t.menv[1] = 0.07f; t.menv[2] = 0.f; t.menv[3] = 0.05f; t.menvAmt = 1.f; t.menvDest = DEST_PITCH;
-             t.env[0] = 0.001f; t.env[1] = 0.35f; t.env[2] = 0.f; t.env[3] = 0.1f; }},
-        {"SYNC PLUCK", CAT_PLUCK, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_SQR; t.ext.osc[1].wave = W_SAW; t.ext.osc[1].semi = 12; t.ext.osc[1].level = 0.7f;
-             t.ext.fmode = FLT_BP; t.knob[2] = 9000; t.knob[3] = 14000;
-             t.fenv[0] = 0.001f; t.fenv[1] = 0.18f; t.fenv[2] = 0.f; t.fenv[3] = 0.2f; t.fenvAmt = 0.6f;
-             t.env[0] = 0.001f; t.env[1] = 0.4f; t.env[2] = 0.f; t.env[3] = 0.3f; }},
-        {"SOFT STRINGS", CAT_PAD, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_SAW; t.ext.osc[1].wave = W_SAW; t.ext.osc[0].cents = -8; t.ext.osc[1].cents = 8;
-             t.ext.fmode = FLT_LP12; t.knob[2] = 17000; t.knob[3] = 3000; t.age = 0.5f;
-             t.env[0] = 0.5f; t.env[1] = 1.5f; t.env[2] = 0.85f; t.env[3] = 1.4f;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.2f; t.lfo[0].depth = 0.008f; t.lfo[0].dest = DEST_PITCH; }},
-        {"GATED KEYS", CAT_KEYS, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_WARM; t.ext.osc[1].wave = W_PULSE; t.ext.osc[1].semi = 12; t.ext.osc[1].level = 0.4f;
-             t.knob[2] = 19000; t.knob[3] = 5000; t.env[0] = 0.01f; t.env[2] = 0.9f; t.env[3] = 0.4f;
-             t.lfo[0].shape = LFO_SQUARE; t.lfo[0].sync = true; t.lfo[0].div = 7; t.lfo[0].depth = 0.85f; t.lfo[0].dest = DEST_VOLUME; }},
-        {"PORTA LEAD", CAT_LEAD, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_VOCAL; t.ext.osc[1].wave = W_SAW; t.ext.osc[1].semi = 7; t.ext.osc[1].level = 0.6f;
-             t.ext.fmode = FLT_LP12; t.knob[2] = 21000; t.knob[3] = 9000; t.mono = true; t.glideSync = true; t.glideDiv = 5;
-             t.age = 0.3f; t.env[2] = 0.85f;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.f; t.lfo[0].depth = 0.01f; t.lfo[0].dest = DEST_PITCH; }},
-        {"DRIFT PAD", CAT_PAD, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_WARM; t.ext.osc[1].wave = W_VOCAL; t.ext.osc[1].semi = 7; t.ext.osc[1].level = 0.7f;
-             t.knob[2] = 14000; t.knob[3] = 8000; t.age = 1.f; t.env[0] = 0.8f; t.env[1] = 2.f; t.env[2] = 0.8f; t.env[3] = 2.f;
-             t.lfo[0].shape = LFO_TRI; t.lfo[0].rate = 0.12f; t.lfo[0].depth = 0.25f; t.lfo[0].dest = DEST_W1;
-             t.lfo[1].shape = LFO_SINE; t.lfo[1].sync = true; t.lfo[1].div = 0; t.lfo[1].depth = 0.2f; t.lfo[1].dest = DEST_W2; }},
-        {"BELL TREE", CAT_BELL, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_DIGI; t.ext.osc[0].level = 0.45f; t.ext.osc[1].wave = W_SINE; t.ext.osc[1].semi = 24;
-             t.ext.osc[1].level = 0.35f; t.ext.fmode = FLT_HP; t.knob[2] = 4000; t.knob[3] = 5000;
-             t.env[0] = 0.001f; t.env[1] = 1.4f; t.env[2] = 0.f; t.env[3] = 1.6f;
-             t.menv[0] = 0.001f; t.menv[1] = 0.6f; t.menv[2] = 0.f; t.menvAmt = 0.4f; t.menvDest = DEST_W1; }},
-        {"NOISE SWEEP", CAT_FX, 2, [](Track& t) {
-             t.alt = true; t.knob[0] = W_DIGI; t.ext.osc[1].wave = W_DIGI; t.ext.osc[1].semi = 19; t.ext.osc[0].cents = -40;
-             t.ext.osc[1].cents = 40; t.ext.osc[0].level = 0.3f; t.ext.osc[1].level = 0.25f; t.ext.fmode = FLT_HP;
-             t.knob[2] = 6000; t.knob[3] = 9000;
-             t.lfo[0].shape = LFO_SAW; t.lfo[0].sync = true; t.lfo[0].div = 1; t.lfo[0].depth = 0.6f; t.lfo[0].dest = DEST_CUTOFF;
-             t.env[0] = 0.2f; t.env[2] = 0.6f; t.env[3] = 0.8f; }},
-    };
-    // pierwszy start (pusty katalog): caly zestaw; pozniej: tylko presety z nowszych wersji, ktorych brakuje
-    bool fresh = n_ == 0;
-    char old[400];
-    int had = 0;
-    for (int v = FACTORY_VERSION - 1; v >= 1 && !had; v--) {
-        snprintf(old, sizeof old, "%s/_factory_v%d", dir_, v);
-        if (fs::exists(old)) had = v;
+    static char names[MAX][32];
+    int n = fs::listFiles(src, ".dpr", names, MAX);
+    for (int i = 0; i < n; i++) {
+        char from[400], to[400], line[2048];
+        snprintf(from, sizeof from, "%s/%s.dpr", src, names[i]);
+        FILE* f = fopen(from, "r");
+        if (!f) continue;
+        bool plus = false;
+        while (fgets(line, sizeof line, f)) if (!strncmp(line, "inst", 4) && strstr(line, " alt 1")) plus = true;
+        fclose(f);
+        snprintf(to, sizeof to, "%s/%s.dpr", dir_, names[i]);
+        if (plus && !fs::exists(to)) rename(from, to);
     }
-    if (!fresh && had == 0) had = 1;  // katalog sprzed wersjonowania = zestaw v1
-    for (const F& p : list) {
-        if (!fresh && p.ver <= had) continue;
-        if (find(p.name) >= 0) continue;  // nie nadpisuj
-        Track t;
-        t.engine = ENG_WAVETABLE;
-        initInstrument(t);
-        p.set(t);
-        save(t, p.name, p.cat);
-    }
-    FILE* f = fopen(mark, "w");
-    if (f) fclose(f);
+    FILE* m = fopen(mark, "w");
+    if (m) fclose(m);
 }
 
-// Zestaw fabryczny TAFFY (CZ). Galki: WAVE (0 saw, 10923 square, 21846 pulse, 32767 saw-pulse), DCW, ENV, RES;
-// druga obwiednia steruje DCW. Wersjonowany jak zestaw WAVETABLE.
-void PresetStore::writeFactoryTaffy() {
-    char mark[400];
-    snprintf(mark, sizeof mark, "%s/_factory_v1", dir_);
-    if (fs::exists(mark)) return;
-    struct F { const char* name; int cat; void (*set)(Track&); };
-    static const F list[] = {
-        {"INIT", CAT_OTHER, [](Track&) {}},
-        {"CZ BRASS", CAT_LEAD, [](Track& t) {
-             t.knob[0] = 0; t.knob[1] = 9000; t.knob[2] = 22000; t.knob[3] = 0;
-             t.env[0] = 0.03f; t.env[1] = 0.6f; t.env[2] = 0.7f; t.env[3] = 0.25f;
-             t.fenv[0] = 0.04f; t.fenv[1] = 0.5f; t.fenv[2] = 0.3f; t.fenv[3] = 0.3f; t.fenvAmt = 0.2f; }},
-        {"CZ BASS", CAT_BASS, [](Track& t) {
-             t.knob[0] = 10923; t.knob[1] = 6000; t.knob[2] = 26000; t.knob[3] = 0; t.mono = true; t.glide = 0.03f;
-             t.env[0] = 0.002f; t.env[1] = 0.4f; t.env[2] = 0.6f; t.env[3] = 0.08f; }},
-        {"DIGI PIANO", CAT_KEYS, [](Track& t) {
-             t.knob[0] = 32767; t.knob[1] = 4000; t.knob[2] = 20000; t.knob[3] = 0;
-             t.env[0] = 0.002f; t.env[1] = 1.2f; t.env[2] = 0.1f; t.env[3] = 0.6f; }},
-        {"SQUARE ORGAN", CAT_KEYS, [](Track& t) {
-             t.knob[0] = 10923; t.knob[1] = 12000; t.knob[2] = 0; t.knob[3] = 0;
-             t.env[0] = 0.005f; t.env[1] = 0.3f; t.env[2] = 1.f; t.env[3] = 0.1f; }},
-        {"PULSE PLUCK", CAT_PLUCK, [](Track& t) {
-             t.knob[0] = 21846; t.knob[1] = 2000; t.knob[2] = 30000; t.knob[3] = 0;
-             t.env[0] = 0.001f; t.env[1] = 0.3f; t.env[2] = 0.f; t.env[3] = 0.25f; }},
-        {"BUBBLEGUM PAD", CAT_PAD, [](Track& t) {
-             t.knob[0] = 16384; t.knob[1] = 8000; t.knob[2] = 6000; t.knob[3] = 12000; t.age = 0.4f;
-             t.env[0] = 0.7f; t.env[1] = 1.5f; t.env[2] = 0.8f; t.env[3] = 1.5f;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 0.2f; t.lfo[0].depth = 0.2f; t.lfo[0].dest = DEST_WAVE; }},
-        {"CZ BELLS", CAT_BELL, [](Track& t) {
-             t.knob[0] = 32767; t.knob[1] = 14000; t.knob[2] = 16000; t.knob[3] = 18000;
-             t.env[0] = 0.001f; t.env[1] = 1.6f; t.env[2] = 0.f; t.env[3] = 1.4f; }},
-        {"RESO SWEEP", CAT_FX, [](Track& t) {
-             t.knob[0] = 0; t.knob[1] = 3000; t.knob[2] = 0; t.knob[3] = 26000;
-             t.lfo[0].shape = LFO_TRI; t.lfo[0].sync = true; t.lfo[0].div = 1; t.lfo[0].depth = 0.4f; t.lfo[0].dest = DEST_DETUNE;
-             t.env[2] = 0.9f; t.env[3] = 0.5f; }},
-        {"SYNC LEAD", CAT_LEAD, [](Track& t) {
-             t.knob[0] = 0; t.knob[1] = 7000; t.knob[2] = 12000; t.knob[3] = 20000; t.mono = true; t.unison = 15.f;
-             t.glideSync = true; t.glideDiv = 7;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.5f; t.lfo[0].depth = 0.01f; t.lfo[0].dest = DEST_PITCH; }},
-        {"WOBBLE CZ", CAT_FX, [](Track& t) {
-             t.knob[0] = 10923; t.knob[1] = 4000; t.knob[2] = 0; t.knob[3] = 8000; t.mono = true;
-             t.lfo[0].shape = LFO_SINE; t.lfo[0].sync = true; t.lfo[0].div = 5; t.lfo[0].depth = 0.5f; t.lfo[0].dest = DEST_DETUNE; }},
-    };
-    for (const F& p : list) {
-        if (find(p.name) >= 0) continue;
+// Zestaw fabryczny: dopisuje presety z wersji nowszych niz najwyzszy znacznik _factory_vN, nigdy nie nadpisuje.
+void PresetStore::writeFactory() {
+    int n = 0, engine = ENG_WAVETABLE;
+    const FactoryPreset* list = factoryList(eng_, &n, &engine);
+    int had = 0, top = 0;
+    for (int i = 0; i < n; i++) if (list[i].ver > top) top = list[i].ver;
+    for (int v = top; v >= 1 && !had; v--) {
+        char m[400];
+        snprintf(m, sizeof m, "%s/_factory_v%d", dir_, v);
+        if (fs::exists(m)) had = v;
+    }
+    if (had >= top) return;
+    static char line[2048];
+    char* tok[128];
+    for (int i = 0; i < n; i++) {
+        const FactoryPreset& p = list[i];
+        if (p.ver <= had || find(p.name) >= 0) continue;
         Track t;
-        t.engine = ENG_TAFFY;
+        t.engine = (uint8_t)engine;
         initInstrument(t);
-        p.set(t);
+        snprintf(line, sizeof line, "%s", p.inst);
+        int nt = tokenize(line, tok, 128);
+        parseInstrument(t, tok, nt, 0);
         save(t, p.name, p.cat);
     }
+    char mark[400];
+    snprintf(mark, sizeof mark, "%s/_factory_v%d", dir_, top);
     FILE* f = fopen(mark, "w");
     if (f) fclose(f);
 }

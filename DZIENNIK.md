@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 23:30
+**Zmienione:**
+- `core/gfx/icons.cpp` — ilustracja TAFFY na karcie ENGINE to teraz twarz dziewczyny z oryginalnego SVG (zamiast balonu).
+- `core/io/preset_store.*`, `core/ui/app.h`, `core/ui/synth_view.cpp` — osobne presety dla WAVETABLE+ (`presets/wavetableplus/`); przy pierwszym starcie presety WAVETABLE+ ze wspólnego katalogu są przenoszone (własne presety Patryka zostają tam, gdzie pasują).
+- `core/io/factory_presets.cpp` (nowy) — zestawy fabryczne jako linie tekstu; po 30 nowych presetów: WAVETABLE (37 razem), WAVETABLE+ (45), TAFFY (41). Istniejące presety nie są nadpisywane.
+- `core/headless.cpp` — ekran `pluspresets`.
+- Testy: wszystkie 123 presety sprawdzone pod kątem głośności (szczyt < 0,8, żaden cichy); przeniesienie starych presetów sprawdzone; WAVETABLE i TAFFY nadal bit w bit (0 różnic). Wysłane na konsolę.
+**Następny krok:** Patryk odsłuchuje presety.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 22:00
 **Zmienione — port silnika TAFFY (op1r, Hundekraft):**
 - `third_party/op1r_taffy/` — oryginalne `taffy.c`, `taffy_tables.h`, `taffy_geom.h`, `screen.c`, `taffy.svg`, LICENSE, NOTICE, README (źródło + commit); zaślepki `hk/engine.h`, `op1_l1.h`; `taffy_art.h` wygenerowany z SVG (`tools/gen/svg_to_art.py`). `third_party/LICENSES.md`.

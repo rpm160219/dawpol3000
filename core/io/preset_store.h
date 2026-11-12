@@ -1,4 +1,4 @@
-// Presety instrumentow: <root>/<silnik>/<NAZWA>.dpr (silnik: "wavetable" albo "taffy") — tekst:
+// Presety instrumentow: <root>/<silnik>/<NAZWA>.dpr (silnik: "wavetable", "wavetableplus", "taffy") — tekst:
 //   dawpol-preset 1
 //   name "WARM PAD"
 //   category PAD
@@ -34,7 +34,7 @@ private:
     uint8_t cats_[MAX];
     int n_ = 0;
     void writeFactory();
-    void writeFactoryTaffy();
+    void migrateFromWavetable();
     static const int FACTORY_VERSION = 2;
 };
 

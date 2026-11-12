@@ -22,4 +22,4 @@ L2/R2 (PC: 1/2) = druga warstwa: trzymaj B + góra/dół = transpozycja, trzymaj
 SYNTH (R2 z piano rolla): silnik (WAVETABLE / WAVETABLE+ / TEST SAW) wybierasz w oknie ścieżki: Select → R2 (karta ENGINE); Select = następna strona; L3: na obwiedniach RELEASE ↔ AMOUNT, na OSC 1 LEVEL ↔ SUB, na LFO synchronizacja z BPM; gałki = parametry; odsłuch z przycisków (PC: strzałki + A/S/Z/X).
 Silniki: WAVETABLE / WAVETABLE+ i TAFFY (porty 1:1 z op1r, Hundekraft, GPL-3.0-or-later — `third_party/op1r_wavetable`, `third_party/op1r_taffy`), TEST SAW.
 `--test` uruchamia ekran testu sprzętu. `tools/test_wavetable.sh`, `tools/test_taffy.sh` — testy zgodności z oryginałami.
-Presety: ostatnia strona SYNTH (Select); pliki w `presets/wavetable/` (na konsoli `/userdata/dawpol3000/presets`).
+Presety: ostatnia strona SYNTH (Select); pliki osobno dla silnika: `presets/wavetable/`, `presets/wavetableplus/`, `presets/taffy/` (na konsoli `/userdata/dawpol3000/presets`).

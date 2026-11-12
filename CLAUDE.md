@@ -126,8 +126,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - WAVETABLE ma też obwiednię filtra i 2 LFO z wyborem celu (dodatki DAW-POL; przy zerowych ustawieniach brzmi bit w bit jak oryginał).
 - Działa: PROJECT (zapis/odczyt `.dpp`, autozapis), ARRANGE (16 MIDI + 4 audio, klipy, VU, mute/solo, 32 kolory, pętla IN/OUT), PIANO ROLL (wielotaktowy, zaznaczanie 2 warstwy, pętla), SYNTH (WAVETABLE: 4 gałki + ADSR, ekran oscyloskopowy), undo/redo, paski akcji L3/R3.
 - WAVETABLE: ~1,4% rdzenia na głos (6 głosów/ścieżkę ≈ 8%); ~5 w pełni obciążonych ścieżek mieści się w budżecie 50%.
-- TAFFY (port 1:1 z op1r, CZ phase distortion, ekran „bubblegum”): gałki WAVE/DCW/ENV/RES, druga obwiednia = DCW ENV, ta sama infrastruktura co WAVETABLE (ADSR, MOD ENV, 2 LFO, VOICE), presety w `presets/taffy/` (11 fabrycznych); ~7% rdzenia przy 6 głosach.
+- TAFFY (port 1:1 z op1r, CZ phase distortion, ekran „bubblegum”): gałki WAVE/DCW/ENV/RES, druga obwiednia = DCW ENV, ta sama infrastruktura co WAVETABLE (ADSR, MOD ENV, 2 LFO, VOICE), ilustracja na karcie ENGINE = twarz z oryginalnego SVG; ~7% rdzenia przy 6 głosach.
 - WAVETABLE+ (tryb rozszerzony): 2 oscylatory, sub, filtr LP24/LP12/BP/HP + drive, cele LFO W1/W2/P1/P2/LV1/LV2 (WAVE = obie fale naraz); ~10% rdzenia przy 6 głosach.
-- Presety instrumentów (`presets/wavetable/*.dpr`, 21 fabrycznych w 2 wersjach zestawu, kategorie z ikonami); głosy POLY/MONO, glide, unison, AGE.
+- Presety instrumentów osobno dla silnika (`presets/wavetable/`, `presets/wavetableplus/`, `presets/taffy/`; zestawy fabryczne w `core/io/factory_presets.cpp`: 37 / 45 / 41, kategorie z ikonami); głosy POLY/MONO, glide, unison, AGE.
 - Brakuje: ekran „about” z atrybucją, kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.
-- Następny krok: ocena brzmienia i sterowania WAVETABLE przez Patryka na konsoli.
+- Następny krok: Patryk odsłuchuje nowe presety (po 30 na silnik) na konsoli.

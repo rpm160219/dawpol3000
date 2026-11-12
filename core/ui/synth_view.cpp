@@ -470,7 +470,7 @@ void SynthView::render(Canvas& c) {
 // ---------------- PRESETS ----------------
 
 int SynthView::filtered(int* idx, int max) {
-    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine, app_->project().tracks[track_].alt);
     int n = 0;
     for (int i = 0; i < ps.count() && n < max; i++)
         if (catSel_ == 0 || ps.category(i) == catSel_ - 1) idx[n++] = i;
@@ -480,7 +480,7 @@ int SynthView::filtered(int* idx, int max) {
 void SynthView::updatePresets(const Buttons& b) {
     Project& p = app_->project();
     Track& t = p.tracks[track_];
-    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine, app_->project().tracks[track_].alt);
     if (ed_.active()) {  // wpisywanie nazwy
         ed_.update(b);
         if (!ed_.active()) savePending_ = true;
@@ -557,7 +557,7 @@ void SynthView::updatePresets(const Buttons& b) {
 }
 
 void SynthView::renderPresets(Canvas& c) {
-    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine, app_->project().tracks[track_].alt);
     const Track& t = app_->project().tracks[track_];
     char b[96];
     const float top = 56, rowH = 34;
@@ -607,7 +607,7 @@ void SynthView::renderPresets(Canvas& c) {
         drawText(c, 140, 164, b, 10, 1.3f, pal::tan);
         nameBox(c, 140, 202, 360, 50, "", saveName_, &ed_, pal::steel);
         if (savePending_) {
-            bool exists = app_->presetsFor(app_->project().tracks[track_].engine).find(saveName_) >= 0;
+            bool exists = app_->presetsFor(app_->project().tracks[track_].engine, app_->project().tracks[track_].alt).find(saveName_) >= 0;
             drawText(c, 140, 270, exists ? "A = OVERWRITE   B = CANCEL" : "A = SAVE   B = CANCEL", 9, 1.2f,
                      exists ? pal::red : pal::white);
         } else drawText(c, 140, 270, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 8, 1.1f, pal::dim);
