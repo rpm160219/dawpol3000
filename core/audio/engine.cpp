@@ -39,9 +39,9 @@ void AudioEngine::applyProject() {
         wt_[i].setOctave(t.octave);
         wt_[i].setSsFilter((32767 - t.push[0]) / 32767.f, t.push[1] / 32767.f, t.push[2]);  // SUPERSAW: push = zamkniecie filtra, RES, typ
         synth_[i].setOctave(t.octave);
-        const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD || e == ENG_ARC;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
+        const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
         const bool noMod = bare || e == ENG_BLOT;  // BLOT: sam silnik + MODE/GLIDE (slide 303 = portamento gospodarza)
-        const bool simple = bare || e == ENG_MIXTUR || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
+        const bool simple = bare || e == ENG_MIXTUR || e == ENG_ARC || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
         const bool sidFenv = e == ENG_SID || e == ENG_VAPORA;  // VAPORA: obwiednia filtra na BRIGHTNESS (galka 2)
          // SID: obwiednia filtra na CUTOFF (galka 2), bez trybow glosu  // OXBOW+: tryby glosu jak WAVETABLE+
         const bool oxPlus = e == ENG_OXBOW && t.alt;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
@@ -78,7 +78,7 @@ void AudioEngine::applyProject() {
                           x.osc[1].level, x.sub, x.fmode, x.drive);
         }
         for (int l = 0; l < 2; l++)
-            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, noMod || (e == ENG_MIXTUR && l == 1) ? 0.f : t.lfo[l].depth,  // MIXTUR: jedno LFO
+            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, noMod || ((e == ENG_MIXTUR || e == ENG_ARC) && l == 1) ? 0.f : t.lfo[l].depth,  // MIXTUR: jedno LFO
                           t.lfo[l].dest, t.lfo[l].sync,
                           lfoDivBeats(t.lfo[l].div));
     }

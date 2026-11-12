@@ -364,7 +364,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
             if (alt_ && i == 2) {
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepMDest_.steps(ax, dt, 4.f);
                 if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
                 break;
@@ -413,7 +413,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
                 // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepDest_[l].steps(ax, dt, 4.f);
                 if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
@@ -585,7 +585,7 @@ void SynthView::render(Canvas& c) {
     // lewy dol: strona galek
     static const char* kPage[13] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS", "TILT"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
-    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_LFO1 && t.engine == ENG_MIXTUR ? "LFO" : kPage[k]), 13, 1.5f, pc);
+    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_LFO1 && (t.engine == ENG_MIXTUR || t.engine == ENG_ARC) ? "LFO" : kPage[k]), 13, 1.5f, pc);
     int np = pageCount(pm);
     for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;

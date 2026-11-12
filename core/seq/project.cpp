@@ -66,6 +66,9 @@ const char* destNameFor(int engine, int d) {
     if (engine == ENG_SUPERSAW && d >= 0 && d < 4) return ssn[d];
     static const char* acn[4] = {"CUR", "CARB", "HISS", "STRK"};
     if (engine == ENG_ARC && d >= 0 && d < 4) return acn[d];
+    if (engine == ENG_ARC && d == DEST_W1) return "RAT";  // strona 2: proporcja 2. lampy, sprzezenie, jasnosc
+    if (engine == ENG_ARC && d == DEST_W2) return "CPL";
+    if (engine == ENG_ARC && d == DEST_P1) return "BRT";
     static const char* aen[4] = {"ORBT", "FORM", "SPCE", "DPTH"};
     if (engine == ENG_AETHER && d >= 0 && d < 4) return aen[d];
     if (engine == ENG_AETHER && d == DEST_W1) return "PTLT";  // wirtualne przechylenie

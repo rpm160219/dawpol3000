@@ -604,6 +604,15 @@ void WavetableSynth::renderBlock() {
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
             }
         }
+        if (kind_ == 19) {  // ARC: modulacja strony 2 — RATIO (0 = 8192 = 1:1), COUPLING (0 = wyl.), BRIGHTNESS (0 = 8192)
+            static const int dst[3] = {DEST_W1, DEST_W2, DEST_P1};
+            for (int j = 0; j < 3; j++)
+                if (vm[dst[j]] != 0.f) {
+                    const int base = knobs_[5 + j] > 0 ? knobs_[5 + j] : (j == 1 ? 0 : 8192);
+                    int x = base + (int)lrintf(vm[dst[j]] * 32767.f);
+                    vk[5 + j] = (int16_t)(x < (j == 1 ? 0 : 1) ? (j == 1 ? 0 : 1) : (x > 32767 ? 32767 : x));
+                }
+        }
         if (kind_ == 13) {  // MIXTUR: modulacja formantow F1 / F2 / RES (slowa 5..7; 0 = 8192 jak w oryginale)
             static const int dst[3] = {DEST_W1, DEST_W2, DEST_P1};
             for (int j = 0; j < 3; j++)

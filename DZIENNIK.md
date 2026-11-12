@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:26
+**Zmienione (prośba Patryka): ARC dostał MOD ENV i jedno LFO.**
+- `core/ui/synth_view.*` — strony ARC: SOUND, AMP ENV, MOD ENV, LFO, PRESETS; cele modulacji: CUR, CARB, HISS, STRK, PTCH, VOL oraz RAT, CPL, BRT (strona 2: proporcja 2. lampy, sprzężenie, jasność).
+- `core/synth/wavetable_synth.cpp` — modulacja słów 5..7 ARC per głos; `core/audio/engine.cpp` — bez drugiego LFO i trybów głosu; `core/seq/project.cpp` — nazwy celów; `core/ui/dialogs.cpp` — opis na karcie ENGINE.
+- Bez modulacji nadal bit w bit. Wysłane na konsolę.
+**Następny krok:** Patryk testuje ARC z modulacją.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 20:13
 **Zmienione — port silnika ARC (op1r, ultralazr), 1:1; lista silników alfabetycznie:**
 - `core/ui/dialogs.cpp` — lista silników na karcie ENGINE (okno TRACK / NEW TRACK) w kolejności alfabetycznej (indeksy silników bez zmian; strzałki i przewijanie po nowej kolejności).

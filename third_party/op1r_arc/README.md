@@ -11,7 +11,7 @@ Bez zmian: `arc.c` (DSP: oscylator Van der Pola „śpiewającego łuku” Dudde
 W DAW-POL: `core/synth/arc_dsp.c` kompiluje `arc.c` jako C; stan głosu = slot 0x24 B w instancji (self); globalne dane
 ekranu (portret fazowy, poziomy) przekierowane makrami do instancji, głos śledzony podmieniany. Ekran:
 `core/ui/arc_screen_c.c` kompiluje `arc.c` drugi raz (przedrostek ars_). Sam silnik 1:1: gałki CURRENT, CARBON, HISS,
-STRIKE; L3 na SOUND = strona 2 (RATIO z zapadkami, COUPLING, BRIGHTNESS); strony SOUND / AMP ENV / PRESETS. Tarcze z dołu
+STRIKE; L3 na SOUND = strona 2 (RATIO z zapadkami, COUPLING, BRIGHTNESS); strony SOUND / AMP ENV / MOD ENV / LFO (jedno, dodane na prośbę Patryka; cele też RATIO / COUPLING / BRIGHTNESS) / PRESETS. Tarcze z dołu
 ekranu i napis proporcji pominięte (dublowałyby gałki). Wyjście ścieżki −3 dB. Oryginał nie ma presetów — 12 własnych.
 Test bit w bit: `tools/test_arc.sh` (szum startuje z ziarna zależnego od adresu pamięci głosu: harness bez PIE, adres z
 tablicy symboli, ziarno ustawiane w wrapperze).

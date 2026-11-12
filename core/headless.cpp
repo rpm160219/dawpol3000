@@ -417,7 +417,7 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "arc") || !strcmp(screen, "arcp2")) {
+    } else if (!strcmp(screen, "arc") || !strcmp(screen, "arcp2") || !strcmp(screen, "arclfo")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_ARC;
         engineDefaultKnobs(ENG_ARC, tr.knob);
@@ -427,6 +427,7 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "arcp2")) app.synth.setAlt(true);
+        if (!strcmp(screen, "arclfo")) { tr.lfo[0].dest = DEST_W2; tr.lfo[0].depth = 0.4f; app.markDirty(); idle(app); app.synth.setPageKind(SynthView::K_LFO1); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

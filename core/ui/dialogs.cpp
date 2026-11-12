@@ -336,7 +336,8 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ < 10) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 10 || engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 14) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
+    else if (engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 19) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  TILT, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 18) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV, GLIDE", 7, 1.f, pal::dim);
     else if (engSel_ == 13) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);
