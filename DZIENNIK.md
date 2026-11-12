@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 01:50 — LOUNGE: poprawki ekranu
+- **Co zmienione:** `core/ui/lounge_screen.cpp` — usunięte kratki VOICES i dolny pasek z podpisami (napisy wchodziły na obramowanie); obudowa z zaokrąglonymi dolnymi rogami; podpisy HAMMER i PICKUP przy samych elementach w środku obudowy (CLAV: rozsunięte, bez nachodzenia); `core/ui/dialogs.cpp` — w opisie silnika bez „6 VOICES”. Po co: uwagi Patryka.
+- **Następny krok:** Patryk ocenia ekran LOUNGE.
+
 ## 2026-11-13 01:30 — silnik LOUNGE (własne modelowane klawisze w stylu KEYS z „OP-1 Mods”)
 - **Co zmienione:** nowy silnik LOUNGE — `core/synth/lounge_dsp.*` (własne modele fizyczne: ząb Rhodesa z przetwornikiem magnetycznym, języczek Wurlitzera z przetwornikiem elektrostatycznym, struna clavu Karplus-Strong; głos 48 kHz → 96 kHz), `core/ui/lounge_screen.*` (własny rysunek przekroju w układzie zrzutu KEYS: DECAY, LID z koktajlem, młotek, drgania, przetwornik, głosy), wpięcie (rodzaj 25), projekt, zapis, widok SYNTH (SOUND / AMP ENV / MOD ENV / 2 LFO), karta ENGINE, 16 presetów, CMake, podglądy, testy (`tools/gin_objs.sh`). Clean room: kod KEYS niepubliczny (repo j3threejay/op1-mod = tylko łatka binarna bez licencji).
 - Strój sprawdzony (TINE i CLAV ±1 cent). CPU na konsoli: 5,3–5,8% rdzenia (6 głosów). Wszystkie 24 testy zgodności bez zmian. Wgrane na konsolę.

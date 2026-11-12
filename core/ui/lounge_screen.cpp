@@ -71,10 +71,11 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, int voic
         (void)rim;
     }
     // obudowa
-    t.ln(44, 87, 44, 282, 1.4f, kBody);
-    t.ln(556, 87, 556, 282, 1.4f, kBody);
-    t.ln(44, 262, 556, 262, 1.4f, kBody);
-    t.ln(44, 282, 556, 282, 1.4f, kBody);
+    t.ln(44, 87, 44, 264, 1.4f, kBody);
+    t.ln(556, 87, 556, 264, 1.4f, kBody);
+    t.c.arc(t.X(56), t.Y(264), 12 * t.s, 1.5708f, 3.14159f, 1.4f * t.s, kBody);   // zaokraglone dolne rogi
+    t.c.arc(t.X(544), t.Y(264), 12 * t.s, 0.f, 1.5708f, 1.4f * t.s, kBody);
+    t.ln(56, 276, 544, 276, 1.4f, kBody);
     // nazwa typu
     static const char* N[3] = {"TINE", "REED", "CLAV"};
     t.text(172, 110, N[type], 24, kRed);
@@ -132,17 +133,18 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, int voic
         t.ln(537, 218, 537, 249, 2.f, kGreen);
     }
     t.c.circle(t.X(537), t.Y(255), 6.f * t.s, 2.f * t.s, kGreen);  // gniazdo
-    // glosy
-    for (int i = 0; i < 6; i++) {
-        const float x = 286 + i * 17;
-        if (i < voices) t.ln(x, 229, x, 255, 6.f, rgb(200, 198, 236));
-        else t.rect(x - 4, 255, x + 4, 261, 1.2f, kBody);
-    }
+    // podpisy przy elementach (wewnatrz obudowy, z dala od krawedzi)
     if (labels) {
-        t.text(221, 270, "HAMMER", 13, rgb(88, 98, 170), ALIGN_CENTER);
-        t.text(326, 270, "VOICES", 13, kLabel, ALIGN_CENTER);
-        t.text(468, 270, "PICKUP", 13, rgb(60, 150, 120), ALIGN_CENTER);
+        const Color hc = rgb(88, 98, 170), pc = rgb(60, 150, 120);
+        if (type == 2) {  // CLAV: mlotek (stycznik) z prawej, przetworniki z lewej — podpisy z dala od siebie
+            t.text(378, 246, "HAMMER", 12, hc, ALIGN_RIGHT);
+            t.text(120 + 180 * tone, 224, "PICKUP", 12, pc);
+        } else {
+            t.text((type == 0 ? 147 : 160) + 12, 250, "HAMMER", 12, hc);
+            t.text(525, 247, "PICKUP", 12, pc, ALIGN_RIGHT);
+        }
     }
+    (void)voices;
 }
 }  // namespace
 

@@ -370,7 +370,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 21 || engSel_ == 22) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 19) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  TILT, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 26) drawText(c, 280, 408, "6 VOICES  -  PHYSICAL MODELS  -  ENVELOPES, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 26) drawText(c, 280, 408, "PHYSICAL MODELS, NO SAMPLES  -  ENVELOPES, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 25) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, FILTER ENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 24) drawText(c, 280, 408, "12 VOICES (4 SYNTH)  -  44.1 KHZ CORE  -  8 KITS", 7, 1.f, pal::dim);
     else if (engSel_ == 23) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV, GLIDE", 7, 1.f, pal::dim);
