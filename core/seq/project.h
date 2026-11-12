@@ -45,6 +45,7 @@ const char* lfoDestName(int d);
 static const int LFO_DIVS = 15;
 const char* lfoDivName(int i);
 float lfoDivBeats(int i);  // dlugosc cyklu w cwiercnutach
+float glideSeconds(const struct Track& t, float bpm);  // czas portamento (z synchronizacja albo bez)
 struct Lfo {
     uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
     float rate = 2.f;    // Hz (0.05 .. 20) gdy bez synchronizacji
@@ -81,6 +82,8 @@ struct Track {
     // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
     bool mono = false;
     float glide = 0.f, unison = 0.f, age = 0.f;
+    bool glideSync = false;  // GLIDE zsynchronizowany z tempem (czas = podzial nutowy przy biezacym BPM)
+    uint8_t glideDiv = 7;    // indeks podzialu (jak w LFO), domyslnie 1/16
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };

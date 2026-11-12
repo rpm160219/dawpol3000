@@ -95,7 +95,7 @@ int headlessPng(const char* path, const char* screen) {
     } else if (!strcmp(screen, "presets") || !strcmp(screen, "voice")) {
         app.openPresets("out/presets_demo");
         Track& tr = app.project().tracks[1];
-        if (!strcmp(screen, "voice")) { tr.mono = true; tr.unison = 22; tr.glide = 0.08f; tr.age = 0.4f; }
+        if (!strcmp(screen, "voice")) { tr.mono = true; tr.unison = 22; tr.glideSync = true; tr.glideDiv = 7; tr.age = 0.4f; }
         app.markDirty();
         app.openSynth(1);
         idle(app);

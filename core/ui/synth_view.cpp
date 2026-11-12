@@ -84,6 +84,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     }
     if (b.pressed(B_L3)) {
         if (k == K_LFO1 || k == K_LFO2) { Lfo& L = t.lfo[k - K_LFO1]; L.sync = !L.sync; app_->markDirty(); }
+        else if (k == K_VOICE) { t.glideSync = !t.glideSync; app_->markDirty(); }
         else alt_ = !alt_;
     }
     if (b.pressed(B_START)) app_->togglePlaySong();
@@ -140,6 +141,9 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             if (i == 0) {
                 int st = stepVMode_.steps(ax, dt, 3.f);
                 if (st) { bool m = st > 0; if (m != t.mono) { t.mono = m; changed = true; } }
+            } else if (i == 1 && t.glideSync) {  // podzial nutowy, skokowo (0 = OFF przy pierwszym podziale w dol)
+                int st = stepGDiv_.steps(ax, dt, 5.f);
+                if (st) { int dv = t.glideDiv + st; t.glideDiv = (uint8_t)(dv < 0 ? 0 : (dv >= LFO_DIVS ? LFO_DIVS - 1 : dv)); changed = true; }
             } else if (i == 1 && d != 0.f) {  // 0 .. 2 s (wykladniczo), 0 = wylaczone
                 float kk = t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f);
                 kk = clamp01(kk + d);
@@ -282,6 +286,7 @@ void SynthView::render(Canvas& c) {
     Color hc = rgb(80, 80, 80);
     if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
     else if (k == K_MENV) { hint = alt_ ? "L3 = SUSTAIN + RELEASE" : "L3 = DEST + AMOUNT"; if (alt_) hc = pal::red; }
+    else if (k == K_VOICE) { hint = t.glideSync ? "GLIDE SYNC TO BPM   L3 = FREE" : "GLIDE FREE   L3 = SYNC TO BPM"; if (t.glideSync) hc = pal::blue; }
     else if (k == K_OSC1) { hint = alt_ ? "L3 = LEVEL" : "L3 = SUB OSC"; if (alt_) hc = pal::red; }
     else if (k == K_LFO1 || k == K_LFO2) {
         bool sy = t.lfo[k - K_LFO1].sync;
@@ -386,15 +391,17 @@ void SynthView::render(Canvas& c) {
         pos[3] = sub ? t.ext.sub : os.level;
     } else if (k == K_VOICE) {
         snprintf(v[0], 16, "%s", t.mono ? "MONO" : "POLY");
-        if (t.glide <= 0.f) snprintf(v[1], 16, "OFF");
+        if (t.glideSync) snprintf(v[1], 16, "%s", lfoDivName(t.glideDiv));
+        else if (t.glide <= 0.f) snprintf(v[1], 16, "OFF");
         else if (t.glide < 1.f) snprintf(v[1], 16, "%.0fMS", t.glide * 1000.f);
         else snprintf(v[1], 16, "%.1fS", t.glide);
         if (t.unison <= 0.f) snprintf(v[2], 16, "OFF");
         else snprintf(v[2], 16, "%.0fC%s", t.unison, t.mono ? "" : "*");
         snprintf(v[3], 16, "%d", (int)lrintf(t.age * 100));
-        labels[0] = "MODE"; labels[1] = "GLIDE"; labels[2] = "UNISON"; labels[3] = "AGE";
+        labels[0] = "MODE"; labels[1] = t.glideSync ? "GLIDE SYNC" : "GLIDE"; labels[2] = "UNISON"; labels[3] = "AGE";
         pos[0] = t.mono ? 1.f : 0.f;
-        pos[1] = t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f);
+        pos[1] = t.glideSync ? 1.f - t.glideDiv / (float)(LFO_DIVS - 1)
+                             : (t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f));
         pos[2] = t.unison / 50.f;
         pos[3] = t.age;
     } else if (k == K_FILTER) {

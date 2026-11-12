@@ -481,6 +481,7 @@ void WavetableSynth::renderBlock() {
             }
             if (trem != 1.f || tremPrev_ != 1.f) g *= tremPrev_ + (trem - tremPrev_) * (i + 1) * (1.f / BLOCK);
             if (mvol != 1.f || v.mvolPrev != 1.f) g *= v.mvolPrev + (mvol - v.mvolPrev) * (i + 1) * (1.f / BLOCK);
+            if (mono_ && unison_ > 0) g *= 0.4082f;  // unison: 6 glosow ~ glosnosc jednego (1/sqrt(6))
             sum[i] += (double)out[i] * g;
         }
         v.mvolPrev = mvol;

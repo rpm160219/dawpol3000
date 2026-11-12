@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:30
+**Zmienione:**
+- GLIDE zsynchronizowany z tempem (decyzja Patryka: strona VOICE, L3 = FREE ↔ SYNC, gałka GLIDE = podział 1/1 … 1/128T, czas liczony z bieżącego BPM) — `core/seq/project.*` (`glideSync`, `glideDiv`, `glideSeconds`), `core/io/project_file.cpp`, `core/io/preset_store.cpp`, `core/audio/engine.cpp`, `core/ui/synth_view.*`.
+- 10 nowych presetów fabrycznych dla trybu rozszerzonego: HOOVER, REESE, KICK DRUM, SYNC PLUCK, SOFT STRINGS, GATED KEYS, PORTA LEAD, DRIFT PAD, BELL TREE, NOISE SWEEP; zestaw wersjonowany (`_factory_v2`) — na konsoli dojdą tylko brakujące, istniejące i własne presety zostają nietknięte.
+- `core/synth/wavetable_synth.cpp` — kompensacja głośności UNISON (6 głosów ≈ jeden głos, 1/√6); wcześniej HOOVER/SUPERSAW dobijały do granicy.
+- Testy: świeży katalog 21 presetów; aktualizacja starego katalogu dopisuje 10 i nie nadpisuje zmienionego ACID ani własnego presetu; wszystkie presety grają, szczyty ≤ 0,81; GLIDE SYNC 1/16 @120 = 0,125 s, @90 = 0,167 s; oryginał 0 różnic.
+**Następny krok:** Patryk testuje nowe presety.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 17:30
 **Zmienione:**
 - `core/synth/wavetable_synth.*` — naprawiony glide w unisonie: przy starcie nuty tylko pierwszy z 6 głosów zaczynał od poprzedniej wysokości (pozostałe od razu na docelowej), teraz cały stos ma wspólny punkt startu (pomiar: unison podjeżdża identycznie jak pojedynczy głos; przed poprawką 5 głosów skakało od razu na 440 Hz).

@@ -39,6 +39,11 @@ const char* filterModeName(int m) {
 const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : "?"; }
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
+float glideSeconds(const Track& t, float bpm) {
+    if (!t.glideSync) return t.glide;
+    return lfoDivBeats(t.glideDiv) * 60.f / (bpm > 1 ? bpm : 120.f);
+}
+
 int Project::countTracks(int type) const {
     int n = 0;
     for (int i = 0; i < nTracks; i++) if (tracks[i].type == type) n++;

@@ -3,7 +3,8 @@
 //   name "WARM PAD"
 //   category PAD
 //   inst engine wavetable k ... env ... voice ...     (ten sam zapis co w projekcie)
-// Przy pierwszym uruchomieniu (pusty katalog) zapisywany jest zestaw fabryczny.
+// Zestaw fabryczny jest wersjonowany (plik-znacznik _factory_vN): nowe wersje dopisuja tylko brakujace presety,
+// niczego nie nadpisujac (presety Patryka i jego zmiany zostaja).
 #pragma once
 #include "seq/project.h"
 
@@ -32,6 +33,7 @@ private:
     uint8_t cats_[MAX];
     int n_ = 0;
     void writeFactory();
+    static const int FACTORY_VERSION = 2;
 };
 
 }  // namespace dp

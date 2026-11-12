@@ -39,7 +39,7 @@ void AudioEngine::applyProject() {
                            t.envAmt);
         wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], t.fenvAmt);
         wt_[i].setAlt(t.alt);
-        wt_[i].setVoice(t.mono, t.glide, t.unison, t.age);
+        wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
         {
             const WtExt& x = t.ext;

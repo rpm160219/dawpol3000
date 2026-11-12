@@ -8,7 +8,8 @@
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
 // MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
-// VOICE: MODE (POLY/MONO), GLIDE (portamento), UNISON (rozstrojenie stosu w MONO), AGE (dryf "vintage").
+// VOICE: MODE (POLY/MONO), GLIDE (portamento; L3 = synchronizacja z BPM: podzial 1/1 .. 1/128T), UNISON
+//        (rozstrojenie stosu w MONO), AGE (dryf "vintage").
 // PRESETS: kategorie (lewo) i presety (prawo); lewo/prawo = kolumna, gora/dol = wybor,
 //          A = wczytaj, X = zapisz (nazwa, kategoria = zaznaczona), B = usun (dwa razy), Y = INIT.
 //   L3             na stronach obwiedni: czerwona galka RELEASE <-> AMOUNT; na OSC 1: LEVEL <-> SUB;
@@ -44,7 +45,7 @@ private:
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     int pageCount(bool ext) const { return ext ? 10 : 8; }
-    RelEncoder stepMDest_;
+    RelEncoder stepMDest_, stepGDiv_;
     RelEncoder stepVMode_;
     // przegladarka presetow
     int catSel_ = 0, preSel_ = 0, preFirst_ = 0, focus_ = 1;  // catSel_ 0 = ALL, 1.. = kategorie
