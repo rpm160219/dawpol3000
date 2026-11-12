@@ -52,6 +52,7 @@ public:
     const uint8_t* pixels() const { return px_; }
 
     void clear(Color c);
+    void copyRows(const Canvas& src, int y0, int y1);  // kopia pasa wierszy (cache statycznej grafiki)
     void fillRect(float x, float y, float w, float h, Color c);
     void fillCircle(float cx, float cy, float r, Color c);
     void rect(float x, float y, float w, float h, float lw, Color c);  // obrys

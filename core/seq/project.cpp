@@ -4,6 +4,14 @@
 
 namespace dp {
 
+const char* engineName(int e) {
+    switch (e) {
+    case ENG_WAVETABLE: return "WAVETABLE";
+    case ENG_SAW: return "TEST SAW";
+    default: return "?";
+    }
+}
+
 int Project::countTracks(int type) const {
     int n = 0;
     for (int i = 0; i < nTracks; i++) if (tracks[i].type == type) n++;

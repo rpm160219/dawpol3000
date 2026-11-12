@@ -34,13 +34,14 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `util/spsc.h` | Kolejka lock-free jeden producent / jeden konsument. |
 | `util/triple_buffer.h` | Potrójny bufor bez blokad do przekazywania migawek danych (pattern) do audio. |
 | `synth/note_sink.h` | Interfejs instrumentu: `noteOn / noteOff / allOff` (wołany w wątku audio). |
+| `synth/wavetable_synth.*` | **WAVETABLE** — port 1:1 silnika op1r (Hundekraft, `third_party/op1r_wavetable`): oryginalny DSP w C bez zmian (2 oscylatory wavetable z morfingiem 8 kształtów, detune, ladder z rezonansem, soft clip, kompensacja poziomu), głos 96 kHz (2× jak na OP-1) w blokach po 128, decymacja 2:1 FIR z harnessa op1r (bufor kołowy, ta sama kolejność sumowania). 6 głosów na ścieżkę, własny ADSR (na OP-1 robił to firmware). Zgodność bit w bit z oryginałem: `tools/test_wavetable.sh`. ~1,4% rdzenia A53 na głos. |
 | `synth/saw_synth.*` | Testowy instrument: 8 głosów, piła polyBLEP, łagodny filtr dolnoprzepustowy, obwiednia A/D/S/R. |
 | `synth/tone_synth.*` | Pojedynczy ton sinus z drive — tylko dla ekranu testowego sprzętu. |
 | `seq/pattern.*` | Pattern: nazwa + lista nut (start, długość w tickach, wysokość, velocity), 1..16 taktów 4/4, max 512 nut. Pilnuje, by nuty o tej samej wysokości nie nachodziły na siebie. |
-| `seq/project.*` | Projekt: BPM, master, ścieżki (max 16 MIDI + 4 audio; nazwa, kolor, głośność, mute/solo; usuwanie razem z klipami), pula patternów (max 64), klipy na playliście (ścieżka, pattern, takt startu; max 512). Kolizje klipów, długość utworu, domyślne nazwy. |
+| `seq/project.*` | Projekt: BPM, master, ścieżki (max 16 MIDI + 4 audio; nazwa, kolor, głośność, mute/solo, instrument: silnik + 4 gałki + ADSR; usuwanie razem z klipami), pula patternów (max 64), klipy na playliście (ścieżka, pattern, takt startu; max 512). Kolizje klipów, długość utworu, domyślne nazwy. |
 | `seq/undo_stack.h` | Historia zmian: pierścień 32 migawek projektu (~7 MB, przydzielone raz); App ma dwie — undo i redo. |
 | `seq/sequencer.*` | Odtwarzanie z dokładnością do próbki w dwóch trybach: SONG (pętla IN/OUT w taktach albo cały utwór; bez pętli gra raz i staje) i PATTERN (jeden pattern, opcjonalna pętla IN/OUT w krokach). Sam pamięta grające nuty, więc edycja w trakcie nie zawiesza dźwięku. |
-| `audio/engine.*` | Silnik audio (+ poziomy ścieżek do VU: szczyt z opadaniem ~24 dB/s, po głośności ścieżki): komendy z UI, migawka projektu, mute/solo (w trybie SONG; nie wyzwala nut i wycisza grające), instrument (SawSynth) na każdą ścieżkę, blok dzielony na odcinki między tickami, miks, master i łagodny ogranicznik. |
+| `audio/engine.*` | Silnik audio (instrument wg ścieżki: WAVETABLE albo TEST SAW, przełączany z migawki projektu; + poziomy ścieżek do VU: szczyt z opadaniem ~24 dB/s, po głośności ścieżki): komendy z UI, migawka projektu, mute/solo (w trybie SONG; nie wyzwala nut i wycisza grające), instrument (SawSynth) na każdą ścieżkę, blok dzielony na odcinki między tickami, miks, master i łagodny ogranicznik. |
 | `ui/input.h` | Logiczne przyciski i osie (niezależne od sprzętu). |
 | `ui/buttons.h` | Wciśnięcie / puszczenie / auto-powtarzanie przycisków dla ekranów. |
 | `ui/encoder.h` | Analog jako enkoder względny: martwa strefa, krzywa, tryb ciągły i „ząbkowy”. |
@@ -51,6 +52,8 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `ui/dialogs.*` | Okna NEW TRACK, TRACK (edycja: nazwa, kolor z siatki 32 barw, usuwanie z potwierdzeniem) i NEW PATTERN w stylu menu (belki, ilustracja, pola, lista, pigułki akcji). |
 | `ui/widgets.*` | Wspólne elementy: kompaktowy pasek 4 pigułek akcji (`actionBar`, w kolumnach gałek, z linią statusu), pigułki z tekstem dopasowanym do obrysu, nagłówek ekranów ARRANGE/PIANO ROLL (ten sam układ, pozycja „BAR takt.miara”), tekst przycinany do szerokości, belka nagłówka, pigułka z literą przycisku, pole wartości, lista, mini-gałka, pasek 4 enkoderów, edycja nazwy przyciskami. |
 | `ui/piano_roll.*` | Ekran PIANO ROLL (tryb zaznaczania pod R3, 2 warstwy przełączane L2/R2 (wtedy L2/R2 nie zmieniają zakładek): 1) zaznacz/prostokąt, usuń, kopiuj, wklej — schowek między patternami; 2) transpozycja, przesuwanie, oktawa, duplikat — „wszystko albo nic” przy kolizjach): pattern z projektu, wiele taktów (widok 1 taktu + pasek pozycji), nuty jako pigułki, kolor = velocity, podgląd nut na instrumencie ścieżki (sterowanie w nagłówku pliku). |
+| `ui/synth_view.*` | Zakładka SYNTH: instrument bieżącej ścieżki — ekran silnika, strony gałek SOUND/ENVELOPE (Select), wykres ADSR, granie nut z przycisków. |
+| `ui/wavetable_screen.*` | Ekran WAVETABLE przeniesiony 1:1 z op1r (`wavetable_screen.c` + statyczna grafika wg `gen_svg.py`, geometria `wavetable_geom.h`), skala 2×, część statyczna w cache. |
 | `ui/test_screen.*` | Ekran testu sprzętu (etap 0): ton, gałki, oscyloskop, podgląd przycisków i surowych kodów. Uruchamiany `--test`. |
 | `headless.*` | Tryb bez okna: `--render-png plik [arrange|track|pattern|roll|test]`, `--render-wav plik [sekundy]` (cała aranżacja demo). |
 
@@ -59,6 +62,9 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 |---|---|
 | `main_sdl.cpp` | Okno/pełny ekran, tekstura, audio SDL (48 kHz float), zdarzenia pada i klawiatury, wybór ekranu. SIGTERM/SIGINT (np. Hotkey+Start w Knulli) = normalne wyjście z autozapisem. |
 | `controls_map.h` | **Jedyna** tabela mapowania: klawiatura, pad SDL, surowe kody RG35XX Pro. |
+
+## Testy (`tests/`)
+- `wavetable_match.cpp` + `tools/test_wavetable.sh` — port WAVETABLE vs oryginalny harness op1r, porównanie próbka po próbce.
 
 ## Narzędzia (`tools/`)
 `build.sh [desktop|arm]`, `deploy.sh` (ARM + wysyłka + wpis w Ports), `log.sh`, `dev.sh '<komenda>'`, `ssh_env.sh` (wspólne SSH z hasłem), `knulli/` (starter Ports i plik `.keys` z wyjściem Hotkey+Start).

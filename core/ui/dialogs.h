@@ -1,8 +1,8 @@
 // Okna dialogowe w stylu menu (belki, ilustracja, pola, lista, pigulki akcji).
 //
-// NEW TRACK:   gora/dol = typ (MIDI/AUDIO), X = edycja nazwy, A = utworz, B = anuluj.
+// NEW TRACK:   gora/dol = typ (MIDI/AUDIO), L1/R1 = silnik (instrument), X = edycja nazwy, A = utworz, B = anuluj.
 //              Po utworzeniu sciezki MIDI od razu otwiera sie NEW PATTERN.
-// TRACK (edycja, Select na sciezce w ARRANGE): X = nazwa, krzyzak = kolor (siatka 4x8 = 32),
+// TRACK (edycja, Select na sciezce w ARRANGE): X = nazwa, krzyzak = kolor (siatka 4x8 = 32), L1/R1 = silnik,
 //              Y dwa razy = usun sciezke, A = OK, B = anuluj.
 // NEW PATTERN: gora/dol = nowy albo istniejacy pattern z listy, lewo/prawo (lub niebieski
 //              enkoder) = dlugosc w taktach, X = edycja nazwy, A = utworz / uzyj, B = anuluj.
@@ -26,6 +26,7 @@ private:
     int type_ = TRACK_MIDI;
     int edit_ = -1;  // -1 = nowa sciezka
     int color_ = 0;
+    int engine_ = ENG_WAVETABLE;
     bool confirmDelete_ = false;
     char name_[12] = "";
     bool nameTouched_ = false;

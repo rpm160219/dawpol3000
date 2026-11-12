@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 09:30
+**Zmienione:**
+- `third_party/op1r_wavetable/` — oryginalne pliki silnika WAVETABLE z op1r (Hundekraft, GPL-3.0-or-later): `wavetable_dsp.h`, `wavetable_level.h`, `wavetable_geom.h`, `orig_88k/wavetables.h`, LICENSE, NOTICE, README ze źródłem i commitem; `wavetables.h` przeliczony ich generatorem dla 96 kHz (`tools/gen/op1r_wavetable_gen_tables.py`; z 88200 odtwarza oryginał bajt w bajt). `third_party/LICENSES.md`.
+- `core/synth/wavetable_synth.*` — instrument: oryginalny DSP (ścieżka C), głos 96 kHz w blokach 128, decymacja 2:1 FIR z harnessa op1r (bufor kołowy), 6 głosów, własny ADSR.
+- `core/ui/wavetable_screen.*` — ekran przeniesiony 1:1 (statyka wg `gen_svg.py` w cache, ruch wg `wavetable_screen.c`), skala 2×; `core/ui/synth_view.*` — zakładka SYNTH (strony SOUND/ENVELOPE, wykres ADSR, nuty z przycisków).
+- `core/seq/project.*`, `core/io/project_file.*` — instrument ścieżki (silnik, 4 gałki, ADSR) w projekcie i w pliku; `core/audio/engine.*` — instrument wg ścieżki; `core/ui/dialogs.*` — wybór silnika L1/R1; `core/ui/app.*` — 4. zakładka; `core/gfx/canvas.*` — `copyRows`.
+- `tests/wavetable_match.cpp`, `tools/test_wavetable.sh` — test zgodności: **0 różnic na 105 984 próbkach** względem oryginalnego harnessa op1r.
+- Wydajność na konsoli: 1,37% rdzenia na głos (6 głosów 8,2%).
+**Następny krok:** Patryk testuje brzmienie i sterowanie WAVETABLE na konsoli.
+**Wymaga od Patryka:** tak — odsłuch i ocena sterowania.
+
 ## 2026-11-12 08:00
 **Zmienione:**
 - `core/gfx/canvas.h` — 32 kolory ścieżek (8 dotychczasowych + 24 nowe); `core/io/project_file.cpp`, `core/seq/project.*`, ekrany — obsługa 32 barw.

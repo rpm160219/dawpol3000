@@ -92,6 +92,14 @@ int headlessPng(const char* path, const char* screen) {
         app.roll.setSelectLayer(1);
         app.roll.selectRect(4, 63, 9, 72);
         app.roll.setCursor(9, 72);
+    } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv")) {
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "synthenv")) app.synth.setPage(1);
+        InputState in;
+        in.btn[B_A] = true;  // trzymana nuta
+        app.update(in, 0.016f);
+        for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
     } else if (!strcmp(screen, "tools")) {        // ARRANGE + pasek narzedzi, petla takty 3-6
         app.arrange.setCursor(1, 2);
         tap(app, B_L3);

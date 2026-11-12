@@ -12,6 +12,7 @@ void App::init(AudioEngine* e) {
     roll.attach(this);
     trackDlg.attach(this);
     patDlg.attach(this);
+    synth.attach(this);
     cur_ = &arrange;
     publish();
 }
@@ -172,6 +173,7 @@ void App::toolsRender(Canvas& c) {
 void App::validateViews() {
     if (lastPattern_ >= prj_.nPatterns || lastTrack_ >= prj_.nTracks) lastPattern_ = -1;
     if (cur_ == &roll && !roll.valid()) cur_ = &arrange;
+    if (cur_ == &synth && synth.track() >= prj_.nTracks) cur_ = &arrange;
     arrange.clampCursor();
 }
 
@@ -239,6 +241,12 @@ void App::openPattern(int pattern, int track) {
     next_ = &roll;
 }
 
+void App::openSynth(int track) {
+    if (track < 0 || track >= prj_.nTracks || prj_.tracks[track].type != TRACK_MIDI) return;
+    synth.open(track);
+    next_ = &synth;
+}
+
 void App::openNewTrack() {
     trackDlg.open();
     next_ = &trackDlg;
@@ -278,10 +286,14 @@ void App::update(const InputState& in, float dt) {
     // W menu zaznaczania (R3) L2/R2 przelaczaja warstwy paska, nie zakladki
     if (cur_ == &roll && roll.inSelectMode()) dialog = true;
     if (!dialog && btn_.pressed(B_L2)) {
-        if (cur_ == &roll) showArrange();
+        if (cur_ == &synth) {
+            if (hasRoll && lastTrack_ == synth.track()) openPattern(lastPattern_, lastTrack_);
+            else { int lp = prj_.tracks[synth.track()].lastPattern; if (lp >= 0) openPattern(lp, synth.track()); else showArrange(); }
+        } else if (cur_ == &roll) showArrange();
         else if (cur_ == &arrange) showProject();
     } else if (!dialog && btn_.pressed(B_R2)) {
         if (cur_ == &projectView) showArrange();
+        else if (cur_ == &roll) openSynth(roll.trackIndex());
         else if (cur_ == &arrange) {
             int t = 0, pt = arrange.highlightedPattern(&t);  // pattern pod kursorem
             if (pt >= 0) openPattern(pt, t);
@@ -305,11 +317,11 @@ void App::update(const InputState& in, float dt) {
 
 void App::render(Canvas& c) {
     cur_->render(c);
-    // Wskaznik zakladek (3 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL
-    int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : -1));
+    // Wskaznik zakladek (4 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL, SYNTH
+    int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : (cur_ == &synth ? 3 : -1)));
     if (tab >= 0) {
-        for (int i = 0; i < 3; i++) {
-            float x = 308 + i * 12, y = tab == 0 ? 60 : 38;
+        for (int i = 0; i < 4; i++) {
+            float x = 302 + i * 12, y = tab == 0 ? 60 : 38;
             if (i == tab) c.fillCircle(x, y, 2.6f, pal::white);
             else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
         }
@@ -330,6 +342,11 @@ void App::loadDemo() {
     int keys = prj_.addTrack(TRACK_MIDI, "KEYS");
     prj_.addTrack(TRACK_AUDIO, "GUITAR");
     const int T = TICKS_PER_STEP;
+    // brzmienia: BASS = pila->kwadrat, nisko, LEAD = domyslne, KEYS = cieple + rozstrojenie, miekki atak
+    { Track& t = prj_.tracks[bass]; t.knob[0] = 12000; t.knob[1] = 3000; t.knob[2] = 14000; t.knob[3] = 14000;
+      t.env[0] = 0.002f; t.env[1] = 0.25f; t.env[2] = 0.5f; t.env[3] = 0.12f; }
+    { Track& t = prj_.tracks[keys]; t.knob[0] = 4700; t.knob[1] = 20000; t.knob[2] = 17000; t.knob[3] = 6000;
+      t.env[0] = 0.35f; t.env[1] = 1.0f; t.env[2] = 0.8f; t.env[3] = 0.9f; t.volume = 0.6f; }
     int pb = prj_.addPattern("BASS A", 1);
     struct N { int s, l, p, v; };
     N bn[] = {{0, 3, 36, 120}, {4, 2, 36, 90}, {6, 2, 43, 100}, {8, 3, 39, 115}, {12, 2, 41, 95}, {14, 2, 43, 100}};

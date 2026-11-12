@@ -21,6 +21,12 @@ void Canvas::clear(Color c) {
     }
 }
 
+void Canvas::copyRows(const Canvas& src, int y0, int y1) {
+    if (y0 < 0) y0 = 0;
+    if (y1 > H) y1 = H;
+    if (y1 > y0) memcpy(px_ + y0 * W * 4, src.px_ + y0 * W * 4, (size_t)(y1 - y0) * W * 4);
+}
+
 void Canvas::blend(int idx, Color c, float a) {
     a *= c.a * (1.f / 255.f);
     if (a <= 0.f) return;

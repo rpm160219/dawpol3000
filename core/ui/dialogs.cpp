@@ -22,6 +22,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 
 void TrackDialog::open() {
     edit_ = -1;
+    engine_ = ENG_WAVETABLE;
     Project& p = app_->project();
     type_ = p.canAddTrack(TRACK_MIDI) ? TRACK_MIDI : TRACK_AUDIO;
     p.nextTrackName(type_, name_, sizeof name_);
@@ -32,6 +33,7 @@ void TrackDialog::openEdit(int track) {
     Project& p = app_->project();
     edit_ = track;
     color_ = p.tracks[track].color % pal::TRACK_COLORS;
+    engine_ = p.tracks[track].engine;
     type_ = p.tracks[track].type;
     memcpy(name_, p.tracks[track].name, sizeof name_);
     confirmDelete_ = false;
@@ -48,6 +50,8 @@ void TrackDialog::updateEdit(const Buttons& b) {
     if (b.repeat(B_DOWN) && color_ + cols < n) nc += cols;
     if (b.repeat(B_UP) && color_ - cols >= 0) nc -= cols;
     if (nc != color_) { color_ = nc; confirmDelete_ = false; }
+    if (type_ == TRACK_MIDI && (b.pressed(B_L1) || b.pressed(B_R1)))
+        engine_ = (engine_ + (b.pressed(B_R1) ? 1 : ENG_COUNT - 1)) % ENG_COUNT;
     if (b.pressed(B_X)) ed_.begin(name_);
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_Y)) {
@@ -63,6 +67,7 @@ void TrackDialog::updateEdit(const Buttons& b) {
         Track& t = p.tracks[edit_];
         memcpy(t.name, name_, sizeof t.name);
         t.color = (uint8_t)color_;
+        t.engine = (uint8_t)engine_;
         app_->markDirty();
         app_->showArrange();
     }
@@ -85,6 +90,10 @@ void TrackDialog::renderEdit(Canvas& c) {
     char b[48];
     snprintf(b, sizeof b, "%d CLIPS   VOL %d", clips, (int)(t.volume * 100 + 0.5f));
     drawText(c, 236, 218, b, 10, 1.3f, pal::dim);
+    if (type_ == TRACK_MIDI) {
+        drawText(c, 236, 244, "ENGINE  L1/R1", 8, 1.1f, pal::dim);
+        drawText(c, 236, 258, engineName(engine_), 13, 1.5f, pal::white);
+    }
     if (confirmDelete_) drawText(c, 28, 300, "PRESS Y AGAIN TO DELETE TRACK + CLIPS", 10, 1.4f, pal::red);
     else drawText(c, 28, 300, "Y = DELETE TRACK", 10, 1.3f, pal::dim);
     if (ed_.active()) drawText(c, 28, 330, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 9, 1.2f, pal::steel);
@@ -115,10 +124,13 @@ void TrackDialog::update(const Buttons& b, const InputState&, float) {
         type_ = nt;
         if (!nameTouched_) p.nextTrackName(type_, name_, sizeof name_);
     }
+    if (type_ == TRACK_MIDI && (b.pressed(B_L1) || b.pressed(B_R1)))
+        engine_ = (engine_ + (b.pressed(B_R1) ? 1 : ENG_COUNT - 1)) % ENG_COUNT;
     if (b.pressed(B_X)) { ed_.begin(name_); nameTouched_ = true; }
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_A) && p.canAddTrack(type_)) {
         int t = p.addTrack(type_, name_);
+        p.tracks[t].engine = (uint8_t)engine_;
         app_->markDirty();
         app_->arrange.setCursor(t, 0);
         if (type_ == TRACK_MIDI) app_->openNewPattern(t, 0);
@@ -140,6 +152,10 @@ void TrackDialog::render(Canvas& c) {
     drawText(c, 236, 190, b, 11, 1.4f, pal::dim);
     snprintf(b, sizeof b, "AUDIO %d/%d", p.countTracks(TRACK_AUDIO), MAX_AUDIO_TRACKS);
     drawText(c, 236, 212, b, 11, 1.4f, pal::dim);
+    if (type_ == TRACK_MIDI) {
+        drawText(c, 236, 244, "ENGINE  L1/R1", 8, 1.1f, pal::dim);
+        drawText(c, 236, 258, engineName(engine_), 13, 1.5f, pal::white);
+    }
     drawText(c, 28, 300, type_ == TRACK_MIDI ? "NOTES FROM PATTERNS -> SYNTH" : "AUDIO CLIPS FROM TAPE RECORDING", 10, 1.3f,
              pal::dim);
     if (ed_.active()) drawText(c, 28, 330, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 9, 1.2f, pal::steel);

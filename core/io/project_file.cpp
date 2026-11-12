@@ -27,7 +27,11 @@ bool saveProjectFile(const Project& p, const char* path) {
         const Track& t = p.tracks[i];
         fprintf(f, "track %s ", t.type == TRACK_MIDI ? "midi" : "audio");
         putStr(f, t.name);
-        fprintf(f, " color %d vol %.3f mute %d solo %d last %d\n", t.color, t.volume, t.mute, t.solo, t.lastPattern);
+        fprintf(f, " color %d vol %.3f mute %d solo %d last %d", t.color, t.volume, t.mute, t.solo, t.lastPattern);
+        if (t.type == TRACK_MIDI)
+            fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f", t.engine == ENG_SAW ? "saw" : "wavetable",
+                    t.knob[0], t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
+        fputc('\n', f);
     }
     fputc('\n', f);
     for (int i = 0; i < p.nPatterns; i++) {
@@ -104,6 +108,13 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             if ((v = kv(tok, n, 3, "mute"))) t.mute = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
+            if ((v = kv(tok, n, 3, "engine"))) t.engine = !strcmp(v, "saw") ? ENG_SAW : ENG_WAVETABLE;
+            for (int i = 3; i + 4 < n; i++) {
+                if (!strcmp(tok[i], "k"))
+                    for (int j = 0; j < 4; j++) { int x = atoi(tok[i + 1 + j]); t.knob[j] = (int16_t)(x < 0 ? 0 : x > 32767 ? 32767 : x); }
+                if (!strcmp(tok[i], "env"))
+                    for (int j = 0; j < 4; j++) t.env[j] = (float)atof(tok[i + 1 + j]);
+            }
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {
             curPat = p.nPatterns++;
             Pattern& pt = p.patterns[curPat];

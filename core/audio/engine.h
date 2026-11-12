@@ -7,6 +7,7 @@
 #include "seq/project.h"
 #include "seq/sequencer.h"
 #include "synth/saw_synth.h"
+#include "synth/wavetable_synth.h"
 #include "util/spsc.h"
 #include "util/triple_buffer.h"
 
@@ -28,6 +29,9 @@ public:
     bool isPlaying() const { return playingOut_.load(std::memory_order_relaxed); }
     int playMode() const { return modeOut_.load(std::memory_order_relaxed); }  // Sequencer::Mode
     // Poziom sciezki do VU (0..1, szczyt z opadaniem ~24 dB/s, po glosnosci sciezki, przed masterem).
+    // Dla ekranu instrumentu: roznica faz oscylatorow i liczba grajacych glosow WAVETABLE na sciezce
+    uint32_t wtDrift(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].drift() : 0; }
+    int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione
     void process(float* out, int frames);
@@ -37,6 +41,8 @@ private:
     TripleBuffer<Project> prj_;
     Sequencer seq_;
     SawSynth synth_[MAX_TRACKS];
+    WavetableSynth wt_[MAX_TRACKS];
+    uint8_t eng_[MAX_TRACKS] = {};  // biezacy silnik sciezki
     NoteSink* sinks_[MAX_TRACKS];
     float master_ = 0.8f;
     float level_[MAX_TRACKS] = {};

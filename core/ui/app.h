@@ -1,5 +1,5 @@
 // App: wlasciciel projektu i ekranow. Kieruje wejscie do biezacego ekranu, po zmianach
-// publikuje migawke projektu do silnika audio. Zakladki (L2/R2): PROJECT | ARRANGE | PIANO ROLL.
+// publikuje migawke projektu do silnika audio. Zakladki (L2/R2): PROJECT | ARRANGE | PIANO ROLL | SYNTH.
 #pragma once
 #include "audio/engine.h"
 #include "io/project_store.h"
@@ -9,6 +9,7 @@
 #include "ui/dialogs.h"
 #include "ui/piano_roll.h"
 #include "ui/project_view.h"
+#include "ui/synth_view.h"
 
 namespace dp {
 
@@ -39,6 +40,7 @@ public:
     void showArrange();
     void showProject();
     void openPattern(int pattern, int track);
+    void openSynth(int track);
     void openNewTrack();
     void openTrackEdit(int track);
     void openNewPattern(int track, int bar);
@@ -51,6 +53,7 @@ public:
     PianoRoll roll;
     TrackDialog trackDlg;
     PatternDialog patDlg;
+    SynthView synth;
 
 private:
     AudioEngine* eng_ = nullptr;

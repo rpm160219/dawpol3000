@@ -42,6 +42,7 @@ public:
     void setView(int topPitch) { topPitch_ = topPitch; scrollToCursor(); }
     bool valid();                 // czy pattern/sciezka nadal istnieja (np. po undo)
     int patternIndex() const { return pat_; }
+    int trackIndex() const { return track_; }
     int cursorStep() const { return curStep_; }
     void exitSelect() { selMode_ = false; bHeld_ = false; clearSel(); }
     bool inSelectMode() const { return selMode_; }
