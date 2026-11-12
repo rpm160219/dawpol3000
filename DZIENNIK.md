@@ -1,6 +1,6 @@
 # Dziennik DAW-POL 3000
 
-## 2026-11-12 19:05
+## 2026-11-12 18:43
 **Zmienione — filtr w SUPERSAW (wybór Patryka: opcja 1, filtr w samym silniku):**
 - `core/synth/wavetable_synth.*` — filtr DAW-POL za oryginalnym silnikiem: SVF (LP24 / LP12 / BP / HP), rezonans do Q 10 z kompensacją głośności, wygładzanie; obwiednia filtra i cele LFO/MOD ENV CUT/RES. Filtr w pełni otwarty bez rezonansu = dźwięk oryginału bit w bit (test 0 różnic).
 - `core/ui/synth_view.*` — L3 na SOUND = CUTOFF (OPEN na końcu) / RESONANCE / TYPE; strona FILTER ENV; LFO i MOD ENV z celami CUT i RES. `core/audio/engine.cpp`, `core/io/project_file.cpp`, `core/seq/project.*` — parametry filtra w `push` (zamknięcie, RES, typ; stare projekty = otwarty).
