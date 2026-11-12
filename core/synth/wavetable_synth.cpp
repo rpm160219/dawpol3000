@@ -508,6 +508,11 @@ void WavetableSynth::renderBlock() {
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
             }
         }
+        if (kind_ == 9 && vm[0] != 0.f) {  // SID: modulacja WAVE skokowo o cale fale (+-5 przy glebokosci 1), bez przelatywania pasm
+            int mode = (int)sidWaveMode(knobs_[0]) + (int)lrintf(vm[0] * 5.f);
+            mode = mode < 0 ? 0 : (mode > 5 ? 5 : mode);
+            vk[0] = (int16_t)(mode * 512 + 256);
+        }
         // portamento, unison, AGE (przy wylaczonych — dokladnie jak oryginal: v.inc)
         uint32_t base = v.inc;
         if (glide_ > 0 || v.det != 0.f || age_ > 0) {

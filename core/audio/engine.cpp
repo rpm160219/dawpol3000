@@ -35,7 +35,8 @@ void AudioEngine::applyProject() {
         }
         wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : 0);
         const bool bare = e == ENG_ELG;  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
-        const bool simple = bare || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || (e == ENG_OXBOW && !t.alt);  // OXBOW+: tryby glosu jak WAVETABLE+
+        const bool simple = bare || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || (e == ENG_OXBOW && !t.alt);
+        const bool sidFenv = e == ENG_SID;  // SID: obwiednia filtra na CUTOFF (galka 2), bez trybow glosu  // OXBOW+: tryby glosu jak WAVETABLE+
         const bool oxPlus = e == ENG_OXBOW && t.alt;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
         wt_[i].setKnobs(t.knob);
         if (oxPlus) {  // OXBOW+: FILTER i DRIVE w slowach 6, 7 (jak strona 2 oryginalu); reszta w obx_params
@@ -57,7 +58,7 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || simple || oxPlus ? 0.f : t.fenvAmt);
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);

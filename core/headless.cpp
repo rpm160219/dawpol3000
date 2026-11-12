@@ -263,8 +263,9 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_SELECT);
         tap(app, B_R2);
         for (int i = 0; i < 9; i++) tap(app, B_DOWN);  // OXBOW+
-    } else if (!strcmp(screen, "sid") || !strcmp(screen, "sidsync")) {
+    } else if (!strcmp(screen, "sid") || !strcmp(screen, "sidsync") || !strcmp(screen, "sidfenv")) {
         Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "sidfenv")) { tr.fenv[1] = 0.5f; tr.fenv[2] = 0.2f; tr.fenvAmt = -0.4f; }
         tr.engine = ENG_SID;
         engineDefaultKnobs(ENG_SID, tr.knob);
         if (!strcmp(screen, "sidsync")) { tr.knob[0] = 4 * 512 + 256; tr.knob[1] = 12000; }
@@ -272,6 +273,7 @@ int headlessPng(const char* path, const char* screen) {
         app.markDirty();
         app.openSynth(1);
         idle(app);
+        if (!strcmp(screen, "sidfenv")) { app.synth.setPageKind(SynthView::K_FENV); app.synth.setAlt(true); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

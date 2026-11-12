@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 17:00
+**Zmienione (uwagi Patryka do SID):**
+- `core/ui/synth_view.*`, `core/audio/engine.cpp` — SID ma stronę FILTER ENV (wspólna obwiednia filtra na CUTOFF, AMOUNT ± pod L3); strony: SOUND, AMP ENV, FILTER ENV, MOD ENV, LFO 1, LFO 2, PRESETS.
+- `core/ui/synth_view.cpp` — gałka WAVE w SID krokowa (TRIANGLE … RING, jedno wychylenie = jedna fala, bez zawijania); wcześniej fale powtarzały się co 512 jednostek i analog przelatywał przez nie lawinowo. `core/synth/wavetable_synth.cpp` — modulacja WAVE (LFO / MOD ENV) też skokowo o całe fale.
+- SID bez obwiedni filtra nadal bit w bit. Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza SID.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 16:30
 **Zmienione — port silnika SID (op1r; cRSID 1.58 Hermita, adaptacja Hundekraft):**
 - `third_party/op1r_sid/` — oryginalne `sid.c`, `sid_dsp.c/.h`, tablice filtra i szumu, `sid_screen.c`, `sid.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_l1.h`; `sid_art.h`.

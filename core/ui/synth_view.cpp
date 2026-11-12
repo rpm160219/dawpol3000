@@ -35,7 +35,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     int n = pageCount(pm), p = page_ < n ? page_ : n - 1;
     static const Kind elgk[3] = {K_SOUND, K_AMP, K_PRESETS};
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : orig[p])));
+    static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : orig[p]))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -125,6 +126,14 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
+                }
+            } else if (t.engine == ENG_SID && i == 0) {  // SID: fala krokowo, srodek pasma 512 (TRIANGLE .. RING)
+                int st = stepSidWave_.steps(ax, dt, 4.f);
+                if (st) {
+                    int m = (int)sidWaveMode(t.knob[0]) + st;
+                    m = m < 0 ? 0 : (m > 5 ? 5 : m);
+                    const int16_t nv = (int16_t)(m * 512 + 256);
+                    if (nv != t.knob[0]) { t.knob[0] = nv; changed = true; }
                 }
             } else if ((t.engine == ENG_MBIRA || t.engine == ENG_OXBOW) && alt_ && i < 3) {  // OXBOW: WAVE, FILTER, DRIVE  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
                 knob(t.push[i]);
@@ -543,6 +552,7 @@ void SynthView::render(Canvas& c) {
         snprintf(v[3], 16, "%u", ((unsigned)t.knob[3] * 99 + 16383) >> 15);
         labels[0] = "WAVE"; labels[2] = "CUTOFF"; labels[3] = "RESONANCE";
         for (int i = 0; i < 4; i++) pos[i] = t.knob[i] / 32767.f;
+        pos[0] = mode / 5.f;  // fala jako przelacznik
     } else if (k == K_SOUND && t.engine == ENG_OXBOW) {  // OB: filtr, rezonans, obwiednia filtra (+/-), rozstrojenie OSC 2
         static const char* L[4] = {"CUTOFF", "RESONANCE", "ENV AMT", "DETUNE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
