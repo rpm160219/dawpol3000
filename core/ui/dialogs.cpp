@@ -7,6 +7,7 @@
 #include "ui/mbira_screen.h"
 #include "ui/reactor_screen.h"
 #include "ui/oxbow_screen.h"
+#include "ui/sid_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -27,7 +28,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 11;
+static const int NENG = 12;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -59,16 +60,19 @@ static const EngineInfo kEngines[NENG] = {
     {"OXBOW+", "EXTENDED",
      {"THE OXBOW CORE, OPENED UP:", "TWO INDEPENDENT OSCILLATORS -", "WAVE, INTERVAL, DETUNE, LEVEL, PW.",
       "NOISE, SYNC, X-MOD, ENV TO PITCH.", "FILTER ENVELOPE WITH ADSR, KEY", "TRACK, VELOCITY, VINTAGE.", "POLY / MONO, GLIDE, UNISON, AGE."}},
+    {"SID", "C64 CHIP VOICE",
+     {"PORT OF THE OP1R SID ENGINE:", "CRSID 1.58 PRIMITIVES BY HERMIT,", "ADAPTED BY HUNDEKRAFT. BIT-EXACT.", "THREE OSCILLATORS PER VOICE -",
+      "TRIANGLE, SAW, PULSE, NOISE,", "SYNC, RING - INTO THE 8580", "RESONANT LOW-PASS FILTER."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 10 ? ENG_SAW : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 11 ? ENG_SAW : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     const bool wasObp = t.engine == ENG_OXBOW && t.alt;
     t.engine = (uint8_t)e;
@@ -215,12 +219,12 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     for (int i = 0; i < NENG; i++) {
-        float y = 70 + i * 30;
+        float y = 70 + i * 27;
         bool sel = i == engSel_;
-        if (sel) c.fillRoundRect(16, y - 5, 236, 30, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
+        if (sel) c.fillRoundRect(16, y - 4, 236, 27, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
-        drawText(c, 30, y, kEngines[i].name, 12, 1.5f, col);
-        drawText(c, 30, y + 15, kEngines[i].sub, 6.5f, 1.f, sel ? pal::white : pal::dim);
+        drawText(c, 30, y, kEngines[i].name, 11, 1.4f, col);
+        drawText(c, 30, y + 14, kEngines[i].sub, 6, 1.f, sel ? pal::white : pal::dim);
         if (i == cur) c.fillCircle(238, y + 7, 3.5f, pal::green);  // silnik zapisany na sciezce
     }
     c.line(258, 70, 258, 410, 1.5f, pal::steel);
@@ -229,6 +233,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 6) drawMbiraIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 7) drawReactorIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 8 || engSel_ == 9) drawOxbowIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 10) drawSidIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
@@ -236,7 +241,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     if (engSel_ < 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 9) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
-    else if (engSel_ < 10) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ < 11) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');

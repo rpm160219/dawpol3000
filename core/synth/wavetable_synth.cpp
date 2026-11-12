@@ -8,6 +8,7 @@
 #include "synth/reactor_dsp.h"
 #include "synth/oxbow_dsp.h"
 #include "synth/oxbow_plus_dsp.h"
+#include "synth/sid_dsp_wrap.h"
 #include <math.h>
 #include <string.h>
 
@@ -111,6 +112,7 @@ void WavetableSynth::init(float outRate) {
     if (!reactor_) reactor_ = reactorCreate();
     if (!oxbow_) oxbow_ = oxbowCreate();
     if (!oxp_) oxp_ = oxbowPlusCreate();
+    if (!sid_) sid_ = sidCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -388,6 +390,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 3) elgNoteOn(elg_, slot);
     else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
+    else if (kind_ == 9) sidNoteOn(sid_, slot, knobs_);
     else if (kind_ == 8) {  // OXBOW+: jak OXBOW
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) oxbowPlusNoteOff(oxp_, i);
@@ -523,7 +526,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 8) {  // OXBOW+ (rozszerzona kopia DSP kennel): modulacje PW1/PW2, P1/P2, LV1/LV2 per glos
+        if (kind_ == 9) {  // SID (oryginalny DSP op1r / cRSID)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            sidRender(sid_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 8) {  // OXBOW+ (rozszerzona kopia DSP kennel): modulacje PW1/PW2, P1/P2, LV1/LV2 per glos
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             obx_params q = obx_;
             auto pwm = [](uint32_t pw, float m) {

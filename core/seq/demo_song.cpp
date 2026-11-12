@@ -42,6 +42,7 @@ void buildDemoAllEngines(Project& p) {
     const int lead = track(p, "LEAD", "taffy", "CZ LEAD", 7, 0.5f);            // TAFFY
     const int core = track(p, "CORE", "reactor", "SCRAM", 8, 0.35f);          // REACTOR
     const int brass = track(p, "BRASS", "oxbow", "POLY BRASS", 9, 0.4f);     // OXBOW
+    const int chip = track(p, "CHIP", "sid", "PULSE KEYS", 10, 0.3f);        // SID
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
     int pd = p.addPattern("DRONE", 4);
@@ -120,6 +121,12 @@ void buildDemoAllEngines(Project& p) {
             note(p.patterns[pbr], b, 10, 4, CH[b][k] + 12, 90);
         }
     p.addClip(brass, pbr, 8);
+    // SID: szesnastkowe arpeggio akordu dwie oktawy wyzej (groove i calosc)
+    int pch = p.addPattern("CHIP", 4);
+    for (int b = 0; b < 4; b++)
+        for (int st = 0; st < 16; st++) note(p.patterns[pch], b, st, 1, CH[b][st % 3] + (st % 6 < 3 ? 12 : 24), st % 4 ? 70 : 100);
+    p.addClip(chip, pch, 4);
+    p.addClip(chip, pch, 8);
     p.addClip(core, pr, 8);
     p.addClip(core, pr, 12);
     p.addClip(lead, pl, 8);

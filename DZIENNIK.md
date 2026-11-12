@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 16:30
+**Zmienione — port silnika SID (op1r; cRSID 1.58 Hermita, adaptacja Hundekraft):**
+- `third_party/op1r_sid/` — oryginalne `sid.c`, `sid_dsp.c/.h`, tablice filtra i szumu, `sid_screen.c`, `sid.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_l1.h`; `sid_art.h`.
+- `core/synth/sid_dsp_wrap.*` — sid.c jako C (stan głosu per ścieżka), `sid_dsp.c` osobno; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — SID jako rodzaj 9 z pakietem modulacji (AMP ENV, MOD ENV, 2 LFO).
+- `core/ui/sid_screen.*` — ekran (rysunek układu SID + odczyty WAVE / VOICES-WIDTH-INTERVAL / CUTOFF / RES) i ilustracja; `core/ui/synth_view.*` — strona SOUND; `core/ui/dialogs.cpp` — SID na liście (12 pozycji, lista ciaśniej).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `sid`, 20 presetów (8 z oryginału + 12 z modulacją); demo ALL ENGINES z partią CHIP (SID, arpeggio), wersja 4.
+- `tests/sid_match.cpp`, `tools/test_sid.sh`; pozostałe skrypty testów linkują SID. `CMakeLists.txt` — sid_dsp.c bez ostrzeżeń o wcięciach (oryginał 1:1).
+- Testy: SID bit w bit (0 różnic), wszystkie 10 testów zgodności 0 różnic; presety bez przesterowania; CPU na konsoli 6,3–7,8% przy 6 głosach; demo ~22% rdzenia, szczyt 0,87. Wysłane na konsolę.
+**Następny krok:** Patryk testuje SID.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 15:30
 **Zmienione:** `tools/package_portmaster.sh` (nowy) i `tools/portmaster/DAW-POL 3000.sh` — paczka ZIP dla PortMastera (do pokazania koledze): starter szukający PortMastera jak inne porty, folder `dawpol3000/` z programem, `port.json`, README (instalacja, sterowanie) i licencje. Wynik w `dist/` (poza gitem) i kopia na konsoli w `/userdata/dawpol3000/`. Sprawdzone na konsoli w katalogu tymczasowym (rozpakowanie, PortMaster znaleziony, program startuje); obecna instalacja nienaruszona.
 **Następny krok:** Patryk przekazuje paczkę koledze.

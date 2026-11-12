@@ -3,6 +3,7 @@
 #include "gfx/icons.h"
 #include "ui/app.h"
 #include "ui/encoder.h"
+#include "synth/sid_dsp_wrap.h"
 #include "ui/widgets.h"
 #include <math.h>
 #include <stdio.h>
@@ -323,6 +324,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_SID) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        sd_.draw(c, shown);
     } else if (t.engine == ENG_OXBOW) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -525,7 +532,18 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_OXBOW) {  // OB: filtr, rezonans, obwiednia filtra (+/-), rozstrojenie OSC 2
+    if (k == K_SOUND && t.engine == ENG_SID) {  // SID: fala, glosy / szerokosc / interwal, filtr
+        static const char* W[6] = {"TRIANGLE", "SAW", "PULSE", "NOISE", "SYNC", "RING"};
+        const unsigned mode = sidWaveMode(t.knob[0]);
+        snprintf(v[0], 16, "%s", W[mode]);
+        if (mode >= 4) { labels[1] = "INTERVAL"; snprintf(v[1], 16, "+%u ST", sidIntervalSemi(t.knob[1])); }
+        else if (mode == 2) { labels[1] = "WIDTH"; snprintf(v[1], 16, "%u", 3 + (((unsigned)t.knob[1] * 94 + 16383) >> 15)); }
+        else { labels[1] = "VOICES"; snprintf(v[1], 16, "%u", ((unsigned)t.knob[1] * 99 + 16383) >> 15); }
+        snprintf(v[2], 16, "%u", ((unsigned)t.knob[2] * 99 + 16383) >> 15);
+        snprintf(v[3], 16, "%u", ((unsigned)t.knob[3] * 99 + 16383) >> 15);
+        labels[0] = "WAVE"; labels[2] = "CUTOFF"; labels[3] = "RESONANCE";
+        for (int i = 0; i < 4; i++) pos[i] = t.knob[i] / 32767.f;
+    } else if (k == K_SOUND && t.engine == ENG_OXBOW) {  // OB: filtr, rezonans, obwiednia filtra (+/-), rozstrojenie OSC 2
         static const char* L[4] = {"CUTOFF", "RESONANCE", "ENV AMT", "DETUNE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
         snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);

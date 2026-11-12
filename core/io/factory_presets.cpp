@@ -372,9 +372,36 @@ static const FactoryPreset kOxbowPlus[] = {
     {"NOISE HIT", CAT_FX, 1, "alt 1 k 28000 6000 30000 0 obx 0 0 0 0 0 0 0 64 64 126 0 0 0 32 40 30 0 0 fenv 0.001 0.12 0 0.1 0 env 0.001 0.2 0 0.15"},
 };
 
+// SID: 8 presetow oryginalu (third_party/op1r_sid/presets.py; fala = srodek pasma 512, obwiednia OP-1 w przyblizeniu,
+// efekty i oktawa pominiete) + wersja 2: 12 z MOD ENV i LFO (cele: 0 WAVE 1 MOD 2 CUT 3 RES 4 PTCH 5 VOL).
+static const FactoryPreset kSid[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"ROUND BASS", CAT_BASS, 1, "k 1280 16384 23000 0 env 0.001 0.477 0.855 0.169"},
+    {"CHIP BASS", CAT_BASS, 1, "k 1280 10000 25200 6500 env 0.001 0.407 0.58 0.169"},
+    {"SAW LEAD", CAT_LEAD, 1, "k 768 6500 29200 5500 env 0.001 0.707 0.671 0.279"},
+    {"PULSE KEYS", CAT_KEYS, 1, "k 1280 18000 27800 3500 env 0.001 0.707 0.305 0.407"},
+    {"SOFT TRIANGLE", CAT_PAD, 1, "k 256 10000 28000 2500 env 0.407 0.79 0.671 0.707"},
+    {"SYNC BITE", CAT_LEAD, 1, "k 2304 10923 30000 6000 env 0.001 0.55 0.366 0.222"},
+    {"RING BELL", CAT_BELL, 1, "k 2816 16384 31000 3500 env 0.001 0.79 0.0 0.627"},
+    {"NOISE HATS", CAT_FX, 1, "k 1792 0 31500 3000 env 0.001 0.407 0.0 0.078"},
+    {"PWM BASS", CAT_BASS, 2, "k 1280 8000 24000 4000 env 0.002 0.4 0.8 0.15 lfo1 1 0.6 0.35 1 0 0 push 0 0 6800"},
+    {"FILTER PLUCK", CAT_PLUCK, 2, "k 768 8000 18000 9000 env 0.001 0.4 0 0.3 menv 0.001 0.3 0 0.2 0.35 2"},
+    {"WOBBLE BASS", CAT_BASS, 2, "k 768 4000 22000 12000 env 0.002 0.3 0.9 0.1 lfo1 0 2 0.3 2 1 5"},
+    {"ARP SYNC", CAT_LEAD, 2, "k 2304 10923 29000 5000 env 0.002 0.3 0.8 0.2 lfo1 3 4 0.25 1 1 7"},
+    {"SYNC SWEEP", CAT_LEAD, 2, "k 2304 6000 30000 4000 env 0.005 0.4 0.85 0.3 menv 0.01 1.2 0 0.4 0.6 1"},
+    {"RING DRONE", CAT_PAD, 2, "k 2816 20000 28000 6000 env 0.6 1 0.9 1.5 lfo1 0 0.2 0.15 1 0 0"},
+    {"CHIP STRINGS", CAT_PAD, 2, "k 768 22000 26000 3000 env 0.4 1 0.85 1.2 lfo1 0 5 0.01 4 0 0"},
+    {"VIBRATO LEAD", CAT_LEAD, 2, "k 1280 14000 28500 4000 env 0.01 0.3 0.85 0.3 lfo1 0 6 0.012 4 1 7"},
+    {"ZAP", CAT_FX, 2, "k 1280 16384 30000 6000 env 0.001 0.2 0 0.1 menv 0.001 0.15 0 0.1 1 4"},
+    {"SNARE", CAT_FX, 2, "k 1792 0 27000 12000 env 0.001 0.15 0 0.1 push 0 0 13000"},
+    {"KICK", CAT_FX, 2, "k 256 0 26000 4000 env 0.001 0.25 0 0.1 menv 0.001 0.08 0 0.05 0.6 4 push 0 0 14000"},
+    {"GLITCH NOISE", CAT_FX, 2, "k 1792 16000 24000 16000 env 0.002 0.3 0.8 0.2 lfo1 4 8 0.4 2 1 7"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "sid")) { *n = sizeof kSid / sizeof kSid[0]; *engine = ENG_SID; return kSid; }
     if (!__builtin_strcmp(eng, "oxbowplus")) { *n = sizeof kOxbowPlus / sizeof kOxbowPlus[0]; *engine = ENG_OXBOW; return kOxbowPlus; }
     if (!__builtin_strcmp(eng, "oxbow")) { *n = sizeof kOxbow / sizeof kOxbow[0]; *engine = ENG_OXBOW; return kOxbow; }
     if (!__builtin_strcmp(eng, "reactor")) { *n = sizeof kReactor / sizeof kReactor[0]; *engine = ENG_REACTOR; return kReactor; }
