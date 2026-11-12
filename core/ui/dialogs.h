@@ -1,6 +1,7 @@
 // Okna dialogowe w stylu menu (belki, ilustracja, pola, lista, pigulki akcji).
 //
-// NEW TRACK:   gora/dol = typ (MIDI/AUDIO), L1/R1 = silnik (instrument), X = edycja nazwy, A = utworz, B = anuluj.
+// NEW TRACK:   karty L2/R2: TRACK (gora/dol = typ MIDI/AUDIO, X = nazwa) i ENGINE (wybor silnika, tylko MIDI);
+//              A = utworz (z obu kart), B = anuluj.
 //              Po utworzeniu sciezki MIDI od razu otwiera sie NEW PATTERN.
 // TRACK (edycja, Select na sciezce w ARRANGE): dwie karty przelaczane L2/R2:
 //   TRACK:  X = nazwa, krzyzak = kolor (siatka 4x8 = 32), Y dwa razy = usun sciezke; silnik tylko jako nazwa

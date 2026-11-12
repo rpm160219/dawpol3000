@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:30
+**Zmienione:** `core/ui/dialogs.*` — okno NEW TRACK ma kartę ENGINE (L2/R2, tylko dla MIDI) jak okno TRACK; na pierwszej karcie tylko nazwa silnika (usunięty wybór L1/R1); CREATE działa z obu kart; nowa ścieżka MIDI domyślnie WAVETABLE. Headless `newengine`. Test: WAVETABLE+ z karty → nowa ścieżka ma WAVETABLE+; bez karty — WAVETABLE; ścieżka AUDIO bez karty ENGINE.
+**Następny krok:** Patryk sprawdza.
+**Wymaga od Patryka:** nie.
+
 ## 2026-11-12 20:15
 **Zmienione:** `core/ui/synth_view.*` — usunięty przełącznik R3 (oryginał ↔ rozszerzony) i jego podpowiedź w zakładce SYNTH; WAVETABLE i WAVETABLE+ wybiera się tylko jako silniki na karcie ENGINE okna TRACK (propozycja Patryka). Dokumentacja, README, CLAUDE.md zaktualizowane.
 **Następny krok:** Patryk sprawdza.

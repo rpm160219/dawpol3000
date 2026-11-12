@@ -39,6 +39,8 @@ static int engineIndexOf(const Track& t) { return t.engine == ENG_SAW ? 2 : (t.a
 void TrackDialog::open() {
     edit_ = -1;
     engine_ = ENG_WAVETABLE;
+    card_ = 0;
+    engSel_ = 0;  // nowa sciezka MIDI: domyslnie WAVETABLE
     Project& p = app_->project();
     type_ = p.canAddTrack(TRACK_MIDI) ? TRACK_MIDI : TRACK_AUDIO;
     p.nextTrackName(type_, name_, sizeof name_);
@@ -165,10 +167,9 @@ void TrackDialog::cardDots(Canvas& c, int card) {
 
 // Karta ENGINE: jedna kolumna silnikow, po prawej ilustracja i opis
 void TrackDialog::renderEngineCard(Canvas& c) {
-    const Track& t = app_->project().tracks[edit_];
     headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
-    const int cur = engineIndexOf(t);
+    const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     for (int i = 0; i < 3; i++) {
         float y = 80 + i * 56;
         bool sel = i == engSel_;
@@ -185,7 +186,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
     if (engSel_ < 2) drawText(c, 280, 400, "6 VOICES  -  1.4% CPU PER VOICE", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
-    pillButton(c, 330, PY, 140, PH, "OK", pal::pill, 'A');
+    pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
     cardDots(c, 1);
 }
@@ -194,19 +195,28 @@ void TrackDialog::update(const Buttons& b, const InputState&, float) {
     Project& p = app_->project();
     if (ed_.active()) { ed_.update(b); return; }
     if (edit_ >= 0) { updateEdit(b); return; }
-    int nt = type_;
+    // karty TRACK <-> ENGINE (L2/R2), ENGINE tylko dla sciezki MIDI
+    if (b.pressed(B_L2) && card_ > 0) card_--;
+    if (b.pressed(B_R2) && card_ < 1 && type_ == TRACK_MIDI) card_++;
+    if (card_ == 1) {
+        if (b.repeat(B_DOWN) && engSel_ < 2) engSel_++;
+        if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
+    } else {
+        int nt = type_;
     if (b.repeat(B_UP) || b.repeat(B_DOWN) || b.repeat(B_LEFT) || b.repeat(B_RIGHT)) nt = 1 - type_;
-    if (nt != type_ && p.canAddTrack(nt)) {
-        type_ = nt;
-        if (!nameTouched_) p.nextTrackName(type_, name_, sizeof name_);
+        if (nt != type_ && p.canAddTrack(nt)) {
+            type_ = nt;
+            if (!nameTouched_) p.nextTrackName(type_, name_, sizeof name_);
+        }
+        if (b.pressed(B_X)) { ed_.begin(name_); nameTouched_ = true; }
     }
-    if (type_ == TRACK_MIDI && (b.pressed(B_L1) || b.pressed(B_R1)))
-        engine_ = (engine_ + (b.pressed(B_R1) ? 1 : ENG_COUNT - 1)) % ENG_COUNT;
-    if (b.pressed(B_X)) { ed_.begin(name_); nameTouched_ = true; }
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_A) && p.canAddTrack(type_)) {
         int t = p.addTrack(type_, name_);
-        p.tracks[t].engine = (uint8_t)engine_;
+        if (type_ == TRACK_MIDI) {  // silnik z karty ENGINE
+            p.tracks[t].engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
+            p.tracks[t].alt = engSel_ == 1;
+        }
         app_->markDirty();
         app_->arrange.setCursor(t, 0);
         if (type_ == TRACK_MIDI) app_->openNewPattern(t, 0);
@@ -218,6 +228,7 @@ void TrackDialog::render(Canvas& c) {
     if (edit_ >= 0) { renderEdit(c); return; }
     Project& p = app_->project();
     c.clear(pal::bg);
+    if (card_ == 1) { renderEngineCard(c); return; }
     headerBar(c, LBX, BY, LBW, BH, "NEW TRACK", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "TYPE", pal::tan);
     if (type_ == TRACK_MIDI) drawSynthIllustration(c, 24, 84, 196, 150);
@@ -228,9 +239,10 @@ void TrackDialog::render(Canvas& c) {
     drawText(c, 236, 190, b, 11, 1.4f, pal::dim);
     snprintf(b, sizeof b, "AUDIO %d/%d", p.countTracks(TRACK_AUDIO), MAX_AUDIO_TRACKS);
     drawText(c, 236, 212, b, 11, 1.4f, pal::dim);
-    if (type_ == TRACK_MIDI) {
-        drawText(c, 236, 244, "ENGINE  L1/R1", 8, 1.1f, pal::dim);
-        drawText(c, 236, 258, engineName(engine_), 13, 1.5f, pal::white);
+    if (type_ == TRACK_MIDI) {  // tylko nazwa silnika (wybor na karcie ENGINE: R2)
+        drawText(c, 236, 244, "ENGINE", 8, 1.1f, pal::dim);
+        drawText(c, 236, 258, kEngines[engSel_].name, 13, 1.5f, pal::white);
+        drawText(c, 236, 278, "R2 = CHANGE ENGINE", 7, 1.f, rgb(80, 80, 80));
     }
     drawText(c, 28, 300, type_ == TRACK_MIDI ? "NOTES FROM PATTERNS -> SYNTH" : "AUDIO CLIPS FROM TAPE RECORDING", 10, 1.3f,
              pal::dim);
@@ -244,6 +256,7 @@ void TrackDialog::render(Canvas& c) {
                  type_ == r ? pal::tan : rgb(90, 70, 50));
     }
     pills(c, "NAME", "TYPE", "CREATE", "CANCEL");
+    if (type_ == TRACK_MIDI) cardDots(c, 0);
 }
 
 // ---------------- NEW PATTERN ----------------
