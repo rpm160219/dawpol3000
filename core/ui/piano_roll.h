@@ -16,7 +16,8 @@
 //                    A          usun zaznaczone
 //                    Y          kopiuj zaznaczone (schowek dziala miedzy patternami)
 //                    X          wklej w miejscu kursora (wklejone zostaja zaznaczone)
-//                    L1 / R1    przelaczenie warstwy paska (1: edycja, 2: przeksztalcenia)
+//                    L2 / R2    przelaczenie warstwy paska (1: edycja, 2: przeksztalcenia);
+//                               w tym trybie L2/R2 NIE zmieniaja zakladek
 //                  warstwa 2:
 //                    B + gora/dol     TRANSPOSE zaznaczonych o poltony
 //                    A + D-pad        MOVE — przesuwanie zaznaczonych (czas i wysokosc)
@@ -43,6 +44,7 @@ public:
     int patternIndex() const { return pat_; }
     int cursorStep() const { return curStep_; }
     void exitSelect() { selMode_ = false; bHeld_ = false; clearSel(); }
+    bool inSelectMode() const { return selMode_; }
     void onProjectReplaced();     // po undo/wczytaniu: czysci zaznaczenie
     void setSelectMode(bool on) { selMode_ = on; clearSel(); }  // (testy/headless)
     void selectRect(int s0, int p0, int s1, int p1);             // (testy/headless)

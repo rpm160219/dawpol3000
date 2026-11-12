@@ -18,5 +18,5 @@ Piano roll — klawiatura na PC (konsola: te same funkcje na D-padzie/ABXY/analo
 strzałki = kursor, X = wstaw nutę (A na konsoli), Z = usuń (B), S + ←/→ = długość (X), A + strzałki = przesuń (Y),
 Q/W = oktawa, Enter = play/stop, gałki: F/H długość, T/G velocity, J/L głośność, I/K tempo, Esc = wyjście.
 Narzędzia: klik lewej gałki (PC: U) → B undo, A redo, Y IN/OUT pętli, X pętla wł/wył. Zaznaczanie w piano rollu: klik prawej gałki (PC: O) → B zaznacz (trzymaj + strzałki = prostokąt), A usuń, Y kopiuj, X wklej;
-L1/R1 (PC: Q/W) = druga warstwa: trzymaj B + góra/dół = transpozycja, trzymaj A + strzałki = przesuń, trzymaj Y + góra/dół = oktawa, X = duplikat.
+L2/R2 (PC: 1/2) = druga warstwa: trzymaj B + góra/dół = transpozycja, trzymaj A + strzałki = przesuń, trzymaj Y + góra/dół = oktawa, X = duplikat.
 `--test` uruchamia ekran testu sprzętu.

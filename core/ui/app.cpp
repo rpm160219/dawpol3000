@@ -275,6 +275,8 @@ void App::update(const InputState& in, float dt) {
     }
     if (tools_ && (!toolsView || (cur_ == &roll && btn_.pressed(B_R3)))) tools_ = false;  // R3 -> zaznaczanie
     bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
+    // W menu zaznaczania (R3) L2/R2 przelaczaja warstwy paska, nie zakladki
+    if (cur_ == &roll && roll.inSelectMode()) dialog = true;
     if (!dialog && btn_.pressed(B_L2)) {
         if (cur_ == &roll) showArrange();
         else if (cur_ == &arrange) showProject();

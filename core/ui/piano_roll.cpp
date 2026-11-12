@@ -193,7 +193,8 @@ void PianoRoll::previewTopSelected() {
 
 void PianoRoll::updateSelect(const Buttons& b) {
     Pattern& p = pat();
-    if (b.pressed(B_L1) || b.pressed(B_R1)) { selLayer_ = 1 - selLayer_; bHeld_ = false; }
+    if (b.pressed(B_L2) && selLayer_ > 0) { selLayer_--; bHeld_ = false; }
+    if (b.pressed(B_R2) && selLayer_ < 1) { selLayer_++; bHeld_ = false; }
     if (selLayer_ == 1) { updateTransform(b); return; }
     int nsteps = steps();
     int os = curStep_, op = curPitch_;
@@ -562,16 +563,16 @@ void PianoRoll::renderSelectBar(Canvas& c) {
     const Color cols[4] = {pal::steel, pal::red, pal::tan, pal::pill};
     const char keys[4] = {'B', 'A', 'Y', 'X'};
     if (selLayer_ == 0) {
-        snprintf(st, sizeof st, "EDIT 1/2 (L1/R1)  -  %d SELECTED  -  CLIPBOARD %d  -  HOLD B + D-PAD = AREA  -  R3 = EXIT",
+        snprintf(st, sizeof st, "EDIT 1/2 (L2/R2)  -  %d SELECTED  -  CLIPBOARD %d  -  HOLD B + D-PAD = AREA  -  R3 = EXIT",
                  selCount(), clip_.n);
         const char* labels[4] = {"SELECT", "DELETE", "COPY", "PASTE"};
         actionBar(c, labels, cols, keys, st);
     } else {
-        snprintf(st, sizeof st, "TRANSFORM 2/2 (L1/R1)  -  %d SELECTED  -  HOLD BUTTON + D-PAD  -  R3 = EXIT", selCount());
+        snprintf(st, sizeof st, "TRANSFORM 2/2 (L2/R2)  -  %d SELECTED  -  HOLD BUTTON + D-PAD  -  R3 = EXIT", selCount());
         const char* labels[4] = {"TRANSPOSE", "MOVE", "OCTAVE", "DUPLICATE"};
         actionBar(c, labels, cols, keys, st);
     }
-    // Kropki warstw paska (L1/R1) — na samym dole ekranu, pod linia statusu
+    // Kropki warstw paska (L2/R2) — na samym dole ekranu, pod linia statusu
     for (int i = 0; i < 2; i++) {
         float x = 314.5f + i * 12, y = 474.5f;
         if (i == selLayer_) c.fillCircle(x, y, 2.4f, pal::white);
