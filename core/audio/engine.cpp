@@ -33,9 +33,9 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : 0);
         const bool bare = e == ENG_ELG;  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
-        const bool simple = bare || e == ENG_EVA;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
+        const bool simple = bare || e == ENG_EVA || e == ENG_MBIRA;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
         wt_[i].setKnobs(t.knob);
         wt_[i].setPush(t.push);
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty

@@ -124,6 +124,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_MBIRA && alt_ && i < 3) {  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
+                knob(t.push[i]);
             } else if (t.engine == ENG_EVA && alt_ && i == 3) {  // EVA + L3: strona 2 COM = oktawa sygnalu (3 stopnie)
                 int st = stepOct_.steps(ax, dt, 3.f);
                 if (st) {
@@ -268,6 +270,14 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_MBIRA) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        MbiraView mv = {};
+        if (e) e->mbiraView(track_, &mv);
+        mb_.draw(c, shown, t.push, k == K_SOUND && alt_, mv);
     } else if (t.engine == ENG_EVA) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -335,6 +345,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_MBIRA) { hint = alt_ ? "L3 = STRIKE / TINE / BOX" : "L3 = RING / DOUBLE / WAH"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_EVA) { hint = alt_ ? "L3 = COM" : "L3 = BEEP OCTAVE"; if (alt_) hc = pal::red; }
     if (k == K_SOUND && t.engine == ENG_ELG) {
         hint = alt_ ? "L3 = MOVEMENT" : (t.movSync ? "MOVEMENT SYNC TO BPM   L3 = SYNC" : "L3 = MOVEMENT SYNC");
@@ -425,7 +436,25 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_EVA) {  // chor: jasnosc/atak, samogloska, oddech, radio
+    if (k == K_SOUND && t.engine == ENG_MBIRA) {  // pianino kciukowe: uderzenie, material, pudlo, kapsle
+        static const char* L[4] = {"STRIKE", "TINE", "BOX", "BUZZ"};
+        snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
+        static const char* mat[3] = {"WOOD", "STEEL", "GLASS"};
+        const int p2 = t.knob[1] * 2, mi = p2 >> 15, fr = (p2 & 0x7FFF) * 100 / 32768;
+        if (mi >= 2 || fr < 8) snprintf(v[1], 16, "%s", mat[mi >= 2 ? 2 : mi]);
+        else if (fr > 92) snprintf(v[1], 16, "%s", mat[mi + 1]);
+        else snprintf(v[1], 16, "%.2s>%.2s", mat[mi], mat[mi + 1]);
+        snprintf(v[2], 16, "%d", t.knob[2] * 100 / 32767);
+        snprintf(v[3], 16, "%d", t.knob[3] * 100 / 32767);
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+        if (alt_) {  // strona 2: RING 1,6..8 s, DOUBLE do 12 c, WAH
+            static const char* L2[3] = {"RING", "DOUBLE", "WAH"};
+            snprintf(v[0], 16, "%.1fS", 1.6f + 6.4f * t.push[0] / 32767.f);
+            snprintf(v[1], 16, "%.1fC", 12.f * t.push[1] / 32767.f);
+            snprintf(v[2], 16, "%d", t.push[2] * 100 / 32767);
+            for (int i = 0; i < 3; i++) { labels[i] = L2[i]; pos[i] = t.push[i] / 32767.f; }
+        }
+    } else if (k == K_SOUND && t.engine == ENG_EVA) {  // chor: jasnosc/atak, samogloska, oddech, radio
         snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
         static const char* vw[3] = {"OO", "AH", "EE"};
         const int pos2 = t.knob[1] * 2, vi = pos2 >> 15, fr = (pos2 & 0x7FFF) * 100 / 32768;

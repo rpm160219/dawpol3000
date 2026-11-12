@@ -4,6 +4,7 @@
 #include "synth/pew_dsp.h"
 #include "synth/elg_dsp.h"
 #include "synth/eva_dsp.h"
+#include "synth/mbira_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -103,6 +104,7 @@ void WavetableSynth::init(float outRate) {
     if (!pew_) pew_ = pewCreate();
     if (!elg_) elg_ = elgCreate();
     if (!eva_) eva_ = evaCreate();
+    if (!mbira_) mbira_ = mbiraCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -378,6 +380,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     wtExtOn(SX(sx_, slot));
     if (kind_ == 1) taffyNoteOn(tfBase_ + slot);
     else if (kind_ == 3) elgNoteOn(elg_, slot);
+    else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 4) {  // EVA: najpierw puszczone klawisze (sygnal Quindar przy pierwszym klawiszu)
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) evaNoteOff(eva_, i);
@@ -494,7 +497,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 4) {  // EVA (oryginalny DSP op1r)
+        if (kind_ == 5) {  // MBIRA (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            mbiraRender(mbira_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 4) {  // EVA (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             evaRender(eva_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 3) {  // ELG (oryginalny DSP op1r)

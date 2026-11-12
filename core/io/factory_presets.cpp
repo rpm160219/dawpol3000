@@ -257,9 +257,24 @@ static const FactoryPreset kEva[] = {
     {"STATION BASS", CAT_BASS, 2, "k 24000 4000 4000 8000 env 0.005 0.5 0.7 0.3 menv 0.001 0.3 0 0.2 0.5 0"},
 };
 
+// MBIRA: 8 presetow oryginalu (third_party/op1r_mbira/presets.py): galki i strona 2 (push RING DOUBLE WAH) 1:1;
+// obwiednia OP-1 przeliczona w przyblizeniu; efekty i oktawa oryginalu pominiete.
+static const FactoryPreset kMbira[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"KALIMBA", CAT_PLUCK, 1, "k 14000 16384 12000 0 env 0.001 0.8 0.92 0.6"},
+    {"THUMB WAH", CAT_PLUCK, 1, "k 16000 16384 14000 6000 push 8000 6000 20000 env 0.001 0.8 0.92 0.6"},
+    {"GLASS RAIN", CAT_BELL, 1, "k 26000 30000 6000 0 push 16000 12000 0 env 0.001 1 0.8 0.8"},
+    {"MARIMBA STEPS", CAT_PLUCK, 1, "k 12000 2000 20000 9000 env 0.001 0.6 0.75 0.4"},
+    {"MUTED WOOD", CAT_PLUCK, 1, "k 9000 2000 5000 0 env 0.001 0.8 0.75 0.15"},
+    {"STEEL DUET", CAT_PLUCK, 1, "k 14500 16384 9000 0 push 5000 6000 0 env 0.001 0.7 0.78 0.35"},
+    {"BOTTLE CAPS", CAT_PLUCK, 1, "k 19000 16000 17000 16000 env 0.001 0.6 0.7 0.2"},
+    {"GLASS DUSK", CAT_BELL, 1, "k 10000 30000 4000 0 push 10000 0 0 env 0.001 1 0.92 0.45"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "mbira")) { *n = sizeof kMbira / sizeof kMbira[0]; *engine = ENG_MBIRA; return kMbira; }
     if (!__builtin_strcmp(eng, "eva")) { *n = sizeof kEva / sizeof kEva[0]; *engine = ENG_EVA; return kEva; }
     if (!__builtin_strcmp(eng, "elg")) { *n = sizeof kElg / sizeof kElg[0]; *engine = ENG_ELG; return kElg; }
     if (!__builtin_strcmp(eng, "pew")) { *n = sizeof kPew / sizeof kPew[0]; *engine = ENG_PEW; return kPew; }

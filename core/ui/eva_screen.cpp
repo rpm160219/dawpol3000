@@ -21,9 +21,29 @@ static inline Color hexc(unsigned v) { return rgb((v >> 16) & 255, (v >> 8) & 25
 // przeksztalcenie grupy (x' = a x + tx, y' = d y + ty; tx/ty w Q10 px jak SVG_MATRIX), widocznosc
 struct GroupXf { int32_t a = ONE, d = ONE, tx = 0, ty = 0; bool visible = true; };
 
+// Astronautka (lewa czesc sceny, x < 200 w jednostkach OP-1) zmniejszona do 88% wokol (AX, AY), zeby nie wchodzila
+// na napisy strony pod ekranem silnika (dol rysunku 153 -> ~136); wskazniki po prawej bez zmian (decyzja Patryka).
+static const float AS = 0.88f, AX = 90.f, AY = 10.f;
+static bool isAstro(const EVItem& it) {
+    int first = 0;
+    if (it.kind == 0) first = EV_FILLS[it.idx].first;
+    else if (it.kind == 1) first = EV_STROKES[it.idx].first;
+    else return EV_CIRCLES[it.idx].x < 200.f;
+    return EV_PTS[first * 2] < 200.f;
+}
+
 static void drawItem(Canvas& c, const EVItem& it, const GroupXf* xf) {
-    auto X = [](float x, int g, const GroupXf* f) { return OX + (g < 0 ? x : (x * f[g].a + f[g].tx) / 1024.f) * S; };
-    auto Y = [](float y, int g, const GroupXf* f) { return OY + (g < 0 ? y : (y * f[g].d + f[g].ty) / 1024.f) * S; };
+    const bool astro = isAstro(it);
+    auto X = [astro](float x, int g, const GroupXf* f) {
+        float u = g < 0 ? x : (x * f[g].a + f[g].tx) / 1024.f;
+        if (astro) u = AX + (u - AX) * AS;
+        return OX + u * S;
+    };
+    auto Y = [astro](float y, int g, const GroupXf* f) {
+        float u = g < 0 ? y : (y * f[g].d + f[g].ty) / 1024.f;
+        if (astro) u = AY + (u - AY) * AS;
+        return OY + u * S;
+    };
     static float buf[2 * 1024];
     if (it.kind == 0) {
         const EVFill& f = EV_FILLS[it.idx];
@@ -37,7 +57,7 @@ static void drawItem(Canvas& c, const EVItem& it, const GroupXf* xf) {
         const EVStroke& l = EV_STROKES[it.idx];
         if (l.group >= 0 && !xf[l.group].visible) return;
         if (l.rgb == 0x010101 && l.count == 2 && EV_PTS[l.first * 2 + 1] <= 2.f) return;  // ukryte paski iter (bar0..3)
-        const float sc = l.group >= 0 ? xf[l.group].a / 1024.f : 1.f;
+        const float sc = (l.group >= 0 ? xf[l.group].a / 1024.f : 1.f) * (astro ? AS : 1.f);
         c.beginStroke();
         const int segs = l.closed ? l.count : l.count - 1;
         for (int i = 0; i < segs; i++) {

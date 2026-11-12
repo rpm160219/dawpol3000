@@ -1,5 +1,20 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 08:00
+**Zmienione:** `core/ui/eva_screen.cpp` — astronautka na ekranie EVA (i na ilustracji) zmniejszona do 88%, nie wchodzi już na napisy strony pod ekranem; wskaźniki bez zmian (uwaga Patryka). Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza ekran EVA i MBIRA.
+**Wymaga od Patryka:** tak — ocena.
+
+## 2026-11-13 07:30
+**Zmienione — port silnika MBIRA (op1r, Hundekraft):**
+- `third_party/op1r_mbira/` — oryginalne `mbira.c`, `mbira_noise.h`, `mbira_geom.h`, `mbira.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `mbira_art.h` (`tools/gen/svg_to_art2.py` — pusty wpis, gdy brak wypełnień/okręgów).
+- `core/synth/mbira_dsp.*` — mbira.c jako C, stan ścieżki podmieniany przed wywołaniem; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — MBIRA jako szósty rodzaj (AMP ENV, MOD ENV, 2 LFO; bez drugiej obwiedni i trybów głosu).
+- `core/ui/mbira_screen.*` — ekran kalimby 1:1 + ilustracja; `core/ui/synth_view.*` — SOUND (STRIKE/TINE/BOX/BUZZ), L3 = RING/DOUBLE/WAH; `core/ui/dialogs.cpp` — MBIRA na liście (8 pozycji).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `mbira`, 8 presetów oryginału w `presets/mbira/`; `tests/mbira_match.cpp`, `tools/test_mbira.sh`.
+- Testy: MBIRA bit w bit z oryginałem (0 różnic), pozostałe 5 silników nadal 0; presety bez przesterowania; CPU na konsoli przy 6 głosach: MBIRA 5,3%. Wysłane na konsolę.
+**Następny krok:** Patryk testuje MBIRA.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 06:30
 **Zmienione:** `core/io/factory_presets.cpp` — 20 nowych presetów EVA (wersja 2 zestawu) z MOD ENV i LFO: przejścia samogłosek, oddychanie, bramkowanie w tempie, zaniki radia, stab/pluck/lead/bass; poziomy sprawdzone (szczyt ≤ 0,44). Wysłane na konsolę.
 **Następny krok:** kolejny silnik — Patryk nie podał linku.

@@ -7,7 +7,7 @@
 //                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS (bez drugiej obwiedni)
 //                    ELG:         SOUND -> AMP ENV -> PRESETS (sam silnik 1:1, bez dodatkow)
-//                    EVA:         SOUND -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    EVA, MBIRA:  SOUND -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
 // MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
@@ -32,6 +32,7 @@
 #include "ui/pew_screen.h"
 #include "ui/elg_screen.h"
 #include "ui/eva_screen.h"
+#include "ui/mbira_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -53,8 +54,8 @@ private:
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
-    // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA: + MOD ENV i 2 LFO
-    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA ? 4 : 0))); }
+    // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA: + MOD ENV i 2 LFO
+    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA ? 4 : 0))); }
     int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : (pm == 4 ? 6 : 8)); }
     RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_;
     RelEncoder stepVMode_;
@@ -75,6 +76,7 @@ private:
     PewScreen pw_;
     ElgScreen el_;
     EvaScreen ev_;
+    MbiraScreen mb_;
     void releaseAll();
 };
 

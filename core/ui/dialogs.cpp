@@ -4,6 +4,7 @@
 #include "ui/app.h"
 #include "ui/elg_screen.h"
 #include "ui/eva_screen.h"
+#include "ui/mbira_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,7 +24,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 7;
+static const int NENG = 8;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -43,16 +44,19 @@ static const EngineInfo kEngines[NENG] = {
     {"EVA", "SPACE CHOIR",
      {"PORT OF THE OP1R EVA ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "A SUNG 80S FILM PAD: SAW + PULSE,", "VOWELS OO-AH-EE, BREATH, CHORUS.",
       "THE HELMET RADIO ON TOP: BAND,", "HISS, DROPOUTS, QUINDAR BEEPS.", "L3 ON SOUND: BEEP OCTAVE."}},
+    {"MBIRA", "THUMB PIANO",
+     {"PORT OF THE OP1R MBIRA ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "MODAL SYNTHESIS: A PLUCKED TINE,", "FOUR DECAYING PARTIALS + CLICK,",
+      "WOOD / STEEL / GLASS, A WOODEN BOX,", "BOTTLE-CAP BUZZ. L3 ON SOUND:", "RING, DOUBLE TINE, WAH."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 6 ? ENG_SAW : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 7 ? ENG_SAW : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     t.engine = (uint8_t)e;
     t.alt = idx == 1;
@@ -191,7 +195,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     for (int i = 0; i < NENG; i++) {
-        float y = 76 + i * 46;
+        float y = 74 + i * 41;
         bool sel = i == engSel_;
         if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
@@ -202,12 +206,14 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     c.line(258, 70, 258, 410, 1.5f, pal::steel);
     if (engSel_ == 4) drawElgIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 5) drawEvaIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 6) drawMbiraIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
     if (engSel_ < 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 4 || engSel_ == 5) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
+    else if (engSel_ == 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
+    else if (engSel_ < 7) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
