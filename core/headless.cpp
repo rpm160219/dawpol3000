@@ -417,6 +417,19 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "outatime")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_OUTATIME;
+        engineDefaultKnobs(ENG_OUTATIME, tr.knob);
+        tr.knob[1] = 20000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
     } else if (!strcmp(screen, "juni")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_JUNI;

@@ -1,0 +1,28 @@
+{
+  "name": "outatime",
+  "kind": "synth",
+  "symbol": "ENGINE_outatime",
+  "sources": [
+    "outatime.c",
+    "outatime_screen.c",
+    "ota_dsp.c",
+    "ota_kern.S"
+  ],
+  "defaults": [
+    16549,
+    6620,
+    8274,
+    11584
+  ],
+  "screen": {
+    "svg": "outatime.svg",
+    "symbol": "SCREEN_outatime"
+  },
+  "loadable": true,
+  "claims": [],
+  "author": "opus (LizardMan245)",
+  "cost": {
+    "voice": 24876,
+    "start": 1284
+  }
+}

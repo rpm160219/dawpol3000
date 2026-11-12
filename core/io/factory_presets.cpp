@@ -675,9 +675,27 @@ static const FactoryPreset kJuni[] = {
     {"DREAM PAD", CAT_PAD, 1, "k 15000 30000 12000 26000 push 0 0 6000 env 0.79 1.773 0.763 1.999"},
 };
 
+// OUTATIME: 4 presety oryginalu (kennel presets.py: galki i strona 2 SPREAD / TONE / FLUX 1:1, ADSR OP-1 -> sekundy
+// (v / 8192)^1,5; efekty OP-1 pominiete) + 8 wlasnych. push SPREAD TONE FLUX.
+static const FactoryPreset kOutatime[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"OUTATIME", CAT_LEAD, 1, "k 16549 6620 8274 11584 push 13239 16549 9929 env 0.001 1.152 0.855 0.627"},
+    {"1955 ORGAN", CAT_KEYS, 1, "k 0 2000 0 3000 push 9000 18000 16000 env 0.024 1.152 0.916 0.627"},
+    {"88 MPH", CAT_LEAD, 1, "k 16549 32767 20000 26000 push 16000 20000 12000 env 0.001 1.152 0.793 0.477"},
+    {"2015 GLASS", CAT_BELL, 1, "k 32767 9000 4000 20000 push 6000 12000 20000 env 0.001 1.773 0.61 1.152"},
+    {"DELOREAN BASS", CAT_BASS, 1, "k 14000 2000 16000 14000 push 4000 12000 0 voice 1 0.04 0 0 env 0.002 0.4 0.9 0.15 oct -1"},
+    {"FLUX PAD", CAT_PAD, 1, "k 20000 10000 3000 6000 push 20000 18000 24000 env 0.8 1.5 0.9 2"},
+    {"TIME CIRCUITS", CAT_FX, 1, "k 16384 26000 12000 30000 push 12000 16000 16000 env 0.01 0.5 0.8 0.6"},
+    {"HILL VALLEY", CAT_KEYS, 1, "k 8000 4000 6000 10000 push 10000 16000 8000 env 0.003 0.8 0.5 0.6"},
+    {"GIGAWATT LEAD", CAT_LEAD, 1, "k 18000 8000 26000 16000 push 8000 18000 6000 voice 1 0.08 0 0 env 0.005 0.3 0.9 0.3"},
+    {"CLOCK TOWER", CAT_BELL, 1, "k 28000 3000 2000 24000 push 4000 20000 4000 env 0.001 2 0 2"},
+    {"1985 BRASS", CAT_KEYS, 1, "k 16549 5000 14000 18000 push 9000 14000 10000 env 0.04 0.5 0.8 0.4"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "outatime")) { *n = sizeof kOutatime / sizeof kOutatime[0]; *engine = ENG_OUTATIME; return kOutatime; }
     if (!__builtin_strcmp(eng, "juni")) { *n = sizeof kJuni / sizeof kJuni[0]; *engine = ENG_JUNI; return kJuni; }
     if (!__builtin_strcmp(eng, "dddd")) { *n = sizeof kDddd / sizeof kDddd[0]; *engine = ENG_DDDD; return kDddd; }
     if (!__builtin_strcmp(eng, "arc")) { *n = sizeof kArc / sizeof kArc[0]; *engine = ENG_ARC; return kArc; }

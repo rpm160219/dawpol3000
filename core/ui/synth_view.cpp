@@ -4,6 +4,7 @@
 #include "synth/hollowsaint_dsp.h"
 #include "synth/blot_dsp.h"
 #include "synth/arc_dsp.h"
+#include "synth/outatime_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -140,6 +141,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_OUTATIME && alt_) {  // OUTATIME + L3: SPREAD, TONE, FLUX
+                if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_JUNI && alt_) {  // JUNI + L3: RESONANCE, HPF, PWM RATE (0 = neutralnie)
                 if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_DDDD && alt_) {  // DDDD + L3: FILTER, SPREAD, RATE
@@ -320,8 +323,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 kk = clamp01(kk + d);
                 t.glide = kk <= 0.01f ? 0.f : 0.005f * powf(400.f, kk);
                 changed = true;
-            } else if (i == 2 && d != 0.f && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
-            else if (i == 3 && d != 0.f && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT) { t.age = clamp01(t.age + d); changed = true; }  // MONOLIT: AGE na L3 SOUND
+            } else if (i == 2 && d != 0.f && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT && t.engine != ENG_OUTATIME) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
+            else if (i == 3 && d != 0.f && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT && t.engine != ENG_OUTATIME) { t.age = clamp01(t.age + d); changed = true; }  // MONOLIT: AGE na L3 SOUND
             break;
         }
         case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
@@ -459,6 +462,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_OUTATIME) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ot_.draw(c, words, shown, e ? e->outatimeCore(track_) : nullptr, k == K_SOUND && alt_);
     } else if (t.engine == ENG_JUNI) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -622,6 +631,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_OUTATIME) { hint = alt_ ? "L3 = YEAR / SPEED / POWER / TRAIL" : "L3 = SPREAD / TONE / FLUX"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_JUNI) { hint = alt_ ? "L3 = TONE / SHAPE / SWEEP / CHORUS" : "L3 = RESONANCE / HPF / PWM RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_DDDD) { hint = alt_ ? "L3 = SOURCE / FEEDBACK / DESTROY / HANDS" : "L3 = FILTER / SPREAD / RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_ARC) { hint = alt_ ? "L3 = CURRENT / CARBON / HISS / STRIKE" : "L3 = RATIO / COUPLING / BRIGHTNESS"; if (alt_) hc = pal::blue; }
@@ -639,7 +649,7 @@ void SynthView::render(Canvas& c) {
         hint = alt_ ? "L3 = MOVEMENT" : (t.movSync ? "MOVEMENT SYNC TO BPM   L3 = SYNC" : "L3 = MOVEMENT SYNC");
         if (alt_ || t.movSync) hc = alt_ ? pal::red : pal::blue;
     }
-    if (k == K_VOICE && !t.mono && t.unison > 0 && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
+    if (k == K_VOICE && !t.mono && t.unison > 0 && t.engine != ENG_MONOLIT && t.engine != ENG_SUPERSAW && t.engine != ENG_BLOT && t.engine != ENG_OUTATIME) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
     if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
 
     // prawy dol: grafika strony
@@ -687,7 +697,7 @@ void SynthView::render(Canvas& c) {
         drawText(c, 600, 394, "DRAWBARS", 8, 1.1f, pal::dim, ALIGN_RIGHT);
     } else if (k == K_VOICE) {
         // glosy: POLY = 6 niezaleznych kresek, MONO = jedna (albo wachlarz unison); AGE = falowanie
-        const bool mnl = t.engine == ENG_MONOLIT || t.engine == ENG_SUPERSAW || t.engine == ENG_BLOT;  // MONOLIT, SUPERSAW: bez unisonu i AGE
+        const bool mnl = t.engine == ENG_MONOLIT || t.engine == ENG_SUPERSAW || t.engine == ENG_BLOT || t.engine == ENG_OUTATIME;  // MONOLIT, SUPERSAW: bez unisonu i AGE
         int n = t.mono ? (t.unison > 0 && !mnl ? 6 : 1) : 6;
         for (int i = 0; i < n; i++) {
             float spread = t.mono && n > 1 ? (2.f * i / (n - 1) - 1.f) * t.unison / 50.f : 0.f;
@@ -764,7 +774,20 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_JUNI) {  // JUNI: makra TONE, SHAPE, SWEEP, CHORUS
+    if (k == K_SOUND && t.engine == ENG_OUTATIME) {  // OUTATIME: rok, predkosc, moc, zaplon
+        static const char* L[4] = {"YEAR", "SPEED", "POWER", "TRAIL"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        snprintf(v[0], 16, "%d", ota_year(t.knob[0]));
+        snprintf(v[1], 16, "%d MPH", ota_mph(t.knob[1]));
+        const int gw = ota_gw100(t.knob[2]);
+        snprintf(v[2], 16, "%d.%02d GW", gw / 100, gw % 100);
+        if (alt_) {
+            labels[0] = "SPREAD"; snprintf(v[0], 16, "%dC", (t.push[0] * 20 + 16383) / 32767); pos[0] = t.push[0] / 32767.f;
+            labels[1] = "TONE"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
+            labels[2] = "FLUX"; snprintf(v[2], 16, "%d", (t.push[2] * 100 + 16383) / 32767); pos[2] = t.push[2] / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_JUNI) {  // JUNI: makra TONE, SHAPE, SWEEP, CHORUS
         static const char* L[4] = {"TONE", "SHAPE", "SWEEP", "CHORUS"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         static const char* SH[5] = {"SAW+SUB", "SAW", "SAW+PULSE", "PWM STR", "SAW+PWM+S"};
@@ -1106,7 +1129,7 @@ void SynthView::render(Canvas& c) {
                              : (t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f));
         pos[2] = t.unison / 50.f;
         pos[3] = t.age;
-        if (t.engine == ENG_MONOLIT || t.engine == ENG_SUPERSAW || t.engine == ENG_BLOT) { labels[2] = ""; labels[3] = ""; v[2][0] = v[3][0] = 0; pos[2] = pos[3] = 0; }  // MONOLIT: tylko MODE i GLIDE
+        if (t.engine == ENG_MONOLIT || t.engine == ENG_SUPERSAW || t.engine == ENG_BLOT || t.engine == ENG_OUTATIME) { labels[2] = ""; labels[3] = ""; v[2][0] = v[3][0] = 0; pos[2] = pos[3] = 0; }  // MONOLIT: tylko MODE i GLIDE
     } else if (k == K_FILTER && t.engine == ENG_SUPERSAW) {  // filtr DAW-POL
         const int16_t cut = (int16_t)(32767 - t.push[0]);
         labels[0] = "CUTOFF"; if (cut >= 32767) snprintf(v[0], 16, "OPEN"); else cutoffName(v[0], cut); pos[0] = cut / 32767.f;

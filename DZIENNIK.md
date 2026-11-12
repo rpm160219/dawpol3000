@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 21:40 — silnik OUTATIME (port 1:1 z paczki Hundekraft 3.1.4)
+- **Co zmienione:** nowy silnik OUTATIME — `third_party/kennel_outatime/` (oryginalny kod opus/Hundekraft bez zmian), `core/synth/outatime_dsp.*` (wrapper), `core/ui/outatime_screen*` (ekran DeLoreana), wpięcie w `wavetable_synth`, `engine`, `project`, `project_file`, `synth_view`, `dialogs`, `app.h`, `factory_presets` (12 presetów: 4 z oryginału + 7 nowych + INIT), `headless`, `CMakeLists.txt`; test `tools/test_outatime.sh` (+ obiekt OUTATIME dopisany do pozostałych skryptów testowych); dokumentacja i licencje. Po co: Patryk poprosił o OUTATIME.
+- Zgodność bit w bit z oryginałem: 0 różnic (wszystkie 23 testy przechodzą). CPU na konsoli: 9,1% rdzenia przy 6 głosach. Wgrane na konsolę.
+- **Następny krok:** Patryk testuje OUTATIME; decyzja o GIN (syntezator perkusji z zestawami — inna architektura niż silniki klawiszowe).
+- **Od Patryka:** ocena brzmienia/ekranu + odpowiedź w sprawie GIN.
+
 ## 2026-11-12 21:08
 **Zmienione — port silnika JUNI (op1r, Hundekraft), 1:1:**
 - `third_party/op1r_juni/` — oryginalne `juni.c`, geometria, tablice, `juni.svg`, test hosta, generatory, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `juni_art.h`.

@@ -21,6 +21,7 @@
 #include "synth/arc_dsp.h"
 #include "synth/dddd_dsp.h"
 #include "synth/juni_dsp.h"
+#include "synth/outatime_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -137,6 +138,7 @@ void WavetableSynth::init(float outRate) {
     if (!arc_) arc_ = arcCreate();
     if (!ddd_) ddd_ = ddddCreate();
     if (!jun_) jun_ = juniCreate();
+    if (!ota_) ota_ = outatimeCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -458,6 +460,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 19) arcNoteOn(arc_, slot, knobs_);
     else if (kind_ == 20) ddddNoteOn(ddd_, slot, knobs_);
     else if (kind_ == 21) juniNoteOn(jun_, slot, knobs_);
+    else if (kind_ == 22) outatimeNoteOn(ota_, slot, knobs_);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -529,6 +532,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 22)  // OUTATIME: puszczony klawisz (ekran: samochod zwalnia)
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) outatimeNoteOff(ota_, vi);
     if (kind_ == 20)  // DDDD: puszczony klawisz przestaje prowadzic sciane, gdy inne sa trzymane
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) ddddNoteOff(ddd_, vi);
@@ -653,7 +659,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 21) {  // JUNI (oryginalny DSP op1r): obwiednia glosnosci (AMP ENV) prowadzi tez filtr (SWEEP)
+        if (kind_ == 22) {  // OUTATIME (oryginalny DSP z paczki Hundekraft)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            outatimeRender(ota_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 21) {  // JUNI (oryginalny DSP op1r): obwiednia glosnosci (AMP ENV) prowadzi tez filtr (SWEEP)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             juniRender(jun_, vi, out, vk, pitchBuf, v.vel, (int)lrintf(v.env * 32767.f));
         } else if (kind_ == 20) {  // DDDD (oryginalny DSP op1r): obwiednia glosnosci (AMP ENV) otwiera filtr sciany

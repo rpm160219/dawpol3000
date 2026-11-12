@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; struct OutatimeCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -59,6 +59,7 @@ public:
     const ::ArcCore* arc() const { return arc_; }
     const ::DdddCore* dddd() const { return ddd_; }
     const ::JuniCore* juni() const { return jun_; }
+    const ::OutatimeCore* outatime() const { return ota_; }
     void setTilt(float p, float v, float s) { tilt_[0] = p; tilt_[1] = v; tilt_[2] = s; }  // AETHER: wirtualny czujnik
     void setRelic(bool on) { relic_ = on; }  // HOLLOW SAINT: tasma Lo-Fi Relic
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
@@ -139,6 +140,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::OutatimeCore* ota_ = nullptr;  // OUTATIME: glosy tej sciezki (C)
     ::JuniCore* jun_ = nullptr;  // JUNI: stan silnika tej sciezki (C)
     ::DdddCore* ddd_ = nullptr;  // DDDD: cala sciana tej sciezki (C)
     ::ArcCore* arc_ = nullptr;  // ARC: glosy tej sciezki (C)
