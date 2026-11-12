@@ -32,6 +32,7 @@ const char* engineName(int e) {
     case ENG_GIN: return "GIN";
     case ENG_PARALLAX: return "PARALLAX";
     case ENG_LOUNGE: return "LOUNGE";
+    case ENG_FELT: return "FELT";
     default: return "?";
     }
 }
@@ -70,6 +71,8 @@ const char* destNameFor(int engine, int d) {
     if (engine == ENG_VAPORA && d >= 0 && d < 4) return vpn[d];
     static const char* ssn[4] = {"DTUN", "MRPH", "SUB", "DRV"};
     if (engine == ENG_SUPERSAW && d >= 0 && d < 4) return ssn[d];
+    static const char* ftn[4] = {"FELT", "CRDA", "DCAY", "NOIS"};
+    if (engine == ENG_FELT && d >= 0 && d < 4) return ftn[d];
     static const char* lgn[4] = {"BARK", "TONE", "DCAY", "TYPE"};
     if (engine == ENG_LOUNGE && d >= 0 && d < 4) return lgn[d];
     static const char* pxn[4] = {"WAVE", "UNI", "CUT", "RES"};
@@ -125,8 +128,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000}, mx[4] = {1966, 3277, 4588, 7209}, br[4] = {19660, 16384, 3932, 7536}, hs[4] = {16384, 16384, 12000, 12000}, bm[4] = {14000, 20000, 7000, 9000}, bl[4] = {9000, 22000, 18000, 9000}, ae[4] = {15671, 11469, 16384, 32767}, ac[4] = {12000, 6000, 5000, 9000}, dd[4] = {0, 24000, 20000, 8000}, jn[4] = {18000, 16384, 11000, 9800}, ot[4] = {16549, 6620, 8274, 11584}, px[4] = {16384, 0, 22000, 6000}, lg[4] = {14000, 16384, 18000, 0};
-    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : engine == ENG_MIXTUR ? mx : engine == ENG_BRASS ? br : engine == ENG_HOLLOW ? hs : engine == ENG_BLOOD ? bm : engine == ENG_BLOT ? bl : engine == ENG_AETHER ? ae : engine == ENG_ARC ? ac : engine == ENG_DDDD ? dd : engine == ENG_JUNI ? jn : engine == ENG_OUTATIME ? ot : engine == ENG_PARALLAX ? px : engine == ENG_LOUNGE ? lg : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000}, mx[4] = {1966, 3277, 4588, 7209}, br[4] = {19660, 16384, 3932, 7536}, hs[4] = {16384, 16384, 12000, 12000}, bm[4] = {14000, 20000, 7000, 9000}, bl[4] = {9000, 22000, 18000, 9000}, ae[4] = {15671, 11469, 16384, 32767}, ac[4] = {12000, 6000, 5000, 9000}, dd[4] = {0, 24000, 20000, 8000}, jn[4] = {18000, 16384, 11000, 9800}, ot[4] = {16549, 6620, 8274, 11584}, px[4] = {16384, 0, 22000, 6000}, lg[4] = {14000, 16384, 18000, 0}, ft[4] = {20000, 16000, 18000, 10000};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : engine == ENG_MIXTUR ? mx : engine == ENG_BRASS ? br : engine == ENG_HOLLOW ? hs : engine == ENG_BLOOD ? bm : engine == ENG_BLOT ? bl : engine == ENG_AETHER ? ae : engine == ENG_ARC ? ac : engine == ENG_DDDD ? dd : engine == ENG_JUNI ? jn : engine == ENG_OUTATIME ? ot : engine == ENG_PARALLAX ? px : engine == ENG_LOUNGE ? lg : engine == ENG_FELT ? ft : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

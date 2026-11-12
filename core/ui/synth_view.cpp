@@ -7,6 +7,7 @@
 #include "synth/outatime_dsp.h"
 #include "synth/parallax_dsp.h"
 #include "synth/lounge_dsp.h"
+#include "synth/felt_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -467,6 +468,11 @@ void SynthView::render(Canvas& c) {
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_FELT) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ft_.draw(c, shown, e ? e->feltCore(track_) : nullptr, dt_);
     } else if (t.engine == ENG_LOUNGE) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
@@ -789,7 +795,14 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_LOUNGE) {  // LOUNGE: BARK, TONE, DECAY, TYPE
+    if (k == K_SOUND && t.engine == ENG_FELT) {  // FELT: filc, struny, wybrzmienie, mechanika
+        static const char* L[4] = {"FELT", "CORDA", "DECAY", "NOISE"};
+        static const char* C[3] = {"UNA", "DUE", "TRE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        snprintf(v[1], 16, "%s", C[feltStrings(t.knob[1]) - 1]);
+        const float ds = feltDecaySeconds(t.knob[2]);
+        snprintf(v[2], 16, "%.1fS", ds);
+    } else if (k == K_SOUND && t.engine == ENG_LOUNGE) {  // LOUNGE: BARK, TONE, DECAY, TYPE
         static const char* L[4] = {"BARK", "TONE", "DECAY", "TYPE"};
         static const char* T[3] = {"TINE", "REED", "CLAV"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }

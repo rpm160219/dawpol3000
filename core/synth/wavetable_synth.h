@@ -16,7 +16,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; struct OutatimeCore; struct GinCore; struct ParallaxCore; struct LoungeCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; struct OutatimeCore; struct GinCore; struct ParallaxCore; struct LoungeCore; struct FeltCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -63,6 +63,7 @@ public:
     const ::OutatimeCore* outatime() const { return ota_; }
     const ::GinCore* gin() const { return gin_; }
     const ::LoungeCore* lounge() const { return lng_; }
+    const ::FeltCore* felt() const { return flt_; }
     void setGin(int kit, const GinSound* s);  // GIN: zestaw sciezki (przygotowuje zmienione dzwieki)
     void setTilt(float p, float v, float s) { tilt_[0] = p; tilt_[1] = v; tilt_[2] = s; }  // AETHER: wirtualny czujnik
     void setRelic(bool on) { relic_ = on; }  // HOLLOW SAINT: tasma Lo-Fi Relic
@@ -144,6 +145,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::FeltCore* flt_ = nullptr;  // FELT: glosy tej sciezki (C)
     ::LoungeCore* lng_ = nullptr;  // LOUNGE: glosy tej sciezki (C)
     ::ParallaxCore* prx_ = nullptr;  // PARALLAX: glosy tej sciezki (C)
     ::GinCore* gin_ = nullptr;  // GIN: zestaw perkusyjny tej sciezki (C)

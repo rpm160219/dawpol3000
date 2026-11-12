@@ -33,7 +33,7 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : e == ENG_JUNI ? 21 : e == ENG_OUTATIME ? 22 : e == ENG_GIN ? 23 : e == ENG_PARALLAX ? 24 : e == ENG_LOUNGE ? 25 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : e == ENG_JUNI ? 21 : e == ENG_OUTATIME ? 22 : e == ENG_GIN ? 23 : e == ENG_PARALLAX ? 24 : e == ENG_LOUNGE ? 25 : e == ENG_FELT ? 26 : 0);
         if (e == ENG_GIN) wt_[i].setGin(t.ginKit < 0 ? 0 : t.ginKit, t.ginKit < 0 ? nullptr : t.gin);
         wt_[i].setTilt(t.tilt[0] / 32767.f, t.tilt[1] / 32767.f, t.tilt[2] / 32767.f);
         wt_[i].setRelic(t.relic);
@@ -42,7 +42,7 @@ void AudioEngine::applyProject() {
         synth_[i].setOctave(t.octave);
         const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD || e == ENG_DDDD || e == ENG_JUNI;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
         const bool noMod = bare || e == ENG_BLOT || e == ENG_OUTATIME;  // OUTATIME: jak BLOT (glide i tryby gry jak w OP-1)  // BLOT: sam silnik + MODE/GLIDE (slide 303 = portamento gospodarza)
-        const bool simple = bare || e == ENG_LOUNGE || e == ENG_PARALLAX || e == ENG_MIXTUR || e == ENG_ARC || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
+        const bool simple = bare || e == ENG_FELT || e == ENG_LOUNGE || e == ENG_PARALLAX || e == ENG_MIXTUR || e == ENG_ARC || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
         const bool sidFenv = e == ENG_SID || e == ENG_VAPORA || e == ENG_PARALLAX;  // PARALLAX: obwiednia filtra na FILTER FREQ  // VAPORA: obwiednia filtra na BRIGHTNESS (galka 2)
          // SID: obwiednia filtra na CUTOFF (galka 2), bez trybow glosu  // OXBOW+: tryby glosu jak WAVETABLE+
         const bool oxPlus = e == ENG_OXBOW && t.alt;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
