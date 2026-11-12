@@ -21,6 +21,9 @@ struct Note {
 struct Pattern {
     static const int MAX_NOTES = 512;
     char name[12] = "PATTERN";
+    // Petla w PIANO ROLL (kroki, OUT wylacznie). Wylaczona = caly pattern.
+    bool loopOn = false;
+    uint16_t loopIn = 0, loopOut = 0;
     int lengthTicks = TICKS_PER_BAR;
     int count = 0;
     Note notes[MAX_NOTES];

@@ -92,6 +92,11 @@ int Project::songBars() const {
     return e;
 }
 
+void Project::songRange(int& start, int& end) const {
+    if (loopOn && loopOut > loopIn) { start = loopIn * TICKS_PER_BAR; end = loopOut * TICKS_PER_BAR; }
+    else { start = 0; end = songBars() * TICKS_PER_BAR; }
+}
+
 void Project::nextPatternName(char* out, int n) const { snprintf(out, n, "PATTERN %02d", nPatterns + 1); }
 
 void Project::nextTrackName(int type, char* out, int n) const {

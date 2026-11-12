@@ -42,6 +42,7 @@ void App::openStore(const char* root) {
 // ---- Undo ----
 void App::resetHistory() {
     undo_.clear();
+    redo_.clear();
     committed_ = prj_;
     pending_ = edited_ = false;
 }
@@ -50,11 +51,15 @@ void App::commitStep() {
     undo_.push(committed_);  // stan sprzed gestu
     committed_ = prj_;
     pending_ = false;
+    redo_.clear();           // nowa zmiana kasuje mozliwosc ponowienia
 }
 
 void App::undo() {
     if (pending_) commitStep();
-    if (!undo_.pop(prj_)) { toast("NOTHING TO UNDO"); return; }
+    static Project tmp;
+    if (!undo_.pop(tmp)) { toast("NOTHING TO UNDO"); return; }
+    redo_.push(prj_);
+    prj_ = tmp;
     committed_ = prj_;
     dirty_ = modified_ = true;
     edited_ = false;
@@ -63,6 +68,104 @@ void App::undo() {
     char b[40];
     snprintf(b, sizeof b, "UNDO  (%d LEFT)", undo_.size());
     toast(b);
+}
+
+void App::redo() {
+    if (pending_) commitStep();
+    static Project tmp;
+    if (!redo_.pop(tmp)) { toast("NOTHING TO REDO"); return; }
+    undo_.push(prj_);
+    prj_ = tmp;
+    committed_ = prj_;
+    dirty_ = modified_ = true;
+    edited_ = false;
+    validateViews();
+    roll.onProjectReplaced();
+    char b[40];
+    snprintf(b, sizeof b, "REDO  (%d LEFT)", redo_.size());
+    toast(b);
+}
+
+// ---- Petla i IN/OUT ----
+void App::toggleLoop() {
+    char b[48];
+    if (cur_ == &roll) {
+        Pattern& p = prj_.patterns[roll.patternIndex()];
+        p.loopOn = !p.loopOn;
+        if (p.loopOn && p.loopOut <= p.loopIn) snprintf(b, sizeof b, "LOOP ON - SET IN/OUT WITH Y");
+        else snprintf(b, sizeof b, "LOOP %s", p.loopOn ? "ON" : "OFF");
+    } else {
+        prj_.loopOn = !prj_.loopOn;
+        if (prj_.loopOn && prj_.loopOut <= prj_.loopIn) snprintf(b, sizeof b, "LOOP ON (WHOLE SONG)");
+        else snprintf(b, sizeof b, prj_.loopOn ? "LOOP ON" : "LOOP OFF - SONG PLAYS ONCE");
+    }
+    markDirty();
+    toast(b);
+}
+
+// Y raz = IN na kursorze, Y drugi raz = OUT na koncu komorki kursora (i wlacza petle).
+void App::setInOut() {
+    char b[48];
+    bool rollView = cur_ == &roll;
+    int pos = rollView ? roll.cursorStep() : arrange.cursorBar();
+    int* in;
+    int* out;
+    bool* on;
+    int pin, pout;  // dla patternu (uint16_t w strukturze)
+    Pattern* p = rollView ? &prj_.patterns[roll.patternIndex()] : nullptr;
+    if (p) { pin = p->loopIn; pout = p->loopOut; in = &pin; out = &pout; on = &p->loopOn; }
+    else { in = &prj_.loopIn; out = &prj_.loopOut; on = &prj_.loopOn; }
+    if (!inPending_) {
+        *in = pos;
+        *out = pos + 1;
+        inPending_ = true;
+        snprintf(b, sizeof b, "IN %d - NOW MOVE AND PRESS Y FOR OUT", pos + 1);
+    } else {
+        int a = *in, e = pos + 1;
+        if (e <= a) { int t = a; a = pos; e = t + 1; }  // OUT przed IN — zamien
+        *in = a;
+        *out = e;
+        *on = true;
+        inPending_ = false;
+        snprintf(b, sizeof b, "LOOP %d - %d ON", a + 1, e);
+    }
+    if (p) { p->loopIn = (uint16_t)pin; p->loopOut = (uint16_t)pout; }
+    markDirty();
+    toast(b);
+}
+
+void App::toolsUpdate(const InputState& in, float dt) {
+    if (btn_.pressed(B_B)) undo();
+    else if (btn_.pressed(B_A)) redo();
+    else if (btn_.pressed(B_X)) toggleLoop();
+    else if (btn_.pressed(B_Y)) setInOut();
+    // Ekran dostaje tylko D-pad (kursor), Start i R3; galki wylaczone.
+    static const int mask[] = {B_A, B_B, B_X, B_Y, B_L1, B_R1, B_SELECT, B_L3};
+    Buttons mb = btn_.masked(mask, 8);
+    InputState in2 = in;
+    for (int a = 0; a < AXIS_COUNT; a++) in2.axis[a] = 0;
+    cur_->update(mb, in2, dt);
+}
+
+void App::toolsRender(Canvas& c) {
+    char status[96], loopLbl[16];
+    bool rollView = cur_ == &roll;
+    bool on;
+    int a, e;
+    if (rollView) {
+        const Pattern& p = prj_.patterns[roll.patternIndex()];
+        on = p.loopOn; a = p.loopIn; e = p.loopOut;
+    } else { on = prj_.loopOn; a = prj_.loopIn; e = prj_.loopOut; }
+    snprintf(loopLbl, sizeof loopLbl, "LOOP %s", on ? "ON" : "OFF");
+    const char* unit = rollView ? "STEP" : "BAR";
+    if (e > a) snprintf(status, sizeof status, "TOOLS  -  UNDO %d / REDO %d  -  LOOP %s %d-%d  -  L3 = EXIT", undo_.size(),
+                        redo_.size(), unit, a + 1, e);
+    else snprintf(status, sizeof status, "TOOLS  -  UNDO %d / REDO %d  -  LOOP: %s  -  L3 = EXIT", undo_.size(), redo_.size(),
+                  rollView ? "WHOLE PATTERN" : "WHOLE SONG");
+    const char* labels[4] = {"UNDO", "REDO", inPending_ ? "SET OUT" : "SET IN", loopLbl};
+    const Color cols[4] = {pal::steel, pal::red, pal::tan, pal::pill};
+    const char keys[4] = {'B', 'A', 'Y', 'X'};
+    actionBar(c, labels, cols, keys, status);
 }
 
 // Po cofnieciu ekrany moga wskazywac na nieistniejace sciezki/patterny.
@@ -164,7 +267,13 @@ void App::update(const InputState& in, float dt) {
     if (in.btn[B_MENU] && in.btn[B_SELECT]) quit_ = true;
     // Zakladki PROJECT | ARRANGE | PIANO ROLL (L2 = w lewo, R2 = w prawo); nie w oknach dialogowych
     bool dialog = cur_ == &trackDlg || cur_ == &patDlg;
-    if (!dialog && btn_.pressed(B_L3)) { undo(); if (dirty_) publish(); return; }
+    bool toolsView = cur_ == &arrange || cur_ == &roll;
+    if (toolsView && btn_.pressed(B_L3)) {  // pasek narzedzi wl/wyl
+        tools_ = !tools_;
+        inPending_ = false;
+        if (tools_) roll.exitSelect();
+    }
+    if (tools_ && (!toolsView || (cur_ == &roll && btn_.pressed(B_R3)))) tools_ = false;  // R3 -> zaznaczanie
     bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
     if (!dialog && btn_.pressed(B_L2)) {
         if (cur_ == &roll) showArrange();
@@ -176,8 +285,10 @@ void App::update(const InputState& in, float dt) {
             if (pt >= 0) openPattern(pt, t);
             else if (hasRoll) openPattern(lastPattern_, lastTrack_);
         }
-    } else cur_->update(btn_, in, dt);
+    } else if (tools_) toolsUpdate(in, dt);
+    else if (!btn_.pressed(B_L3)) cur_->update(btn_, in, dt);
     if (next_) { cur_ = next_; next_ = nullptr; }
+    if (tools_ && cur_ != &arrange && cur_ != &roll) tools_ = false;
     if (dirty_) publish();
     // Krok historii konczy sie, gdy wszystkie przyciski sa puszczone i galki w spoczynku:
     // jedno wcisniecie = jeden krok, cale pokrecenie galka / przytrzymanie X+strzalka = jeden krok.
@@ -201,6 +312,7 @@ void App::render(Canvas& c) {
             else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
         }
     }
+    if (tools_) toolsRender(c);
     if (toastT_ > 0) {  // komunikat (np. UNDO)
         float w = textWidth(toast_, 12) + 36, x = 320 - w * 0.5f, y = 368;
         c.fillRoundRect(x, y, w, 30, 15, rgb(30, 30, 30));

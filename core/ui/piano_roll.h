@@ -9,7 +9,7 @@
 //   Y + D-pad      przesun nute (czas / wysokosc)
 //   L1 / R1        kursor oktawe w dol / w gore
 //   Start          play / stop patternu (w petli, na instrumencie sciezki)
-//   L3             cofnij (undo)
+//   L3             pasek narzedzi (App): B UNDO, A REDO, Y IN/OUT (petla w krokach), X LOOP
 //   R3             tryb ZAZNACZANIA (dolny pasek zmienia sie w pigulki akcji):
 //                    B          zaznacz/odznacz nute; trzymaj B + D-pad = zaznaczenie prostokatem;
 //                               B na pustym polu = wyczysc zaznaczenie
@@ -34,6 +34,9 @@ public:
     void setCursor(int step, int pitch) { curStep_ = step; curPitch_ = pitch; scrollToCursor(); }
     void setView(int topPitch) { topPitch_ = topPitch; scrollToCursor(); }
     bool valid();                 // czy pattern/sciezka nadal istnieja (np. po undo)
+    int patternIndex() const { return pat_; }
+    int cursorStep() const { return curStep_; }
+    void exitSelect() { selMode_ = false; bHeld_ = false; clearSel(); }
     void onProjectReplaced();     // po undo/wczytaniu: czysci zaznaczenie
     void setSelectMode(bool on) { selMode_ = on; clearSel(); }  // (testy/headless)
     void selectRect(int s0, int p0, int s1, int p1);             // (testy/headless)

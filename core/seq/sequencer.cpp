@@ -55,7 +55,7 @@ int Sequencer::samplesToNextTick() const {
 void Sequencer::advance(int n, NoteSink** sinks) {
     if (!playing_) return;
     untilTick_ -= n;
-    while (untilTick_ <= 0.0) {
+    while (untilTick_ <= 0.0 && playing_) {
         abs_++;
         processTick(sinks);
         untilTick_ += spt_;
@@ -89,11 +89,23 @@ void Sequencer::processTick(NoteSink** sinks) {
     if (mode_ == PATTERN) {
         if (pat_ >= prj_->nPatterns) return;
         const Pattern& p = prj_->patterns[pat_];
-        tick_ = (int)(abs_ % p.lengthTicks);
+        int st = 0, en = p.lengthTicks;
+        if (p.loopOn && p.loopOut > p.loopIn) {
+            st = p.loopIn * TICKS_PER_STEP;
+            en = p.loopOut * TICKS_PER_STEP;
+            if (en > p.lengthTicks) en = p.lengthTicks;
+            if (st >= en) { st = 0; en = p.lengthTicks; }
+        }
+        tick_ = st + (int)(abs_ % (en - st));
         trigger(track_, p, tick_, sinks);
     } else {
-        int len = prj_->songBars() * TICKS_PER_BAR;
-        tick_ = (int)(abs_ % len);
+        int st, en;
+        prj_->songRange(st, en);
+        if (prj_->loopOn) tick_ = st + (int)(abs_ % (en - st));
+        else {
+            tick_ = (int)abs_;
+            if (tick_ >= en) { stop(sinks); return; }  // koniec utworu bez petli
+        }
         bool aud[MAX_TRACKS];
         for (int t = 0; t < prj_->nTracks; t++) aud[t] = prj_->audible(t);
         for (int i = 0; i < prj_->nClips; i++) {

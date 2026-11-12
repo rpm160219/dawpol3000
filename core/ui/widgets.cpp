@@ -15,18 +15,29 @@ void headerBar(Canvas& c, float x, float y, float w, float h, const char* text, 
     drawText(c, x + w * 0.5f, y + (h - sz) * 0.5f, text, sz, 2.f, kDarkText, ALIGN_CENTER);
 }
 
+// Tekst w pigulce zawsze miesci sie w obrysie: rozmiar zmniejszany do dostepnej szerokosci.
 void pillButton(Canvas& c, float x, float y, float w, float h, const char* label, Color fill, char key) {
     c.fillRoundRect(x, y, w, h, h * 0.5f, fill);
-    float sz = h * 0.42f;
-    float tx = x + w * 0.5f;
+    float left = x + h * 0.5f, right = x + w - h * 0.5f;  // obszar bez zaokraglen
     if (key) {
-        float kx = x + h * 0.5f + 2, ky = y + h * 0.5f, kr = h * 0.33f;
+        float kr = h * 0.32f, kx = x + h * 0.5f + 1, ky = y + h * 0.5f;
         c.fillCircle(kx, ky, kr, rgb(0, 0, 0, 110));
         char k[2] = {key, 0};
-        drawText(c, kx + 0.5f, ky - kr * 0.5f, k, kr, 1.3f, pal::white, ALIGN_CENTER);
-        tx += h * 0.3f;
+        float ks = kr * 1.05f;
+        drawText(c, kx, ky - ks * 0.5f, k, ks, 1.2f, pal::white, ALIGN_CENTER);
+        left = kx + kr + 4;
     }
-    drawText(c, tx, y + (h - sz) * 0.5f, label, sz, 1.6f, pal::white, ALIGN_CENTER);
+    float sz = h * 0.42f;
+    float tw = textWidth(label, sz), avail = right - left;
+    if (tw > avail) { sz *= avail / tw; tw = avail; }
+    drawText(c, (left + right) * 0.5f, y + (h - sz) * 0.5f, label, sz, sz > 10 ? 1.6f : 1.2f, pal::white, ALIGN_CENTER);
+}
+
+void actionBar(Canvas& c, const char* const labels[4], const Color cols[4], const char keys[4], const char* status) {
+    c.fillRect(0, 416, 640, 64, pal::bg);
+    c.line(20, 418, 620, 418, 1.f, pal::faint);
+    for (int i = 0; i < 4; i++) pillButton(c, 20 + i * 152, 427, 140, 26, labels[i], cols[i], keys[i]);
+    if (status && *status) drawText(c, 320, 461, status, 7, 1.f, pal::dim, ALIGN_CENTER);
 }
 
 void valueBox(Canvas& c, float x, float y, float w, float h, const char* label, const char* value, const char* unit,

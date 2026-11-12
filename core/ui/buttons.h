@@ -22,6 +22,12 @@ public:
     bool pressed(int b) const { return cur_[b] && !prev_[b]; }
     bool released(int b) const { return !cur_[b] && prev_[b]; }
     bool repeat(int b) const { return rep_[b]; }  // wcisniecie + powtorzenia przy trzymaniu
+    // Kopia z wylaczonymi przyciskami (np. gdy pasek akcji przejmuje A/B/X/Y).
+    Buttons masked(const int* list, int n) const {
+        Buttons c = *this;
+        for (int i = 0; i < n; i++) c.cur_[list[i]] = c.prev_[list[i]] = c.rep_[list[i]] = false;
+        return c;
+    }
 
 private:
     static constexpr float kDelay = 0.32f, kRate = 0.06f;

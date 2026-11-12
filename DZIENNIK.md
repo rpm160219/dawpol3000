@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 06:10
+**Zmienione:**
+- `core/ui/widgets.*` — pigułki z tekstem dopasowanym do obrysu; nowy kompaktowy `actionBar` (4 pigułki w kolumnach gałek, linia oddzielająca, linia statusu).
+- `core/ui/piano_roll.*` — pasek zaznaczania na `actionBar`; podświetlenie zakresu pętli + flagi IN/OUT na siatce.
+- `core/ui/app.*` — pasek NARZĘDZI pod L3: B UNDO, A REDO, Y IN/OUT, X LOOP; redo (druga historia); ekran dostaje wtedy tylko D-pad/Start/R3.
+- `core/ui/buttons.h` — `masked()`; `core/ui/arrange.*` — linia i podświetlenie pętli, `cursorBar()`.
+- `core/seq/project.*`, `pattern.h` — pętla utworu (takty) i patternu (kroki); `core/seq/sequencer.cpp` — odtwarzanie w zakresie pętli, utwór bez pętli zatrzymuje się na końcu; `core/io/project_file.*` — linie `loop`.
+- Headless: `tools`, `rolltools`. Dokumentacja/README/CLAUDE.md.
+- Testy: pętla taktów 3–5 i kroków 5–8 grają tylko swój zakres; bez pętli utwór staje; undo/redo w obie strony; pętla przetrwa zapis/odczyt.
+**Następny krok:** ocena Patryka; potem wybór: step seq/perkusja, syntezator.
+**Wymaga od Patryka:** tak — test na konsoli.
+
 ## 2026-11-12 05:15
 **Zmienione:**
 - `core/ui/input.h`, `platform/controls_map.h`, `core/ui/test_screen.cpp` — nowe przyciski L3/R3 (klik gałek; konsola: 12 i 15, PC: U i O).

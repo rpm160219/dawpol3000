@@ -161,6 +161,21 @@ void ArrangeView::render(Canvas& c) {
         }
     }
 
+    // Petla utworu: linia pod numerami taktow + flagi IN/OUT (biala = wlaczona)
+    {
+        int la = p.loopIn, le = p.loopOut;
+        bool whole = le <= la;
+        if (whole) { la = 0; le = p.songBars(); }
+        Color lc = p.loopOn ? (whole ? rgb(110, 110, 110) : pal::white) : rgb(60, 60, 60);
+        float x0 = TX + (la - firstBar_) * barW(), x1 = TX + (le - firstBar_) * barW();
+        float cx0 = x0 < TX ? TX : x0, cx1 = x1 > TEND ? TEND : x1;
+        if (cx1 > cx0) c.line(cx0, 59, cx1, 59, 2.f, lc);
+        if (!whole) {
+            if (x0 >= TX && x0 <= TEND) { float f[6] = {x0, 55.5f, x0 + 5, 59, x0, 62.5f}; c.polyline(f, 3, 1.2f, lc, true); }
+            if (x1 >= TX && x1 <= TEND) { float f[6] = {x1, 55.5f, x1 - 5, 59, x1, 62.5f}; c.polyline(f, 3, 1.2f, lc, true); }
+        }
+    }
+
     // Sciezki
     for (int r = 0; r < ROWS; r++) {
         int t = topTrack_ + r;
@@ -201,6 +216,14 @@ void ArrangeView::render(Canvas& c) {
         }
         // tlo rzedu
         c.fillRect(TX, y + 1, TEND - TX, TRACK_H - 2, cur ? rgb(16, 16, 16) : rgb(8, 8, 8));
+    }
+    // Podswietlenie zakresu petli na sciezkach (tylko gdy ustawione IN/OUT i petla wlaczona)
+    if (p.loopOn && p.loopOut > p.loopIn) {
+        float x0 = TX + (p.loopIn - firstBar_) * barW(), x1 = TX + (p.loopOut - firstBar_) * barW();
+        if (x0 < TX) x0 = TX;
+        if (x1 > TEND) x1 = TEND;
+        float yb = TY + (p.nTracks - topTrack_ < ROWS ? p.nTracks - topTrack_ : ROWS) * TRACK_H;
+        if (x1 > x0 && yb > TY) c.fillRect(x0, TY, x1 - x0, yb - TY, rgb(255, 255, 255, 12));
     }
     // Linie taktow
     for (int i = 0; i <= vb; i++) {

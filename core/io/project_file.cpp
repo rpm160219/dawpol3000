@@ -21,7 +21,7 @@ bool saveProjectFile(const Project& p, const char* path) {
     if (!f) return false;
     fprintf(f, "# DAW-POL 3000 project\ndawpol %d\nname ", FORMAT_VERSION);
     putStr(f, p.name);
-    fprintf(f, "\nbpm %.2f\nmaster %.3f\n\n", p.bpm, p.masterVol);
+    fprintf(f, "\nbpm %.2f\nmaster %.3f\nloop %d %d %d\n\n", p.bpm, p.masterVol, p.loopOn, p.loopIn, p.loopOut);
     for (int i = 0; i < p.nTracks; i++) {
         const Track& t = p.tracks[i];
         fprintf(f, "track %s ", t.type == TRACK_MIDI ? "midi" : "audio");
@@ -34,6 +34,7 @@ bool saveProjectFile(const Project& p, const char* path) {
         fprintf(f, "pattern ");
         putStr(f, pt.name);
         fprintf(f, " bars %d\n", pt.bars());
+        if (pt.loopOn || pt.loopOut) fprintf(f, "loop %d %d %d\n", pt.loopOn, pt.loopIn, pt.loopOut);
         for (int k = 0; k < pt.count; k++) {
             const Note& n = pt.notes[k];
             fprintf(f, "n %d %d %d %d\n", n.start, n.len, n.pitch, n.vel);
@@ -119,6 +120,18 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             if (nt.vel > 127) nt.vel = 127;
             p.patterns[curPat].add(nt);
         } else if (!strcmp(k, "end")) curPat = -1;
+        else if (!strcmp(k, "loop") && n > 3) {
+            if (curPat >= 0) {
+                Pattern& pt = p.patterns[curPat];
+                pt.loopOn = atoi(tok[1]) != 0;
+                pt.loopIn = (uint16_t)atoi(tok[2]);
+                pt.loopOut = (uint16_t)atoi(tok[3]);
+            } else {
+                p.loopOn = atoi(tok[1]) != 0;
+                p.loopIn = atoi(tok[2]);
+                p.loopOut = atoi(tok[3]);
+            }
+        }
         else if (!strcmp(k, "clip") && n > 3 && p.nClips < MAX_CLIPS) {
             int t = atoi(tok[1]), pt = atoi(tok[2]), b = atoi(tok[3]);
             if (t >= 0 && t < p.nTracks && pt >= 0 && pt < p.nPatterns && b >= 0 && b < MAX_SONG_BARS)

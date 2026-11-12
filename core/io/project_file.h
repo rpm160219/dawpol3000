@@ -4,8 +4,10 @@
 //   name "PROJECT 01"
 //   bpm 120
 //   master 0.80
+//   loop 1 0 8                       <- petla utworu: wlaczona, IN takt, OUT takt (wylacznie)
 //   track midi "BASS" color 0 vol 0.80 mute 0 solo 0
 //   pattern "BASS A" bars 1
+//   loop 0 0 16                      <- (opcjonalnie) petla patternu w krokach
 //   n 0 72 36 120                    <- nuta: start (ticki), dlugosc (ticki), wysokosc MIDI, velocity
 //   end
 //   clip 0 0 0                       <- sciezka, pattern, takt startu

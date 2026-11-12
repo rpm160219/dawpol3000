@@ -9,6 +9,8 @@ namespace dp {
 void headerBar(Canvas& c, float x, float y, float w, float h, const char* text, Color fill);
 // Pigulka akcji na dole ekranu; key = litera przycisku (np. 'A') albo 0.
 void pillButton(Canvas& c, float x, float y, float w, float h, const char* label, Color fill, char key);
+// Kompaktowy pasek 4 pigulek akcji w miejscu paska enkoderow (kolumny jak galki) + linia statusu.
+void actionBar(Canvas& c, const char* const labels[4], const Color cols[4], const char keys[4], const char* status);
 // Obrysowane pole z duza wartoscia, podpisem nad i jednostka obok.
 void valueBox(Canvas& c, float x, float y, float w, float h, const char* label, const char* value, const char* unit,
               Color col, bool active);

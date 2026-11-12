@@ -84,6 +84,21 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R3);                    // tryb zaznaczania
         app.roll.selectRect(4, 63, 9, 72);  // zaznacz 3 nuty
         app.roll.setCursor(9, 72);
+    } else if (!strcmp(screen, "tools")) {        // ARRANGE + pasek narzedzi, petla takty 3-6
+        app.arrange.setCursor(1, 2);
+        tap(app, B_L3);
+        tap(app, B_Y);
+        app.arrange.setCursor(1, 5);
+        tap(app, B_Y);
+    } else if (!strcmp(screen, "rolltools")) {    // PIANO ROLL + pasek narzedzi, petla kroki 5-12
+        app.openPattern(1, 1);
+        idle(app);
+        app.roll.setView(75);
+        app.roll.setCursor(4, 70);
+        tap(app, B_L3);
+        tap(app, B_Y);
+        app.roll.setCursor(11, 70);
+        tap(app, B_Y);
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK

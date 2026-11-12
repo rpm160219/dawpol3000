@@ -25,7 +25,8 @@ public:
     Project& project() { return prj_; }
     AudioEngine* engine() { return eng_; }
     void markDirty() { dirty_ = true; modified_ = true; edited_ = true; }
-    void undo();                       // L3 (klikniecie lewej galki)
+    void undo();
+    void redo();
     void toast(const char* msg);       // krotki komunikat na srodku dolu ekranu
     ProjectStore& store() { return store_; }
     bool isModified() const { return modified_; }
@@ -58,10 +59,16 @@ private:
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia
-    UndoStack undo_;
+    UndoStack undo_, redo_;
+    // Pasek narzedzi pod L3 (ARRANGE / PIANO ROLL): B UNDO, A REDO, Y IN/OUT, X LOOP
+    bool tools_ = false, inPending_ = false;
+    void toolsUpdate(const InputState& in, float dt);
+    void toolsRender(Canvas& c);
+    void toggleLoop();
+    void setInOut();
     Project committed_;
     bool edited_ = false, pending_ = false;
-    char toast_[40] = "";
+    char toast_[64] = "";
     float toastT_ = 0;
     void commitStep();
     void resetHistory();

@@ -31,6 +31,10 @@ struct Project {
     char name[16] = "PROJECT 01";
     float bpm = 120.f;
     float masterVol = 0.8f;
+    // Petla utworu (takty, OUT wylacznie). OUT <= IN = caly utwor.
+    // Wylaczona: utwor gra raz od poczatku i sie zatrzymuje.
+    bool loopOn = true;
+    int loopIn = 0, loopOut = 0;
     int nTracks = 0;
     Track tracks[MAX_TRACKS];
     int nPatterns = 0;
@@ -50,6 +54,8 @@ struct Project {
     int addClip(int track, int pattern, int startBar);  // -1 gdy nachodzi / brak miejsca
     void removeClip(int i);
     int songBars() const;                              // koniec ostatniego klipu (min 1)
+    // Zakres odtwarzania utworu w tickach [start, end) wg petli.
+    void songRange(int& start, int& end) const;
     void nextPatternName(char* out, int n) const;
     void nextTrackName(int type, char* out, int n) const;
 };

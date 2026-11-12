@@ -347,6 +347,19 @@ void PianoRoll::render(Canvas& c) {
         for (int s2 = 1; s2 < STEPS_PER_BAR; s2++)
             if (s2 % 4) c.fillCircle(GX + s2 * SW, GY + r * RH, 0.9f, rgb(60, 60, 60));
 
+    // Petla patternu: podswietlony zakres + flagi IN/OUT na gornej krawedzi siatki
+    if (p.loopOut > p.loopIn) {
+        int la = p.loopIn - viewStep0, le = p.loopOut - viewStep0;
+        if (le > 0 && la < STEPS_PER_BAR) {
+            float x0 = GX + (la < 0 ? 0 : la) * SW, x1 = GX + (le > STEPS_PER_BAR ? STEPS_PER_BAR : le) * SW;
+            Color lc = p.loopOn ? pal::white : rgb(90, 90, 90);
+            if (p.loopOn) c.fillRect(x0, GY, x1 - x0, GH, rgb(255, 255, 255, 14));
+            c.line(x0, GY, x1, GY, 2.f, lc);
+            if (la >= 0) { float f[6] = {x0, GY, x0 + 6, GY, x0, GY + 7}; c.polyline(f, 3, 1.f, lc, true); c.fillRect(x0, GY, 3, 4, lc); }
+            if (le <= STEPS_PER_BAR) { float f[6] = {x1, GY, x1 - 6, GY, x1, GY + 7}; c.polyline(f, 3, 1.f, lc, true); c.fillRect(x1 - 3, GY, 3, 4, lc); }
+        }
+    }
+
     // Nuty (tylko widoczny takt; nuty wystajace z poprzedniego taktu tez)
     const int t0 = viewStep0 * TICKS_PER_STEP, t1 = t0 + TICKS_PER_BAR;
     for (int i = 0; i < p.count; i++) {
@@ -429,16 +442,15 @@ void PianoRoll::render(Canvas& c) {
     encoderBar(c, labels, vals, pos);
 }
 
-// Tryb zaznaczania: zamiast galek — pigulki akcji (jak w oknach dialogowych).
+// Tryb zaznaczania: zamiast galek — kompaktowy pasek akcji (wspolny z paskiem narzedzi).
 void PianoRoll::renderSelectBar(Canvas& c) {
-    char b[96];
-    snprintf(b, sizeof b, "SELECT MODE  -  %d SELECTED  -  CLIPBOARD %d  -  R3 = EXIT", selCount(), clip_.n);
-    drawText(c, 320, 418, b, 7, 1.f, pal::steel, ALIGN_CENTER);
-    const float py = 430, ph = 34;
-    pillButton(c, 16, py, 140, ph, "SELECT", pal::steel, 'B');
-    pillButton(c, 170, py, 140, ph, "DELETE", pal::red, 'A');
-    pillButton(c, 330, py, 140, ph, "COPY", pal::tan, 'Y');
-    pillButton(c, 484, py, 140, ph, "PASTE", pal::pill, 'X');
+    char st[96];
+    snprintf(st, sizeof st, "SELECT  -  %d SELECTED  -  CLIPBOARD %d  -  HOLD B + D-PAD = AREA  -  R3 = EXIT", selCount(),
+             clip_.n);
+    const char* labels[4] = {"SELECT", "DELETE", "COPY", "PASTE"};
+    const Color cols[4] = {pal::steel, pal::red, pal::tan, pal::pill};
+    const char keys[4] = {'B', 'A', 'Y', 'X'};
+    actionBar(c, labels, cols, keys, st);
 }
 
 }  // namespace dp
