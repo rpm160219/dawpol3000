@@ -704,9 +704,37 @@ static const FactoryPreset kGin[] = {
     {"LAST ORDERS", CAT_DRUMS, 1, "gink 7"},
 };
 
+// PARALLAX: wlasne presety (silnik wlasny). k WAVE (0 PULSE, 8192 SQUARE, 16384 SAW, 24576 SAW+SUB, 32767 NOISE)
+// UNISON FILTER-FREQ (20 Hz * 1000^(k/32767)) RES.
+static const FactoryPreset kParallax[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"ACID LINE", CAT_BASS, 1, "k 16384 0 9000 26000 env 0.001 0.3 0.6 0.08 fenv 0.001 0.25 0 0.1 0.45"},
+    {"ACID SQUARE", CAT_BASS, 1, "k 8192 0 8000 27500 env 0.001 0.25 0.5 0.06 fenv 0.001 0.18 0 0.08 0.5"},
+    {"SUB BASS", CAT_BASS, 1, "k 24576 0 13000 4000 env 0.002 0.4 0.9 0.12"},
+    {"SAW BASS", CAT_BASS, 1, "k 16384 3000 12500 12000 env 0.001 0.3 0.7 0.1 fenv 0.001 0.3 0.2 0.1 0.3"},
+    {"WOBBLE", CAT_BASS, 1, "k 24576 6000 12000 22000 env 0.002 0.3 0.9 0.1 lfo1 0 2 0.3 2 1 5"},
+    {"JUNO PAD", CAT_PAD, 1, "k 16384 22000 20000 6000 env 0.6 1.2 0.85 1.5 lfo1 1 0.3 0.04 2 0 0"},
+    {"STRINGS", CAT_PAD, 1, "k 16384 26000 23000 3000 env 0.4 0.8 0.9 1.2 lfo1 0 5 0.006 4 0 0"},
+    {"MORPH PAD", CAT_PAD, 1, "k 12000 16000 20000 8000 env 1 1 0.9 2 lfo1 1 0.08 0.25 0 0 0"},
+    {"DEEP DRONE", CAT_PAD, 1, "k 24576 30000 14000 10000 env 1.5 2 1 3 lfo1 0 0.1 0.1 2 0 0"},
+    {"UNISON LEAD", CAT_LEAD, 1, "k 16384 18000 25000 9000 env 0.005 0.3 0.85 0.25"},
+    {"SQUARE LEAD", CAT_LEAD, 1, "k 8192 9000 24000 8000 env 0.005 0.2 0.9 0.2 lfo1 0 5.5 0.008 4 0 0"},
+    {"SCREAM LEAD", CAT_LEAD, 1, "k 16384 10000 19000 30000 env 0.005 0.3 0.9 0.3 lfo1 1 4 0.02 2 0 0"},
+    {"PULSE KEYS", CAT_KEYS, 1, "k 0 6000 22000 6000 env 0.002 0.6 0.4 0.4 fenv 0.001 0.4 0 0.3 0.25"},
+    {"SOFT KEYS", CAT_KEYS, 1, "k 12288 4000 19500 2000 env 0.003 1 0.3 0.6"},
+    {"POLY BRASS", CAT_KEYS, 1, "k 16384 14000 16000 5000 env 0.04 0.5 0.8 0.3 fenv 0.06 0.5 0.3 0.3 0.35"},
+    {"PLUCK", CAT_PLUCK, 1, "k 16384 8000 19000 9000 env 0.001 0.35 0 0.3 fenv 0.001 0.2 0 0.2 0.55"},
+    {"DETUNE PLUCK", CAT_PLUCK, 1, "k 16384 24000 17000 9000 env 0.001 0.5 0 0.4 fenv 0.001 0.3 0 0.3 0.4"},
+    {"RESO SWEEP", CAT_FX, 1, "k 16384 12000 9000 28000 env 0.01 0.5 0.9 0.5 lfo1 1 0.15 0.35 2 0 0"},
+    {"NOISE WIND", CAT_FX, 1, "k 32767 0 23000 21000 env 0.8 1 0.9 1.5 lfo1 0 0.2 0.3 2 0 0"},
+    {"NOISE HAT", CAT_FX, 1, "k 32767 0 30000 3000 env 0.001 0.08 0 0.05"},
+    {"ZAP", CAT_FX, 1, "k 8192 0 20000 20000 env 0.001 0.2 0 0.1 menv 0.001 0.12 0 0.05 1 4"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "parallax")) { *n = sizeof kParallax / sizeof kParallax[0]; *engine = ENG_PARALLAX; return kParallax; }
     if (!__builtin_strcmp(eng, "gin")) { *n = sizeof kGin / sizeof kGin[0]; *engine = ENG_GIN; return kGin; }
     if (!__builtin_strcmp(eng, "outatime")) { *n = sizeof kOutatime / sizeof kOutatime[0]; *engine = ENG_OUTATIME; return kOutatime; }
     if (!__builtin_strcmp(eng, "juni")) { *n = sizeof kJuni / sizeof kJuni[0]; *engine = ENG_JUNI; return kJuni; }

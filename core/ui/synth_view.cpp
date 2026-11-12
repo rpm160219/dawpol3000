@@ -5,6 +5,7 @@
 #include "synth/blot_dsp.h"
 #include "synth/arc_dsp.h"
 #include "synth/outatime_dsp.h"
+#include "synth/parallax_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -465,6 +466,11 @@ void SynthView::render(Canvas& c) {
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_PARALLAX) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        px_.draw(c, shown, dt_);
     } else if (t.engine == ENG_OUTATIME) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -777,7 +783,13 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_OUTATIME) {  // OUTATIME: rok, predkosc, moc, zaplon
+    if (k == K_SOUND && t.engine == ENG_PARALLAX) {  // PARALLAX: fala, unison, filtr 303
+        static const char* L[4] = {"WAVEFORM", "UNISON", "FILTER FREQ", "RES"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        parallaxWaveName(t.knob[0], v[0], 16);
+        const float hz = parallaxCutoffHz(t.knob[2]);
+        if (hz >= 1000.f) snprintf(v[2], 16, "%.1fK", hz / 1000.f); else snprintf(v[2], 16, "%.0f", hz);
+    } else if (k == K_SOUND && t.engine == ENG_OUTATIME) {  // OUTATIME: rok, predkosc, moc, zaplon
         static const char* L[4] = {"YEAR", "SPEED", "POWER", "TRAIL"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         snprintf(v[0], 16, "%d", ota_year(t.knob[0]));

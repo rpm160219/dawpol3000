@@ -16,7 +16,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; struct OutatimeCore; struct GinCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; struct HollowCore; struct BloodCore; struct BlotCore; struct AetherCore; struct ArcCore; struct DdddCore; struct JuniCore; struct OutatimeCore; struct GinCore; struct ParallaxCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -143,6 +143,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::ParallaxCore* prx_ = nullptr;  // PARALLAX: glosy tej sciezki (C)
     ::GinCore* gin_ = nullptr;  // GIN: zestaw perkusyjny tej sciezki (C)
     void renderGin(float* out, int n);
     ::OutatimeCore* ota_ = nullptr;  // OUTATIME: glosy tej sciezki (C)
