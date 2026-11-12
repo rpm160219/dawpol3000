@@ -640,9 +640,27 @@ static const FactoryPreset kArc[] = {
     {"BRIGHT BUZZ", CAT_LEAD, 1, "k 24000 16000 4000 6000 push 8192 0 30000 env 0.005 0.3 0.9 0.2"},
 };
 
+// DDDD: oryginal (op1r, pcppcp) nie ma presetow — 12 wlasnych z galek silnika (strona 2: push FILTER SPREAD RATE;
+// FILTER 0 = LP, 16384 = BP, 32767 = HP) i obwiedni.
+static const FactoryPreset kDddd[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"WHITE WALL", CAT_FX, 1, "k 0 24000 20000 8000 env 0.005 0.3 1 0.3"},
+    {"CRACKLE FIRE", CAT_FX, 1, "k 11000 18000 12000 6000 env 0.01 0.3 1 0.4"},
+    {"CHAOS ENGINE", CAT_FX, 1, "k 22000 26000 22000 14000 env 0.005 0.3 1 0.3"},
+    {"METAL SCREAM", CAT_LEAD, 1, "k 32767 28000 18000 10000 env 0.005 0.3 1 0.3"},
+    {"FEEDBACK HOWL", CAT_LEAD, 1, "k 4000 30000 6000 4000 push 16384 4000 0 env 0.05 0.5 1 0.6"},
+    {"BIT RUIN", CAT_FX, 1, "k 16000 20000 32767 12000 push 0 0 20000 env 0.005 0.3 1 0.3"},
+    {"STUTTER STORM", CAT_FX, 1, "k 20000 22000 24000 30000 env 0.005 0.3 1 0.3"},
+    {"DARK RUMBLE", CAT_BASS, 1, "k 2000 26000 8000 6000 push 0 6000 4000 env 0.05 0.5 1 0.8 oct -1"},
+    {"HISS PAD", CAT_PAD, 1, "k 0 14000 4000 2000 push 32767 12000 0 env 0.8 1 1 1.5"},
+    {"DRONE CHORD", CAT_PAD, 1, "k 30000 26000 6000 2000 push 6000 16000 0 env 0.3 1 1 2"},
+    {"NOISE HIT", CAT_FX, 1, "k 6000 16000 26000 12000 env 0.001 0.15 0 0.1"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "dddd")) { *n = sizeof kDddd / sizeof kDddd[0]; *engine = ENG_DDDD; return kDddd; }
     if (!__builtin_strcmp(eng, "arc")) { *n = sizeof kArc / sizeof kArc[0]; *engine = ENG_ARC; return kArc; }
     if (!__builtin_strcmp(eng, "aether")) { *n = sizeof kAether / sizeof kAether[0]; *engine = ENG_AETHER; return kAether; }
     if (!__builtin_strcmp(eng, "blot")) { *n = sizeof kBlot / sizeof kBlot[0]; *engine = ENG_BLOT; return kBlot; }

@@ -26,6 +26,7 @@ const char* engineName(int e) {
     case ENG_BLOT: return "BLOT";
     case ENG_AETHER: return "AETHER";
     case ENG_ARC: return "ARC";
+    case ENG_DDDD: return "DDDD";
     default: return "?";
     }
 }
@@ -64,6 +65,8 @@ const char* destNameFor(int engine, int d) {
     if (engine == ENG_VAPORA && d >= 0 && d < 4) return vpn[d];
     static const char* ssn[4] = {"DTUN", "MRPH", "SUB", "DRV"};
     if (engine == ENG_SUPERSAW && d >= 0 && d < 4) return ssn[d];
+    static const char* ddn[4] = {"SRC", "FBK", "DSTR", "HAND"};
+    if (engine == ENG_DDDD && d >= 0 && d < 4) return ddn[d];
     static const char* acn[4] = {"CUR", "CARB", "HISS", "STRK"};
     if (engine == ENG_ARC && d >= 0 && d < 4) return acn[d];
     if (engine == ENG_ARC && d == DEST_W1) return "RAT";  // strona 2: proporcja 2. lampy, sprzezenie, jasnosc
@@ -109,8 +112,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000}, mx[4] = {1966, 3277, 4588, 7209}, br[4] = {19660, 16384, 3932, 7536}, hs[4] = {16384, 16384, 12000, 12000}, bm[4] = {14000, 20000, 7000, 9000}, bl[4] = {9000, 22000, 18000, 9000}, ae[4] = {15671, 11469, 16384, 32767}, ac[4] = {12000, 6000, 5000, 9000};
-    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : engine == ENG_MIXTUR ? mx : engine == ENG_BRASS ? br : engine == ENG_HOLLOW ? hs : engine == ENG_BLOOD ? bm : engine == ENG_BLOT ? bl : engine == ENG_AETHER ? ae : engine == ENG_ARC ? ac : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000}, mx[4] = {1966, 3277, 4588, 7209}, br[4] = {19660, 16384, 3932, 7536}, hs[4] = {16384, 16384, 12000, 12000}, bm[4] = {14000, 20000, 7000, 9000}, bl[4] = {9000, 22000, 18000, 9000}, ae[4] = {15671, 11469, 16384, 32767}, ac[4] = {12000, 6000, 5000, 9000}, dd[4] = {0, 24000, 20000, 8000};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : engine == ENG_MIXTUR ? mx : engine == ENG_BRASS ? br : engine == ENG_HOLLOW ? hs : engine == ENG_BLOOD ? bm : engine == ENG_BLOT ? bl : engine == ENG_AETHER ? ae : engine == ENG_ARC ? ac : engine == ENG_DDDD ? dd : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

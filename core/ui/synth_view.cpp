@@ -140,6 +140,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_DDDD && alt_) {  // DDDD + L3: FILTER, SPREAD, RATE
+                if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_ARC && alt_) {  // ARC + L3: RATIO (0 = 1:1), COUPLING, BRIGHTNESS (0 = neutralnie)
                 if (i < 3 && d != 0.f) {
                     if (i != 1 && t.push[i] <= 0) t.push[i] = 8192;
@@ -455,6 +457,9 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_DDDD) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        dd_.draw(c, words, words, e ? e->ddddCore(track_) : nullptr, k == K_SOUND && alt_);
     } else if (t.engine == ENG_ARC) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -609,6 +614,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_DDDD) { hint = alt_ ? "L3 = SOURCE / FEEDBACK / DESTROY / HANDS" : "L3 = FILTER / SPREAD / RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_ARC) { hint = alt_ ? "L3 = CURRENT / CARBON / HISS / STRIKE" : "L3 = RATIO / COUPLING / BRIGHTNESS"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_AETHER) { hint = alt_ ? "L3 = ORBIT / FORM / SPACE / DEPTH" : "L3 = DEAD ZONE / TILT RANGE / VIB RATE"; if (alt_) hc = pal::blue; }
     if (k == K_TILT) hint = "VIRTUAL TILT SENSOR (THE OP-1 IS TILTED)";
@@ -749,7 +755,24 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_ARC) {  // ARC: prad (mu), wegiel, szum plazmy, zaplon
+    if (k == K_SOUND && t.engine == ENG_DDDD) {  // DDDD: zrodlo, sprzezenie, niszczenie, rece
+        static const char* L[4] = {"SOURCE", "FEEDBACK", "DESTROY", "HANDS"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        static const char* SR[4] = {"NOISE", "CRACKLE", "CHAOS", "METAL"};
+        const int si = (t.knob[0] * 3 + 16383) >> 15;
+        snprintf(v[0], 16, "%s", SR[si > 3 ? 3 : si]);
+        static const char* DS[3] = {"FOLD", "CLIP", "CRUSH"};
+        const int di = (t.knob[2] * 3) >> 15;
+        if (t.knob[2] > 0) snprintf(v[2], 16, "%s %d", DS[di > 2 ? 2 : di], (t.knob[2] * 100 + 16383) / 32767);
+        if (alt_) {
+            static const char* F[3] = {"LP", "BP", "HP"};
+            const int fi = (t.push[0] * 2 + 16383) >> 15;
+            labels[0] = "FILTER"; snprintf(v[0], 16, "%s", F[fi > 2 ? 2 : (fi < 0 ? 0 : fi)]); pos[0] = t.push[0] / 32767.f;
+            labels[1] = "SPREAD"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
+            labels[2] = "RATE"; snprintf(v[2], 16, "1/%d", 1 + ((t.push[2] * 31) >> 15)); pos[2] = t.push[2] / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_ARC) {  // ARC: prad (mu), wegiel, szum plazmy, zaplon
         static const char* L[4] = {"CURRENT", "CARBON", "HISS", "STRIKE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         if (alt_) {

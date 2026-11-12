@@ -417,6 +417,19 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "dddd")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_DDDD;
+        engineDefaultKnobs(ENG_DDDD, tr.knob);
+        tr.knob[2] = 22000; tr.knob[3] = 20000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
     } else if (!strcmp(screen, "arc") || !strcmp(screen, "arcp2") || !strcmp(screen, "arclfo")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_ARC;

@@ -33,13 +33,13 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : 0);
         wt_[i].setTilt(t.tilt[0] / 32767.f, t.tilt[1] / 32767.f, t.tilt[2] / 32767.f);
         wt_[i].setRelic(t.relic);
         wt_[i].setOctave(t.octave);
         wt_[i].setSsFilter((32767 - t.push[0]) / 32767.f, t.push[1] / 32767.f, t.push[2]);  // SUPERSAW: push = zamkniecie filtra, RES, typ
         synth_[i].setOctave(t.octave);
-        const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
+        const bool bare = e == ENG_ELG || e == ENG_BRASS || e == ENG_HOLLOW || e == ENG_BLOOD || e == ENG_DDDD;  // HOLLOW SAINT: sam silnik 1:1  // BRASSOPHONE: sam silnik 1:1  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
         const bool noMod = bare || e == ENG_BLOT;  // BLOT: sam silnik + MODE/GLIDE (slide 303 = portamento gospodarza)
         const bool simple = bare || e == ENG_MIXTUR || e == ENG_ARC || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_SID || e == ENG_VAPORA || (e == ENG_OXBOW && !t.alt);
         const bool sidFenv = e == ENG_SID || e == ENG_VAPORA;  // VAPORA: obwiednia filtra na BRIGHTNESS (galka 2)

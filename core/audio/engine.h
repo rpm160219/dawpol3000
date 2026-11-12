@@ -56,6 +56,7 @@ public:
         if (wt_[t].kind() == 8) oxbowPlusView(wt_[t].oxbowPlus(), v);
         else if (wt_[t].oxbow()) dp_oxbowView(wt_[t].oxbow(), v);
     }
+    const ::DdddCore* ddddCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].dddd() : nullptr; }
     const ::ArcCore* arcCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].arc() : nullptr; }
     const ::AetherCore* aetherCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].aether() : nullptr; }
     const ::BlotCore* blotCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].blot() : nullptr; }

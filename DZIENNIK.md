@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:56
+**Zmienione — port silnika DDDD (op1r, pcppcp), 1:1:**
+- `third_party/op1r_dddd/` — oryginalne `plugins/dddd/dddd.c`, `dddd.svg`, `plugin.json`, `dddd/dd_core.c/h`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`.
+- `core/synth/dddd_dsp.*` — dddd.c jako C, cały stan (ściana szumu z pętlą, kolejność nut) per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 20, sam silnik, obwiednia AMP ENV otwiera filtr.
+- `core/ui/dddd_screen*` — ekran osy 1:1 (druga kompilacja; bez dolnego rzędu z napisami) + ilustracja; `core/ui/synth_view.*` — SOURCE (NOISE/CRACKLE/CHAOS/METAL) / FEEDBACK / DESTROY (FOLD/CLIP/CRUSH) / HANDS, L3: FILTER (LP/BP/HP) / SPREAD / RATE (1/n); `core/ui/dialogs.cpp` — DDDD na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `dddd`, 12 presetów (oryginał nie ma żadnych).
+- `tests/dddd_match.cpp`, `tools/test_dddd.sh`; wszystkie skrypty testów linkują DDDD.
+- Testy: DDDD bit w bit (0 różnic), wszystkie 21 testów 0 różnic; CPU na konsoli ok. 5% (ściana gra jeden głos). Wysłane na konsolę.
+**Następny krok:** Patryk testuje DDDD.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 20:26
 **Zmienione (prośba Patryka): ARC dostał MOD ENV i jedno LFO.**
 - `core/ui/synth_view.*` — strony ARC: SOUND, AMP ENV, MOD ENV, LFO, PRESETS; cele modulacji: CUR, CARB, HISS, STRK, PTCH, VOL oraz RAT, CPL, BRT (strona 2: proporcja 2. lampy, sprzężenie, jasność).

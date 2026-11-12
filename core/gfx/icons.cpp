@@ -211,7 +211,7 @@ void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, fl
         (void)NAVY; (void)PLUM; (void)GREY; (void)GREEN; (void)BLUE; (void)RED;
         return;
     }
-    if (engine == 21) {  // TEST SAW: prosta pila w ramce
+    if (engine == 22) {  // TEST SAW: prosta pila w ramce
         c.strokeRoundRect(x, y, w, h, 8, 1.4f, rgb(80, 80, 80));
         float px = x + 16, py = y + h * 0.5f;
         for (int k = 0; k < 4; k++) {
