@@ -61,14 +61,6 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     const bool wt = t.engine == ENG_WAVETABLE;
     bool ext = wt && t.alt;
 
-    if (b.pressed(B_R3) && wt) {  // tryb silnika
-        t.alt = !t.alt;
-        ext = t.alt;
-        page_ = 0;
-        alt_ = false;
-        app_->markDirty();
-        app_->toast(ext ? "EXTENDED: 2 OSC + SUB + FILTER MODES" : "ORIGINAL 1:1");
-    }
     if (b.pressed(B_SELECT) && !b.down(B_MENU) && !ed_.active()) {
         page_ = (page_ + 1) % pageCount(ext);
         confirm_ = 0;
@@ -292,8 +284,6 @@ void SynthView::render(Canvas& c) {
     }
     if (k == K_VOICE && !t.mono && t.unison > 0) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
     if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
-    if (t.engine == ENG_WAVETABLE)
-        drawText(c, 20, 398, ext ? "R3 = ORIGINAL 1:1" : "R3 = EXTENDED (2 OSC)", 7, 1.f, rgb(80, 80, 80));
 
     // prawy dol: grafika strony
     if (k == K_MENV) {

@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:15
+**Zmienione:** `core/ui/synth_view.*` — usunięty przełącznik R3 (oryginał ↔ rozszerzony) i jego podpowiedź w zakładce SYNTH; WAVETABLE i WAVETABLE+ wybiera się tylko jako silniki na karcie ENGINE okna TRACK (propozycja Patryka). Dokumentacja, README, CLAUDE.md zaktualizowane.
+**Następny krok:** Patryk sprawdza.
+**Wymaga od Patryka:** nie.
+
 ## 2026-11-12 20:00
 **Poprawka po uwadze Patryka (źle zrozumiałem poprzednią prośbę):**
 - `core/ui/app.*` — cofnięta dodatkowa warstwa TRACK w pasku narzędzi L3 (pasek znów ma jedną warstwę EDIT; L2/R2 przy otwartym pasku znów przełączają zakładki).

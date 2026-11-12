@@ -2,7 +2,7 @@
 //
 // Sterowanie:
 //   D-pad + ABXY   odsluch: 8 stopni skali C-dur od C4 (bez opisu na ekranie)
-//   R3             tryb silnika: ORYGINAL 1:1 <-> ROZSZERZONY (2 niezalezne oscylatory, sub, tryby filtra)
+//   (silnik WAVETABLE / WAVETABLE+ wybiera sie na karcie ENGINE w oknie TRACK: Select na sciezce, R2)
 //   Select         nastepna strona galek:
 //                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
