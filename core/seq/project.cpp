@@ -11,6 +11,7 @@ const char* engineName(int e) {
     case ENG_TAFFY: return "TAFFY";
     case ENG_PEW: return "PEW";
     case ENG_ELG: return "ELG";
+    case ENG_EVA: return "EVA";
     default: return "?";
     }
 }
@@ -51,8 +52,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384};
-    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

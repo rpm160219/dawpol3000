@@ -9,7 +9,8 @@ P=$SRC/synth_sdk/plugins/taffy
 (cd "$P" && cc -O1 -DOP1_HOST -DENGINE=ENGINE_taffy -I ../.. ../../harness/audio_harness.c taffy_plugin.c \
     taffy_src_screen.c taffy_src_taffy.c -lm -o "$T/ref")
 "$T/ref" 16384 8192 0 8192 > "$T/ref.raw" 2>/dev/null
-g++ -std=c++17 -O2 -Icore tests/taffy_match.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp \
+gcc -std=gnu11 -O2 -Icore -c core/synth/eva_dsp.c -o "$T/eva.o"
+g++ -std=c++17 -O2 -Icore tests/taffy_match.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp "$T/eva.o" \
     core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
 "$T/match" "$T/ref.raw"
 rm -rf "$T"

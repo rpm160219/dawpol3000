@@ -123,6 +123,15 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_EVA && alt_ && i == 3) {  // EVA + L3: strona 2 COM = oktawa sygnalu (3 stopnie)
+                int st = stepOct_.steps(ax, dt, 3.f);
+                if (st) {
+                    int cur = t.push[2] <= 0 ? 1 : (t.push[2] * 3) >> 15;
+                    cur = cur + st < 0 ? 0 : (cur + st > 2 ? 2 : cur + st);
+                    static const int16_t mid[3] = {5461, 16384, 27306};  // srodki stopni jak OP1_PRESS_PAGE_STEPS(3)
+                    t.push[2] = mid[cur];
+                    changed = true;
+                }
             } else knob(t.knob[i]);
             break;
         case K_BARS: if (i < 3) knob(t.push[i]); break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
@@ -258,6 +267,14 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_EVA) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        EvaView vv = {};
+        if (e) e->evaView(track_, &vv);
+        ev_.draw(c, shown, t.push[2], k == K_SOUND && alt_, vv);
     } else if (t.engine == ENG_ELG) {
         ElgView ev = {};
         if (e) e->elgView(track_, &ev);
@@ -317,6 +334,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_EVA) { hint = alt_ ? "L3 = COM" : "L3 = BEEP OCTAVE"; if (alt_) hc = pal::red; }
     if (k == K_SOUND && t.engine == ENG_ELG) {
         hint = alt_ ? "L3 = MOVEMENT" : (t.movSync ? "MOVEMENT SYNC TO BPM   L3 = SYNC" : "L3 = MOVEMENT SYNC");
         if (alt_ || t.movSync) hc = alt_ ? pal::red : pal::blue;
@@ -406,7 +424,26 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_ELG) {  // dron: interwal trzeciego glosu, rozstrojenie, barwa, ruch
+    if (k == K_SOUND && t.engine == ENG_EVA) {  // chor: jasnosc/atak, samogloska, oddech, radio
+        snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
+        static const char* vw[3] = {"OO", "AH", "EE"};
+        const int pos2 = t.knob[1] * 2, vi = pos2 >> 15, fr = (pos2 & 0x7FFF) * 100 / 32768;
+        if (vi >= 2 || fr < 8) snprintf(v[1], 16, "%s", vw[vi >= 2 ? 2 : vi]);
+        else if (fr > 92) snprintf(v[1], 16, "%s", vw[vi + 1]);
+        else snprintf(v[1], 16, "%s>%s", vw[vi], vw[vi + 1]);
+        snprintf(v[2], 16, "%d", t.knob[2] * 100 / 32767);
+        const int c3 = t.knob[3];
+        snprintf(v[3], 16, "%s %d", c3 < 13107 ? "WARM" : c3 < 24576 ? "RADIO" : "CRUSH", c3 * 100 / 32767);
+        static const char* L[4] = {"PRESSURE", "FREQ", "OXYGEN", "COM"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+        if (alt_) {
+            static const char* oc[3] = {"DOWN", "ORIGINAL", "UP"};
+            const int cur = t.push[2] <= 0 ? 1 : (t.push[2] * 3) >> 15;
+            labels[3] = "BEEP OCT";
+            snprintf(v[3], 16, "%s", oc[cur > 2 ? 2 : cur]);
+            pos[3] = (cur > 2 ? 2 : cur) / 2.f;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_ELG) {  // dron: interwal trzeciego glosu, rozstrojenie, barwa, ruch
         static const char* iv[5] = {"UNISON", "FIFTH", "OCTAVE", "OCT+5TH", "2 OCT"};
         int st = elgInterval(t.knob[0]);
         snprintf(v[0], 16, "%s", iv[st > 4 ? 4 : st]);

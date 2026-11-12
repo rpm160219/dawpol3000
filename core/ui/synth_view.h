@@ -6,7 +6,7 @@
 //   Select         nastepna strona galek:
 //                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS (bez drugiej obwiedni)
-//                    ELG:         SOUND -> AMP ENV -> PRESETS (sam silnik 1:1, bez dodatkow)
+//                    ELG, EVA:    SOUND -> AMP ENV -> PRESETS (sam silnik 1:1, bez dodatkow)
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
 // MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
@@ -30,6 +30,7 @@
 #include "ui/taffy_screen.h"
 #include "ui/pew_screen.h"
 #include "ui/elg_screen.h"
+#include "ui/eva_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -51,10 +52,10 @@ private:
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
-    // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS)
-    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : 0)); }
+    // 3 = ELG, EVA: sam silnik 1:1 (SOUND, AMP ENV, PRESETS)
+    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG || t.engine == ENG_EVA ? 3 : 0)); }
     int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : 8); }
-    RelEncoder stepMDest_, stepGDiv_, stepMovDiv_;
+    RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_;
     RelEncoder stepVMode_;
     // przegladarka presetow
     int catSel_ = 0, preSel_ = 0, preFirst_ = 0, focus_ = 1;  // catSel_ 0 = ALL, 1.. = kategorie
@@ -72,6 +73,7 @@ private:
     TaffyScreen tf_;
     PewScreen pw_;
     ElgScreen el_;
+    EvaScreen ev_;
     void releaseAll();
 };
 

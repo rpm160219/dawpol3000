@@ -222,9 +222,24 @@ static const FactoryPreset kElg[] = {
     {"CAMPFIRE", CAT_OTHER, 2, "k 1280 7000 13000 11000 env 0.6 1 1 2"},
 };
 
+// EVA: 8 presetow oryginalu (third_party/op1r_eva/presets.py): galki 1:1; obwiednia OP-1 (0..32767) przeliczona
+// w przyblizeniu na sekundy; efekty (spring/delay), LFO i oktawa oryginalu pominiete (jeszcze ich nie ma).
+static const FactoryPreset kEva[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"SPACE CHOIR", CAT_PAD, 1, "k 20000 16384 12000 3000 env 0.05 0.6 0.92 0.9"},
+    {"TEARS IN RAIN", CAT_PAD, 1, "k 11000 4000 22000 6000 env 0.15 0.8 0.92 1.2"},
+    {"ENSEMBLE AH", CAT_PAD, 1, "k 24000 15500 28000 0 env 0.04 0.6 0.88 0.8"},
+    {"EE HALO", CAT_PAD, 1, "k 26000 31000 18000 2000 env 0.03 0.4 0.8 1"},
+    {"DISTANT OO", CAT_PAD, 1, "k 3500 1500 15000 9000 env 0.2 0.8 0.92 1.2"},
+    {"RADIO CHOIR", CAT_PAD, 1, "k 20000 14000 10000 17000 env 0.05 0.6 0.85 0.7"},
+    {"HOUSTON", CAT_FX, 1, "k 19000 11000 6000 23000 env 0.02 0.35 0.8 0.45"},
+    {"LOST SIGNAL", CAT_FX, 1, "k 16000 21000 20000 30000 env 0.03 0.6 0.8 0.8"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "eva")) { *n = sizeof kEva / sizeof kEva[0]; *engine = ENG_EVA; return kEva; }
     if (!__builtin_strcmp(eng, "elg")) { *n = sizeof kElg / sizeof kElg[0]; *engine = ENG_ELG; return kElg; }
     if (!__builtin_strcmp(eng, "pew")) { *n = sizeof kPew / sizeof kPew[0]; *engine = ENG_PEW; return kPew; }
     if (!__builtin_strcmp(eng, "wavetableplus")) { *n = sizeof kWavetablePlus / sizeof kWavetablePlus[0]; *engine = ENG_WAVETABLE; return kWavetablePlus; }

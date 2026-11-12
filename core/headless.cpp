@@ -181,6 +181,25 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "eva") || !strcmp(screen, "evaoct")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_EVA;
+        engineDefaultKnobs(ENG_EVA, tr.knob);
+        tr.knob[3] = 17000;  // radio
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "evaoct")) app.synth.setAlt(true);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "evaengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 5; i++) tap(app, B_DOWN);  // EVA
     } else if (!strcmp(screen, "elgengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

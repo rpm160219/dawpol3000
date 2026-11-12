@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 05:30
+**Zmienione — port silnika EVA (op1r, Hundekraft), sam silnik:**
+- `third_party/op1r_eva/` — oryginalne `eva.c`, `eva_tables.h`, `eva_geom.h`, `eva.svg`, `eva-art.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `eva_art.h` z SVG (`tools/gen/svg_to_art2.py` — dodana kolejność elementów z dokumentu, potrzebna dla masek wskaźników).
+- `core/synth/eva_dsp.*` — eva.c kompilowany jako C (CMake: dodany język C), stan każdej ścieżki podmieniany przed wywołaniem; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — EVA jako piąty rodzaj (tylko obwiednia głośności), puszczenie klawisza = note_off oryginału (końcowy sygnał Quindar).
+- `core/ui/eva_screen.*` — ekran astronautki 1:1 + ilustracja; `core/ui/synth_view.*` — SOUND (PRESSURE/FREQ/OXYGEN/COM), L3 = BEEP OCT (strona 2 COM), AMP ENV, PRESETS; `core/ui/dialogs.cpp` — EVA na liście (lista ciaśniej, 7 pozycji).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `eva`, 8 presetów oryginału (gałki 1:1, obwiednia w przybliżeniu, bez efektów); `tests/eva_match.cpp`, `tools/test_eva.sh`; pozostałe testy kompilują EVA jako C.
+- Testy: EVA bit w bit z oryginałem (0 różnic), WAVETABLE/TAFFY/PEW/ELG nadal 0; dwie ścieżki EVA niezależne (0 różnic); sygnał Quindar przy puszczeniu gra; presety bez przesterowania; CPU na konsoli przy 6 głosach: EVA 7,6%. Wysłane na konsolę.
+**Następny krok:** Patryk testuje ELG i EVA.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 04:00
 **Zmienione:** ELG — synchronizacja ruchu (MOVEMENT) z tempem pod L3: czerwona gałka = SYNC (OFF, 1/1 … 1/128T), MOVEMENT dalej ustawia głębokość; faza przypięta do bitu jak w LFO (`core/synth/elg_dsp.*`, `wavetable_synth.*`, `audio/engine.cpp`, `ui/synth_view.*`, `seq/project.h`, `io/project_file.cpp`; `elg.c` bez zmian, bez sync nadal bit w bit). 30 presetów ELG (`io/factory_presets.cpp`), poziomy sprawdzone. Test: 120 BPM, 1/1 → okres ruchu 2,000 s. Wysłane na konsolę.
 **Następny krok:** port EVA z op1r.

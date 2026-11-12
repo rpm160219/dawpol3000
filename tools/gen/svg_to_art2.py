@@ -2,7 +2,7 @@
 """Przepisuje statyczna grafike SVG op1r (path M/L/Z, line, polyline, circle; grupy <g id="...">) do naglowka C++.
    Kreski: PRE_STROKES {pierwszy punkt, liczba, kolor, grubosc, zamknieta, grupa}; wypelnienia (even-odd):
    PRE_FILLS {pierwszy, liczba, kolor, grupa}; okregi: PRE_CIRCLES {x, y, r, kolor, wypelniony, grubosc, grupa}.
-   grupa = indeks w liscie podanych identyfikatorow (-1 = statyczne).
+   grupa = indeks w liscie podanych identyfikatorow (-1 = statyczne); PRE_ORDER = kolejnosc elementow z dokumentu.
    python3 tools/gen/svg_to_art2.py third_party/op1r_pew/pew.svg PW note0,note1,note2 > third_party/op1r_pew/pew_art.h"""
 import re, sys
 src, pre = sys.argv[1], sys.argv[2]
@@ -12,14 +12,18 @@ def col(s): return '0x%s' % s.lstrip('#').upper()
 def attr(tag, name, d=None):
     m = re.search(r'\b%s="([^"]*)"' % name, tag)
     return m.group(1) if m else d
-pts, strokes, fills, circles = [], [], [], []
+pts, strokes, fills, circles, order = [], [], [], [], []
 group = -1
 def add_poly(p, tag, closed):
     fill, stroke = attr(tag, 'fill', 'none'), attr(tag, 'stroke', 'none')
     first = len(pts) // 2
     pts.extend(p)
-    if fill != 'none': fills.append((first, len(p) // 2, col(fill), group))
-    if stroke != 'none': strokes.append((first, len(p) // 2, col(stroke), float(attr(tag, 'stroke-width', '1')), int(closed), group))
+    if fill != 'none':
+        order.append((0, len(fills)))
+        fills.append((first, len(p) // 2, col(fill), group))
+    if stroke != 'none':
+        order.append((1, len(strokes)))
+        strokes.append((first, len(p) // 2, col(stroke), float(attr(tag, 'stroke-width', '1')), int(closed), group))
 for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
     close, name, rest = m.group(1), m.group(2), m.group(3)
     tag = m.group(0)
@@ -43,6 +47,7 @@ for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
     elif name == 'circle':
         fill, stroke = attr(tag, 'fill', 'none'), attr(tag, 'stroke', 'none')
         filled = fill != 'none'
+        order.append((2, len(circles)))
         circles.append((float(attr(tag, 'cx')), float(attr(tag, 'cy')), float(attr(tag, 'r')), col(fill if filled else stroke),
                         int(filled), float(attr(tag, 'stroke-width', '1')), group))
 print('/* wygenerowane przez tools/gen/svg_to_art2.py z %s (grafika: Hundekraft, GPL-3.0-or-later) */' % src.split('/')[-1])
@@ -59,4 +64,9 @@ print('};')
 print('struct %sCircle { float x, y, r; unsigned rgb; int filled; float width; int group; };' % pre)
 print('static const %sCircle %s_CIRCLES[] = {' % (pre, pre))
 for c in circles: print('    {%.2ff, %.2ff, %.2ff, %s, %d, %.2ff, %d},' % c)
+print('};')
+print('/* kolejnosc rysowania jak w dokumencie: rodzaj (0 wypelnienie, 1 kreska, 2 okrag), indeks w swojej tablicy */')
+print('struct %sItem { int kind, idx; };' % pre)
+print('static const %sItem %s_ORDER[] = {' % (pre, pre))
+for k, i in order: print('    {%d, %d},' % (k, i))
 print('};')

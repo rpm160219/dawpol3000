@@ -18,7 +18,7 @@ static void putStr(FILE* f, const char* s) {
 
 void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f",
-            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : "wavetable"))), t.knob[0],
+            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : (t.engine == ENG_EVA ? "eva" : "wavetable")))), t.knob[0],
             t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
     fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
             t.fenvAmt);
@@ -29,7 +29,7 @@ void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
             x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents, x.osc[1].level,
             x.sub, x.fmode, x.drive);
-    if (t.engine == ENG_PEW) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
+    if (t.engine == ENG_PEW || t.engine == ENG_EVA) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
     if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
     fprintf(f, " menv %.4f %.4f %.4f %.4f %.4f %d", t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
@@ -102,7 +102,7 @@ const char* kv(char** tok, int n, int from, const char* key) {
 void parseInstrument(Track& t, char** tok, int n, int start) {
     const char* v;
     if ((v = kv(tok, n, start, "engine")))
-        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : ENG_WAVETABLE)));
+        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : (!strcmp(v, "eva") ? ENG_EVA : ENG_WAVETABLE))));
     // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
     for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu
