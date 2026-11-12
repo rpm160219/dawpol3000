@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 20:00
+**Poprawka po uwadze Patryka (źle zrozumiałem poprzednią prośbę):**
+- `core/ui/app.*` — cofnięta dodatkowa warstwa TRACK w pasku narzędzi L3 (pasek znów ma jedną warstwę EDIT; L2/R2 przy otwartym pasku znów przełączają zakładki).
+- `core/ui/dialogs.*` — wybór silnika jako druga karta okna TRACK (Select na ścieżce): L2/R2 przełączają karty TRACK ↔ ENGINE; karta ENGINE = lista silników w jednej kolumnie + ilustracja i opis; na karcie TRACK silnik tylko jako nazwa (usunięta zmiana przez L1/R1); A = OK zapisuje nazwę, kolor i silnik, B = anuluj; ścieżki audio bez karty ENGINE; kropki kart na dole. Usunięte osobne okno EngineDialog.
+- Test: Select → R2 → WAVETABLE+ → A; TEST SAW i powrót L2 → A; L1/R1 nie zmieniają silnika; B anuluje; ścieżka AUDIO bez karty ENGINE — OK.
+**Następny krok:** Patryk sprawdza.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 19:30
 **Zmienione:**
 - `core/ui/synth_view.cpp` — nazwa presetu usunięta z nagłówka SYNTH (zostaje w przeglądarce PRESETS, zielona kropka).

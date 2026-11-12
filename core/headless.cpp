@@ -130,14 +130,9 @@ int headlessPng(const char* path, const char* screen) {
         for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
     } else if (!strcmp(screen, "engine")) {
         app.arrange.setCursor(1, 2);
-        tap(app, B_L3);
-        tap(app, B_R2);
-        tap(app, B_A);     // ENGINE
-        tap(app, B_DOWN);  // WAVETABLE+
-    } else if (!strcmp(screen, "tracklayer")) {
-        app.arrange.setCursor(1, 2);
-        tap(app, B_L3);
-        tap(app, B_R2);
+        tap(app, B_SELECT);  // okno TRACK
+        tap(app, B_R2);      // karta ENGINE
+        tap(app, B_DOWN);    // WAVETABLE+
     } else if (!strcmp(screen, "tools")) {        // ARRANGE + pasek narzedzi, petla takty 3-6
         app.arrange.setCursor(1, 2);
         tap(app, B_L3);

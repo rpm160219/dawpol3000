@@ -12,7 +12,6 @@ void App::init(AudioEngine* e) {
     roll.attach(this);
     trackDlg.attach(this);
     patDlg.attach(this);
-    engineDlg.attach(this);
     synth.attach(this);
     cur_ = &arrange;
     publish();
@@ -137,22 +136,10 @@ void App::setInOut() {
 }
 
 void App::toolsUpdate(const InputState& in, float dt) {
-    if (btn_.pressed(B_L2) && toolsLayer_ > 0) toolsLayer_--;
-    if (btn_.pressed(B_R2) && toolsLayer_ < 1) toolsLayer_++;
-    if (toolsLayer_ == 0) {
-        if (btn_.pressed(B_B)) undo();
-        else if (btn_.pressed(B_A)) redo();
-        else if (btn_.pressed(B_X)) toggleLoop();
-        else if (btn_.pressed(B_Y)) setInOut();
-    } else {  // TRACK: B mute, A silnik, Y solo, X ustawienia sciezki
-        int t = toolsTrack();
-        if (t < 0) {
-            if (btn_.pressed(B_A) || btn_.pressed(B_B) || btn_.pressed(B_X) || btn_.pressed(B_Y)) toast("NO TRACK UNDER CURSOR");
-        } else if (btn_.pressed(B_B)) { prj_.tracks[t].mute = !prj_.tracks[t].mute; markDirty(); }
-        else if (btn_.pressed(B_Y)) { prj_.tracks[t].solo = !prj_.tracks[t].solo; markDirty(); }
-        else if (btn_.pressed(B_A)) { tools_ = false; openEngineSelect(t); return; }
-        else if (btn_.pressed(B_X)) { tools_ = false; openTrackEdit(t); return; }
-    }
+    if (btn_.pressed(B_B)) undo();
+    else if (btn_.pressed(B_A)) redo();
+    else if (btn_.pressed(B_X)) toggleLoop();
+    else if (btn_.pressed(B_Y)) setInOut();
     // Ekran dostaje tylko D-pad (kursor), Start i R3; galki wylaczone.
     static const int mask[] = {B_A, B_B, B_X, B_Y, B_L1, B_R1, B_SELECT, B_L3};
     Buttons mb = btn_.masked(mask, 8);
@@ -172,33 +159,14 @@ void App::toolsRender(Canvas& c) {
     } else { on = prj_.loopOn; a = prj_.loopIn; e = prj_.loopOut; }
     snprintf(loopLbl, sizeof loopLbl, "LOOP %s", on ? "ON" : "OFF");
     const char* unit = rollView ? "STEP" : "BAR";
-    if (e > a) snprintf(status, sizeof status, "EDIT 1/2 (L2/R2)  -  UNDO %d / REDO %d  -  LOOP %s %d-%d  -  L3 = EXIT", undo_.size(),
+    if (e > a) snprintf(status, sizeof status, "TOOLS  -  UNDO %d / REDO %d  -  LOOP %s %d-%d  -  L3 = EXIT", undo_.size(),
                         redo_.size(), unit, a + 1, e);
-    else snprintf(status, sizeof status, "EDIT 1/2 (L2/R2)  -  UNDO %d / REDO %d  -  LOOP: %s  -  L3 = EXIT", undo_.size(), redo_.size(),
+    else snprintf(status, sizeof status, "TOOLS  -  UNDO %d / REDO %d  -  LOOP: %s  -  L3 = EXIT", undo_.size(), redo_.size(),
                   rollView ? "WHOLE PATTERN" : "WHOLE SONG");
     const Color cols[4] = {pal::steel, pal::red, pal::tan, pal::pill};
     const char keys[4] = {'B', 'A', 'Y', 'X'};
-    if (toolsLayer_ == 0) {
-        const char* labels[4] = {"UNDO", "REDO", inPending_ ? "SET OUT" : "SET IN", loopLbl};
-        actionBar(c, labels, cols, keys, status);
-    } else {
-        int t = toolsTrack();
-        char st[96];
-        if (t >= 0) {
-            const Track& tr = prj_.tracks[t];
-            snprintf(st, sizeof st, "TRACK 2/2 (L2/R2)  -  %s  -  %s%s  -  L3 = EXIT", tr.name,
-                     tr.type == TRACK_MIDI ? (tr.engine == ENG_SAW ? "TEST SAW" : (tr.alt ? "WAVETABLE+" : "WAVETABLE")) : "AUDIO",
-                     tr.mute ? "  MUTED" : (tr.solo ? "  SOLO" : ""));
-        } else snprintf(st, sizeof st, "TRACK 2/2 (L2/R2)  -  NO TRACK UNDER CURSOR  -  L3 = EXIT");
-        bool m = t >= 0 && prj_.tracks[t].mute, so = t >= 0 && prj_.tracks[t].solo;
-        const char* labels[4] = {m ? "UNMUTE" : "MUTE", "ENGINE", so ? "UNSOLO" : "SOLO", "TRACK"};
-        actionBar(c, labels, cols, keys, st);
-    }
-    for (int i = 0; i < 2; i++) {  // kropki warstw na dole
-        float x = 314.5f + i * 12, y = 474.5f;
-        if (i == toolsLayer_) c.fillCircle(x, y, 2.4f, pal::white);
-        else c.circle(x, y, 2.f, 1.f, rgb(90, 90, 90));
-    }
+    const char* labels[4] = {"UNDO", "REDO", inPending_ ? "SET OUT" : "SET IN", loopLbl};
+    actionBar(c, labels, cols, keys, status);
 }
 
 // Po cofnieciu ekrany moga wskazywac na nieistniejace sciezki/patterny.
@@ -290,18 +258,6 @@ void App::openTrackEdit(int track) {
     next_ = &trackDlg;
 }
 
-void App::openEngineSelect(int track) {
-    if (track < 0 || track >= prj_.nTracks) return;
-    if (prj_.tracks[track].type != TRACK_MIDI) { toast("AUDIO TRACK - NO ENGINE"); return; }
-    engineDlg.open(track, cur_);
-    next_ = &engineDlg;
-}
-
-int App::toolsTrack() const {
-    int t = cur_ == &roll ? roll.trackIndex() : arrange.cursorTrack();
-    return t >= 0 && t < prj_.nTracks ? t : -1;
-}
-
 void App::openNewPattern(int track, int bar) {
     patDlg.open(track, bar);
     next_ = &patDlg;
@@ -323,15 +279,13 @@ void App::update(const InputState& in, float dt) {
     if (toolsView && btn_.pressed(B_L3)) {  // pasek narzedzi wl/wyl
         tools_ = !tools_;
         inPending_ = false;
-        toolsLayer_ = 0;
         if (tools_) roll.exitSelect();
     }
     if (tools_ && (!toolsView || (cur_ == &roll && btn_.pressed(B_R3)))) tools_ = false;  // R3 -> zaznaczanie
     bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
     // W menu zaznaczania (R3) i w pasku narzedzi (L3) L2/R2 przelaczaja warstwy paska, nie zakladki
     if (cur_ == &roll && roll.inSelectMode()) dialog = true;
-    if (tools_) dialog = true;
-    if (cur_ == &engineDlg) dialog = true;
+
     if (!dialog && btn_.pressed(B_L2)) {
         if (cur_ == &synth) {
             if (hasRoll && lastTrack_ == synth.track()) openPattern(lastPattern_, lastTrack_);
@@ -354,7 +308,7 @@ void App::update(const InputState& in, float dt) {
     // Krok historii konczy sie, gdy wszystkie przyciski sa puszczone i galki w spoczynku:
     // jedno wcisniecie = jeden krok, cale pokrecenie galka / przytrzymanie X+strzalka = jeden krok.
     // W oknach dialogowych czekamy do ich zamkniecia (cale okno = jeden krok).
-    bool inDialog = cur_ == &trackDlg || cur_ == &patDlg || cur_ == &engineDlg;
+    bool inDialog = cur_ == &trackDlg || cur_ == &patDlg;
     bool idle = true;
     for (int a = 0; a < AXIS_COUNT; a++) if (in.axis[a] > 0.2f || in.axis[a] < -0.2f) idle = false;
     for (int k = 0; k < BTN_COUNT; k++) if (in.btn[k]) idle = false;

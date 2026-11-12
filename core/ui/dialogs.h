@@ -2,8 +2,10 @@
 //
 // NEW TRACK:   gora/dol = typ (MIDI/AUDIO), L1/R1 = silnik (instrument), X = edycja nazwy, A = utworz, B = anuluj.
 //              Po utworzeniu sciezki MIDI od razu otwiera sie NEW PATTERN.
-// TRACK (edycja, Select na sciezce w ARRANGE): X = nazwa, krzyzak = kolor (siatka 4x8 = 32), L1/R1 = silnik,
-//              Y dwa razy = usun sciezke, A = OK, B = anuluj.
+// TRACK (edycja, Select na sciezce w ARRANGE): dwie karty przelaczane L2/R2:
+//   TRACK:  X = nazwa, krzyzak = kolor (siatka 4x8 = 32), Y dwa razy = usun sciezke; silnik tylko jako nazwa
+//   ENGINE: lista silnikow w jednej kolumnie (gora/dol), po prawej ilustracja i opis (sciezki MIDI)
+//   A = OK (zapisuje nazwe, kolor i silnik), B = anuluj.
 // NEW PATTERN: gora/dol = nowy albo istniejacy pattern z listy, lewo/prawo (lub niebieski
 //              enkoder) = dlugosc w taktach, X = edycja nazwy, A = utworz / uzyj, B = anuluj.
 //              Po utworzeniu klip trafia na sciezke i otwiera sie piano roll.
@@ -27,25 +29,16 @@ private:
     int edit_ = -1;  // -1 = nowa sciezka
     int color_ = 0;
     int engine_ = ENG_WAVETABLE;
+    int card_ = 0;     // karta okna edycji: 0 = TRACK, 1 = ENGINE
+    int engSel_ = 0;   // karta ENGINE: 0 WAVETABLE, 1 WAVETABLE+, 2 TEST SAW
+    void renderEngineCard(Canvas& c);
+    void cardDots(Canvas& c, int card);
     bool confirmDelete_ = false;
     char name_[12] = "";
     bool nameTouched_ = false;
     NameEdit ed_;
     void updateEdit(const Buttons& b);
     void renderEdit(Canvas& c);
-};
-
-// ENGINE (pasek narzedzi L3, warstwa TRACK -> ENGINE): lista silnikow w jednej kolumnie,
-// po prawej ilustracja i opis. Gora/dol = wybor, A = ustaw na sciezce, B = powrot.
-class EngineDialog : public View {
-public:
-    void open(int track, View* back);
-    void update(const Buttons& b, const InputState& in, float dt) override;
-    void render(Canvas& c) override;
-
-private:
-    int track_ = 0, sel_ = 0;
-    View* back_ = nullptr;
 };
 
 class PatternDialog : public View {

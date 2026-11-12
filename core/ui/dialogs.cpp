@@ -18,6 +18,22 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
     pillButton(c, 484, PY, 140, PH, l3, pal::red, 'B');
 }
 
+// ---------------- ENGINE ----------------
+
+struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
+static const EngineInfo kEngines[3] = {
+    {"WAVETABLE", "ORIGINAL 1:1",
+     {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
+      "8 WAVES FROM SINE TO DIGITAL.", "4-POLE LADDER FILTER WITH", "RESONANCE UP TO SELF-OSCILLATION.", ""}},
+    {"WAVETABLE+", "EXTENDED",
+     {"THE SAME CORE, OPENED UP:", "TWO INDEPENDENT OSCILLATORS -", "WAVE, INTERVAL, DETUNE, LEVEL.",
+      "SUB OSCILLATOR ONE OCTAVE DOWN.", "FILTER MODES LP24 LP12 BP HP", "WITH DRIVE. LFO TARGETS PER OSC.", ""}},
+    {"TEST SAW", "UTILITY",
+     {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
+};
+
+static int engineIndexOf(const Track& t) { return t.engine == ENG_SAW ? 2 : (t.alt ? 1 : 0); }
+
 // ---------------- NEW TRACK ----------------
 
 void TrackDialog::open() {
@@ -34,6 +50,8 @@ void TrackDialog::openEdit(int track) {
     edit_ = track;
     color_ = p.tracks[track].color % pal::TRACK_COLORS;
     engine_ = p.tracks[track].engine;
+    card_ = 0;
+    engSel_ = engineIndexOf(p.tracks[track]);
     type_ = p.tracks[track].type;
     memcpy(name_, p.tracks[track].name, sizeof name_);
     confirmDelete_ = false;
@@ -42,6 +60,24 @@ void TrackDialog::openEdit(int track) {
 
 void TrackDialog::updateEdit(const Buttons& b) {
     Project& p = app_->project();
+    const bool midi = p.tracks[edit_].type == TRACK_MIDI;
+    if (b.pressed(B_L2) && card_ > 0) card_--;
+    if (b.pressed(B_R2) && card_ < 1 && midi) card_++;
+    if (card_ == 1) {  // ENGINE
+        if (b.repeat(B_DOWN) && engSel_ < 2) engSel_++;
+        if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
+        if (b.pressed(B_B)) app_->showArrange();
+        if (b.pressed(B_A)) {
+            Track& t = p.tracks[edit_];
+            memcpy(t.name, name_, sizeof t.name);
+            t.color = (uint8_t)color_;
+            t.engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
+            if (engSel_ < 2) t.alt = engSel_ == 1;
+            app_->markDirty();
+            app_->showArrange();
+        }
+        return;
+    }
     // siatka kolorow 4 kolumny x 8 wierszy
     const int cols = 4, n = pal::TRACK_COLORS;
     int nc = color_;
@@ -50,8 +86,6 @@ void TrackDialog::updateEdit(const Buttons& b) {
     if (b.repeat(B_DOWN) && color_ + cols < n) nc += cols;
     if (b.repeat(B_UP) && color_ - cols >= 0) nc -= cols;
     if (nc != color_) { color_ = nc; confirmDelete_ = false; }
-    if (type_ == TRACK_MIDI && (b.pressed(B_L1) || b.pressed(B_R1)))
-        engine_ = (engine_ + (b.pressed(B_R1) ? 1 : ENG_COUNT - 1)) % ENG_COUNT;
     if (b.pressed(B_X)) ed_.begin(name_);
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_Y)) {
@@ -67,7 +101,10 @@ void TrackDialog::updateEdit(const Buttons& b) {
         Track& t = p.tracks[edit_];
         memcpy(t.name, name_, sizeof t.name);
         t.color = (uint8_t)color_;
-        t.engine = (uint8_t)engine_;
+        if (t.type == TRACK_MIDI) {  // wybor z karty ENGINE (jesli byla odwiedzona, inaczej bez zmian)
+            t.engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
+            if (engSel_ < 2) t.alt = engSel_ == 1;
+        }
         app_->markDirty();
         app_->showArrange();
     }
@@ -77,6 +114,7 @@ void TrackDialog::renderEdit(Canvas& c) {
     Project& p = app_->project();
     const Track& t = p.tracks[edit_];
     c.clear(pal::bg);
+    if (card_ == 1) { renderEngineCard(c); return; }
     headerBar(c, LBX, BY, LBW, BH, "TRACK", pal::silver);
     headerBar(c, RBX, BY, RBW, BH, "COLOR", pal::tan);
     if (type_ == TRACK_MIDI) drawSynthIllustration(c, 24, 84, 196, 150);
@@ -90,9 +128,10 @@ void TrackDialog::renderEdit(Canvas& c) {
     char b[48];
     snprintf(b, sizeof b, "%d CLIPS   VOL %d", clips, (int)(t.volume * 100 + 0.5f));
     drawText(c, 236, 218, b, 10, 1.3f, pal::dim);
-    if (type_ == TRACK_MIDI) {
-        drawText(c, 236, 244, "ENGINE  L1/R1", 8, 1.1f, pal::dim);
-        drawText(c, 236, 258, engineName(engine_), 13, 1.5f, pal::white);
+    if (type_ == TRACK_MIDI) {  // tylko nazwa silnika (wybor na karcie ENGINE: R2)
+        drawText(c, 236, 244, "ENGINE", 8, 1.1f, pal::dim);
+        drawText(c, 236, 258, kEngines[engSel_].name, 13, 1.5f, pal::white);
+        drawText(c, 236, 278, "R2 = CHANGE ENGINE", 7, 1.f, rgb(80, 80, 80));
     }
     if (confirmDelete_) drawText(c, 28, 300, "PRESS Y AGAIN TO DELETE TRACK + CLIPS", 10, 1.4f, pal::red);
     else drawText(c, 28, 300, "Y = DELETE TRACK", 10, 1.3f, pal::dim);
@@ -112,6 +151,43 @@ void TrackDialog::renderEdit(Canvas& c) {
     pillButton(c, 170, PY, 140, PH, confirmDelete_ ? "SURE?" : "DELETE", pal::tan, 'Y');
     pillButton(c, 330, PY, 140, PH, "OK", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
+    if (type_ == TRACK_MIDI) cardDots(c, 0);
+}
+
+// Kropki kart okna TRACK (TRACK, ENGINE) na dole ekranu
+void TrackDialog::cardDots(Canvas& c, int card) {
+    for (int i = 0; i < 2; i++) {
+        float x = 314.5f + i * 12, y = 474.5f;
+        if (i == card) c.fillCircle(x, y, 2.4f, pal::white);
+        else c.circle(x, y, 2.f, 1.f, rgb(90, 90, 90));
+    }
+}
+
+// Karta ENGINE: jedna kolumna silnikow, po prawej ilustracja i opis
+void TrackDialog::renderEngineCard(Canvas& c) {
+    const Track& t = app_->project().tracks[edit_];
+    headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
+    headerBar(c, 264, BY, 360, BH, name_, pal::tan);
+    const int cur = engineIndexOf(t);
+    for (int i = 0; i < 3; i++) {
+        float y = 80 + i * 56;
+        bool sel = i == engSel_;
+        if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
+        Color col = sel ? rgb(245, 210, 160) : pal::tan;
+        drawText(c, 30, y, kEngines[i].name, 16, 1.8f, col);
+        drawText(c, 30, y + 22, kEngines[i].sub, 8, 1.1f, sel ? pal::white : pal::dim);
+        if (i == cur) c.fillCircle(238, y + 8, 3.5f, pal::green);  // silnik zapisany na sciezce
+    }
+    c.line(258, 70, 258, 410, 1.5f, pal::steel);
+    drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
+    for (int l = 0; l < 7; l++)
+        if (kEngines[engSel_].lines[l][0])
+            drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
+    if (engSel_ < 2) drawText(c, 280, 400, "6 VOICES  -  1.4% CPU PER VOICE", 7, 1.f, pal::dim);
+    drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
+    pillButton(c, 330, PY, 140, PH, "OK", pal::pill, 'A');
+    pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
+    cardDots(c, 1);
 }
 
 void TrackDialog::update(const Buttons& b, const InputState&, float) {
@@ -168,72 +244,6 @@ void TrackDialog::render(Canvas& c) {
                  type_ == r ? pal::tan : rgb(90, 70, 50));
     }
     pills(c, "NAME", "TYPE", "CREATE", "CANCEL");
-}
-
-// ---------------- ENGINE ----------------
-
-struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const EngineInfo kEngines[3] = {
-    {"WAVETABLE", "ORIGINAL 1:1",
-     {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
-      "8 WAVES FROM SINE TO DIGITAL.", "4-POLE LADDER FILTER WITH", "RESONANCE UP TO SELF-OSCILLATION.", ""}},
-    {"WAVETABLE+", "EXTENDED",
-     {"THE SAME CORE, OPENED UP:", "TWO INDEPENDENT OSCILLATORS -", "WAVE, INTERVAL, DETUNE, LEVEL.",
-      "SUB OSCILLATOR ONE OCTAVE DOWN.", "FILTER MODES LP24 LP12 BP HP", "WITH DRIVE. LFO TARGETS PER OSC.", ""}},
-    {"TEST SAW", "UTILITY",
-     {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
-};
-
-static int engineIndexOf(const Track& t) { return t.engine == ENG_SAW ? 2 : (t.alt ? 1 : 0); }
-
-void EngineDialog::open(int track, View* back) {
-    track_ = track;
-    back_ = back;
-    sel_ = engineIndexOf(app_->project().tracks[track]);
-}
-
-void EngineDialog::update(const Buttons& b, const InputState&, float) {
-    Project& p = app_->project();
-    if (b.repeat(B_DOWN) && sel_ < 2) sel_++;
-    if (b.repeat(B_UP) && sel_ > 0) sel_--;
-    if (b.pressed(B_B)) app_->showView(back_);
-    if (b.pressed(B_A) && track_ < p.nTracks) {
-        Track& t = p.tracks[track_];
-        t.engine = sel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
-        if (sel_ < 2) t.alt = sel_ == 1;
-        app_->markDirty();
-        char m[48];
-        snprintf(m, sizeof m, "%s: %s", t.name, kEngines[sel_].name);
-        app_->toast(m);
-        app_->showView(back_);
-    }
-}
-
-void EngineDialog::render(Canvas& c) {
-    Project& p = app_->project();
-    const Track& t = p.tracks[track_];
-    c.clear(pal::bg);
-    headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
-    headerBar(c, 264, BY, 360, BH, t.name, pal::tan);
-    // lista w jednej kolumnie
-    const int cur = engineIndexOf(t);
-    for (int i = 0; i < 3; i++) {
-        float y = 80 + i * 56;
-        bool sel = i == sel_;
-        if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
-        Color col = sel ? rgb(245, 210, 160) : pal::tan;
-        drawText(c, 30, y, kEngines[i].name, 16, 1.8f, col);
-        drawText(c, 30, y + 22, kEngines[i].sub, 8, 1.1f, sel ? pal::white : pal::dim);
-        if (i == cur) c.fillCircle(238, y + 8, 3.5f, pal::green);  // silnik na tej sciezce
-    }
-    c.line(258, 70, 258, 410, 1.5f, pal::steel);
-    // prawa strona: ilustracja + opis
-    drawEngineIllustration(c, sel_, 280, 68, 336, 190);
-    for (int l = 0; l < 7; l++)
-        if (kEngines[sel_].lines[l][0]) drawText(c, 280, 276 + l * 18, kEngines[sel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
-    if (sel_ < 2) drawText(c, 280, 400, "6 VOICES  -  1.4% CPU PER VOICE", 7, 1.f, pal::dim);
-    pillButton(c, 330, PY, 140, PH, "SELECT", pal::pill, 'A');
-    pillButton(c, 484, PY, 140, PH, "BACK", pal::red, 'B');
 }
 
 // ---------------- NEW PATTERN ----------------
