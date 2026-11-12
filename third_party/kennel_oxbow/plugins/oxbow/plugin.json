@@ -1,0 +1,24 @@
+{
+  "name": "oxbow",
+  "kind": "synth",
+  "symbol": "ENGINE_oxbow",
+  "sources": [
+    "oxbow.c"
+  ],
+  "defaults": [
+    11869,
+    5677,
+    23738,
+    2560
+  ],
+  "screen": {
+    "svg": "oxbow.svg",
+    "symbol": "SCREEN_oxbow"
+  },
+  "loadable": true,
+  "claims": [],
+  "author": "zvenson, hundekraft",
+  "cflags": [
+    "-O3"
+  ]
+}

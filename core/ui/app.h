@@ -35,7 +35,7 @@ public:
     PresetStore& presets() { return presets_; }
     // presety wg silnika sciezki: WAVETABLE, WAVETABLE+ (osobny katalog), TAFFY
     PresetStore& presetsFor(int engine, bool alt) {
-        return engine == ENG_TAFFY ? presetsTf_ : (engine == ENG_PEW ? presetsPw_ : (engine == ENG_ELG ? presetsEl_ : (engine == ENG_EVA ? presetsEv_ : (engine == ENG_MBIRA ? presetsMb_ : (engine == ENG_REACTOR ? presetsRx_ : (alt ? presetsWp_ : presets_))))));
+        return engine == ENG_TAFFY ? presetsTf_ : (engine == ENG_PEW ? presetsPw_ : (engine == ENG_ELG ? presetsEl_ : (engine == ENG_EVA ? presetsEv_ : (engine == ENG_MBIRA ? presetsMb_ : (engine == ENG_REACTOR ? presetsRx_ : (engine == ENG_OXBOW ? presetsOb_ : (alt ? presetsWp_ : presets_)))))));
     }
     void openPresets(const char* root) {
         presetsWp_.init(root, "wavetableplus");  // najpierw: przenosi presety WAVETABLE+ ze wspolnego katalogu
@@ -46,6 +46,7 @@ public:
         presetsEv_.init(root, "eva");
         presetsMb_.init(root, "mbira");
         presetsRx_.init(root, "reactor");
+        presetsOb_.init(root, "oxbow");
     }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
@@ -78,7 +79,7 @@ private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
     ProjectStore store_;
-    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_;
+    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_, presetsOb_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia

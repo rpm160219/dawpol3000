@@ -41,6 +41,7 @@ void buildDemoAllEngines(Project& p) {
     const int pluck = track(p, "PLUCK", "wavetableplus", "SYNC PLUCK", 6, 0.4f);
     const int lead = track(p, "LEAD", "taffy", "CZ LEAD", 7, 0.5f);            // TAFFY
     const int core = track(p, "CORE", "reactor", "SCRAM", 8, 0.35f);          // REACTOR
+    const int brass = track(p, "BRASS", "oxbow", "POLY BRASS", 9, 0.4f);     // OXBOW
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
     int pd = p.addPattern("DRONE", 4);
@@ -111,6 +112,14 @@ void buildDemoAllEngines(Project& p) {
         p.addClip(organ, po, s);
     }
     p.addClip(pluck, pp, 8);
+    // OXBOW: akordy dete — dluga "raz" i synkopa na "trzy i"
+    int pbr = p.addPattern("BRASS", 4);
+    for (int b = 0; b < 4; b++)
+        for (int k = 0; k < 3; k++) {
+            note(p.patterns[pbr], b, 0, 6, CH[b][k] + 12, 105);
+            note(p.patterns[pbr], b, 10, 4, CH[b][k] + 12, 90);
+        }
+    p.addClip(brass, pbr, 8);
     p.addClip(core, pr, 8);
     p.addClip(core, pr, 12);
     p.addClip(lead, pl, 8);

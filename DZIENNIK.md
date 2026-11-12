@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 12:30
+**Zmienione — port silnika OXBOW (Hundekraft/kennel wg OberVave zvensona):**
+- Kod OXBOW nie jest w repo op1r — tylko w paczce źródeł Hundekraft 3.0.1 (link w README `Hundekraft/op1-workshop`); pobrana do `~/src_ext/hundekraft-3.0.1/` (suma SHA-256 zgodna).
+- `third_party/kennel_oxbow/` — oryginalne `oxbow.c`, `obv_dsp.h`, `obv_params.h`, `obv_tables.h`, `oxbow_geom.h`, `oxbow.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, PROVENANCE, README (licencja: OberVave GPL-3.0-only — zapisane w `third_party/LICENSES.md`); zaślepki `op1_plugin.h`, `seq/seq_text.h`; `oxbow_art.h`.
+- `core/synth/oxbow_dsp.*` — oxbow.c jako C, stan ścieżki zamieniany przy przełączaniu ścieżek; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — OXBOW jako ósmy rodzaj (note_off = wybrzmienie obwiedni filtra).
+- `core/ui/oxbow_screen.*` — ekran byka 1:1 (rogi, ptaki, dzwonek, oddech, gwiazdy, odczyty) w skali 1,82× (bez nachodzenia na napisy), tło w cache (4 ms/klatkę zamiast 12 na konsoli) + ilustracja; `core/ui/synth_view.*` — SOUND + L3 (WAVE/FILTER/DRIVE); `core/ui/dialogs.cpp` — OXBOW na liście (10 pozycji).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.*` — silnik `oxbow`, 16 presetów oryginału; demo ALL ENGINES z partią BRASS (OXBOW POLY BRASS), wersja 3.
+- `tests/oxbow_match.cpp`, `tools/test_oxbow.sh` — wzorzec z oryginalnego oxbow.c + harness op1r.
+- Testy: OXBOW bit w bit (0 różnic, z wybrzmieniem po note_off), pozostałe 7 silników nadal 0; CPU na konsoli 5,1–6,3% przy 6 głosach; demo bez przesterowania (szczyt 0,85), ~19% rdzenia. Wysłane na konsolę.
+**Następny krok:** Patryk testuje OXBOW i demo.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 11:00
 **Zmienione — port silnika REACTOR (op1r 63, Hundekraft):**
 - `third_party/op1r_reactor/` — oryginalne `reactor.c`, `reactor_dsp.h`, `reactor_sin.h`, `reactor_geom.h`, `reactor.svg`, `plugin.json`, `presets.py` (układ katalogów jak w op1r), LICENSE, NOTICE, README; zaślepki `op1_plugin.h` i `seq/seq_text.h`; `reactor_art.h` z SVG.

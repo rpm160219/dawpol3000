@@ -6,6 +6,7 @@
 #include "synth/eva_dsp.h"
 #include "synth/mbira_dsp.h"
 #include "synth/reactor_dsp.h"
+#include "synth/oxbow_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -107,6 +108,7 @@ void WavetableSynth::init(float outRate) {
     if (!eva_) eva_ = evaCreate();
     if (!mbira_) mbira_ = mbiraCreate();
     if (!reactor_) reactor_ = reactorCreate();
+    if (!oxbow_) oxbow_ = oxbowCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -384,6 +386,11 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 3) elgNoteOn(elg_, slot);
     else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
+    else if (kind_ == 7) {  // OXBOW: najpierw puszczone klawisze (bramka obwiedni filtra; LFO od pierwszego klawisza)
+        for (int i = 0; i < VOICES; i++)
+            if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) oxbowNoteOff(oxbow_, i);
+        oxbowNoteOn(oxbow_, slot, knobs_, v.vel);
+    }
     else if (kind_ == 4) {  // EVA: najpierw puszczone klawisze (sygnal Quindar przy pierwszym klawiszu)
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) evaNoteOff(eva_, i);
@@ -438,6 +445,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 7)  // OXBOW: puszczony klawisz = wybrzmienie obwiedni filtra
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) oxbowNoteOff(oxbow_, vi);
     if (kind_ == 6)  // REACTOR: puszczony klawisz (bramka glosu jak note_off oryginalu)
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) reactorNoteOff(reactor_, vi);
@@ -503,7 +513,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 6) {  // REACTOR (oryginalny DSP op1r)
+        if (kind_ == 7) {  // OXBOW (oryginalny DSP kennel)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            oxbowRender(oxbow_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 6) {  // REACTOR (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             reactorRender(reactor_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 5) {  // MBIRA (oryginalny DSP op1r)

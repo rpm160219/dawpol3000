@@ -5,8 +5,8 @@
 namespace dp {
 
 // "ALL ENGINES": A-moll, 96 BPM, 16 taktow (Am - F - C - G), kazdy silnik ma swoja partie:
-// ELG dron, EVA chor, MBIRA arpeggio, WAVETABLE bas, WAVETABLE+ stopa i pluck, PEW organy, TAFFY melodia, REACTOR akcenty.
-// Uklad: 1-4 intro (dron, chor, kalimba), 5-8 groove (+ bas, stopa, organy), 9-12 calosc (+ melodia, pluck),
+// ELG dron, EVA chor, MBIRA arpeggio, WAVETABLE bas, WAVETABLE+ stopa i pluck, PEW organy, TAFFY melodia, REACTOR akcenty, OXBOW akordy dete.
+// Uklad: 1-4 intro (dron, chor, kalimba), 5-8 groove (+ bas, stopa, organy), 9-12 calosc (+ melodia, pluck, dete),
 // 13-16 wyciszenie (dron, chor, kalimba, melodia, akcenty).
 void buildDemoAllEngines(Project& p);
 

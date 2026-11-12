@@ -115,7 +115,7 @@ static const FactoryPreset kTaffy[] = {
     {"BUBBLEGUM PAD", CAT_PAD, 1, "k 16384 8000 6000 12000 voice 0 0 0 0.4 env 0.7 1.5 0.8 1.5 lfo1 0 0.2 0.2 0 0 0"},
     {"CZ BELLS", CAT_BELL, 1, "k 32767 14000 16000 18000 env 0.001 1.6 0 1.4"},
     {"RESO SWEEP", CAT_FX, 1, "k 0 3000 0 26000 lfo1 1 2 0.4 1 1 1 env 0.005 0.4 0.9 0.5"},
-    {"SYNC LEAD", CAT_LEAD, 1, "k 0 7000 12000 20000 voice 1 0 15 0 gsync 1 7 lfo1 0 5.5 0.01 4 0 0"},
+    {"SYNC LEAD", CAT_LEAD, 1, "k 23222 2581 20642 3072 push 19114 2304 2600 env 0.001 0.79 0.763 0.407"},
     {"WOBBLE CZ", CAT_FX, 1, "k 10923 4000 0 8000 voice 1 0 0 0 lfo1 0 2 0.5 1 1 5"},
     // ---- wersja 2: 30 nowych ----
     {"CZ SUB", CAT_BASS, 2, "k 0 1000 8000 0 voice 1 0.02 0 0 env 0.002 0.4 0.8 0.1"},
@@ -312,9 +312,32 @@ static const FactoryPreset kReactor[] = {
     {"SCRAM", CAT_FX, 1, "k 8000 8000 30000 24000 push 0 0 8687 env 0.001 0.25 0.2 0.08"},
 };
 
+// OXBOW: 16 presetow oryginalu (third_party/kennel_oxbow/plugins/oxbow/presets.py): galki i strona 2 (push WAVE FILTER
+// DRIVE) 1:1; obwiednia OP-1 przeliczona w przyblizeniu (czas ~ 8 s x (v/32767)^1,5); efekty pominiete.
+static const FactoryPreset kOxbow[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"POLY BRASS", CAT_KEYS, 1, "k 14191 3871 26834 3584 push 2730 2304 1600 env 0.009 0.79 0.702 0.341"},
+    {"SYNC LEAD", CAT_LEAD, 1, "k 23222 2581 20642 3072 push 19114 2304 2600 env 0.001 0.211 0.763 0.07"},
+    {"PWM STRING", CAT_PAD, 1, "k 19352 1291 19094 4608 push 8192 256 0 env 0.449 1.451 0.855 1.556"},
+    {"BELL XMOD", CAT_BELL, 1, "k 25802 5161 24254 3072 push 24576 1280 600 env 0.001 1.057 0.183 1.057"},
+    {"FAT BASS", CAT_BASS, 1, "k 10321 7741 28124 3072 push 2730 2304 3500 env 0.001 0.707 0.458 0.179"},
+    {"SWEEP PAD", CAT_PAD, 1, "k 7741 5161 32767 5120 push 13653 2304 0 env 0.707 1.556 0.793 1.773"},
+    {"BP QUACK", CAT_PLUCK, 1, "k 12901 18062 31994 3072 push 8192 1280 500 env 0.001 0.55 0.0 0.159"},
+    {"BRASS STAB", CAT_KEYS, 1, "k 15481 6451 29414 4096 push 13653 256 1200 env 0.003 0.707 0.671 0.279"},
+    {"HOLLOW PAD", CAT_PAD, 1, "k 18062 5161 16514 6144 push 8192 1792 0 env 0.55 1.556 0.793 1.556"},
+    {"SQUARE LD", CAT_LEAD, 1, "k 23222 5161 23222 2560 push 8192 256 1000 env 0.001 0.707 0.855 0.407"},
+    {"SOFT KEYS", CAT_KEYS, 1, "k 15481 2581 25544 3072 push 2730 256 0 env 0.006 0.876 0.397 0.477"},
+    {"CLAV PLUCK", CAT_PLUCK, 1, "k 14191 10321 32767 1536 push 8192 1280 2200 env 0.001 0.341 0.0 0.103"},
+    {"WOBBLE BS", CAT_BASS, 1, "k 9031 12901 16514 3072 push 13653 2304 2800 env 0.001 0.876 0.549 0.279"},
+    {"FIFTHS LD", CAT_LEAD, 1, "k 21932 3871 23222 3072 push 30037 256 600 env 0.001 0.965 0.793 0.477"},
+    {"VINTAGE PD", CAT_PAD, 1, "k 14191 3871 24254 4608 push 13653 256 0 env 0.477 1.556 0.824 1.556"},
+    {"XMOD GROWL", CAT_BASS, 1, "k 12901 5161 29414 3072 push 24576 2304 4500 env 0.003 0.965 0.671 0.407"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "oxbow")) { *n = sizeof kOxbow / sizeof kOxbow[0]; *engine = ENG_OXBOW; return kOxbow; }
     if (!__builtin_strcmp(eng, "reactor")) { *n = sizeof kReactor / sizeof kReactor[0]; *engine = ENG_REACTOR; return kReactor; }
     if (!__builtin_strcmp(eng, "mbira")) { *n = sizeof kMbira / sizeof kMbira[0]; *engine = ENG_MBIRA; return kMbira; }
     if (!__builtin_strcmp(eng, "eva")) { *n = sizeof kEva / sizeof kEva[0]; *engine = ENG_EVA; return kEva; }

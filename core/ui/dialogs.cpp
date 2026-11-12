@@ -6,6 +6,7 @@
 #include "ui/eva_screen.h"
 #include "ui/mbira_screen.h"
 #include "ui/reactor_screen.h"
+#include "ui/oxbow_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -25,7 +26,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 9;
+static const int NENG = 10;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -51,16 +52,19 @@ static const EngineInfo kEngines[NENG] = {
     {"REACTOR", "FEEDBACK FM CORE",
      {"PORT OF THE OP1R REACTOR ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "FOUR SINE RODS IN A FEEDBACK", "LOOP, A CORE THAT HEATS UP.",
       "PAST CRITICAL: MORE DRIVE, AN", "OCTAVE-DOWN GROWL, SAGGING PITCH.", "COOLING, RADIATION, RODS, HEAT."}},
+    {"OXBOW", "OB-STYLE POLY",
+     {"PORT OF HUNDEKRAFT'S OXBOW, AFTER", "ZVENSON'S OBERVAVE. BIT-EXACT.", "TWO OSCILLATORS WITH SYNC AND", "CROSS-MOD, NOISE, DRIVE, A STATE",
+      "VARIABLE FILTER (LP, HP, BP, NOTCH,", "LP24, SEM), FILTER ENVELOPE, VINTAGE.", "L3 ON SOUND: WAVE, FILTER, DRIVE."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 8 : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 9 : t.engine == ENG_OXBOW ? 8 : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 8 ? ENG_SAW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 9 ? ENG_SAW : idx == 8 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     t.engine = (uint8_t)e;
     t.alt = idx == 1;
@@ -199,7 +203,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     for (int i = 0; i < NENG; i++) {
-        float y = 72 + i * 36;
+        float y = 70 + i * 33;
         bool sel = i == engSel_;
         if (sel) c.fillRoundRect(16, y - 6, 236, 35, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
@@ -212,13 +216,14 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 5) drawEvaIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 6) drawMbiraIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 7) drawReactorIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 8) drawOxbowIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
     if (engSel_ < 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
-    else if (engSel_ < 8) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ < 9) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');

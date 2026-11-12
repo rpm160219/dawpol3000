@@ -124,7 +124,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
-            } else if (t.engine == ENG_MBIRA && alt_ && i < 3) {  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
+            } else if ((t.engine == ENG_MBIRA || t.engine == ENG_OXBOW) && alt_ && i < 3) {  // OXBOW: WAVE, FILTER, DRIVE  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
                 knob(t.push[i]);
             } else if (t.engine == ENG_EVA && alt_ && i == 3) {  // EVA + L3: strona 2 COM = oktawa sygnalu (3 stopnie)
                 int st = stepOct_.steps(ax, dt, 3.f);
@@ -270,6 +270,14 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_OXBOW) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        OxbowView ov = {};
+        if (e) e->oxbowView(track_, &ov);
+        ob_.draw(c, shown, t.push, k == K_SOUND && alt_, ov);
     } else if (t.engine == ENG_REACTOR) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -353,6 +361,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_OXBOW) { hint = alt_ ? "L3 = CUTOFF / RES / ENV" : "L3 = WAVE / FILTER / DRIVE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MBIRA) { hint = alt_ ? "L3 = STRIKE / TINE / BOX" : "L3 = RING / DOUBLE / WAH"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_EVA) { hint = alt_ ? "L3 = COM" : "L3 = BEEP OCTAVE"; if (alt_) hc = pal::red; }
     if (k == K_SOUND && t.engine == ENG_ELG) {
@@ -444,7 +453,23 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_REACTOR) {  // reaktor: chlodzenie, promieniowanie, prety, cieplo
+    if (k == K_SOUND && t.engine == ENG_OXBOW) {  // OB: filtr, rezonans, obwiednia filtra (+/-), rozstrojenie OSC 2
+        static const char* L[4] = {"CUTOFF", "RESONANCE", "ENV AMT", "DETUNE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+        snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
+        snprintf(v[1], 16, "%d", t.knob[1] * 100 / 32767);
+        snprintf(v[2], 16, "%+d", (t.knob[2] - 16384) * 100 / 16384);
+        snprintf(v[3], 16, "%.0fC", (t.knob[3] * 128 >> 15) * 50.f / 128.f);
+        if (alt_) {  // strona 2: WAVE, FILTER, DRIVE
+            static const char* W[6] = {"SAW", "PULSE", "BOTH", "SYNC", "X-MOD", "FIFTH"};
+            static const char* F[6] = {"LP12", "HP12", "BP12", "NOTCH", "LP24", "SEM"};
+            const int w0 = t.push[0] < 0 ? 0 : t.push[0], w1 = t.push[1] < 0 ? 0 : t.push[1];
+            labels[0] = "WAVE"; snprintf(v[0], 16, "%s", W[(w0 * 6) >> 15]);
+            labels[1] = "FILTER"; snprintf(v[1], 16, "%s", F[((unsigned)w1 >> 9) % 6]);
+            labels[2] = "DRIVE"; snprintf(v[2], 16, "%d", t.push[2] * 100 / 32767);
+            for (int i = 0; i < 3; i++) pos[i] = t.push[i] / 32767.f;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_REACTOR) {  // reaktor: chlodzenie, promieniowanie, prety, cieplo
         static const char* L[4] = {"COOLING", "RADIATION", "RODS", "HEAT"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", t.knob[i] * 100 / 32767); }
     } else if (k == K_SOUND && t.engine == ENG_MBIRA) {  // pianino kciukowe: uderzenie, material, pudlo, kapsle
