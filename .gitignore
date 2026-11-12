@@ -7,3 +7,4 @@ tools/device.conf
 ref/
 projects/
 presets/
+dist/

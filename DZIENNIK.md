@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 15:30
+**Zmienione:** `tools/package_portmaster.sh` (nowy) i `tools/portmaster/DAW-POL 3000.sh` — paczka ZIP dla PortMastera (do pokazania koledze): starter szukający PortMastera jak inne porty, folder `dawpol3000/` z programem, `port.json`, README (instalacja, sterowanie) i licencje. Wynik w `dist/` (poza gitem) i kopia na konsoli w `/userdata/dawpol3000/`. Sprawdzone na konsoli w katalogu tymczasowym (rozpakowanie, PortMaster znaleziony, program startuje); obecna instalacja nienaruszona.
+**Następny krok:** Patryk przekazuje paczkę koledze.
+**Wymaga od Patryka:** tak — skopiowanie pliku.
+
 ## 2026-11-13 15:00
 **Zmienione:** `core/ui/oxbow_screen.*`, `core/ui/synth_view.cpp` — ekran OXBOW+ (uwagi Patryka): pod bykiem zamiast ENV jest typ filtra (biały), zamiast DETUNE — ENV>PITCH (czerwony); ptaki chodzą po rogach z ENV>PITCH (środek = 0), oddech (biały) rośnie z typem filtra (LP12 najmniejszy … SEM największy). Zwykły OXBOW bez zmian. Wysłane na konsolę.
 **Następny krok:** Patryk sprawdza ekran OXBOW+.
