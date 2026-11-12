@@ -252,6 +252,14 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_SELECT);  // okno TRACK
         tap(app, B_R2);      // karta ENGINE
         tap(app, B_DOWN);    // WAVETABLE+
+    } else if (!strcmp(screen, "allengines")) {  // utwor demo ALL ENGINES w ARRANGE, w trakcie grania
+        app.loadDemoAllEngines();
+        app.arrange.setCursor(0, 0);
+        idle(app);
+        eng.send(EC_PLAY_SONG);
+        for (int i = 0; i < 1900; i++) eng.process(buf, 256);  // ~10 s: takt 5
+        InputState in;
+        app.update(in, 0.016f);
     } else if (!strcmp(screen, "tools")) {        // ARRANGE + pasek narzedzi, petla takty 3-6
         app.arrange.setCursor(1, 2);
         tap(app, B_L3);
@@ -294,7 +302,7 @@ int headlessPng(const char* path, const char* screen) {
     return savePng(c, path);
 }
 
-int headlessWav(const char* path, float seconds) {
+int headlessWav(const char* path, float seconds, const char* song) {
     const int sr = 48000, block = 256;
     int frames = (int)(seconds * sr);
     float* out = (float*)calloc((size_t)frames * 2 + block * 2, sizeof(float));
@@ -302,7 +310,8 @@ int headlessWav(const char* path, float seconds) {
     eng.init((float)sr);
     static App app;
     app.init(&eng);
-    app.loadDemo();
+    if (song && !strcmp(song, "allengines")) app.loadDemoAllEngines();
+    else app.loadDemo();
     eng.send(EC_PLAY_SONG);
     for (int pos = 0; pos < frames; pos += block) eng.process(out + (size_t)pos * 2, block);
     bool ok = writeWav16(path, out, frames, sr);

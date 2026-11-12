@@ -1,5 +1,6 @@
 #include "ui/app.h"
 #include "ui/splash.h"
+#include "seq/demo_song.h"
 #include "gfx/font.h"
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +32,12 @@ void App::showProject() { projectView.onShow(); next_ = &projectView; }
 
 void App::openStore(const char* root) {
     store_.init(root);
+    if (!store_.hasMarker("_demo_all_engines_v1")) {  // utwor demo na wszystkich silnikach — raz (usuniety nie wraca)
+        static Project demo;
+        buildDemoAllEngines(demo);
+        if (!store_.exists(demo.name)) store_.save(demo);
+        store_.setMarker("_demo_all_engines_v1");
+    }
     static Project tmp;
     if (store_.loadLast(tmp)) {
         prj_ = tmp;
@@ -343,6 +350,16 @@ void App::render(Canvas& c) {
         c.strokeRoundRect(x, y, w, 30, 15, 1.2f, pal::dim);
         drawText(c, 320, y + 9, toast_, 12, 1.5f, pal::white, ALIGN_CENTER);
     }
+}
+
+void App::loadDemoAllEngines() {
+    buildDemoAllEngines(prj_);
+    lastPattern_ = -1;
+    savedAs_[0] = 0;
+    dirty_ = true;
+    publish();
+    modified_ = false;
+    resetHistory();
 }
 
 void App::loadDemo() {

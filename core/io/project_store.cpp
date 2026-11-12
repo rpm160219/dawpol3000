@@ -101,4 +101,17 @@ bool ProjectStore::loadLast(Project& p) {
     return false;
 }
 
+bool ProjectStore::hasMarker(const char* name) const {
+    char path[400];
+    snprintf(path, sizeof path, "%s/%s", root_, name);
+    return fs::exists(path);
+}
+
+void ProjectStore::setMarker(const char* name) {
+    char path[400];
+    snprintf(path, sizeof path, "%s/%s", root_, name);
+    FILE* f = fopen(path, "w");
+    if (f) fclose(f);
+}
+
 }  // namespace dp

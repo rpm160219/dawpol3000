@@ -20,6 +20,8 @@ public:
     void setLast(const char* name);
     bool loadLast(Project& p);
     static void folderName(const char* name, char* out, int n);  // "MY SONG" -> "MY_SONG"
+    bool hasMarker(const char* name) const;          // plik-znacznik w katalogu projektow (np. demo juz dodane)
+    void setMarker(const char* name);
 
 private:
     char root_[256] = "";

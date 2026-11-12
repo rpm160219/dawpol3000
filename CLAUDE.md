@@ -134,5 +134,6 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Ekran startowy z nazwą programu (~4,5 s, dowolny przycisk pomija).
 - ELG (port 1:1 z op1r, dron z 3 piłami, ekran „łoś”): „sam silnik” — gałki INTERVAL/DETUNE/TIMBRE/MOVEMENT (L3 = czerwona gałka SYNC: ruch w tempie, OFF / 1/1 … 1/128T), tylko obwiednia głośności, strony SOUND / AMP ENV / PRESETS (31 presetów); ~7,6% rdzenia przy 6 głosach.
 - EVA (port 1:1 z op1r, „kosmiczny chór” z radiem w hełmie, ekran astronautki): PRESSURE/FREQ/OXYGEN/COM, L3 = strona 2 COM (oktawa sygnału Quindar), strony SOUND / AMP ENV / MOD ENV / LFO 1 / LFO 2 / PRESETS (cele PRES, FREQ, OXY, COM, PTCH, VOL; bez drugiej obwiedni i trybów głosu), 28 presetów (8 z oryginału + 20 z modulacją); C (`eva_dsp.c`); ~7,6% rdzenia przy 6 głosach.
-- MBIRA (port 1:1 z op1r, pianino kciukowe — synteza modalna, ekran kalimby): STRIKE/TINE/BOX/BUZZ, L3 = strona 2 (RING / DOUBLE / WAH), strony jak EVA (AMP ENV, MOD ENV, 2 LFO), 8 presetów oryginału; C (`mbira_dsp.c`); ~5,3% rdzenia przy 6 głosach.
-- Następny krok: Patryk testuje MBIRA i poprawiony ekran EVA.
+- MBIRA (port 1:1 z op1r, pianino kciukowe — synteza modalna, ekran kalimby): STRIKE/TINE/BOX/BUZZ, L3 = strona 2 (RING / DOUBLE / WAH), strony jak EVA (AMP ENV, MOD ENV, 2 LFO), 28 presetów (8 z oryginału + 20 z modulacją); C (`mbira_dsp.c`); ~5,3% rdzenia przy 6 głosach.
+- Utwór demo „ALL ENGINES” (`core/seq/demo_song.cpp`): wszystkie silniki, 16 taktów, 96 BPM; dodawany raz do listy PROJECT; na konsoli ~18% rdzenia.
+- Następny krok: Patryk słucha utworu demo i presetów MBIRA; potem kolejny silnik.

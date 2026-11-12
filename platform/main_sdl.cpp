@@ -29,7 +29,7 @@ static volatile sig_atomic_t gTerm = 0;
 static void onTerm(int) { gTerm = 1; }
 
 static void usage() {
-    printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [arrange|track|pattern|roll|test]] [--render-wav file.wav [seconds]]\n");
+    printf("dawpol3000 [--test] [--fullscreen] [--frames N] [--render-png file.png [arrange|track|pattern|roll|test]] [--render-wav file.wav [seconds [allengines]]]\n");
 }
 
 int main(int argc, char** argv) {
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1], i + 2 < argc ? argv[i + 2] : "arrange");
         if (!strcmp(argv[i], "--render-wav") && i + 1 < argc) {
             float secs = (i + 2 < argc) ? (float)atof(argv[i + 2]) : 5.f;
-            return headlessWav(argv[i + 1], secs > 0 ? secs : 5.f);
+            return headlessWav(argv[i + 1], secs > 0 ? secs : 5.f, i + 3 < argc ? argv[i + 3] : nullptr);
         }
         if (!strcmp(argv[i], "--frames") && i + 1 < argc) frames = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--fullscreen")) fullscreen = true;

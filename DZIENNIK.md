@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 09:00
+**Zmienione:**
+- `core/io/factory_presets.cpp` — 20 nowych presetów MBIRA (wersja 2) z MOD ENV, LFO i stroną 2 (RING/DOUBLE/WAH); poziomy sprawdzone; `factoryInstrument()` — brzmienie z presetu fabrycznego po nazwie.
+- `core/seq/demo_song.*` (nowy) — utwór demo „ALL ENGINES”: A-moll, 96 BPM, 16 taktów (Am–F–C–G), każdy silnik ma partię (ELG dron, EVA chór, MBIRA arpeggio, WAVETABLE bas, WAVETABLE+ stopa i pluck, PEW organy, TAFFY melodia); intro → groove → całość → wyciszenie.
+- `core/ui/app.*`, `core/io/project_store.*` — utwór dodawany raz do listy PROJECT (znacznik; usunięty nie wraca); `core/headless.*`, `platform/main_sdl.cpp` — render WAV/PNG utworu demo (`out/all_engines.wav`, `out/allengines.png`).
+- Testy: WAV bez przesterowania (szczyt 0,78); na konsoli cały utwór ~18% jednego rdzenia. Wysłane na konsolę.
+**Następny krok:** Patryk słucha utworu demo (PROJECT → ALL ENGINES) i presetów MBIRA.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 08:00
 **Zmienione:** `core/ui/eva_screen.cpp` — astronautka na ekranie EVA (i na ilustracji) zmniejszona do 88%, nie wchodzi już na napisy strony pod ekranem; wskaźniki bez zmian (uwaga Patryka). Wysłane na konsolę.
 **Następny krok:** Patryk sprawdza ekran EVA i MBIRA.

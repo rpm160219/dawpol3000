@@ -7,6 +7,9 @@
 // 5 VOL 6 W1 7 W2 8 P1 9 P2 10 LV1 11 LV2. Ksztalty LFO: 0 SINE 1 TRI 2 SAW 3 SQR 4 RND. Podzialy: 0 1/1 1 1/2 3 1/4 5 1/8 7 1/16.
 // ver = wersja zestawu w danym katalogu; na karcie dopisywane sa tylko presety z wersji nowszych niz znacznik.
 #include "io/preset_store.h"
+#include "io/project_file.h"
+#include "seq/demo_song.h"
+#include <stdio.h>
 
 namespace dp {
 
@@ -269,6 +272,27 @@ static const FactoryPreset kMbira[] = {
     {"STEEL DUET", CAT_PLUCK, 1, "k 14500 16384 9000 0 push 5000 6000 0 env 0.001 0.7 0.78 0.35"},
     {"BOTTLE CAPS", CAT_PLUCK, 1, "k 19000 16000 17000 16000 env 0.001 0.6 0.7 0.2"},
     {"GLASS DUSK", CAT_BELL, 1, "k 10000 30000 4000 0 push 10000 0 0 env 0.001 1 0.92 0.45"},
+    // ---- wersja 2: z MOD ENV, LFO i strona 2 (push RING DOUBLE WAH; cele 0 STRK 1 TINE 2 BOX 3 BUZZ 4 PTCH 5 VOL) ----
+    {"LONG KALIMBA", CAT_PLUCK, 2, "k 14000 16384 14000 0 push 26000 4000 0 env 0.001 1 0.95 1.5"},
+    {"DETUNED TINES", CAT_PLUCK, 2, "k 15000 17000 12000 0 push 14000 22000 0 env 0.001 0.8 0.9 0.8"},
+    {"WAH KALIMBA", CAT_PLUCK, 2, "k 16000 16384 12000 0 push 10000 0 30000 env 0.001 0.8 0.9 0.6"},
+    {"MORPH TINE", CAT_PLUCK, 2, "k 14000 4000 12000 0 push 16000 0 0 env 0.001 0.8 0.92 0.8 menv 0.001 0.6 0 0.5 0.7 1"},
+    {"WOBBLE TINE", CAT_PLUCK, 2, "k 14000 16384 12000 0 push 18000 0 0 env 0.001 0.8 0.92 0.8 lfo1 0 5 0.012 4 0 0"},
+    {"RATTLE STEPS", CAT_PLUCK, 2, "k 18000 16000 14000 8000 env 0.001 0.6 0.8 0.3 lfo1 3 2 0.5 3 1 7"},
+    {"SOFT THUMBS", CAT_KEYS, 2, "k 4000 16384 18000 0 push 20000 6000 0 env 0.002 1 0.92 1"},
+    {"HARD NAILS", CAT_PLUCK, 2, "k 32767 18000 8000 0 env 0.001 0.5 0.8 0.3 menv 0.001 0.15 0 0.1 -0.5 0"},
+    {"WOOD MARIMBA", CAT_PLUCK, 2, "k 11000 1000 22000 0 push 6000 0 0 env 0.001 0.5 0.75 0.3"},
+    {"LOG DRUM", CAT_FX, 2, "k 9000 0 30000 0 env 0.001 0.4 0.6 0.2 menv 0.001 0.06 0 0.05 -0.15 4"},
+    {"STEEL PAN", CAT_BELL, 2, "k 22000 20000 10000 0 push 14000 10000 6000 env 0.001 0.9 0.85 0.7"},
+    {"GLASS HARP", CAT_BELL, 2, "k 8000 32000 4000 0 push 30000 12000 0 env 0.05 1 0.95 2"},
+    {"ICE CHIMES", CAT_BELL, 2, "k 28000 31000 2000 0 push 26000 18000 0 env 0.001 1.5 0.9 2 lfo1 0 0.3 0.15 5 0 0"},
+    {"MUSIC BOX TINE", CAT_BELL, 2, "k 24000 24000 6000 0 push 12000 3000 0 env 0.001 0.8 0.85 0.8"},
+    {"TALKING BOX", CAT_FX, 2, "k 16000 16384 16000 4000 push 14000 0 24000 env 0.001 0.8 0.9 0.6 lfo1 1 3 0.4 2 0 0"},
+    {"BUZZ SWELL", CAT_FX, 2, "k 16000 14000 14000 0 env 0.001 1 0.9 0.8 menv 0.6 0.6 1 0.6 0.8 3"},
+    {"GATED TINES", CAT_KEYS, 2, "k 16000 16384 12000 0 push 24000 6000 0 env 0.001 1 0.95 0.5 lfo1 3 2 0.85 5 1 7"},
+    {"WARPED", CAT_FX, 2, "k 14000 16384 12000 4000 push 20000 16000 0 env 0.001 1 0.9 1 lfo1 4 1 0.08 4 0 0"},
+    {"DEEP BOX BASS", CAT_BASS, 2, "k 10000 3000 30000 0 env 0.001 0.6 0.85 0.3"},
+    {"BRIGHT PLINK", CAT_PLUCK, 2, "k 30000 20000 8000 2000 push 4000 0 0 env 0.001 0.4 0.6 0.25"},
 };
 
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
@@ -282,6 +306,25 @@ const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     *n = sizeof kWavetable / sizeof kWavetable[0];
     *engine = ENG_WAVETABLE;
     return kWavetable;
+}
+
+// Instrument z presetu fabrycznego (katalog silnika + nazwa) — np. do utworow demo. false = brak presetu.
+bool factoryInstrument(const char* eng, const char* name, Track& t) {
+    int n = 0, engine = ENG_WAVETABLE;
+    const FactoryPreset* list = factoryList(eng, &n, &engine);
+    for (int i = 0; i < n; i++) {
+        if (__builtin_strcmp(list[i].name, name)) continue;
+        t.engine = (uint8_t)engine;
+        t.alt = false;
+        PresetStore::initInstrument(t);
+        static char line[2048];
+        char* tok[128];
+        snprintf(line, sizeof line, "%s", list[i].inst);
+        parseInstrument(t, tok, tokenize(line, tok, 128), 0);
+        snprintf(t.preset, sizeof t.preset, "%s", name);
+        return true;
+    }
+    return false;
 }
 
 }  // namespace dp

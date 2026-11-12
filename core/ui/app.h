@@ -64,6 +64,7 @@ public:
     void togglePlaySong();
 
     void loadDemo();  // przykladowy projekt (headless, pierwsze uruchomienie)
+    void loadDemoAllEngines();  // utwor "ALL ENGINES" (headless: render WAV)
 
     ProjectView projectView;
     ArrangeView arrange;
