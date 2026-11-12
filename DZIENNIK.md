@@ -1,6 +1,6 @@
 # Dziennik DAW-POL 3000
 
-## 2026-11-12 19:00
+## 2026-11-12 18:32
 **Zmienione — port silnika SUPERSAW (op1r, pcppcp), standardowo: 1:1 + pakiet modulacji + VOICE, własne presety:**
 - `third_party/op1r_supersaw/` — oryginalne `supersaw.c`, `supersaw_geom.h`, `supersaw.svg`, `plugin.json`, `gen_svg.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `supersaw_art.h` (rysunek ze SVG).
 - `tools/gen/svg_to_art2.py` — obsługa krzywych Béziera i elementów z własnym id (potrzebne do rysunku piły).
