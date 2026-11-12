@@ -330,7 +330,8 @@ void SynthView::render(Canvas& c) {
             for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
         OxbowView ov = {};
         if (e) e->oxbowView(track_, &ov);
-        ob_.draw(c, shown, t.push, k == K_SOUND && alt_, ov);
+        const OxbowPlusShow ps = {t.obx.ftype, t.obx.envPitch};
+        ob_.draw(c, shown, t.push, k == K_SOUND && alt_, ov, t.alt ? &ps : nullptr);
     } else if (t.engine == ENG_REACTOR) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};

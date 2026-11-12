@@ -11,10 +11,15 @@
 
 namespace dp {
 
+// OXBOW+: odczyty pod bykiem pokazuja typ filtra (bialy) i ENV>PITCH (czerwony) zamiast ENV i DETUNE; oddech reaguje
+// na typ filtra, ptaki na ENV>PITCH (decyzja Patryka: ENV AMOUNT jest na stronie FILTER ENV, DETUNE na OSC 2).
+struct OxbowPlusShow { int ftype; int envPitch; };  // envPitch -64..63
+
 class OxbowScreen {
 public:
     // k = galki (po modulacji, gdy gra); words = strona 2 (WAVE, FILTER, DRIVE); page2 = pokazuj strone 2
-    void draw(Canvas& c, const int16_t k[4], const int16_t words[3], bool page2, const OxbowView& view);
+    void draw(Canvas& c, const int16_t k[4], const int16_t words[3], bool page2, const OxbowView& view,
+              const OxbowPlusShow* plus = nullptr);
 
 private:
     Canvas* cache_ = nullptr;

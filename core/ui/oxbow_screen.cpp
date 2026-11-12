@@ -118,7 +118,7 @@ static void poses(Xf* xf, const int32_t k[4], uint32_t swing, int32_t act, int32
 }
 
 // odczyty na dole (ox_controls)
-static void controls(Canvas& c, const int32_t k[4], const int16_t words[3], bool page2) {
+static void controls(Canvas& c, const int32_t k[4], const int16_t words[3], bool page2, const OxbowPlusShow* plus) {
     static const Color colors[4] = {rgb(105, 142, 255), rgb(0, 237, 149), rgb(245, 245, 245), rgb(255, 58, 93)};
     static const char* const waves[6] = {"SAW", "PULSE", "BOTH", "SYNC", "X-MOD", "FIFTH"};
     static const char* const filters[6] = {"LP12", "HP12", "BP12", "NOTCH", "LP24", "SEM"};
@@ -126,7 +126,9 @@ static void controls(Canvas& c, const int32_t k[4], const int16_t words[3], bool
     for (int i = 0; i < 4; i++) {
         char b[24];
         int v = (k[i] * 100 + 16383) / 32767;
-        if (i < 3 && page2) {
+        if (plus && i == 2) snprintf(b, sizeof b, "FILTER %s", filters[plus->ftype % 6]);  // OXBOW+
+        else if (plus && i == 3) snprintf(b, sizeof b, "ENV>PITCH %+d", (int)lrintf(plus->envPitch * 24.f / 64.f));
+        else if (i < 3 && page2) {
             const int w = words[i] < 0 ? 0 : words[i];
             if (i == 0) snprintf(b, sizeof b, "WAVE %s", waves[(w * 6) >> 15]);
             else if (i == 1) snprintf(b, sizeof b, "FILTER %s", filters[((unsigned)w >> 9) % 6]);
@@ -144,10 +146,16 @@ static void controls(Canvas& c, const int32_t k[4], const int16_t words[3], bool
 // tu ~12 ms na klatke na konsoli, stad cache (dzwonek i oddech leza nad tlem jak w dokumencie).
 static bool dynamicGroup(int g) { return g == G_BELL || g == G_BREATH || (g >= G_S0 && g < NG); }
 
-void OxbowScreen::draw(Canvas& c, const int16_t kn[4], const int16_t words[3], bool page2, const OxbowView& v) {
+void OxbowScreen::draw(Canvas& c, const int16_t kn[4], const int16_t words[3], bool page2, const OxbowView& v,
+                       const OxbowPlusShow* plus) {
     sinInit();
     int32_t k[4];
     for (int i = 0; i < 4; i++) k[i] = kn[i] < 0 ? 0 : kn[i];
+    int32_t pk[4] = {k[0], k[1], k[2], k[3]};  // galki dla sceny
+    if (plus) {  // OXBOW+: oddech z typu filtra (LP12 = najmniejszy .. SEM = najwiekszy), ptaki z ENV>PITCH (srodek = 0)
+        pk[2] = 16384 + (plus->ftype % 6) * 16383 / 5;
+        pk[3] = (plus->envPitch + 64) * 32767 / 127;
+    }
     const uint32_t blocks = v.blocks;
     const int on = blocks != blocks_;
     blocks_ = blocks;
@@ -164,7 +172,7 @@ void OxbowScreen::draw(Canvas& c, const int16_t kn[4], const int16_t words[3], b
     const int32_t puff = 780 + ((env * 260) >> 15);
     puff_ += ((on && nv ? puff : ONE) - puff_) >> 2;
     if (frame_ < 2) puff_ = ONE;
-    poses(xf, k, swing_, act_, puff_);
+    poses(xf, pk, swing_, act_, puff_);
     const int32_t key[4] = {xf[G_HORNL].a, xf[G_HORNL].b, xf[G_BIRDL].tx, xf[G_BIRDL].ty};
     if (!cache_ || key[0] != bgKey_[0] || key[1] != bgKey_[1] || key[2] != bgKey_[2] || key[3] != bgKey_[3]) {
         if (!cache_) cache_ = new Canvas();
@@ -176,7 +184,7 @@ void OxbowScreen::draw(Canvas& c, const int16_t kn[4], const int16_t words[3], b
     c.copyRows(*cache_, (int)OY, (int)(OY + 160 * S) + 1);
     for (const OBItem& it : OB_ORDER)
         if (dynamicGroup(itemGroup(it))) drawItem(c, it, xf);
-    controls(c, k, words, page2);
+    controls(c, k, words, page2, plus);
 }
 
 void drawOxbowIllustration(Canvas& c, float x, float y, float w, float h) {

@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 15:00
+**Zmienione:** `core/ui/oxbow_screen.*`, `core/ui/synth_view.cpp` — ekran OXBOW+ (uwagi Patryka): pod bykiem zamiast ENV jest typ filtra (biały), zamiast DETUNE — ENV>PITCH (czerwony); ptaki chodzą po rogach z ENV>PITCH (środek = 0), oddech (biały) rośnie z typem filtra (LP12 najmniejszy … SEM największy). Zwykły OXBOW bez zmian. Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza ekran OXBOW+.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-13 14:30
 **Zmienione — OXBOW+ (rozszerzona wersja OXBOW, jak WAVETABLE+):**
 - `third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.c`, `oxbow_plus.h` — zmodyfikowana kopia oxbow.c: stałe neutralnego głosu → parametry ścieżki (2 niezależne oscylatory: fala, interwał, strojenie, poziom, PW; szum, SYNC, X-MOD, ENV→P2, keytrack, velocity, VINTAGE, ADSR obwiedni filtra). Oryginalny oxbow.c bez zmian.
