@@ -214,6 +214,24 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 20; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "reactor") || !strcmp(screen, "reactorhot")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_REACTOR;
+        engineDefaultKnobs(ENG_REACTOR, tr.knob);
+        if (!strcmp(screen, "reactorhot")) { tr.knob[0] = 0; tr.knob[1] = 20000; tr.knob[2] = 32767; tr.knob[3] = 32767; }
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 120; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "reactorengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 7; i++) tap(app, B_DOWN);  // REACTOR
     } else if (!strcmp(screen, "mbiraengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

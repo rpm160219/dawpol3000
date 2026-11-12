@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "synth/note_sink.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -33,12 +33,13 @@ public:
     void setVoice(bool mono, float glide, float unison, float age);
     // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
     // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
-    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA
+    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA, 6 REACTOR
     void setPush(const int16_t p[3]) { for (int i = 0; i < 3; i++) knobs_[5 + i] = p[i] < 0 ? 0 : p[i]; }  // PEW: strona 2
     const PewCore* pew() const { return pew_; }
     const ElgCore* elg() const { return elg_; }
     const ::EvaCore* eva() const { return eva_; }
     const ::MbiraCore* mbira() const { return mbira_; }
+    const ::ReactorCore* reactor() const { return reactor_; }
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
     int16_t voiceLevel() const { return vLev_.load(std::memory_order_relaxed); }  // obwiednia x velocity, Q15
@@ -111,7 +112,8 @@ private:
     PewCore* pew_ = nullptr;
     ElgCore* elg_ = nullptr;
     ::EvaCore* eva_ = nullptr;
-    ::MbiraCore* mbira_ = nullptr;  // MBIRA: glosy tej sciezki (C)  // EVA: glosy tej sciezki (C)
+    ::MbiraCore* mbira_ = nullptr;
+    ::ReactorCore* reactor_ = nullptr;  // REACTOR: glosy tej sciezki (C)  // MBIRA: glosy tej sciezki (C)  // EVA: glosy tej sciezki (C)
     bool movSync_ = false;
     float movBeats_ = 4.f;
     double movPh_ = 0;  // faza ruchu ELG przy synchronizacji (0..1)  // ELG: glosy tej sciezki  // PEW: organy tej sciezki (tworzone w init, poza watkiem audio)

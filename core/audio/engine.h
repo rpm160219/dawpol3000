@@ -12,6 +12,8 @@
 #include "synth/elg_dsp.h"
 #include "synth/eva_dsp.h"
 #include "synth/mbira_dsp.h"
+#include "synth/reactor_dsp.h"
+static inline void dp_reactorView(const ReactorCore* p, ReactorView* v) { reactorView(p, v); }
 static inline void dp_mbiraView(const MbiraCore* p, MbiraView* v) { mbiraView(p, v); }
 static inline void dp_evaView(const EvaCore* p, EvaView* v) { evaView(p, v); }
 #include "util/spsc.h"
@@ -43,6 +45,7 @@ public:
     void elgView(int t, ElgView* v) const { if (t >= 0 && t < MAX_TRACKS && wt_[t].elg()) dp::elgView(wt_[t].elg(), v); }
     void evaView(int t, EvaView* v) const { if (t >= 0 && t < MAX_TRACKS && wt_[t].eva()) dp_evaView(wt_[t].eva(), v); }
     void mbiraView(int t, MbiraView* v) const { if (t >= 0 && t < MAX_TRACKS && wt_[t].mbira()) dp_mbiraView(wt_[t].mbira(), v); }
+    void reactorView(int t, ReactorView* v) const { if (t >= 0 && t < MAX_TRACKS && wt_[t].reactor()) dp_reactorView(wt_[t].reactor(), v); }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }

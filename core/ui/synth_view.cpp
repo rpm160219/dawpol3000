@@ -270,6 +270,14 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_REACTOR) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ReactorView rv = {};
+        if (e) e->reactorView(track_, &rv);
+        rx_.draw(c, shown, rv, dt_);
     } else if (t.engine == ENG_MBIRA) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -436,7 +444,10 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_MBIRA) {  // pianino kciukowe: uderzenie, material, pudlo, kapsle
+    if (k == K_SOUND && t.engine == ENG_REACTOR) {  // reaktor: chlodzenie, promieniowanie, prety, cieplo
+        static const char* L[4] = {"COOLING", "RADIATION", "RODS", "HEAT"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", t.knob[i] * 100 / 32767); }
+    } else if (k == K_SOUND && t.engine == ENG_MBIRA) {  // pianino kciukowe: uderzenie, material, pudlo, kapsle
         static const char* L[4] = {"STRIKE", "TINE", "BOX", "BUZZ"};
         snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
         static const char* mat[3] = {"WOOD", "STEEL", "GLASS"};

@@ -295,9 +295,27 @@ static const FactoryPreset kMbira[] = {
     {"BRIGHT PLINK", CAT_PLUCK, 2, "k 30000 20000 8000 2000 push 4000 0 0 env 0.001 0.4 0.6 0.25"},
 };
 
+// REACTOR: 11 presetow oryginalu (third_party/op1r_reactor/plugins/reactor/presets.py): galki i trym (slowo 7 =
+// push[2]) 1:1; obwiednia OP-1 przeliczona w przyblizeniu; efekty i oktawa (-1 w trzech basach) pominiete.
+static const FactoryPreset kReactor[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"CHINA SYNDROME", CAT_BASS, 1, "k 2500 4000 32767 16000 push 0 0 8697 env 0.001 0.4 0.8 0.2"},
+    {"BREEDER", CAT_PAD, 1, "k 9000 3000 20000 13500 push 0 0 7689 env 0.5 0.8 0.92 0.8"},
+    {"IGNITION", CAT_KEYS, 1, "k 20000 1500 18000 9000 push 0 0 8354 env 0.001 0.5 0.45 0.25"},
+    {"TURBINE", CAT_LEAD, 1, "k 6000 5000 28000 20000 push 0 0 8578 env 0.02 0.45 0.8 0.4"},
+    {"COOLANT LEAK", CAT_LEAD, 1, "k 6000 3000 14000 13000 push 0 0 7850 env 0.01 0.5 0.8 0.3"},
+    {"GEIGER LEAD", CAT_LEAD, 1, "k 18000 26000 12000 10000 push 0 0 7932 env 0.001 0.4 0.75 0.15"},
+    {"HALF-LIFE PAD", CAT_PAD, 1, "k 12000 5000 24000 16000 push 0 0 7914 env 0.6 0.8 0.85 0.8"},
+    {"CORE BASS", CAT_BASS, 1, "k 14000 2000 32767 12000 push 0 0 7796 env 0.001 0.3 0.45 0.1"},
+    {"MELTDOWN", CAT_FX, 1, "k 0 20000 32767 32767 push 0 0 8829 env 0.2 0.6 0.92 0.6"},
+    {"CONTROL RODS", CAT_BELL, 1, "k 24000 0 26000 4000 push 0 0 9929 env 0.001 0.7 0 0.4"},
+    {"SCRAM", CAT_FX, 1, "k 8000 8000 30000 24000 push 0 0 8687 env 0.001 0.25 0.2 0.08"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "reactor")) { *n = sizeof kReactor / sizeof kReactor[0]; *engine = ENG_REACTOR; return kReactor; }
     if (!__builtin_strcmp(eng, "mbira")) { *n = sizeof kMbira / sizeof kMbira[0]; *engine = ENG_MBIRA; return kMbira; }
     if (!__builtin_strcmp(eng, "eva")) { *n = sizeof kEva / sizeof kEva[0]; *engine = ENG_EVA; return kEva; }
     if (!__builtin_strcmp(eng, "elg")) { *n = sizeof kElg / sizeof kElg[0]; *engine = ENG_ELG; return kElg; }

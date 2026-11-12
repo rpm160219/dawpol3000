@@ -14,7 +14,8 @@ cp third_party/op1r_wavetable/wavetable_dsp.h third_party/op1r_wavetable/wavetab
 cp third_party/op1r_wavetable/orig_88k/wavetables.h "$T/"
 gcc -std=gnu11 -O2 -Icore -c core/synth/eva_dsp.c -o "$T/eva.o"
 gcc -std=gnu11 -O2 -Icore -c core/synth/mbira_dsp.c -o "$T/mbira.o"
+gcc -std=gnu11 -O2 -Icore -c core/synth/reactor_dsp.c -o "$T/reactor.o"
 g++ -std=c++17 -O2 -Icore "-DWT_DSP_HEADER=\"$T/wavetable_dsp.h\"" tests/wavetable_match.cpp core/synth/wavetable_synth.cpp \
-    core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp "$T/eva.o" "$T/mbira.o" core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
+    core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp "$T/eva.o" "$T/mbira.o" "$T/reactor.o" core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
 "$T/match" "$T/ref.raw"
 rm -rf "$T"

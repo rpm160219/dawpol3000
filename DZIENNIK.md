@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 11:00
+**Zmienione — port silnika REACTOR (op1r 63, Hundekraft):**
+- `third_party/op1r_reactor/` — oryginalne `reactor.c`, `reactor_dsp.h`, `reactor_sin.h`, `reactor_geom.h`, `reactor.svg`, `plugin.json`, `presets.py` (układ katalogów jak w op1r), LICENSE, NOTICE, README; zaślepki `op1_plugin.h` i `seq/seq_text.h`; `reactor_art.h` z SVG.
+- `core/synth/reactor_dsp.*` — reactor.c jako C, stan głosu podmieniany przed wywołaniem; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — REACTOR jako siódmy rodzaj (AMP ENV, MOD ENV, 2 LFO).
+- `core/ui/reactor_screen.*` — ekran elektrowni 1:1 (pręty, wskazówki, wskaźniki, para, miganie w stanie krytycznym, drżenie) + ilustracja; `core/ui/synth_view.*` — SOUND (COOLING/RADIATION/RODS/HEAT); `core/ui/dialogs.cpp` — REACTOR na liście (9 pozycji, lista ciaśniej).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.*` — silnik `reactor`, 11 presetów oryginału (z trymem); utwór demo ALL ENGINES z partią REACTOR (CORE, preset SCRAM) — wersja 2 zastępuje poprzednią raz.
+- op1r zaktualizowany do „op1r 63” — wcześniej przeniesione silniki się nie zmieniły (wszystkie testy 0 różnic).
+- Testy: REACTOR bit w bit (0 różnic), pozostałe 6 nadal 0; presety bez przesterowania (głośniejsze od innych silników, jak oryginał); CPU na konsoli przy 6 głosach 7,8% (też w stanie krytycznym); demo ~18%. Wysłane na konsolę.
+**Następny krok:** Patryk testuje REACTOR i demo.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 09:30
 **Zmienione:** `core/ui/mbira_screen.*` — ekran MBIRA skalowany 1,85× z marginesami 24 px (przy 2× scena sięgała obu krawędzi, wskaźniki dotykały prawej krawędzi ekranu; uwaga Patryka). `core/ui/splash.cpp` — usunięty podpis o silnikach z ekranu startowego (atrybucja trafi do zakładki CREDITS na końcu).
 **Następny krok:** port REACTOR z op1r.

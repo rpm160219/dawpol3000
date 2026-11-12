@@ -40,6 +40,7 @@ void buildDemoAllEngines(Project& p) {
     const int organ = track(p, "ORGAN", "pew", "JAZZ CLUB", 3, 0.4f);          // PEW
     const int pluck = track(p, "PLUCK", "wavetableplus", "SYNC PLUCK", 6, 0.4f);
     const int lead = track(p, "LEAD", "taffy", "CZ LEAD", 7, 0.5f);            // TAFFY
+    const int core = track(p, "CORE", "reactor", "SCRAM", 8, 0.35f);          // REACTOR
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
     int pd = p.addPattern("DRONE", 4);
@@ -92,6 +93,12 @@ void buildDemoAllEngines(Project& p) {
         {3, 0, 6, 74, 100}, {3, 6, 2, 71, 85}, {3, 8, 8, 69, 110},
     };
     for (const M& m : MEL) note(p.patterns[pl], m.bar, m.step, m.len, m.pitch, m.vel);
+    // REACTOR: gorace akcenty na "raz" i synkopa przed nastepnym taktem (prima o oktawe nizej niz akord)
+    int pr = p.addPattern("CORE", 4);
+    for (int b = 0; b < 4; b++) {
+        note(p.patterns[pr], b, 0, 3, ROOT[b], 120);
+        note(p.patterns[pr], b, 14, 2, ROOT[b] + 7, 90);
+    }
 
     for (int s = 0; s < 16; s += 4) {
         p.addClip(drone, pd, s);
@@ -104,6 +111,8 @@ void buildDemoAllEngines(Project& p) {
         p.addClip(organ, po, s);
     }
     p.addClip(pluck, pp, 8);
+    p.addClip(core, pr, 8);
+    p.addClip(core, pr, 12);
     p.addClip(lead, pl, 8);
     p.addClip(lead, pl, 12);
 }
