@@ -715,6 +715,7 @@ int headlessWav(const char* path, float seconds, const char* song) {
     static App app;
     app.init(&eng);
     if (song && !strcmp(song, "allengines")) app.loadDemoAllEngines();
+    else if (song && !strcmp(song, "synthwave")) app.loadDemoSynthwave();
     else app.loadDemo();
     eng.send(EC_PLAY_SONG);
     for (int pos = 0; pos < frames; pos += block) eng.process(out + (size_t)pos * 2, block);

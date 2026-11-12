@@ -9,6 +9,7 @@ namespace dp {
 // Uklad: 1-4 intro (dron, chor, kalimba), 5-8 groove (+ bas, stopa, organy), 9-12 calosc (+ melodia, pluck, dete),
 // 13-16 wyciszenie (dron, chor, kalimba, melodia, akcenty).
 void buildDemoAllEngines(Project& p);
+void buildDemoSynthwave(Project& p);  // SYNTHWAVE: 16 taktow (GIN, PARALLAX, JUNI, OXBOW)
 
 bool factoryInstrument(const char* engineDir, const char* name, Track& t);  // io/factory_presets.cpp
 

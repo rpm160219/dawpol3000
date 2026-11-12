@@ -175,4 +175,76 @@ void buildDemoAllEngines(Project& p) {
     p.addClip(lead, pl, 12);
 }
 
+// SYNTHWAVE: 16 taktow, 104 BPM, a-moll (Am F C G po takcie). Wstep (1-4): pad + arpeggio; 5-8: + bebny i bas;
+// 9-12: + melodia; 13-16: kulminacja z akordami brass i crashem.
+void buildDemoSynthwave(Project& p) {
+    p = Project();
+    snprintf(p.name, sizeof p.name, "SYNTHWAVE");
+    p.bpm = 104.f;
+    p.loopOn = true;
+    p.loopIn = 0;
+    p.loopOut = 16;
+    const int drums = track(p, "DRUMS", "gin", "LINN + TONIC", 2, 0.7f);        // GIN
+    const int bass = track(p, "BASS", "parallax", "SAW BASS", 0, 0.55f);         // PARALLAX
+    const int arp = track(p, "ARP", "parallax", "PLUCK", 5, 0.32f);              // PARALLAX
+    const int pad = track(p, "PAD", "juni", "ENSEMBLE", 4, 0.4f);                // JUNI
+    const int lead = track(p, "LEAD", "parallax", "UNISON LEAD", 7, 0.42f);      // PARALLAX
+    const int brass = track(p, "BRASS", "oxbow", "POLY BRASS", 3, 0.3f);         // OXBOW
+    static const int SC[4][3] = {{57, 60, 64}, {53, 57, 60}, {55, 60, 64}, {55, 59, 62}};  // Am F C G
+    static const int SR[4] = {33, 29, 36, 31};
+    // bebny GIN (klawisze od C2): 36 KICK, 38 SNARE, 41 CLAP, 44 CLOSED HAT, 46 OPEN HAT, 51 CRASH
+    int pd = p.addPattern("DRUMS", 4);
+    int pdc = p.addPattern("DRUMS CRASH", 4);
+    for (int v = 0; v < 2; v++) {
+        Pattern& pt = p.patterns[v ? pdc : pd];
+        for (int b = 0; b < 4; b++) {
+            note(pt, b, 0, 1, 36, 127);
+            note(pt, b, 8, 1, 36, 115);
+            if (b == 3) note(pt, b, 14, 1, 36, 95);
+            note(pt, b, 4, 1, 38, 120); note(pt, b, 4, 1, 41, 90);
+            note(pt, b, 12, 1, 38, 120); note(pt, b, 12, 1, 41, 90);
+            for (int s = 0; s < 16; s += 2) note(pt, b, s, 1, s == 14 ? 46 : 44, s % 4 ? 70 : 95);
+        }
+        if (v) note(pt, 0, 0, 4, 51, 110);
+    }
+    // bas: osemki oktawowe
+    int pb = p.addPattern("BASS", 4);
+    for (int b = 0; b < 4; b++)
+        for (int s = 0; s < 16; s += 2) note(p.patterns[pb], b, s, 1, SR[b] + (s % 4 == 2 ? 12 : 0), s % 4 ? 90 : 115);
+    // arpeggio szesnastkami o oktawe wyzej
+    int pa = p.addPattern("ARP", 4);
+    static const int AR[4] = {0, 1, 2, 1};
+    for (int b = 0; b < 4; b++)
+        for (int s = 0; s < 16; s++) note(p.patterns[pa], b, s, 1, SC[b][AR[s % 4]] + (s >= 8 ? 24 : 12), s % 4 ? 75 : 100);
+    // pad: cale takty
+    int pp = p.addPattern("PAD", 4);
+    for (int b = 0; b < 4; b++)
+        for (int k = 0; k < 3; k++) note(p.patterns[pp], b, 0, 16, SC[b][k], 85);
+    // melodia
+    int pl = p.addPattern("LEAD", 4);
+    static const int M[][4] = {{0, 0, 6, 76}, {0, 6, 2, 74}, {0, 8, 4, 72}, {0, 12, 4, 74},
+                               {1, 0, 6, 72}, {1, 6, 2, 69}, {1, 8, 8, 72},
+                               {2, 0, 4, 67}, {2, 4, 4, 72}, {2, 8, 6, 76}, {2, 14, 2, 79},
+                               {3, 0, 6, 77}, {3, 6, 2, 76}, {3, 8, 8, 74}};
+    for (const auto& m : M) note(p.patterns[pl], m[0], m[1], m[2], m[3], 105);
+    // brass: akordy na 1 i "i" dwojki (synkopa)
+    int pbr = p.addPattern("BRASS", 4);
+    for (int b = 0; b < 4; b++)
+        for (int k = 0; k < 3; k++) {
+            note(p.patterns[pbr], b, 0, 3, SC[b][k] + 12, 100);
+            note(p.patterns[pbr], b, 6, 6, SC[b][k] + 12, 90);
+        }
+    for (int bar = 0; bar < 16; bar += 4) {
+        p.addClip(pad, pp, bar);
+        p.addClip(arp, pa, bar);
+    }
+    p.addClip(drums, pd, 4);
+    p.addClip(drums, pdc, 8);
+    p.addClip(drums, pdc, 12);
+    for (int bar = 4; bar < 16; bar += 4) p.addClip(bass, pb, bar);
+    p.addClip(lead, pl, 8);
+    p.addClip(lead, pl, 12);
+    p.addClip(brass, pbr, 12);
+}
+
 }  // namespace dp

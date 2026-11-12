@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 03:10 — utwór demo SYNTHWAVE
+- **Co zmienione:** `core/seq/demo_song.*` — nowy utwór `buildDemoSynthwave`: 16 taktów w pętli, 104 BPM, a-moll (Am F C G); GIN (LINN + TONIC), PARALLAX (bas oktawowy, arpeggio, melodia), JUNI (pad ENSEMBLE), OXBOW (akordy brass); aranżacja: wstęp, bębny + bas, melodia, kulminacja. `core/ui/app.*` — dodawany raz do listy PROJECT (znacznik `_demo_synthwave_v1`); `core/headless.cpp` — `--render-wav plik 37 synthwave`.
+- Szczyt miksu 0,86, na konsoli ~24% rdzenia (render 37 s w 8,7 s). Wgrane na konsolę.
+- **Następny krok:** Patryk słucha SYNTHWAVE (PROJECT → SYNTHWAVE). **Od Patryka:** ocena.
+
 ## 2026-11-13 02:40 — silnik FELT (własny model fortepianu z filcem)
 - **Co zmienione:** nowy silnik FELT — `core/synth/felt_dsp.*` (falowody strun ze sztywnością, młotek z filcem, grzebień miejsca uderzenia, płyta rezonansowa, mechanika i tłumik; strojenie poprawione o opóźnienia fazowe), `core/ui/felt_screen.*` (przekrój fortepianu: pokrywa, świeca, struny wg CORDA, młotek z warstwami filcu uderzający w struny, tłumik, klawisz, pył mechaniki), wpięcie (rodzaj 26, tłumik po puszczeniu klawisza), projekt, zapis, widok SYNTH, karta ENGINE, 16 presetów, CMake, podglądy, testy.
 - Strój sprawdzony widmem: ±2 centy (1–3 struny, cały zakres). Brak przesterów w przeglądzie wszystkich ustawień (łagodne kolano na wyjściu). CPU na konsoli: ~10% rdzenia (6 głosów × 3 struny). Wszystkie 24 testy zgodności bez zmian. Wgrane na konsolę.
