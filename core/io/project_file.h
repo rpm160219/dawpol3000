@@ -26,6 +26,8 @@ bool saveProjectFile(const Project& p, const char* path);
 // Wspolny zapis/odczyt instrumentu sciezki (projekt i presety): " engine ... k ... env ... voice ..."
 void writeInstrument(FILE* f, const Track& t);
 void parseInstrument(Track& t, char** tok, int n, int start);
+void writeGinSounds(FILE* f, const Track& t);          // GIN: linie gins (dzwieki zmienione wzgledem zestawu)
+bool parseGinSound(Track& t, char** tok, int n);
 int tokenize(char* line, char** tok, int max);  // slowa i "napisy"
 const char* kv(char** tok, int n, int from, const char* key);
 bool loadProjectFile(Project& out, const char* path, char* err, int errLen);

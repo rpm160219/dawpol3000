@@ -22,6 +22,7 @@
 #include "synth/dddd_dsp.h"
 #include "synth/juni_dsp.h"
 #include "synth/outatime_dsp.h"
+#include "synth/gin_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -139,6 +140,7 @@ void WavetableSynth::init(float outRate) {
     if (!ddd_) ddd_ = ddddCreate();
     if (!jun_) jun_ = juniCreate();
     if (!ota_) ota_ = outatimeCreate();
+    if (!gin_) gin_ = ginCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -232,6 +234,7 @@ void WavetableSynth::setFilterEnv(float a, float d, float s, float r, float amou
 
 void WavetableSynth::setKind(int k) {
     if (k == kind_) return;
+    if (kind_ == 23) ginAllOff(gin_);  // GIN: zmiana silnika wycisza bebny
     allOff();
     kind_ = k;
     if (k == 1 && tfBase_ < 0) tfBase_ = taffyAllocVoices(VOICES);
@@ -397,6 +400,7 @@ void WavetableSynth::setEnvelope(float a, float d, float s, float r, float amoun
 }
 
 void WavetableSynth::noteOn(int pitch, float vel) {
+    if (kind_ == 23) { ginNoteOn(gin_, pitch, (int)lrintf(vel * 127.f)); return; }  // GIN: klawisz = dzwiek zestawu
     if (mono_) { monoOn(pitch, vel); return; }
     int slot = -1;
     for (int i = 0; i < VOICES; i++)
@@ -492,6 +496,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
 }
 
 void WavetableSynth::noteOff(int pitch) {
+    if (kind_ == 23) return;  // GIN: uderzenia wybrzmiewaja same
     if (mono_) { monoOff(pitch); return; }
     for (auto& v : v_) {
         if (v.stage == FADE && v.pendPitch == pitch) { v.pendPitch = -1; continue; }  // puszczona przed startem
@@ -504,6 +509,7 @@ void WavetableSynth::noteOff(int pitch) {
 }
 
 void WavetableSynth::allOff() {
+    if (kind_ == 23) return;  // GIN: stop nie ucina wybrzmienia
     for (auto& v : v_) {
         v.pendPitch = -1;
         if (v.stage != OFF) { v.stage = RELEASE; v.fstage = RELEASE; v.mstage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
@@ -811,7 +817,30 @@ void WavetableSynth::renderBlock() {
     fifoPos_ = 0;
 }
 
+void WavetableSynth::setGin(int kit, const GinSound* s) { ginSetKit(gin_, kit, s); }
+
+// GIN: wlasna sciezka (oryginal 88,2 kHz -> 48 kHz w gin_dsp.c), bez obwiedni i modulacji gospodarza.
+void WavetableSynth::renderGin(float* out, int n) {
+    float buf[256];
+    int voices = 0;
+    for (int pos = 0; pos < n; pos += 256) {
+        const int m = n - pos < 256 ? n - pos : 256;
+        for (int i = 0; i < m; i++) buf[i] = 0;
+        voices = ginRender(gin_, buf, m);
+        for (int i = 0; i < m; i++) {
+            vol_ += (volT_ - vol_) * volK_;
+            const float x = buf[i] * 2.f * vol_;  // +6 dB: zestawy oryginalu szczytuja ~0,3
+            const float ax = x < 0 ? -x : x;
+            if (ax > peak_) peak_ = ax;
+            out[(pos + i) * 2] += x;
+            out[(pos + i) * 2 + 1] += x;
+        }
+    }
+    active_.store(voices, std::memory_order_relaxed);
+}
+
 void WavetableSynth::render(float* out, int n) {
+    if (kind_ == 23) { renderGin(out, n); return; }
     advanceLfo(n);
     bool any = false;
     for (auto& v : v_) if (v.stage != OFF) { any = true; break; }

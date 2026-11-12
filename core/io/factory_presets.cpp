@@ -692,9 +692,22 @@ static const FactoryPreset kOutatime[] = {
     {"1985 BRASS", CAT_KEYS, 1, "k 16549 5000 14000 18000 push 9000 14000 10000 env 0.04 0.5 0.8 0.4"},
 };
 
+// GIN: 8 zestawow fabrycznych oryginalu (gin_factory_bank.c, na podstawie zestawow CNTR RNDM) — preset = zestaw.
+static const FactoryPreset kGin[] = {
+    {"CELLAR 808", CAT_DRUMS, 1, "gink 0"},
+    {"NIGHT 909", CAT_DRUMS, 1, "gink 1"},
+    {"LINN + TONIC", CAT_DRUMS, 1, "gink 2"},
+    {"MEASURES", CAT_DRUMS, 1, "gink 3"},
+    {"MOTOR CITY", CAT_DRUMS, 1, "gink 4"},
+    {"DEEP POUR", CAT_DRUMS, 1, "gink 5"},
+    {"DIRTY GLASS", CAT_DRUMS, 1, "gink 6"},
+    {"LAST ORDERS", CAT_DRUMS, 1, "gink 7"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "gin")) { *n = sizeof kGin / sizeof kGin[0]; *engine = ENG_GIN; return kGin; }
     if (!__builtin_strcmp(eng, "outatime")) { *n = sizeof kOutatime / sizeof kOutatime[0]; *engine = ENG_OUTATIME; return kOutatime; }
     if (!__builtin_strcmp(eng, "juni")) { *n = sizeof kJuni / sizeof kJuni[0]; *engine = ENG_JUNI; return kJuni; }
     if (!__builtin_strcmp(eng, "dddd")) { *n = sizeof kDddd / sizeof kDddd[0]; *engine = ENG_DDDD; return kDddd; }

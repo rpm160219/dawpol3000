@@ -417,6 +417,28 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "gin") || !strcmp(screen, "ginedit") || !strcmp(screen, "ginenv") || !strcmp(screen, "ginabout")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_GIN;
+        ginLoadKit(tr, 0);
+        tr.gin[0].morph = 350;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "ginedit")) app.synth.setPage(4);  // NOISE FILTER
+        if (!strcmp(screen, "ginenv")) app.synth.setPage(2);   // TONE ENV
+        if (!strcmp(screen, "ginabout")) app.synth.setPage(9);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "ginengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 30; i++) tap(app, B_UP);
+        for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
     } else if (!strcmp(screen, "outatime")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_OUTATIME;

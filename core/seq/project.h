@@ -1,6 +1,7 @@
 // Projekt: sciezki (max 16 MIDI + 4 audio), pula patternow, klipy na playliscie (arrange).
 // Caly projekt to zwykla struktura bez wskaznikow — UI kopiuje ja do silnika audio jako migawke.
 #pragma once
+#include "synth/gin_dsp.h"
 #include <stdint.h>
 #include "seq/pattern.h"
 
@@ -12,7 +13,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_GIN, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -64,7 +65,10 @@ const char* lfoDivName(int i);
 float lfoDivBeats(int i);  // dlugosc cyklu w cwiercnutach
 float glideSeconds(const struct Track& t, float bpm);
 void engineDefaultKnobs(int engine, int16_t k[4]);  // domyslne galki brzmienia silnika (plugin.json oryginalu)  // czas portamento (z synchronizacja albo bez)
-void engineDefaultPush(int engine, int16_t p[3]);  // strona 2 nowego silnika (HOLLOW SAINT: 0, 8192, 21064; inne 0)
+void engineDefaultPush(int engine, int16_t p[3]);
+void ginLoadKit(struct Track& t, int kit);       // GIN: dzwieki zestawu fabrycznego
+void ginEnsure(struct Track& t);                 // GIN: zestaw 0, gdy sciezka nie ma jeszcze zestawu
+bool ginSoundEdited(const struct Track& t, int s);  // GIN: dzwiek rozni sie od fabrycznego  // strona 2 nowego silnika (HOLLOW SAINT: 0, 8192, 21064; inne 0)
 struct Lfo {
     uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
     float rate = 2.f;    // Hz (0.05 .. 20) gdy bez synchronizacji
@@ -74,7 +78,7 @@ struct Lfo {
 };
 
 // Kategorie presetow (ikona + nazwa w przegladarce)
-enum PresetCat : uint8_t { CAT_BASS, CAT_LEAD, CAT_PAD, CAT_KEYS, CAT_PLUCK, CAT_BELL, CAT_FX, CAT_OTHER, PRESET_CATS };
+enum PresetCat : uint8_t { CAT_BASS, CAT_LEAD, CAT_PAD, CAT_KEYS, CAT_PLUCK, CAT_BELL, CAT_FX, CAT_DRUMS, CAT_OTHER, PRESET_CATS };
 const char* presetCatName(int c);
 
 struct Track {
@@ -111,6 +115,8 @@ struct Track {
     int16_t tilt[3] = {0, 0, 0};  // AETHER: wirtualne przechylenie — PITCH (-32767..32767 = przod / tyl), VOL (prawy bok), SHAKE
     bool relic = false;      // HOLLOW SAINT: tasma Lo-Fi Relic wlaczona (w OP-1: strona 2 zielonej galki)
     uint8_t sun = 0;         // VAPORA: wzor slonca na ekranie 0..6 (tylko obraz)
+    int8_t ginKit = -1;      // GIN: zestaw fabryczny 0..7 (-1 = jeszcze nie ustawiony: zestaw 0)
+    GinSound gin[GIN_KIT_SOUNDS];  // GIN: biezace dzwieki zestawu (konce A/B, MORPH, strona edycji)
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };

@@ -18,7 +18,7 @@ static void putStr(FILE* f, const char* s) {
 
 void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f",
-            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : (t.engine == ENG_EVA ? "eva" : (t.engine == ENG_MBIRA ? "mbira" : (t.engine == ENG_REACTOR ? "reactor" : (t.engine == ENG_OXBOW ? "oxbow" : (t.engine == ENG_SID ? "sid" : (t.engine == ENG_MONOLIT ? "monolit" : (t.engine == ENG_VAPORA ? "vapora" : (t.engine == ENG_SUPERSAW ? "supersaw" : (t.engine == ENG_MIXTUR ? "mixtur" : (t.engine == ENG_BRASS ? "brass" : (t.engine == ENG_HOLLOW ? "hollowsaint" : (t.engine == ENG_BLOOD ? "bloodmoon" : (t.engine == ENG_BLOT ? "blot" : (t.engine == ENG_AETHER ? "aether" : (t.engine == ENG_ARC ? "arc" : (t.engine == ENG_DDDD ? "dddd" : (t.engine == ENG_JUNI ? "juni" : (t.engine == ENG_OUTATIME ? "outatime" : "wavetable"))))))))))))))))))))), t.knob[0],
+            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : (t.engine == ENG_EVA ? "eva" : (t.engine == ENG_MBIRA ? "mbira" : (t.engine == ENG_REACTOR ? "reactor" : (t.engine == ENG_OXBOW ? "oxbow" : (t.engine == ENG_SID ? "sid" : (t.engine == ENG_MONOLIT ? "monolit" : (t.engine == ENG_VAPORA ? "vapora" : (t.engine == ENG_SUPERSAW ? "supersaw" : (t.engine == ENG_MIXTUR ? "mixtur" : (t.engine == ENG_BRASS ? "brass" : (t.engine == ENG_HOLLOW ? "hollowsaint" : (t.engine == ENG_BLOOD ? "bloodmoon" : (t.engine == ENG_BLOT ? "blot" : (t.engine == ENG_AETHER ? "aether" : (t.engine == ENG_ARC ? "arc" : (t.engine == ENG_DDDD ? "dddd" : (t.engine == ENG_JUNI ? "juni" : (t.engine == ENG_OUTATIME ? "outatime" : (t.engine == ENG_GIN ? "gin" : "wavetable")))))))))))))))))))))), t.knob[0],
             t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
     fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
             t.fenvAmt);
@@ -41,9 +41,39 @@ void writeInstrument(FILE* f, const Track& t) {
     if (t.engine == ENG_AETHER && (t.tilt[0] | t.tilt[1] | t.tilt[2])) fprintf(f, " tilt %d %d %d", t.tilt[0], t.tilt[1], t.tilt[2]);
     if (t.engine == ENG_VAPORA && t.sun) fprintf(f, " vsun %d", t.sun);
     if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);
+    if (t.engine == ENG_GIN) fprintf(f, " gink %d", t.ginKit < 0 ? 0 : t.ginKit);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
     fprintf(f, " menv %.4f %.4f %.4f %.4f %.4f %d", t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
     if (t.preset[0]) { fprintf(f, " preset "); putStr(f, t.preset); }
+}
+
+// GIN: dzwieki zmienione wzgledem zestawu fabrycznego — osobne linie "gins i morph strona A(21) B(21)".
+void writeGinSounds(FILE* f, const Track& t) {
+    if (t.engine != ENG_GIN || t.ginKit < 0) return;
+    for (int s = 0; s < GIN_KIT_SOUNDS; s++) {
+        if (!ginSoundEdited(t, s)) continue;
+        const GinSound& g = t.gin[s];
+        fprintf(f, "gins %d %d %d", s, g.morph, g.side);
+        for (int e = 0; e < 2; e++)
+            for (int i = 0; i < GIN_PARAMS; i++) fprintf(f, " %.9g", g.ep[e][i]);
+        fputc('\n', f);
+    }
+}
+
+bool parseGinSound(Track& t, char** tok, int n) {
+    if (n < 4 + 2 * GIN_PARAMS || strcmp(tok[0], "gins")) return false;
+    const int s = atoi(tok[1]);
+    if (s < 0 || s >= GIN_KIT_SOUNDS) return false;
+    GinSound& g = t.gin[s];
+    const int m = atoi(tok[2]);
+    g.morph = (uint16_t)(m < 0 ? 0 : m > 1000 ? 1000 : m);
+    g.side = atoi(tok[3]) ? 1 : 0;
+    for (int e = 0; e < 2; e++)
+        for (int i = 0; i < GIN_PARAMS; i++) {
+            float x = (float)atof(tok[4 + e * GIN_PARAMS + i]);
+            g.ep[e][i] = x < 0 ? 0 : (x > 1 ? 1 : x);
+        }
+    return true;
 }
 
 bool saveProjectFile(const Project& p, const char* path) {
@@ -61,6 +91,7 @@ bool saveProjectFile(const Project& p, const char* path) {
         fprintf(f, " color %d vol %.3f mute %d solo %d last %d", t.color, t.volume, t.mute, t.solo, t.lastPattern);
         if (t.type == TRACK_MIDI) writeInstrument(f, t);
         fputc('\n', f);
+        if (t.type == TRACK_MIDI) writeGinSounds(f, t);
     }
     fputc('\n', f);
     for (int i = 0; i < p.nPatterns; i++) {
@@ -112,7 +143,7 @@ const char* kv(char** tok, int n, int from, const char* key) {
 void parseInstrument(Track& t, char** tok, int n, int start) {
     const char* v;
     if ((v = kv(tok, n, start, "engine")))
-        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : (!strcmp(v, "eva") ? ENG_EVA : (!strcmp(v, "mbira") ? ENG_MBIRA : (!strcmp(v, "reactor") ? ENG_REACTOR : (!strcmp(v, "oxbow") ? ENG_OXBOW : (!strcmp(v, "sid") ? ENG_SID : (!strcmp(v, "monolit") ? ENG_MONOLIT : (!strcmp(v, "vapora") ? ENG_VAPORA : (!strcmp(v, "supersaw") ? ENG_SUPERSAW : (!strcmp(v, "mixtur") ? ENG_MIXTUR : (!strcmp(v, "brass") ? ENG_BRASS : (!strcmp(v, "hollowsaint") ? ENG_HOLLOW : (!strcmp(v, "bloodmoon") ? ENG_BLOOD : (!strcmp(v, "blot") ? ENG_BLOT : (!strcmp(v, "aether") ? ENG_AETHER : (!strcmp(v, "arc") ? ENG_ARC : (!strcmp(v, "dddd") ? ENG_DDDD : (!strcmp(v, "juni") ? ENG_JUNI : (!strcmp(v, "outatime") ? ENG_OUTATIME : ENG_WAVETABLE)))))))))))))))))))));
+        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : (!strcmp(v, "eva") ? ENG_EVA : (!strcmp(v, "mbira") ? ENG_MBIRA : (!strcmp(v, "reactor") ? ENG_REACTOR : (!strcmp(v, "oxbow") ? ENG_OXBOW : (!strcmp(v, "sid") ? ENG_SID : (!strcmp(v, "monolit") ? ENG_MONOLIT : (!strcmp(v, "vapora") ? ENG_VAPORA : (!strcmp(v, "supersaw") ? ENG_SUPERSAW : (!strcmp(v, "mixtur") ? ENG_MIXTUR : (!strcmp(v, "brass") ? ENG_BRASS : (!strcmp(v, "hollowsaint") ? ENG_HOLLOW : (!strcmp(v, "bloodmoon") ? ENG_BLOOD : (!strcmp(v, "blot") ? ENG_BLOT : (!strcmp(v, "aether") ? ENG_AETHER : (!strcmp(v, "arc") ? ENG_ARC : (!strcmp(v, "dddd") ? ENG_DDDD : (!strcmp(v, "juni") ? ENG_JUNI : (!strcmp(v, "outatime") ? ENG_OUTATIME : (!strcmp(v, "gin") ? ENG_GIN : ENG_WAVETABLE))))))))))))))))))))));
     // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
     for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu
@@ -176,6 +207,7 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                     for (int j = 0; j < 3; j++) { int v = atoi(tok[i + 1 + j]); t.tilt[j] = (int16_t)(v < -32767 ? -32767 : v > 32767 ? 32767 : v); }
                 if (!strcmp(tok[i], "relic") && left >= 1) t.relic = atoi(tok[i + 1]) != 0;
                 if (!strcmp(tok[i], "oct") && left >= 1) { int v = atoi(tok[i + 1]); t.octave = (int8_t)(v < -3 ? -3 : v > 3 ? 3 : v); }
+                if (!strcmp(tok[i], "gink") && left >= 1) ginLoadKit(t, atoi(tok[i + 1]));  // GIN: zestaw (linie gins = zmiany)
                 if (!strcmp(tok[i], "vsun") && left >= 1) t.sun = (uint8_t)(atoi(tok[i + 1]) % 7);
                 if (!strcmp(tok[i], "gsync") && left >= 2) {
                     t.glideSync = atoi(tok[i + 1]) != 0;
@@ -225,6 +257,8 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
             parseInstrument(t, tok, n, 3);
+        } else if (!strcmp(k, "gins") && p.nTracks > 0) {
+            parseGinSound(p.tracks[p.nTracks - 1], tok, n);
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {
             curPat = p.nPatterns++;
             Pattern& pt = p.patterns[curPat];

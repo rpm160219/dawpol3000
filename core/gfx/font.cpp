@@ -151,4 +151,39 @@ float drawText(Canvas& c, float x, float y, const char* s, float size, float wid
     return w;
 }
 
+void textStrokes(const char* s, float size, void (*seg)(void*, float, float, float, float), void* user) {
+    const float u = size / 12.f;
+    float x = 0;
+    for (const char* p = s; *p; x += advOf(*p) * u, p++) {
+        const char* g = glyph((char)toupper((unsigned char)*p));
+        if (!g) continue;
+        const float gx = narrow(*p) ? x - 3.f * u : x;
+        while (*g) {
+            while (*g == ' ') g++;
+            if (!*g) break;
+            bool smooth = false;
+            if (*g == '~') { smooth = true; g++; }
+            float pts[MAXP * 2];
+            int n = 0;
+            while (g[0] && g[0] != ' ' && g[1] && g[1] != ' ' && n < 64) {
+                pts[n * 2] = (float)hexv(g[0]);
+                pts[n * 2 + 1] = (float)hexv(g[1]);
+                n++;
+                g += 2;
+            }
+            while (*g && *g != ' ') g++;
+            if (n == 0) continue;
+            if (smooth && n > 2) {
+                bool closed = pts[0] == pts[n * 2 - 2] && pts[1] == pts[n * 2 - 1];
+                float sm[MAXP * 2];
+                n = chaikin(pts, n, sm, closed);
+                memcpy(pts, sm, sizeof(float) * 2 * n);
+            }
+            if (n == 1) { seg(user, gx + pts[0] * u, pts[1] * u, gx + pts[0] * u + 0.01f, pts[1] * u); continue; }
+            for (int i = 0; i + 1 < n; i++)
+                seg(user, gx + pts[i * 2] * u, pts[i * 2 + 1] * u, gx + pts[i * 2 + 2] * u, pts[i * 2 + 3] * u);
+        }
+    }
+}
+
 }  // namespace dp

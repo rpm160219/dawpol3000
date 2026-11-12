@@ -1,0 +1,93 @@
+{
+  "name": "gin",
+  "kind": "feature",
+  "symbol": "FEATURE_gin",
+  "loadable": true,
+  "sources": [
+    "gin_feature.c",
+    "vendor/sdk/synth_sdk/drum_dispatcher.c",
+    "vendor/sdk/synth_sdk/drum_module_table.c",
+    "vendor/sdk/synth_sdk/drum_ui.c",
+    "vendor/sdk/synth_sdk/drum_screen_table.c",
+    "vendor/sdk/synth_sdk/plugins/gin/gin_adapter.c",
+    "vendor/sdk/synth_sdk/plugins/gin/gin_dsp.c",
+    "vendor/src/tonic/sdk_drum/gin_resample.c",
+    "vendor/src/tonic/sdk_drum/gin_fw.c",
+    "vendor/src/tonic/sdk_drum/gin_fw_presets.c",
+    "vendor/src/tonic/sdk_drum/gin_fw_snapshot.c",
+    "vendor/src/tonic/presets/gin_snapshot_text.c",
+    "vendor/src/tonic/presets/gin_factory.c",
+    "vendor/src/tonic/factory_bank/gin_factory_bank.c",
+    "vendor/src/tonic/ui_native/gin_screen.c",
+    "vendor/src/tonic/ui_native/gin_text.c",
+    "vendor/src/tonic/ui_native/gin_controls.c",
+    "vendor/src/tonic/ui_native/gin_target_lib.c",
+    "vendor/src/tonic/ui/gin_ui.c",
+    "vendor/src/tonic/ui/gin_name.c",
+    "vendor/src/tonic/integer/gin_prepare.c",
+    "vendor/src/tonic/tonic_voice.c",
+    "vendor/third_party/libpo32/core/src/po32_synth.c",
+    "data.S"
+  ],
+  "cflags": [
+    "-DGIN_FACTORY_BANK",
+    "-DGIN_FAST_FIXED=1",
+    "-DGIN_NATIVE_SNAPSHOTS",
+    "-DGIN_AUDIO_OBSERVATION=0",
+    "-DGIN_WORKING_SLOTS=1",
+    "-DGIN_PROFILE_ENABLED=0",
+    "-DGIN_PARAMS_ONLY=0",
+    "-DGIN_FW_OUTPUT_SHIFT=14",
+    "-DGIN_FW_OUTPUT_LEVEL_Q12=4596",
+    "-DGIN_SINE_QUARTER=0",
+    "-DGIN_SYNTH_VOICE_LIMIT=4",
+    "-DGIN_RATE_2X=1",
+    "-DGIN_BLOCK_STATE=1",
+    "-DGIN_FACTORY_PACKED_INDEX=1",
+    "-fno-tree-loop-distribute-patterns"
+  ],
+  "include_dirs": [
+    "vendor/src/tonic/ui_native/freestanding",
+    "vendor/sdk/synth_sdk",
+    "vendor/sdk/synth_sdk/plugins/gin",
+    "vendor/src/tonic/sdk_drum",
+    "vendor/src/tonic/ui",
+    "vendor/src/tonic/ui_native",
+    "vendor/src/tonic/integer",
+    "vendor/src/tonic",
+    "vendor/src/tonic/presets",
+    "vendor/third_party/libpo32/core/include",
+    "vendor/third_party/libpo32/core/src"
+  ],
+  "generated": [
+    "build/gin/gin_font.private.inc",
+    "build/gin/gin_data.S",
+    "build/gin/gin_catalog.inc"
+  ],
+  "drum_synth": {
+    "state_key": "gin_state"
+  },
+  "claims": [
+    "drum:gin"
+  ],
+  "screen": {
+    "svg": "gin.svg",
+    "symbol": "SCREEN_gin"
+  },
+  "source_cflags": {
+    "vendor/src/tonic/sdk_drum/gin_fw_snapshot.c": [
+      "-Os"
+    ],
+    "vendor/src/tonic/presets/gin_snapshot_text.c": [
+      "-Os"
+    ],
+    "vendor/src/tonic/ui_native/gin_screen.c": [
+      "-Os"
+    ]
+  },
+  "sdk_include_dirs": [
+    "build/gin"
+  ],
+  "author": "SquareWave Studio / Eric Lewis",
+  "version": "1.0.0"
+}

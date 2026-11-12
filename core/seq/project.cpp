@@ -29,6 +29,7 @@ const char* engineName(int e) {
     case ENG_DDDD: return "DDDD";
     case ENG_JUNI: return "JUNI";
     case ENG_OUTATIME: return "OUTATIME";
+    case ENG_GIN: return "GIN";
     default: return "?";
     }
 }
@@ -105,7 +106,7 @@ const char* destNameFor(int engine, int d) {
 }
 
 const char* presetCatName(int c) {
-    static const char* n[PRESET_CATS] = {"BASS", "LEAD", "PAD", "KEYS", "PLUCK", "BELL", "FX", "OTHER"};
+    static const char* n[PRESET_CATS] = {"BASS", "LEAD", "PAD", "KEYS", "PLUCK", "BELL", "FX", "DRUMS", "OTHER"};
     return c >= 0 && c < PRESET_CATS ? n[c] : "OTHER";
 }
 
@@ -232,4 +233,18 @@ void Project::nextTrackName(int type, char* out, int n) const {
     snprintf(out, n, "%s %02d", type == TRACK_MIDI ? "MIDI" : "AUDIO", countTracks(type) + 1);
 }
 
+}  // namespace dp
+
+namespace dp {
+void ginLoadKit(Track& t, int kit) {
+    if (kit < 0 || kit >= ginFactoryCount()) kit = 0;
+    t.ginKit = (int8_t)kit;
+    for (int i = 0; i < GIN_KIT_SOUNDS; i++) ginFactorySound(kit, i, &t.gin[i]);
+}
+void ginEnsure(Track& t) { if (t.ginKit < 0) ginLoadKit(t, 0); }
+bool ginSoundEdited(const Track& t, int s) {
+    GinSound f;
+    ginFactorySound(t.ginKit < 0 ? 0 : t.ginKit, s, &f);
+    return t.gin[s].morph != 0 || t.gin[s].side != 0 || memcmp(f.ep, t.gin[s].ep, sizeof f.ep) != 0;
+}
 }  // namespace dp

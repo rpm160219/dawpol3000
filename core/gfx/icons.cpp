@@ -211,7 +211,7 @@ void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, fl
         (void)NAVY; (void)PLUM; (void)GREY; (void)GREEN; (void)BLUE; (void)RED;
         return;
     }
-    if (engine == 24) {  // TEST SAW: prosta pila w ramce
+    if (engine == 25) {  // TEST SAW: prosta pila w ramce
         c.strokeRoundRect(x, y, w, h, 8, 1.4f, rgb(80, 80, 80));
         float px = x + 16, py = y + h * 0.5f;
         for (int k = 0; k < 4; k++) {
@@ -317,6 +317,12 @@ void drawCategoryIcon(Canvas& c, int cat, float x, float y, float s, Color col, 
         return;
     case 6:  // FX: iskra
         seg(8, 1.5f, 8, 14.5f); seg(1.5f, 8, 14.5f, 8); seg(3.5f, 3.5f, 12.5f, 12.5f); seg(12.5f, 3.5f, 3.5f, 12.5f);
+        break;
+    case 7:  // DRUMS: beben z paleczkami
+        c.endStroke(col);
+        c.circle(X(8), Y(10), 4.5f * u, lw, col);
+        c.beginStroke();
+        seg(3, 1.5f, 7, 7); seg(13, 1.5f, 9, 7);
         break;
     default:  // OTHER: kolo z kropka
         c.endStroke(col);

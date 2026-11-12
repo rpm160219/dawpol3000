@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 23:30 — silnik GIN (perkusja, port 1:1 z paczki Hundekraft 3.1.4)
+- **Co zmienione:** nowy silnik GIN — `third_party/kennel_gin/` (oryginalne źródła SquareWave Studio / libpo32 / kennel bez zmian), `core/synth/gin_dsp.*` (wrapper: zestaw, przydział 12 głosów, 88,2 → 48 kHz, dynamika), `core/ui/gin_screen_c.c` + `ginscreen.*` + `gin_shim/` (oryginalny ekran butelek, napisy naszą czcionką — nowa funkcja `textStrokes` w `gfx/font.cpp`), `Track.gin` + zapis `gink`/`gins` w projekcie i presetach, kategoria presetów DRUMS (ikona bębna), widok SYNTH (11 stron), karta ENGINE, 8 zestawów jako presety, podglądy headless, CMake; test `tools/test_gin.sh` (referencja = oryginalny `gin_fw.c` ze słownikiem współczynników z ich skryptu) + `tools/gin_objs.sh` w pozostałych testach. Po co: Patryk poprosił o GIN z własną czcionką.
+- Zgodność bit w bit: 0 różnic (430 tys. próbek, 8 zestawów) na PC i na konsoli; pozostałe 23 testy też 0 różnic. CPU na konsoli: 5,9% rdzenia (gęste uderzenia z dynamiką). Wgrane na konsolę.
+- **Następny krok:** Patryk testuje GIN (granie z przycisków, piano roll od C2, strony edytora, MORPH, A/B). Do decyzji: zmiana nazw dźwięków (w oryginale jest), mapowanie klawiszy.
+- **Od Patryka:** ocena „git / nie git”.
+
 ## 2026-11-12 21:40 — silnik OUTATIME (port 1:1 z paczki Hundekraft 3.1.4)
 - **Co zmienione:** nowy silnik OUTATIME — `third_party/kennel_outatime/` (oryginalny kod opus/Hundekraft bez zmian), `core/synth/outatime_dsp.*` (wrapper), `core/ui/outatime_screen*` (ekran DeLoreana), wpięcie w `wavetable_synth`, `engine`, `project`, `project_file`, `synth_view`, `dialogs`, `app.h`, `factory_presets` (12 presetów: 4 z oryginału + 7 nowych + INIT), `headless`, `CMakeLists.txt`; test `tools/test_outatime.sh` (+ obiekt OUTATIME dopisany do pozostałych skryptów testowych); dokumentacja i licencje. Po co: Patryk poprosił o OUTATIME.
 - Zgodność bit w bit z oryginałem: 0 różnic (wszystkie 23 testy przechodzą). CPU na konsoli: 9,1% rdzenia przy 6 głosach. Wgrane na konsolę.

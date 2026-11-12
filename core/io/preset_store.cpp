@@ -35,6 +35,7 @@ void PresetStore::initInstrument(Track& t) {
         t.fenv[3] = oxbowPlusDecaySeconds(60);
     }
     t.movDiv = d.movDiv;
+    if (t.engine == ENG_GIN) ginLoadKit(t, 0);  // GIN: INIT = pierwszy zestaw
     t.mono = d.mono;
     t.glide = d.glide;
     t.unison = d.unison;
@@ -103,16 +104,17 @@ bool PresetStore::load(int i, Track& t) const {
     static char line[2048];
     char* tok[128];
     bool ok = false;
+    static Track tmp;
     while (fgets(line, sizeof line, f)) {
         int n = tokenize(line, tok, 128);
         if (n >= 1 && !strcmp(tok[0], "inst")) {
-            Track tmp = t;
+            tmp = t;
             initInstrument(tmp);  // brakujace pola = INIT
             parseInstrument(tmp, tok, n, 1);
-            t = tmp;
             ok = true;
-        }
+        } else if (ok && n >= 1) parseGinSound(tmp, tok, n);  // GIN: zmienione dzwieki zestawu
     }
+    if (ok) t = tmp;
     fclose(f);
     return ok;
 }
@@ -128,6 +130,7 @@ bool PresetStore::save(const Track& t, const char* name, int category) {
     fprintf(f, "dawpol-preset 1\nname \"%s\"\ncategory %s\ninst", name, presetCatName(category));
     writeInstrument(f, t);
     fputc('\n', f);
+    writeGinSounds(f, t);
     bool ok = fflush(f) == 0 && fsync(fileno(f)) == 0;
     ok &= fclose(f) == 0;
     if (!ok || rename(tmp, path) != 0) { unlink(tmp); return false; }

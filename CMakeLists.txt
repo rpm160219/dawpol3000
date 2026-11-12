@@ -24,6 +24,24 @@ add_library(dpcore STATIC
   core/ui/widgets.cpp core/ui/app.cpp core/ui/project_view.cpp core/ui/synth_view.cpp core/ui/wavetable_screen.cpp core/ui/taffy_screen.cpp core/ui/pew_screen.cpp core/ui/elg_screen.cpp core/ui/eva_screen.cpp core/ui/mbira_screen.cpp core/ui/reactor_screen.cpp core/ui/oxbow_screen.cpp core/ui/sid_screen.cpp core/ui/monolit_screen.cpp core/ui/vapora_screen.cpp core/ui/vapora_screen_c.c core/ui/supersaw_screen.cpp core/ui/mixtur_screen.cpp core/ui/brass_screen.cpp core/ui/hollowsaint_screen.cpp core/ui/bloodmoon_screen.cpp core/ui/blot_screen.cpp core/ui/aether_screen.cpp core/ui/aether_screen_c.c core/ui/arc_screen.cpp core/ui/arc_screen_c.c core/ui/dddd_screen.cpp core/ui/dddd_screen_c.c core/ui/juni_screen.cpp core/ui/juni_screen_c.c core/ui/outatime_screen.cpp core/ui/outatime_screen_c.c core/ui/splash.cpp
   core/headless.cpp)
 target_include_directories(dpcore PUBLIC core)
+
+# GIN (Hundekraft 3.1.4 / SquareWave Studio, libpo32): oryginalne pliki jako osobne jednostki, flagi jak plugin.json.
+set(GIN_V ${CMAKE_SOURCE_DIR}/third_party/kennel_gin/gin/vendor)
+set(GIN_SOURCES
+  ${GIN_V}/sdk/synth_sdk/plugins/gin/gin_adapter.c ${GIN_V}/sdk/synth_sdk/plugins/gin/gin_dsp.c
+  ${GIN_V}/src/tonic/sdk_drum/gin_resample.c ${GIN_V}/src/tonic/integer/gin_prepare.c ${GIN_V}/src/tonic/tonic_voice.c
+  ${GIN_V}/third_party/libpo32/core/src/po32_synth.c ${GIN_V}/src/tonic/presets/gin_factory.c
+  ${GIN_V}/src/tonic/factory_bank/gin_factory_bank.c ${GIN_V}/src/tonic/ui/gin_ui.c ${GIN_V}/src/tonic/ui/gin_name.c)
+set(GIN_FLAGS -DGIN_FACTORY_BANK -DGIN_FAST_FIXED=1 -DGIN_AUDIO_OBSERVATION=0 -DGIN_WORKING_SLOTS=1 -DGIN_PROFILE_ENABLED=0
+  -DGIN_PARAMS_ONLY=0 -DGIN_FW_OUTPUT_SHIFT=14 -DGIN_FW_OUTPUT_LEVEL_Q12=4596 -DGIN_SINE_QUARTER=0 -DGIN_SYNTH_VOICE_LIMIT=4
+  -DGIN_RATE_2X=1 -DGIN_BLOCK_STATE=1 -DGIN_FACTORY_PACKED_INDEX=1 -fno-tree-loop-distribute-patterns -ffp-contract=off
+  -I${GIN_V}/sdk/synth_sdk -I${GIN_V}/sdk/synth_sdk/plugins/gin -I${GIN_V}/src/tonic/sdk_drum -I${GIN_V}/src/tonic/ui
+  -I${GIN_V}/src/tonic/ui_native -I${GIN_V}/src/tonic/integer -I${GIN_V}/src/tonic -I${GIN_V}/src/tonic/presets
+  -I${GIN_V}/third_party/libpo32/core/include -I${GIN_V}/third_party/libpo32/core/src)
+target_sources(dpcore PRIVATE ${GIN_SOURCES} core/synth/gin_dsp.c core/ui/gin_screen_c.c core/ui/ginscreen.cpp)
+set_source_files_properties(${GIN_SOURCES} PROPERTIES COMPILE_OPTIONS "${GIN_FLAGS};-w")
+set_source_files_properties(core/synth/gin_dsp.c PROPERTIES COMPILE_OPTIONS "${GIN_FLAGS}")
+set_source_files_properties(core/ui/gin_screen_c.c PROPERTIES COMPILE_OPTIONS "-I${CMAKE_SOURCE_DIR}/core/ui/gin_shim;-DOP1_HOST;${GIN_FLAGS}")
 set_source_files_properties(third_party/op1r_sid/sid_dsp.c PROPERTIES COMPILE_OPTIONS "-Wno-misleading-indentation")  # oryginal 1:1
 
 add_executable(dawpol3000 platform/main_sdl.cpp)

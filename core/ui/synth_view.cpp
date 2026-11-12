@@ -47,6 +47,7 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind blk[4] = {K_SOUND, K_VOICE, K_AMP, K_PRESETS};  // BLOT: slide = MODE + GLIDE
     static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
+    if (pm == 11) return p == 10 ? K_PRESETS : K_SOUND;  // GIN: SOUND, 8 stron edytora, ABOUT, PRESETS
     return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : (pm == 8 ? mxk[p] : (pm == 9 ? blk[p] : (pm == 10 ? aek[p] : orig[p])))))))));
 }
 
@@ -92,6 +93,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         if (b.pressed(B_START)) app_->togglePlaySong();
         return;
     }
+    if (t.engine == ENG_GIN) { updateGin(b, in, dt, t); return; }
     if (b.pressed(B_L3)) {
         if (k == K_LFO1 || k == K_LFO2) { Lfo& L = t.lfo[k - K_LFO1]; L.sync = !L.sync; app_->markDirty(); }
         else if (k == K_VOICE) { t.glideSync = !t.glideSync; app_->markDirty(); }
@@ -460,6 +462,7 @@ void SynthView::render(Canvas& c) {
     const Kind k = kind(pm);
     char b[64];
 
+    if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
     } else if (t.engine == ENG_OUTATIME) {
@@ -1193,6 +1196,140 @@ void SynthView::render(Canvas& c) {
         pos[3] = L.dest / (float)(LFO_DESTS - 1);
     }
     const char* vals[4] = {v[0], v[1], v[2], v[3]};
+    encoderBar(c, labels, vals, pos);
+}
+
+// ---------------- GIN ----------------
+// Strony jak w edytorze oryginalu: SOUND = tryb gry (MORPH / PITCH / DECAY / BALANCE, L3 = MOD / NOISE / CUTOFF),
+// potem 8 stron parametrow i ABOUT. Wybrany dzwiek: ostatnio uderzony klawisz (jak w oryginale) albo L1 / R1.
+// R3 = koniec A / B (wcisniecie niebieskiego enkodera w OP-1). Stan edycji = gin_ui.c na kopii zestawu sciezki.
+extern "C" {
+struct GinUi* ginUiGet(void);
+void ginUiLoad(struct GinUi* g, const GinSound* s, int kit, int selected, int mode, int page, int shift);
+int ginUiSelected(const struct GinUi* g);
+const char* ginUiName(const struct GinUi* g);
+int ginUiRotate(struct GinUi* g, int enc, int d, uint32_t now);
+void ginUiToggleSide(struct GinUi* g);
+void ginUiSound(const struct GinUi* g, int i, GinSound* out);
+void ginUiReadout(const struct GinUi* g, uint32_t now, int enc, char* label, char* value, char* unit, int* active);
+}
+
+struct ::GinUi* SynthView::ginUi(const Track& t) {
+    struct ::GinUi* g = ginUiGet();
+    if (ginSel_ < 0 || ginSel_ > 23) ginSel_ = 0;
+    const int gp = page_ - 1;  // 0..7 strony edytora, 8 = ABOUT
+    ginUiLoad(g, t.gin, t.ginKit < 0 ? 0 : t.ginKit, ginSel_, page_ == 0 ? 0 : 1, gp < 0 ? 0 : gp, alt_ ? 1 : 0);
+    return g;
+}
+
+void SynthView::updateGin(const Buttons& b, const InputState& in, float dt, Track& t) {
+    AudioEngine* e = app_->engine();
+    if (t.ginKit < 0) { ginLoadKit(t, 0); app_->markDirty(); }
+    if (b.pressed(B_START)) app_->togglePlaySong();
+    if (b.pressed(B_L3)) alt_ = !alt_;
+    if (b.pressed(B_L1)) ginSel_ = (ginSel_ + 23) % 24;
+    if (b.pressed(B_R1)) ginSel_ = (ginSel_ + 1) % 24;
+    // uderzenie (przyciski, sekwencer, MIDI) wybiera dzwiek klawisza — jak w oryginale
+    if (e && e->ginCore(track_)) {
+        const uint32_t h = ginHits(e->ginCore(track_));
+        if (h != ginHitsSeen_) {
+            ginHitsSeen_ = h;
+            const int key = ginLastKey(e->ginCore(track_));
+            if (key >= 0) ginSel_ = ginKeySound(t.ginKit < 0 ? 0 : t.ginKit, key);
+        }
+    }
+    for (int i = 0; i < 8; i++) {  // odsluch: kolejne klawisze od stopy (C2)
+        static const int keys[8] = {0, 2, 5, 8, 10, 12, 14, 17};  // KICK, SNARE, CLAP, CLOSED HAT, OPEN HAT, LOW TOM, MID TOM, COWBELL
+        if (b.pressed(kNoteBtn[i]) && e) {
+            const int pitch = 36 + keys[i];
+            e->send(EC_NOTE_ON, track_, pitch, 0, 1.f);
+            held_[i] = pitch;
+        }
+        if (b.released(kNoteBtn[i]) && held_[i] >= 0) {
+            if (e) e->send(EC_NOTE_OFF, track_, held_[i]);
+            held_[i] = -1;
+        }
+    }
+    struct ::GinUi* g = ginUi(t);
+    bool changed = false;
+    if (b.pressed(B_R3) && page_ < 9) { ginUiToggleSide(g); changed = true; }
+    static const int axisOf[4] = {AX_LX, AX_LY, AX_RX, AX_RY};
+    static const float sign[4] = {1.f, -1.f, 1.f, -1.f};
+    for (int i = 0; i < 4; i++) {
+        const int d = stepGin_[i].steps(in.axis[axisOf[i]] * sign[i], dt, 18.f);
+        if (d && ginUiRotate(g, i, d, ginNowMs())) changed = true;
+        if (d && ginUiSelected(g) != ginSel_) ginSel_ = ginUiSelected(g);  // L3 na stronie edytora: zielona = dzwiek
+    }
+    if (changed) {
+        ginUiSound(g, ginSel_, &t.gin[ginSel_]);
+        app_->markDirty();
+    }
+}
+
+void SynthView::renderGin(Canvas& c, const Track& t) {
+    Project& p = app_->project();
+    AudioEngine* e = app_->engine();
+    Color tc = pal::track[t.color % pal::TRACK_COLORS];
+    const bool playing = e && e->isPlaying() && e->playMode() == Sequencer::SONG;
+    const int tick = playing ? e->playTick() : 0;
+    struct ::GinUi* g = ginUi(t);
+    gn_.draw(c, g, e && e->ginCore(track_) ? ginHits(e->ginCore(track_)) : 0);
+    c.fillRect(0, 0, 640, 44, pal::bg);
+    screenHeader(c, ICON_KEYS, tc, "GIN", t.name, tc, tick / TICKS_PER_BAR + 1, (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
+    c.fillRect(0, 334, 640, 146, pal::bg);
+    static const char* kPg[10] = {"SOUND", "TONE", "TONE ENV", "PITCH MOD", "NOISE FILTER", "NOISE ENV", "MIX + LEVEL", "EQ", "VELOCITY", "ABOUT"};
+    drawText(c, 20, 342, kPg[page_ < 10 ? page_ : 0], 13, 1.5f, pal::white);
+    const int np = pageCount(11);
+    for (int i = 0; i < np; i++) {
+        const float x = 24 + i * 12;
+        if (i == page_) c.fillCircle(x, 366, 2.6f, pal::white);
+        else c.circle(x, 366, 2.2f, 1.f, rgb(90, 90, 90));
+    }
+    drawText(c, 24 + np * 12 + 4, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
+    const char* hint = page_ == 0 ? (alt_ ? "L3 = PITCH / DECAY / BALANCE" : "L3 = MOD / NOISE / CUTOFF")
+                     : page_ < 9 ? (alt_ ? "L3 = PARAMETERS" : "L3 = SOUND SELECT (GREEN)") : nullptr;
+    if (hint) drawText(c, 20, 384, hint, 7, 1.f, alt_ ? pal::blue : rgb(80, 80, 80));
+    // prawy dol: wybrany dzwiek, klawisz, koniec A / B
+    char b[48];
+    const GinSound& s = t.gin[ginSel_];
+    drawText(c, 600, 340, ginUiName(g), 11, 1.4f, pal::white, ALIGN_RIGHT);
+    int key = -1;
+    for (int k = 0; k < 24 && key < 0; k++) if (ginKeySound(t.ginKit < 0 ? 0 : t.ginKit, k) == ginSel_) key = k;
+    static const char* nn[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+    if (key >= 0) snprintf(b, sizeof b, "%d/24  %s%d  EDIT %c", ginSel_ + 1, nn[(36 + key) % 12], (36 + key) / 12 - 1, s.side ? 'B' : 'A');
+    else snprintf(b, sizeof b, "%d/24  EDIT %c", ginSel_ + 1, s.side ? 'B' : 'A');
+    drawText(c, 600, 364, b, 8, 1.1f, rgb(150, 150, 150), ALIGN_RIGHT);
+    drawText(c, 600, 384, "L1/R1 = SOUND   R3 = A / B", 7, 1.f, rgb(80, 80, 80), ALIGN_RIGHT);
+    // galki: odczyty jak na ekranie oryginalu (nazwa, wartosc, jednostka)
+    static const int fields[8][4] = {{-1, 0, 1, -1}, {-1, 2, 3, -1}, {-1, 4, 6, 5}, {-1, 7, 8, 9}, {-1, 10, 11, 12}, {-1, 13, 14, 17}, {-1, 15, 16, -1}, {-1, 18, 19, 20}};
+    static const int perf[2][4] = {{-1, 1, 3, 13}, {-1, 6, 12, 8}};
+    char lab[4][16], val[4][24], unit[4][12], v[4][28];
+    const char* labels[4];
+    const char* vals[4];
+    float pos[4];
+    for (int i = 0; i < 4; i++) {
+        int act = 0;
+        if (page_ == 9) { lab[i][0] = 0; val[i][0] = 0; unit[i][0] = 0; }
+        else ginUiReadout(g, ginNowMs(), i, lab[i], val[i], unit[i], &act);
+        if (!strcmp(lab[i], "-")) lab[i][0] = 0;
+        // krotsze nazwy jak w edytorze oryginalu
+        static const char* const from[] = {"TONE ATK", "NOISE ATK", "TONE DECAY", "NOISE DECAY", "MOD AMOUNT", "RESONANCE", "ENV SHAPE", "SWEEP TIME", "SINE RATE", "NOISE RATE", "TONE VEL", "NOISE VEL", "MOD VEL"};
+        static const char* const to[] = {"ATTACK", "ATTACK", "DECAY", "DECAY", "AMOUNT", "RESO", "SHAPE", "TIME", "RATE", "RATE", "TONE", "NOISE", "MOD"};
+        if (page_ == 0) { static const char* const p0[2][4] = {{"MORPH", "PITCH", "DECAY", "BALANCE"}, {"MORPH", "MOD", "NOISE", "CUTOFF"}}; snprintf(lab[i], 16, "%s", p0[alt_ ? 1 : 0][i]); }
+        else for (unsigned j = 0; j < sizeof from / sizeof from[0]; j++) if (!strcmp(lab[i], from[j])) { snprintf(lab[i], 16, "%s", to[j]); break; }
+        const char* un = !strcmp(unit[i], "%") ? "" : (!strcmp(unit[i], "% SENS") ? "%" : unit[i]);
+        if (!strcmp(val[i], "TRIANGLE")) snprintf(val[i], 24, "TRI");
+        if (!strcmp(val[i], "INF")) { snprintf(val[i], 24, "HOLD"); un = ""; }
+        snprintf(v[i], sizeof v[i], un[0] ? "%s %s" : "%s", val[i], un);
+        labels[i] = lab[i];
+        vals[i] = v[i];
+        const int f = page_ == 0 ? perf[alt_ ? 1 : 0][i] : (page_ < 9 ? fields[page_ - 1][i] : -1);
+        if (i == 0 && page_ < 9) pos[i] = s.morph / 1000.f;
+        else pos[i] = f >= 0 ? s.ep[s.side][f] : 0.f;
+        if (page_ == 9 || (i > 0 && f < 0 && !(page_ > 0 && alt_ && i == 1))) { labels[i] = ""; vals[i] = ""; pos[i] = 0; }
+        if (page_ > 0 && page_ < 9 && alt_ && i == 1) { labels[i] = "SOUND"; snprintf(v[i], sizeof v[i], "%d", ginSel_ + 1); vals[i] = v[i]; pos[i] = ginSel_ / 23.f; }
+        else if (page_ > 0 && page_ < 9 && alt_ && i > 1) { labels[i] = ""; vals[i] = ""; pos[i] = 0; }
+    }
     encoderBar(c, labels, vals, pos);
 }
 
