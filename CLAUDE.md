@@ -93,7 +93,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - D-pad + ABXY = 8 nut skali (skala/tonacja wybieralna), L1/R1 = oktawa −/+.
 - L2/R2 = zakładki w lewo/prawo: PROJECT ↔ ARRANGE ↔ PIANO ROLL (docelowo też SYNTH, DRUM, TAPE, MIXER). R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
 - L3 (klik lewej gałki) = pasek NARZĘDZI w ARRANGE i PIANO ROLL: B UNDO, A REDO, Y IN/OUT (raz = IN na kursorze, drugi raz = OUT i włącza pętlę), X LOOP wł/wył; L3 ponownie = wyjście. Pętla w ARRANGE w taktach (wyłączona = utwór gra raz), w PIANO ROLL w krokach patternu.
-- R3 (klik prawej gałki) = tryb ZAZNACZANIA w piano rollu: B SELECT / A DELETE / Y COPY / X PASTE; R3 ponownie = wyjście.
+- R3 (klik prawej gałki) = tryb ZAZNACZANIA w piano rollu, 2 warstwy (L1/R1): 1) B SELECT / A DELETE / Y COPY / X PASTE; 2) B TRANSPOSE (trzymaj + góra/dół) / A MOVE (trzymaj + krzyżak) / Y OCTAVE (trzymaj + góra/dół) / X DUPLICATE; R3 ponownie = wyjście. (Y/X w warstwie 2 dobrane przez Claude — do potwierdzenia przez Patryka.)
 - Paski akcji (L3/R3) zawsze tym samym elementem `actionBar`: 4 pigułki w kolumnach gałek, kolejność B, A, Y, X, kolory steel / czerwony / tan / szary. Na PC: U = L3, O = R3. RG35XX: L3 = przycisk 12, R3 = 15.
 - Pozycja w nagłówkach zawsze w formacie „BAR takt.miara”, w tym samym miejscu (wspólny `screenHeader`). Teksty w klipach/polach przycinane do obrysu (`drawTextFit`). Start = play/stop, Select = rec (później). Menu+Select = wyjście.
 - W oknach dialogowych: A = zatwierdź, B = anuluj, X = edycja nazwy (góra/dół litera, lewo/prawo pozycja); pigułki na dole pokazują literę przycisku.

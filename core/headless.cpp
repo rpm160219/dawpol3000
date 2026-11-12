@@ -84,6 +84,14 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R3);                    // tryb zaznaczania
         app.roll.selectRect(4, 63, 9, 72);  // zaznacz 3 nuty
         app.roll.setCursor(9, 72);
+    } else if (!strcmp(screen, "transform")) {
+        app.openPattern(1, 1);
+        idle(app);
+        app.roll.setView(75);
+        tap(app, B_R3);
+        app.roll.setSelectLayer(1);
+        app.roll.selectRect(4, 63, 9, 72);
+        app.roll.setCursor(9, 72);
     } else if (!strcmp(screen, "tools")) {        // ARRANGE + pasek narzedzi, petla takty 3-6
         app.arrange.setCursor(1, 2);
         tap(app, B_L3);

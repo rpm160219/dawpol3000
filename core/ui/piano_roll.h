@@ -16,6 +16,12 @@
 //                    A          usun zaznaczone
 //                    Y          kopiuj zaznaczone (schowek dziala miedzy patternami)
 //                    X          wklej w miejscu kursora (wklejone zostaja zaznaczone)
+//                    L1 / R1    przelaczenie warstwy paska (1: edycja, 2: przeksztalcenia)
+//                  warstwa 2:
+//                    B + gora/dol     TRANSPOSE zaznaczonych o poltony
+//                    A + D-pad        MOVE — przesuwanie zaznaczonych (czas i wysokosc)
+//                    Y + gora/dol     OCTAVE — o oktawe
+//                    X                DUPLICATE — kopia zaznaczonych zaraz za nimi
 //                    R3         wyjscie z trybu
 //   L2             powrot do ARRANGE
 // Enkodery: niebieski = LENGTH, zielony = VELOCITY, bialy = VOLUME sciezki, czerwony = BPM.
@@ -52,12 +58,20 @@ private:
     bool selMode_ = false;
     bool sel_[Pattern::MAX_NOTES] = {};
     bool bHeld_ = false, bMoved_ = false;
+    int selLayer_ = 0;  // 0 = SELECT/DELETE/COPY/PASTE, 1 = TRANSPOSE/MOVE/OCTAVE/DUPLICATE
     int anchorStep_ = 0, anchorPitch_ = 0;
     struct Clipboard { Note notes[Pattern::MAX_NOTES]; int n = 0; int refPitch = 60; } clip_;
     void clearSel();
     int selCount();
     void removeNote(int i);  // usuwa z patternu, przenosi flage zaznaczenia jak Pattern::remove
     void updateSelect(const Buttons& b);
+    void updateTransform(const Buttons& b);
+    bool shiftSelection(int dSteps, int dPitch);  // false = kolizja/poza zakresem (nic sie nie zmienia)
+    void duplicateSelection();
+    void previewTopSelected();
+public:
+    void setSelectLayer(int l) { selLayer_ = l; }  // (testy/headless)
+private:
     void renderSelectBar(Canvas& c);
 
     Pattern& pat();

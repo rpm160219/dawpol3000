@@ -79,8 +79,122 @@ void PianoRoll::selectRect(int s0, int p0, int s1, int p1) {
     }
 }
 
+// Przesuniecie zaznaczonych nut. Wszystko albo nic: przy kolizji z inna nuta albo wyjsciu
+// poza pattern stan wraca do poprzedniego.
+bool PianoRoll::shiftSelection(int ds, int dp) {
+    Pattern& p = pat();
+    static Pattern backup;
+    static bool selBackup[Pattern::MAX_NOTES];
+    static Note moved[Pattern::MAX_NOTES];
+    int nm = 0;
+    for (int i = 0; i < p.count; i++) {
+        if (!sel_[i]) continue;
+        const Note& n = p.notes[i];
+        int st = n.start + ds * TICKS_PER_STEP, pt = n.pitch + dp;
+        if (st < 0 || st + n.len > p.lengthTicks || pt < 0 || pt > 127) return false;
+        moved[nm] = n;
+        moved[nm].start = (uint16_t)st;
+        moved[nm].pitch = (uint8_t)pt;
+        nm++;
+    }
+    if (nm == 0) return false;
+    backup = p;
+    for (int i = 0; i < Pattern::MAX_NOTES; i++) selBackup[i] = sel_[i];
+    for (int i = p.count - 1; i >= 0; i--) if (sel_[i]) removeNote(i);
+    for (int k = 0; k < nm; k++) {
+        if (p.find(moved[k].start, moved[k].pitch) >= 0 || p.maxLen(moved[k].start, moved[k].pitch) < moved[k].len) {
+            p = backup;
+            for (int i = 0; i < Pattern::MAX_NOTES; i++) sel_[i] = selBackup[i];
+            return false;
+        }
+        int idx = p.add(moved[k]);
+        if (idx < 0) {
+            p = backup;
+            for (int i = 0; i < Pattern::MAX_NOTES; i++) sel_[i] = selBackup[i];
+            return false;
+        }
+        sel_[idx] = true;
+    }
+    app_->markDirty();
+    return true;
+}
+
+void PianoRoll::duplicateSelection() {
+    Pattern& p = pat();
+    int a = 1 << 30, e = 0;
+    for (int i = 0; i < p.count; i++)
+        if (sel_[i]) {
+            if (p.notes[i].start < a) a = p.notes[i].start;
+            if (p.notes[i].start + p.notes[i].len > e) e = p.notes[i].start + p.notes[i].len;
+        }
+    if (a == (1 << 30)) { app_->toast("NOTHING SELECTED"); return; }
+    int span = ((e - a + TICKS_PER_STEP - 1) / TICKS_PER_STEP) * TICKS_PER_STEP;
+    static Note src[Pattern::MAX_NOTES];
+    int n = 0;
+    for (int i = 0; i < p.count; i++) if (sel_[i]) src[n++] = p.notes[i];
+    clearSel();
+    int added = 0;
+    for (int k = 0; k < n; k++) {
+        Note d = src[k];
+        int st = d.start + span;
+        if (st >= p.lengthTicks) continue;
+        d.start = (uint16_t)st;
+        int ex = p.find(d.start, d.pitch);
+        if (ex >= 0) removeNote(ex);
+        int idx = p.add(d);
+        if (idx >= 0) { sel_[idx] = true; added++; }
+    }
+    if (added) {
+        app_->markDirty();
+        curStep_ += span / TICKS_PER_STEP;
+        if (curStep_ >= steps()) curStep_ = steps() - 1;
+    }
+    char m[32];
+    snprintf(m, sizeof m, added ? "DUPLICATED %d" : "NO ROOM IN PATTERN", added);
+    app_->toast(m);
+}
+
+// Warstwa 2: przeksztalcenia zaznaczenia (trzymany przycisk + krzyzak).
+void PianoRoll::updateTransform(const Buttons& b) {
+    int dx = 0, dy = 0;
+    if (b.repeat(B_RIGHT)) dx = 1;
+    if (b.repeat(B_LEFT)) dx = -1;
+    if (b.repeat(B_UP)) dy = 1;
+    if (b.repeat(B_DOWN)) dy = -1;
+    bool hb = b.down(B_B), ha = b.down(B_A), hy = b.down(B_Y);
+    if ((hb || ha || hy) && selCount() == 0) {
+        if (b.pressed(B_B) || b.pressed(B_A) || b.pressed(B_Y)) app_->toast("NOTHING SELECTED");
+        return;
+    }
+    if (hb && dy) {  // TRANSPOSE o poltony
+        if (shiftSelection(0, dy)) { curPitch_ += dy; previewTopSelected(); }
+    } else if (hy && dy) {  // OCTAVE
+        if (shiftSelection(0, dy * 12)) { curPitch_ += dy * 12; previewTopSelected(); }
+    } else if (ha && (dx || dy)) {  // MOVE
+        if (shiftSelection(dx, dy)) { curStep_ += dx; curPitch_ += dy; if (dy) previewTopSelected(); }
+    } else if (!hb && !ha && !hy) {
+        if (dx > 0 && curStep_ < steps() - 1) curStep_++;
+        if (dx < 0 && curStep_ > 0) curStep_--;
+        if (dy > 0 && curPitch_ < 127) curPitch_++;
+        if (dy < 0 && curPitch_ > 0) curPitch_--;
+    }
+    if (curPitch_ < 0) curPitch_ = 0;
+    if (curPitch_ > 127) curPitch_ = 127;
+    if (b.pressed(B_X)) duplicateSelection();
+}
+
+void PianoRoll::previewTopSelected() {
+    Pattern& p = pat();
+    int best = -1;
+    for (int i = 0; i < p.count; i++)
+        if (sel_[i] && (best < 0 || p.notes[i].pitch > p.notes[best].pitch)) best = i;
+    if (best >= 0) preview(p.notes[best].pitch, p.notes[best].vel);
+}
+
 void PianoRoll::updateSelect(const Buttons& b) {
     Pattern& p = pat();
+    if (b.pressed(B_L1) || b.pressed(B_R1)) { selLayer_ = 1 - selLayer_; bHeld_ = false; }
+    if (selLayer_ == 1) { updateTransform(b); return; }
     int nsteps = steps();
     int os = curStep_, op = curPitch_;
     if (b.repeat(B_RIGHT) && curStep_ < nsteps - 1) curStep_++;
@@ -444,13 +558,25 @@ void PianoRoll::render(Canvas& c) {
 
 // Tryb zaznaczania: zamiast galek — kompaktowy pasek akcji (wspolny z paskiem narzedzi).
 void PianoRoll::renderSelectBar(Canvas& c) {
-    char st[96];
-    snprintf(st, sizeof st, "SELECT  -  %d SELECTED  -  CLIPBOARD %d  -  HOLD B + D-PAD = AREA  -  R3 = EXIT", selCount(),
-             clip_.n);
-    const char* labels[4] = {"SELECT", "DELETE", "COPY", "PASTE"};
+    char st[128];
     const Color cols[4] = {pal::steel, pal::red, pal::tan, pal::pill};
     const char keys[4] = {'B', 'A', 'Y', 'X'};
-    actionBar(c, labels, cols, keys, st);
+    if (selLayer_ == 0) {
+        snprintf(st, sizeof st, "EDIT 1/2 (L1/R1)  -  %d SELECTED  -  CLIPBOARD %d  -  HOLD B + D-PAD = AREA  -  R3 = EXIT",
+                 selCount(), clip_.n);
+        const char* labels[4] = {"SELECT", "DELETE", "COPY", "PASTE"};
+        actionBar(c, labels, cols, keys, st);
+    } else {
+        snprintf(st, sizeof st, "TRANSFORM 2/2 (L1/R1)  -  %d SELECTED  -  HOLD BUTTON + D-PAD  -  R3 = EXIT", selCount());
+        const char* labels[4] = {"TRANSPOSE", "MOVE", "OCTAVE", "DUPLICATE"};
+        actionBar(c, labels, cols, keys, st);
+    }
+    // kropki warstw nad paskiem
+    for (int i = 0; i < 2; i++) {
+        float x = 314 + i * 12, y = 421.5f;
+        if (i == selLayer_) c.fillCircle(x, y, 2.4f, pal::white);
+        else c.circle(x, y, 2.f, 1.f, rgb(90, 90, 90));
+    }
 }
 
 }  // namespace dp

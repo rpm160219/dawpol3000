@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 06:45
+**Zmienione:** `core/ui/piano_roll.*` — druga warstwa paska zaznaczania (L1/R1): B TRANSPOSE (trzymaj + góra/dół, półtony), A MOVE (trzymaj + krzyżak, czas i wysokość), Y OCTAVE (trzymaj + góra/dół), X DUPLICATE (kopia zaraz za zaznaczeniem); przesunięcia „wszystko albo nic” (kolizja albo wyjście poza pattern = brak zmiany), kursor podąża za zaznaczeniem, odsłuch najwyższej nuty; kropki warstw nad paskiem. Headless: `transform`. Dokumentacja/README/CLAUDE.md.
+Testy: transpozycja, oktawa, przesuwanie z blokadą na końcu patternu, duplikat bez miejsca, undo całego gestu — OK.
+**Następny krok:** Patryk ocenia (i potwierdza, czy Y = OCTAVE i X = DUPLICATE mu pasują); potem step seq/perkusja albo syntezator.
+**Wymaga od Patryka:** tak — test i decyzja o Y/X.
+
 ## 2026-11-12 06:10
 **Zmienione:**
 - `core/ui/widgets.*` — pigułki z tekstem dopasowanym do obrysu; nowy kompaktowy `actionBar` (4 pigułki w kolumnach gałek, linia oddzielająca, linia statusu).
