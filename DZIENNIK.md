@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 18:30
+**Zmienione — port silnika MONOLIT (op1r, Hundekraft), wybór Patryka: 1:1 + modulacja + VOICE, presety 12 + 20:**
+- `third_party/op1r_monolit/` — oryginalne `monolit.c`, `monolit_tables.h`, `monolit.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `screens/stroke_font.h`; `monolit_art.h`.
+- `core/synth/monolit_dsp.*` — monolit.c jako C, stan głosu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 10, note_off = wybrzmienie CONTOUR, VOICE bez AGE, wyjście −3 dB (oryginał bez trymu był za głośny).
+- `core/ui/monolit_screen.*` — ekran monolitu 1:1 + ilustracja; `core/ui/synth_view.*` — SOUND (SHAPE/CUTOFF/CONTOUR/HEAT, L3: BODY/VEL/AGE), VOICE z AGE wyłączonym; `core/ui/dialogs.cpp` — MONOLIT na liście (13 pozycji, ciaśniej).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `monolit`, 32 presety; demo ALL ENGINES z partią ACID (MONOLIT, MONO + glide), wersja 5.
+- `tests/monolit_match.cpp`, `tools/test_monolit.sh`; wszystkie skrypty testów linkują MONOLIT.
+- Testy: MONOLIT bit w bit (0 różnic, z wybrzmieniem po note_off), wszystkie 11 testów 0 różnic; presety bez przesterowania; CPU na konsoli 13% przy 6 głosach (najcięższy silnik); demo ~24% rdzenia, szczyt 0,89. Wysłane na konsolę.
+**Następny krok:** Patryk testuje MONOLIT.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 17:00
 **Zmienione (uwagi Patryka do SID):**
 - `core/ui/synth_view.*`, `core/audio/engine.cpp` — SID ma stronę FILTER ENV (wspólna obwiednia filtra na CUTOFF, AMOUNT ± pod L3); strony: SOUND, AMP ENV, FILTER ENV, MOD ENV, LFO 1, LFO 2, PRESETS.

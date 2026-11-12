@@ -9,6 +9,7 @@
 #include "synth/oxbow_dsp.h"
 #include "synth/oxbow_plus_dsp.h"
 #include "synth/sid_dsp_wrap.h"
+#include "synth/monolit_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -113,6 +114,7 @@ void WavetableSynth::init(float outRate) {
     if (!oxbow_) oxbow_ = oxbowCreate();
     if (!oxp_) oxp_ = oxbowPlusCreate();
     if (!sid_) sid_ = sidCreate();
+    if (!mnl_) mnl_ = monolitCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -391,6 +393,11 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
     else if (kind_ == 9) sidNoteOn(sid_, slot, knobs_);
+    else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
+        for (int i = 0; i < VOICES; i++)
+            if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) monolitNoteOff(mnl_, i);
+        monolitNoteOn(mnl_, slot, knobs_);
+    }
     else if (kind_ == 8) {  // OXBOW+: jak OXBOW
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) oxbowPlusNoteOff(oxp_, i);
@@ -455,6 +462,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 10)  // MONOLIT: puszczony klawisz = wybrzmienie CONTOUR
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) monolitNoteOff(mnl_, vi);
     if (kind_ == 8)  // OXBOW+: puszczony klawisz = wybrzmienie obwiedni filtra
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) oxbowPlusNoteOff(oxp_, vi);
@@ -531,7 +541,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 9) {  // SID (oryginalny DSP op1r / cRSID)
+        if (kind_ == 10) {  // MONOLIT (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            monolitRender(mnl_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 9) {  // SID (oryginalny DSP op1r / cRSID)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             sidRender(sid_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 8) {  // OXBOW+ (rozszerzona kopia DSP kennel): modulacje PW1/PW2, P1/P2, LV1/LV2 per glos
@@ -625,7 +638,10 @@ void WavetableSynth::renderBlock() {
             dec_[i >> 1] = a;
         }
     }
-    for (int i = 0; i < BLOCK / 2; i++) fifo_[i] = (float)(dec_[i] * (1.0 / 32768.0));
+    // MONOLIT jest glosniejszy od reszty (oryginal bez trymu; 2 nuty dochodzily do pelnej skali): -3 dB na wyjsciu
+    // sciezki, po decymacji — DSP i test zgodnosci (lastDecimated) bez zmian
+    const double outGain = kind_ == 10 ? 0.7079 / 32768.0 : 1.0 / 32768.0;
+    for (int i = 0; i < BLOCK / 2; i++) fifo_[i] = (float)(dec_[i] * outGain);
     fifoPos_ = 0;
 }
 

@@ -8,6 +8,7 @@
 //                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS (bez drugiej obwiedni)
 //                    ELG:         SOUND -> AMP ENV -> PRESETS (sam silnik 1:1, bez dodatkow)
 //                    SID:         SOUND -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    MONOLIT:     SOUND -> VOICE -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    EVA, MBIRA, REACTOR, OXBOW: SOUND -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
@@ -37,6 +38,7 @@
 #include "ui/reactor_screen.h"
 #include "ui/oxbow_screen.h"
 #include "ui/sid_screen.h"
+#include "ui/monolit_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -58,9 +60,9 @@ private:
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
-    // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA, REACTOR, OXBOW: + MOD ENV i 2 LFO; 5 = SID: + FILTER ENV
-    static int pageMode(const Track& t) { return (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : (t.engine == ENG_SID ? 5 : 0)))); }
-    int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : (pm == 4 ? 6 : (pm == 5 ? 7 : 8))); }
+    // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA, REACTOR, OXBOW: + MOD ENV i 2 LFO; 5 = SID: + FILTER ENV; 6 = MONOLIT: + VOICE (bez AGE — jest w oryginale)
+    static int pageMode(const Track& t) { return (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : (t.engine == ENG_SID ? 5 : (t.engine == ENG_MONOLIT ? 6 : 0))))); }
+    int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : (pm == 4 ? 6 : (pm == 5 || pm == 6 ? 7 : 8))); }
     RelEncoder stepSidWave_;  // SID: fala krokowo (w oryginale fale powtarzaja sie co 512 — galka "szalala")
     RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_, stepObWave_[2], stepObType_, stepObSync_;
     RelEncoder stepVMode_;
@@ -85,6 +87,7 @@ private:
     ReactorScreen rx_;
     OxbowScreen ob_;
     SidScreen sd_;
+    MonolitScreen mn_;
     void releaseAll();
 };
 

@@ -12,7 +12,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -57,7 +57,7 @@ struct ObExt {
 };
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
-const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES; EVA: PRES, FREQ, OXY, COM; MBIRA: STRK, TINE, BOX, BUZZ; REACTOR: COOL, RAD, RODS, HEAT; OXBOW: CUT, RES, ENV, DTUN; SID: WAVE, MOD, CUT, RES
+const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES; EVA: PRES, FREQ, OXY, COM; MBIRA: STRK, TINE, BOX, BUZZ; REACTOR: COOL, RAD, RODS, HEAT; OXBOW: CUT, RES, ENV, DTUN; SID: WAVE, MOD, CUT, RES; MONOLIT: SHPE, CUT, CONT, HEAT
 // Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
 static const int LFO_DIVS = 15;
 const char* lfoDivName(int i);
@@ -98,7 +98,7 @@ struct Track {
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;
     ObExt obx;  // OXBOW+ (alt przy silniku OXBOW)
-    int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767); EVA: push[2] = oktawa sygnalu (slowo 7); MBIRA: RING, DOUBLE, WAH (slowa 5..7); REACTOR: push[2] = trym presetu (slowo 7); OXBOW: WAVE, FILTER, DRIVE (slowa 5..7); SID: push[2] = trym presetu (slowo 7)
+    int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767); EVA: push[2] = oktawa sygnalu (slowo 7); MBIRA: RING, DOUBLE, WAH (slowa 5..7); REACTOR: push[2] = trym presetu (slowo 7); OXBOW: WAVE, FILTER, DRIVE (slowa 5..7); SID: push[2] = trym presetu (slowo 7); MONOLIT: BODY, VEL, AGE (slowa 5..7)
     // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
     bool mono = false;
     float glide = 0.f, unison = 0.f, age = 0.f;

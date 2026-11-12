@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -34,7 +34,7 @@ public:
     void setVoice(bool mono, float glide, float unison, float age);
     // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
     // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
-    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA, 6 REACTOR, 7 OXBOW, 8 OXBOW+, 9 SID
+    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA, 6 REACTOR, 7 OXBOW, 8 OXBOW+, 9 SID, 10 MONOLIT
     void setPush(const int16_t p[3]) { for (int i = 0; i < 3; i++) knobs_[5 + i] = p[i] < 0 ? 0 : p[i]; }  // PEW: strona 2
     const PewCore* pew() const { return pew_; }
     const ElgCore* elg() const { return elg_; }
@@ -43,6 +43,7 @@ public:
     const ::ReactorCore* reactor() const { return reactor_; }
     ::OxbowCore* oxbow() const { return oxbow_; }
     const ::OxbowPlusCore* oxbowPlus() const { return oxp_; }
+    const ::MonolitCore* monolit() const { return mnl_; }
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
@@ -120,7 +121,8 @@ private:
     ::ReactorCore* reactor_ = nullptr;
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
-    ::SidCore* sid_ = nullptr;  // SID: glosy tej sciezki (C)  // OXBOW+: glosy tej sciezki (C)
+    ::SidCore* sid_ = nullptr;
+    ::MonolitCore* mnl_ = nullptr;  // MONOLIT: glosy tej sciezki (C)  // SID: glosy tej sciezki (C)  // OXBOW+: glosy tej sciezki (C)
     obx_params obx_ = OBX_DEFAULTS;  // OXBOW: glosy tej sciezki (C)  // REACTOR: glosy tej sciezki (C)  // MBIRA: glosy tej sciezki (C)  // EVA: glosy tej sciezki (C)
     bool movSync_ = false;
     float movBeats_ = 4.f;

@@ -36,7 +36,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind elgk[3] = {K_SOUND, K_AMP, K_PRESETS};
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : orig[p]))));
+    static const Kind monk[7] = {K_SOUND, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : orig[p])))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -135,7 +136,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     const int16_t nv = (int16_t)(m * 512 + 256);
                     if (nv != t.knob[0]) { t.knob[0] = nv; changed = true; }
                 }
-            } else if ((t.engine == ENG_MBIRA || t.engine == ENG_OXBOW) && alt_ && i < 3) {  // OXBOW: WAVE, FILTER, DRIVE  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
+            } else if ((t.engine == ENG_MBIRA || t.engine == ENG_OXBOW || t.engine == ENG_MONOLIT) && alt_ && i < 3) {  // MONOLIT: BODY, VEL, AGE  // OXBOW: WAVE, FILTER, DRIVE  // MBIRA + L3: strona 2 = RING, DOUBLE, WAH
                 knob(t.push[i]);
             } else if (t.engine == ENG_EVA && alt_ && i == 3) {  // EVA + L3: strona 2 COM = oktawa sygnalu (3 stopnie)
                 int st = stepOct_.steps(ax, dt, 3.f);
@@ -211,7 +212,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 t.glide = kk <= 0.01f ? 0.f : 0.005f * powf(400.f, kk);
                 changed = true;
             } else if (i == 2 && d != 0.f) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
-            else if (i == 3 && d != 0.f) { t.age = clamp01(t.age + d); changed = true; }
+            else if (i == 3 && d != 0.f && t.engine != ENG_MONOLIT) { t.age = clamp01(t.age + d); changed = true; }  // MONOLIT: AGE na L3 SOUND
             break;
         }
         case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
@@ -333,6 +334,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_MONOLIT) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        mn_.draw(c, shown, t.push, k == K_SOUND && alt_, e ? e->monolitEnv(track_) : 0, live);
     } else if (t.engine == ENG_SID) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -434,6 +441,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_MONOLIT) { hint = alt_ ? "L3 = SHAPE / CUTOFF / CONTOUR" : "L3 = BODY / VEL / AGE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OXBOW) { hint = alt_ ? "L3 = CUTOFF / RES / ENV" : "L3 = WAVE / FILTER / DRIVE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MBIRA) { hint = alt_ ? "L3 = STRIKE / TINE / BOX" : "L3 = RING / DOUBLE / WAH"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_EVA) { hint = alt_ ? "L3 = COM" : "L3 = BEEP OCTAVE"; if (alt_) hc = pal::red; }
@@ -541,7 +549,21 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_SID) {  // SID: fala, glosy / szerokosc / interwal, filtr
+    if (k == K_SOUND && t.engine == ENG_MONOLIT) {  // MONOLIT: makra SHAPE, CUTOFF, CONTOUR, HEAT; L3: BODY, VEL, AGE
+        static const char* L[4] = {"SHAPE", "CUTOFF", "CONTOUR", "HEAT"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", t.knob[i] * 100 / 32767); }
+        static const char* SH[5] = {"SAW", "SAW+SUB", "2 SAWS", "3 SAWS", "STACK"};
+        snprintf(v[0], 16, "%s", SH[(t.knob[0] * 4 + 16383) >> 15 > 4 ? 4 : (t.knob[0] * 4 + 16383) >> 15]);
+        snprintf(v[2], 16, "%s %d", t.knob[2] < 16384 ? "PLUCK" : "SWELL", t.knob[2] * 100 / 32767);
+        if (alt_) {
+            static const char* B[5] = {"SUB", "UNI", "5TH", "OCT", "SUB2"};
+            const int bs = (t.push[0] * 5) >> 15;
+            labels[0] = "BODY"; snprintf(v[0], 16, "%s", B[bs > 4 ? 4 : bs]);
+            labels[1] = "VEL"; snprintf(v[1], 16, "%d", t.push[1] * 100 / 32767);
+            labels[2] = "AGE"; snprintf(v[2], 16, "%d", t.push[2] * 100 / 32767);
+            for (int i = 0; i < 3; i++) pos[i] = t.push[i] / 32767.f;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_SID) {  // SID: fala, glosy / szerokosc / interwal, filtr
         static const char* W[6] = {"TRIANGLE", "SAW", "PULSE", "NOISE", "SYNC", "RING"};
         const unsigned mode = sidWaveMode(t.knob[0]);
         snprintf(v[0], 16, "%s", W[mode]);
@@ -714,6 +736,7 @@ void SynthView::render(Canvas& c) {
         if (t.unison <= 0.f) snprintf(v[2], 16, "OFF");
         else snprintf(v[2], 16, "%.0fC%s", t.unison, t.mono ? "" : "*");
         snprintf(v[3], 16, "%d", (int)lrintf(t.age * 100));
+        if (t.engine == ENG_MONOLIT) snprintf(v[3], 16, "SOUND L3");  // AGE oryginalu: SOUND + L3
         labels[0] = "MODE"; labels[1] = t.glideSync ? "GLIDE SYNC" : "GLIDE"; labels[2] = "UNISON"; labels[3] = "AGE";
         pos[0] = t.mono ? 1.f : 0.f;
         pos[1] = t.glideSync ? 1.f - t.glideDiv / (float)(LFO_DIVS - 1)

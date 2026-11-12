@@ -15,6 +15,8 @@
 #include "synth/reactor_dsp.h"
 #include "synth/oxbow_dsp.h"
 #include "synth/oxbow_plus_dsp.h"
+#include "synth/monolit_dsp.h"
+static inline int32_t dp_monolitEnv(const MonolitCore* p) { return monolitEnv(p); }
 static inline void dp_oxbowView(const OxbowCore* p, OxbowView* v) { oxbowView(p, v); }
 static inline void dp_reactorView(const ReactorCore* p, ReactorView* v) { reactorView(p, v); }
 static inline void dp_mbiraView(const MbiraCore* p, MbiraView* v) { mbiraView(p, v); }
@@ -54,6 +56,7 @@ public:
         if (wt_[t].kind() == 8) oxbowPlusView(wt_[t].oxbowPlus(), v);
         else if (wt_[t].oxbow()) dp_oxbowView(wt_[t].oxbow(), v);
     }
+    int32_t monolitEnv(int t) const { return t >= 0 && t < MAX_TRACKS && wt_[t].monolit() ? dp_monolitEnv(wt_[t].monolit()) : 0; }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }

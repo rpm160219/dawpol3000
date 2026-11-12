@@ -16,6 +16,7 @@ const char* engineName(int e) {
     case ENG_REACTOR: return "REACTOR";
     case ENG_OXBOW: return "OXBOW";
     case ENG_SID: return "SID";
+    case ENG_MONOLIT: return "MONOLIT";
     default: return "?";
     }
 }
@@ -47,7 +48,9 @@ const char* destNameFor(int engine, int d) {
     static const char* obn[4] = {"CUT", "RES", "ENV", "DTUN"};
     if (engine == ENG_REACTOR && d >= 0 && d < 4) return rxn[d];
     static const char* sdn[4] = {"WAVE", "MOD", "CUT", "RES"};
+    static const char* mnn[4] = {"SHPE", "CUT", "CONT", "HEAT"};
     if (engine == ENG_SID && d >= 0 && d < 4) return sdn[d];
+    if (engine == ENG_MONOLIT && d >= 0 && d < 4) return mnn[d];
     if (engine == ENG_OXBOW && d >= 0 && d < 4) return obn[d];
     if (engine == ENG_OXBOW && d == DEST_W1) return "PW1";  // OXBOW+: szerokosc pulsu zamiast fali
     if (engine == ENG_OXBOW && d == DEST_W2) return "PW2";
@@ -68,8 +71,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192};
-    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

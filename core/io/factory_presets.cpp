@@ -398,9 +398,48 @@ static const FactoryPreset kSid[] = {
     {"GLITCH NOISE", CAT_FX, 2, "k 1792 16000 24000 16000 env 0.002 0.3 0.8 0.2 lfo1 4 8 0.4 2 1 7"},
 };
 
+// MONOLIT: 12 presetow oryginalu (third_party/op1r_monolit/presets.py; galki i strona 2 BODY/VEL/AGE 1:1, obwiednia OP-1
+// w przyblizeniu; efekty i oktawa -1 czterech basow pominiete) + wersja 2: 20 z MONO/glide/unison i modulacja.
+static const FactoryPreset kMonolit[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"LADDER BASS", CAT_BASS, 1, "k 8192 7000 6000 12000 push 3277 12000 4000 env 0.001 0.965 0.793 0.169"},
+    {"PLUCK BASS", CAT_BASS, 1, "k 4000 3000 9000 20000 push 3277 20000 0 env 0.001 1.349 0.549 0.121"},
+    {"SUB DROP", CAT_BASS, 1, "k 8192 10000 2000 4000 push 29491 6000 0 env 0.001 1.773 0.916 0.341"},
+    {"LADDER PING", CAT_PLUCK, 1, "k 0 1500 3000 31000 push 3277 16000 0 env 0.001 1.152 0.366 0.121"},
+    {"ACID LINE", CAT_BASS, 1, "k 0 5000 11000 28000 push 3277 24000 2000 env 0.001 0.79 0.61 0.222"},
+    {"FAT LEAD", CAT_LEAD, 1, "k 24576 18000 4000 14000 push 22938 8000 9000 env 0.001 1.152 0.916 0.477"},
+    {"FIFTH LEAD", CAT_LEAD, 1, "k 24576 15000 8000 18000 push 16384 10000 6000 env 0.001 1.152 0.855 0.477"},
+    {"BRIGHT STAB", CAT_KEYS, 1, "k 24576 22000 7000 8000 push 22938 16000 4000 env 0.001 0.477 0.488 0.222"},
+    {"BRASS SWELL", CAT_KEYS, 1, "k 16384 9000 24000 9000 push 9830 14000 6000 env 0.078 1.152 0.855 0.79"},
+    {"WORN TAPE LEAD", CAT_LEAD, 1, "k 16384 13000 12000 10000 push 9830 8000 30000 env 0.001 1.152 0.855 0.627"},
+    {"WIDE PAD", CAT_PAD, 1, "k 32767 12000 30000 6000 push 22938 6000 20000 env 0.627 1.773 0.732 1.773"},
+    {"NIGHT DRONE", CAT_PAD, 1, "k 32767 6000 32767 22000 push 29491 0 26000 env 1.152 2.73 1.0 2.73"},
+    {"MOOG BASS", CAT_BASS, 2, "k 8192 6000 5000 14000 push 3277 14000 3000 env 0.002 0.4 0.9 0.1 voice 1 0.03 0 0"},
+    {"GLIDE BASS", CAT_BASS, 2, "k 4000 5000 8000 18000 push 3277 12000 2000 env 0.002 0.4 0.9 0.1 voice 1 0.12 0 0"},
+    {"UNISON BASS", CAT_BASS, 2, "k 24576 6000 6000 12000 push 3277 10000 4000 env 0.002 0.4 0.9 0.1 voice 1 0.03 14 0"},
+    {"ACID GLIDE", CAT_BASS, 2, "k 0 4000 12000 29000 push 3277 26000 2000 env 0.002 0.3 0.8 0.08 voice 1 0.09 0 0"},
+    {"WOBBLE BASS", CAT_BASS, 2, "k 8192 5000 2000 20000 push 3277 8000 2000 env 0.002 0.3 0.9 0.1 voice 1 0 0 0 lfo1 0 2 0.3 1 1 5"},
+    {"REESE", CAT_BASS, 2, "k 16384 7000 3000 10000 push 9830 6000 12000 env 0.003 0.4 0.9 0.15 voice 1 0.02 10 0"},
+    {"SYNC LEAD", CAT_LEAD, 2, "k 24576 16000 7000 16000 push 22938 12000 6000 env 0.005 0.3 0.9 0.25 voice 1 0.06 0 0 lfo1 0 5.5 0.012 4 0 0"},
+    {"SCREAMER", CAT_LEAD, 2, "k 16384 14000 6000 31000 push 16384 12000 4000 env 0.005 0.3 0.9 0.25 voice 1 0.05 0 0"},
+    {"UNISON LEAD", CAT_LEAD, 2, "k 32767 17000 5000 12000 push 22938 8000 8000 env 0.005 0.3 0.9 0.3 voice 1 0.05 20 0"},
+    {"PORTA LEAD", CAT_LEAD, 2, "k 24576 15000 9000 14000 push 16384 10000 6000 env 0.01 0.3 0.9 0.3 voice 1 0.18 0 0"},
+    {"HEAT LEAD", CAT_LEAD, 2, "k 16384 12000 8000 20000 push 22938 10000 4000 env 0.005 0.3 0.9 0.3 voice 1 0.06 0 0 lfo1 1 0.3 0.3 3 0 0"},
+    {"FILTER SWEEP", CAT_PAD, 2, "k 32767 6000 20000 16000 push 22938 6000 15000 env 0.5 1 0.9 1.5 lfo1 0 0.1 0.3 1 0 0"},
+    {"PULSING PAD", CAT_PAD, 2, "k 32767 10000 26000 10000 push 16384 6000 18000 env 0.4 1 0.9 1.5 lfo1 3 2 0.6 5 1 5"},
+    {"SLOW STACK", CAT_PAD, 2, "k 32767 9000 30000 8000 push 22938 4000 22000 env 1 1.5 0.9 2"},
+    {"PLUCK STAB", CAT_PLUCK, 2, "k 24576 8000 4000 16000 push 22938 18000 3000 env 0.001 0.4 0 0.3"},
+    {"RESO PING", CAT_PLUCK, 2, "k 0 2000 3000 30000 push 3277 20000 0 env 0.001 0.6 0 0.4 lfo1 4 6 0.15 1 1 7"},
+    {"POLY KEYS", CAT_KEYS, 2, "k 16384 12000 9000 8000 push 22938 16000 5000 env 0.003 0.8 0.4 0.4"},
+    {"BRASS", CAT_KEYS, 2, "k 24576 8000 22000 10000 push 9830 14000 8000 env 0.05 0.5 0.8 0.3"},
+    {"ZAP", CAT_FX, 2, "k 0 14000 4000 26000 push 3277 0 0 env 0.001 0.2 0 0.1 menv 0.001 0.18 0 0.1 1 4"},
+    {"SELF OSC", CAT_FX, 2, "k 0 9000 16384 32767 push 3277 0 0 env 0.01 0.4 1 0.5 lfo1 0 0.2 0.2 1 0 0"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "monolit")) { *n = sizeof kMonolit / sizeof kMonolit[0]; *engine = ENG_MONOLIT; return kMonolit; }
     if (!__builtin_strcmp(eng, "sid")) { *n = sizeof kSid / sizeof kSid[0]; *engine = ENG_SID; return kSid; }
     if (!__builtin_strcmp(eng, "oxbowplus")) { *n = sizeof kOxbowPlus / sizeof kOxbowPlus[0]; *engine = ENG_OXBOW; return kOxbowPlus; }
     if (!__builtin_strcmp(eng, "oxbow")) { *n = sizeof kOxbow / sizeof kOxbow[0]; *engine = ENG_OXBOW; return kOxbow; }
