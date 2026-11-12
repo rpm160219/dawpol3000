@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 07:05
+**Zmienione:** `core/ui/widgets.cpp` — kółko i litera przycisku w pigułkach wyrównane do środka piksela (litera na środku koła), napis BAR w nagłówku wyśrodkowany; `core/ui/app.cpp` — kropki zakładek przeniesione na dół ekranu; `core/ui/piano_roll.cpp` — usunięte kropki warstw spod linii (warstwę pokazuje status „1/2” / „2/2”). CLAUDE.md — zasady.
+**Następny krok:** ocena Patryka; potem step seq/perkusja albo syntezator.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 06:45
 **Zmienione:** `core/ui/piano_roll.*` — druga warstwa paska zaznaczania (L1/R1): B TRANSPOSE (trzymaj + góra/dół, półtony), A MOVE (trzymaj + krzyżak, czas i wysokość), Y OCTAVE (trzymaj + góra/dół), X DUPLICATE (kopia zaraz za zaznaczeniem); przesunięcia „wszystko albo nic” (kolizja albo wyjście poza pattern = brak zmiany), kursor podąża za zaznaczeniem, odsłuch najwyższej nuty; kropki warstw nad paskiem. Headless: `transform`. Dokumentacja/README/CLAUDE.md.
 Testy: transpozycja, oktawa, przesuwanie z blokadą na końcu patternu, duplikat bez miejsca, undo całego gestu — OK.

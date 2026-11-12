@@ -571,12 +571,6 @@ void PianoRoll::renderSelectBar(Canvas& c) {
         const char* labels[4] = {"TRANSPOSE", "MOVE", "OCTAVE", "DUPLICATE"};
         actionBar(c, labels, cols, keys, st);
     }
-    // kropki warstw nad paskiem
-    for (int i = 0; i < 2; i++) {
-        float x = 314 + i * 12, y = 421.5f;
-        if (i == selLayer_) c.fillCircle(x, y, 2.4f, pal::white);
-        else c.circle(x, y, 2.f, 1.f, rgb(90, 90, 90));
-    }
 }
 
 }  // namespace dp

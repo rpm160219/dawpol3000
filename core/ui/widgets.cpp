@@ -20,10 +20,12 @@ void pillButton(Canvas& c, float x, float y, float w, float h, const char* label
     c.fillRoundRect(x, y, w, h, h * 0.5f, fill);
     float left = x + h * 0.5f, right = x + w - h * 0.5f;  // obszar bez zaokraglen
     if (key) {
-        float kr = h * 0.32f, kx = x + h * 0.5f + 1, ky = y + h * 0.5f;
+        // srodek kola i litery wyrownany do srodka piksela — symetryczny antyaliasing
+        float kr = floorf(h * 0.32f) + 0.5f;
+        float kx = floorf(x + h * 0.5f + 1) + 0.5f, ky = floorf(y + h * 0.5f) + 0.5f;
         c.fillCircle(kx, ky, kr, rgb(0, 0, 0, 110));
         char k[2] = {key, 0};
-        float ks = kr * 1.05f;
+        float ks = roundf(kr * 0.95f);
         drawText(c, kx, ky - ks * 0.5f, k, ks, 1.2f, pal::white, ALIGN_CENTER);
         left = kx + kr + 4;
     }
@@ -80,7 +82,7 @@ void screenHeader(Canvas& c, int icon, Color iconCol, const char* title, const c
     drawText(c, 44, 15, title, 13, 1.5f, pal::white);
     if (sub && *sub) drawText(c, 44 + textWidth(title, 13) + 12, 17, sub, 10, 1.3f, subCol);
     snprintf(b, sizeof b, "BAR %d.%d", bar, beat);
-    drawText(c, 392, 17, b, 11, 1.3f, playing ? pal::white : pal::dim, ALIGN_RIGHT);
+    drawText(c, 320, 17, b, 11, 1.3f, playing ? pal::white : pal::dim, ALIGN_CENTER);
     drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);
     snprintf(b, sizeof b, "%.0f", bpm);
     drawText(c, 572, 9, b, 24, 1.9f, pal::red, ALIGN_RIGHT);
