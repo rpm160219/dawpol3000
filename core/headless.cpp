@@ -278,18 +278,22 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 20; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "monolit") || !strcmp(screen, "monolitp2") || !strcmp(screen, "monolitvoice")) {
+    } else if (!strcmp(screen, "monolit") || !strcmp(screen, "monolitp2") || !strcmp(screen, "monolitvoice") || !strcmp(screen, "monolitfenv")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_MONOLIT;
         engineDefaultKnobs(ENG_MONOLIT, tr.knob);
         tr.knob[0] = 24576; tr.knob[3] = 26000; tr.push[0] = 22938; tr.push[2] = 9000;
-        if (!strcmp(screen, "monolitvoice")) { tr.mono = true; tr.glide = 0.08f; tr.unison = 15; }
+        if (!strcmp(screen, "monolitvoice")) { tr.mono = true; tr.glide = 0.08f; }
         app.openPresets("out/presets_demo");
         app.markDirty();
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "monolitp2")) app.synth.setAlt(true);
         if (!strcmp(screen, "monolitvoice")) app.synth.setPageKind(SynthView::K_VOICE);
+        if (!strcmp(screen, "monolitfenv")) {
+            tr.fenv[1] = 0.6f; tr.fenvAmt = 0.4f; app.markDirty(); idle(app);
+            app.synth.setPageKind(SynthView::K_FENV); app.synth.setAlt(true);
+        }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

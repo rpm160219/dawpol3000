@@ -36,7 +36,7 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind elgk[3] = {K_SOUND, K_AMP, K_PRESETS};
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    static const Kind monk[7] = {K_SOUND, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind monk[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : orig[p])))));
 }
 
@@ -211,7 +211,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 kk = clamp01(kk + d);
                 t.glide = kk <= 0.01f ? 0.f : 0.005f * powf(400.f, kk);
                 changed = true;
-            } else if (i == 2 && d != 0.f) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
+            } else if (i == 2 && d != 0.f && t.engine != ENG_MONOLIT) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
             else if (i == 3 && d != 0.f && t.engine != ENG_MONOLIT) { t.age = clamp01(t.age + d); changed = true; }  // MONOLIT: AGE na L3 SOUND
             break;
         }
@@ -449,7 +449,7 @@ void SynthView::render(Canvas& c) {
         hint = alt_ ? "L3 = MOVEMENT" : (t.movSync ? "MOVEMENT SYNC TO BPM   L3 = SYNC" : "L3 = MOVEMENT SYNC");
         if (alt_ || t.movSync) hc = alt_ ? pal::red : pal::blue;
     }
-    if (k == K_VOICE && !t.mono && t.unison > 0) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
+    if (k == K_VOICE && !t.mono && t.unison > 0 && t.engine != ENG_MONOLIT) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
     if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
 
     // prawy dol: grafika strony
@@ -497,15 +497,16 @@ void SynthView::render(Canvas& c) {
         drawText(c, 600, 394, "DRAWBARS", 8, 1.1f, pal::dim, ALIGN_RIGHT);
     } else if (k == K_VOICE) {
         // glosy: POLY = 6 niezaleznych kresek, MONO = jedna (albo wachlarz unison); AGE = falowanie
-        int n = t.mono ? (t.unison > 0 ? 6 : 1) : 6;
+        const bool mnl = t.engine == ENG_MONOLIT;  // MONOLIT: bez unisonu i AGE
+        int n = t.mono ? (t.unison > 0 && !mnl ? 6 : 1) : 6;
         for (int i = 0; i < n; i++) {
             float spread = t.mono && n > 1 ? (2.f * i / (n - 1) - 1.f) * t.unison / 50.f : 0.f;
             float x0 = t.mono ? 500 : 410 + i * 36, x1 = t.mono ? 500 + spread * 90 : x0;
-            float wob = t.age * 4.f * sinf(i * 1.7f + (float)tick * 0.01f);
+            float wob = mnl ? 0.f : t.age * 4.f * sinf(i * 1.7f + (float)tick * 0.01f);
             c.line(x0, 392, x1 + wob, 344, 2.f, t.mono ? pal::green : pal::blue);
             c.fillCircle(x1 + wob, 344, 3.f, t.mono ? pal::green : pal::blue);
         }
-        snprintf(b, sizeof b, "%s%s", t.mono ? "MONO" : "POLY 6", t.mono && t.unison > 0 ? " UNISON 6" : "");
+        snprintf(b, sizeof b, "%s%s", t.mono ? "MONO" : "POLY 6", t.mono && t.unison > 0 && t.engine != ENG_MONOLIT ? " UNISON 6" : "");
         drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
     } else if (obp && (k == K_OSC1 || k == K_OSC2 || k == K_FILTER)) {
         // OXBOW+: poziomy OSC 1 (zielony), OSC 2 (czerwony), NOISE (bialy) i typ filtra
@@ -736,13 +737,13 @@ void SynthView::render(Canvas& c) {
         if (t.unison <= 0.f) snprintf(v[2], 16, "OFF");
         else snprintf(v[2], 16, "%.0fC%s", t.unison, t.mono ? "" : "*");
         snprintf(v[3], 16, "%d", (int)lrintf(t.age * 100));
-        if (t.engine == ENG_MONOLIT) snprintf(v[3], 16, "SOUND L3");  // AGE oryginalu: SOUND + L3
         labels[0] = "MODE"; labels[1] = t.glideSync ? "GLIDE SYNC" : "GLIDE"; labels[2] = "UNISON"; labels[3] = "AGE";
         pos[0] = t.mono ? 1.f : 0.f;
         pos[1] = t.glideSync ? 1.f - t.glideDiv / (float)(LFO_DIVS - 1)
                              : (t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f));
         pos[2] = t.unison / 50.f;
         pos[3] = t.age;
+        if (t.engine == ENG_MONOLIT) { labels[2] = ""; labels[3] = ""; v[2][0] = v[3][0] = 0; pos[2] = pos[3] = 0; }  // MONOLIT: tylko MODE i GLIDE
     } else if (k == K_FILTER) {
         cutoffName(v[0], t.knob[2]);
         snprintf(v[1], 16, "%d", t.knob[3] * 100 / 32767);

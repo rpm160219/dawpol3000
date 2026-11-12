@@ -58,11 +58,12 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || (simple && !sidFenv) || oxPlus || e == ENG_MONOLIT ? 0.f : t.fenvAmt);  // MONOLIT: CONTOUR
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);
-        else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, e == ENG_MONOLIT ? 0.f : t.age);  // MONOLIT: AGE z oryginalu
+        else if (e == ENG_MONOLIT) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT: tylko MODE i GLIDE
+        else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], bare ? 0.f : t.menvAmt, t.menvDest);
         {
             const WtExt& x = t.ext;

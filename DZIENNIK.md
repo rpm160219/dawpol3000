@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 19:00
+**Zmienione (uwagi Patryka do MONOLIT):**
+- `core/ui/synth_view.*`, `core/audio/engine.cpp`, `core/synth/wavetable_synth.cpp` — MONOLIT ma stronę FILTER ENV (wspólna obwiednia filtra na CUTOFF = gałka 1, AMOUNT ± pod L3, działa obok CONTOUR); strona VOICE tylko MODE i GLIDE (UNISON i AGE usunięte, w dźwięku wyłączone).
+- `core/ui/widgets.cpp` — puste pozycje paska gałek nie są rysowane (MONOLIT VOICE, PEW BARS).
+- MONOLIT bez obwiedni filtra nadal bit w bit; WAVETABLE, TAFFY bez zmian. Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza MONOLIT.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 18:30
 **Zmienione — port silnika MONOLIT (op1r, Hundekraft), wybór Patryka: 1:1 + modulacja + VOICE, presety 12 + 20:**
 - `third_party/op1r_monolit/` — oryginalne `monolit.c`, `monolit_tables.h`, `monolit.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `screens/stroke_font.h`; `monolit_art.h`.

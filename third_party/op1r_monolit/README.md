@@ -12,8 +12,8 @@ Bez zmian: `monolit.c` (DSP: 3 piły polyBLEP + sub, filtr drabinkowy zero-delay
 Odrzucone: `monolit_dsp.S`, `monolit_fc.S` (Blackfin), `kern_guest.c`, generatory i skrypty kontrolne Pythona.
 
 W DAW-POL: 4 makra (SHAPE, CUTOFF, CONTOUR, HEAT), L3 na SOUND = strona 2 (BODY, VEL, AGE = `Track::push[0..2]`),
-AMP ENV, MOD ENV, 2 LFO, VOICE (POLY/MONO, GLIDE, UNISON — oryginał zakłada, że daje je gospodarz; AGE z VOICE
-wyłączony, bo jest AGE oryginału). Wyjście ścieżki −3 dB (po decymacji, poza DSP): oryginał nie ma trymu, a dwie
+AMP ENV, FILTER ENV (na CUTOFF), MOD ENV, 2 LFO, VOICE (POLY/MONO i GLIDE — oryginał zakłada, że daje je gospodarz;
+bez UNISON i AGE, decyzja Patryka). Wyjście ścieżki −3 dB (po decymacji, poza DSP): oryginał nie ma trymu, a dwie
 nuty dochodziły do pełnej skali. Presety: 12 z oryginału (gałki i strona 2 1:1, obwiednia w przybliżeniu, bez efektów
 i oktawy −1 czterech basów) + 20 z MONO/glide/unison i modulacją. Test bit w bit: `tools/test_monolit.sh`.
 Częstotliwość: przy 96 kHz CONTOUR i dryf (liczone na blok) ~9% szybciej, filtr ~9% niżej względem dźwięku.

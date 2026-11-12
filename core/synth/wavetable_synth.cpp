@@ -512,7 +512,7 @@ void WavetableSynth::renderBlock() {
         // galki glosu = galki sciezki + LFO + obwiednie (przy zerowych modulacjach — bez zmian)
         for (int i = 0; i < 8; i++) vk[i] = knobs_[i];
         for (int i = 0; i < 4; i++) {
-            float m = vm[i] + (i == (kind_ == 1 ? 1 : 2) ? fAmt_ * v.fenv : 0.f);
+            float m = vm[i] + (i == (kind_ == 1 || kind_ == 10 ? 1 : 2) ? fAmt_ * v.fenv : 0.f);  // jasnosc: DCW / CUTOFF MONOLIT (1), CUTOFF (2)
             if (m != 0.f) {
                 int x = knobs_[i] + (int)lrintf(m * 32767.f);
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
@@ -534,7 +534,7 @@ void WavetableSynth::renderBlock() {
                 v.ageP += (v.ageTp - v.ageP) * 0.003f;  // ~0,4 s na blok 1,33 ms: powolny dryf
                 v.ageC += (v.ageTc - v.ageC) * 0.003f;
                 cents += (v.ageP * 9.f + v.statP * 7.f) * age_;
-                const int bi = kind_ == 1 ? 1 : 2;  // jasnosc: CUTOFF albo DCW
+                const int bi = kind_ == 1 || kind_ == 10 ? 1 : 2;  // jasnosc: CUTOFF albo DCW
                 int c2 = vk[bi] + (int)lrintf((v.ageC * 0.6f + v.statC * 0.4f) * age_ * 3000.f);
                 vk[bi] = (int16_t)(c2 < 0 ? 0 : (c2 > 32767 ? 32767 : c2));
             }

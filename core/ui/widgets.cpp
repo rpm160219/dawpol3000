@@ -108,6 +108,7 @@ bool drawTextFit(Canvas& c, float x, float y, const char* s, float size, float w
 }
 
 void miniKnob(Canvas& c, float x, float y, float v, Color col, const char* label, const char* val) {
+    if ((!label || !label[0]) && (!val || !val[0])) return;  // pusta pozycja paska (np. MONOLIT VOICE, PEW BARS)
     const float a0 = 0.75f * 3.14159265f, a1 = 2.25f * 3.14159265f, r = 14;
     float cx = x + 16, cy = y + 18;
     v = v < 0 ? 0 : (v > 1 ? 1 : v);
