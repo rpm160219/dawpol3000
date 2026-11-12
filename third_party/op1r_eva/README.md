@@ -14,8 +14,8 @@ Zaślepka zamiast firmware/op1r: `op1_plugin.h` (wysokość, velocity, puste fun
 jedna instancja = jedna ścieżka. Ekran z `eva.c` przeniesiony do `core/ui/eva_screen.cpp`.
 Odrzucone: `eva_dsp.S` (Blackfin), `gen_svg.py`, `gen_tables.py`, pliki `presets/*.aif` (format OP-1).
 
-Port „sam silnik” (decyzja Patryka): 4 gałki + strona 2 COM z oryginału (oktawa sygnału Quindar, L3 na SOUND,
-`Track::push[2]` = słowo 7) i obwiednia głośności. Presety oryginału: gałki 1:1, obwiednia OP-1 przeliczona
+Port: 4 gałki + strona 2 COM z oryginału (oktawa sygnału Quindar, L3 na SOUND, `Track::push[2]` = słowo 7),
+obwiednia głośności; na prośbę Patryka dodane MOD ENV i 2 LFO (modulują gałki, kod `eva.c` bez zmian). Presety oryginału: gałki 1:1, obwiednia OP-1 przeliczona
 w przybliżeniu na sekundy; efekty (spring/delay), LFO i oktawa presetów pominięte.
 
 Różnica wynikająca z częstotliwości: na OP-1 głos liczony jest przy 88,2 kHz (wewnętrznie 44,1 kHz), u nas przy

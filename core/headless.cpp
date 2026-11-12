@@ -181,8 +181,10 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "eva") || !strcmp(screen, "evaoct")) {
+    } else if (!strcmp(screen, "eva") || !strcmp(screen, "evaoct") || !strcmp(screen, "evalfo") || !strcmp(screen, "evamenv")) {
         Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "evalfo")) { tr.lfo[0].depth = 0.4f; tr.lfo[0].dest = DEST_DETUNE; tr.lfo[0].rate = 0.5f; }
+        if (!strcmp(screen, "evamenv")) { tr.menv[1] = 0.8f; tr.menvAmt = 0.5f; tr.menvDest = DEST_WAVE; }
         tr.engine = ENG_EVA;
         engineDefaultKnobs(ENG_EVA, tr.knob);
         tr.knob[3] = 17000;  // radio
@@ -191,6 +193,8 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "evaoct")) app.synth.setAlt(true);
+        if (!strcmp(screen, "evalfo")) app.synth.setPageKind(SynthView::K_LFO1);
+        if (!strcmp(screen, "evamenv")) { app.synth.setPageKind(SynthView::K_MENV); app.synth.setAlt(true); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

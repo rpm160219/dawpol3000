@@ -33,7 +33,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind pewk[8] = {K_SOUND, K_BARS, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     int n = pageCount(pm), p = page_ < n ? page_ : n - 1;
     static const Kind elgk[3] = {K_SOUND, K_AMP, K_PRESETS};
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : orig[p]));
+    static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : orig[p])));
 }
 
 void SynthView::setPageKind(int kd) {

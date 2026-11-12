@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 06:00
+**Zmienione:** EVA — dodane strony MOD ENV (z wyborem celu) i LFO 1 / LFO 2 (`core/ui/synth_view.*`, `core/audio/engine.cpp`; cele PRES/FREQ/OXY/COM/PTCH/VOL w `core/seq/project.cpp`); bez modulacji nadal bit w bit. `core/ui/widgets.cpp` — wartość gałki zmniejsza się, gdy nie mieści się w kolumnie (np. „RADIO 51” w COM). Wysłane na konsolę.
+**Następny krok:** Patryk testuje EVA z modulacją.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 05:30
 **Zmienione — port silnika EVA (op1r, Hundekraft), sam silnik:**
 - `third_party/op1r_eva/` — oryginalne `eva.c`, `eva_tables.h`, `eva_geom.h`, `eva.svg`, `eva-art.svg`, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `eva_art.h` z SVG (`tools/gen/svg_to_art2.py` — dodana kolejność elementów z dokumentu, potrzebna dla masek wskaźników).

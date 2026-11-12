@@ -133,5 +133,5 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - PEW (port 1:1 z op1r, organy z 9 suwakami + Leslie, ekran „jazz club”): gałki REGISTER/PERCUSSION/DRIVE/LESLIE, strona BARS (wysunięcie suwaków LOW/MID/HIGH), bez drugiej obwiedni (decyzja Patryka), 31 presetów w `presets/pew/`; ~5,6% rdzenia przy 6 głosach.
 - Ekran startowy z nazwą programu (~4,5 s, dowolny przycisk pomija).
 - ELG (port 1:1 z op1r, dron z 3 piłami, ekran „łoś”): „sam silnik” — gałki INTERVAL/DETUNE/TIMBRE/MOVEMENT (L3 = czerwona gałka SYNC: ruch w tempie, OFF / 1/1 … 1/128T), tylko obwiednia głośności, strony SOUND / AMP ENV / PRESETS (31 presetów); ~7,6% rdzenia przy 6 głosach.
-- EVA (port 1:1 z op1r, „kosmiczny chór” z radiem w hełmie, ekran astronautki): sam silnik — PRESSURE/FREQ/OXYGEN/COM, L3 = strona 2 COM (oktawa sygnału Quindar), obwiednia głośności, 8 presetów oryginału; C (`eva_dsp.c`); ~7,6% rdzenia przy 6 głosach.
+- EVA (port 1:1 z op1r, „kosmiczny chór” z radiem w hełmie, ekran astronautki): PRESSURE/FREQ/OXYGEN/COM, L3 = strona 2 COM (oktawa sygnału Quindar), strony SOUND / AMP ENV / MOD ENV / LFO 1 / LFO 2 / PRESETS (cele PRES, FREQ, OXY, COM, PTCH, VOL; bez drugiej obwiedni i trybów głosu), 8 presetów oryginału; C (`eva_dsp.c`); ~7,6% rdzenia przy 6 głosach.
 - Następny krok: Patryk testuje ELG (sync, presety) i EVA na konsoli.

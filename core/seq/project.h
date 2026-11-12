@@ -41,7 +41,7 @@ struct WtExt {
 };
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
-const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES
+const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES; EVA: PRES, FREQ, OXY, COM
 // Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
 static const int LFO_DIVS = 15;
 const char* lfoDivName(int i);

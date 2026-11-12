@@ -34,7 +34,9 @@ const char* destNameFor(int engine, int d) {
     static const char* tf[4] = {"WAVE", "DCW", "ENV", "RES"};
     static const char* pw[4] = {"REG", "PERC", "DRV", "LES"};
     if (engine == ENG_TAFFY && d >= 0 && d < 4) return tf[d];
+    static const char* ev[4] = {"PRES", "FREQ", "OXY", "COM"};
     if (engine == ENG_PEW && d >= 0 && d < 4) return pw[d];
+    if (engine == ENG_EVA && d >= 0 && d < 4) return ev[d];
     return lfoDestName(d);
 }
 

@@ -116,7 +116,11 @@ void miniKnob(Canvas& c, float x, float y, float v, Color col, const char* label
     if (v > 0.002f) c.arc(cx, cy, r, a0, av, 2.f, col);
     c.fillCircle(cx + cosf(av) * r, cy + sinf(av) * r, 3.f, col);
     drawText(c, x + 42, y + 2, label, 9, 1.1f, col);
-    drawText(c, x + 42, y + 18, val, 16, 1.5f, pal::white);
+    // wartosc: 16 px, mniejsza gdy nie miesci sie w kolumnie (do ~104 px; dol tekstu w tym samym miejscu)
+    float sz = 16.f;
+    const float w = textWidth(val, sz), maxW = 104.f;
+    if (w > maxW) sz = sz * maxW / w;
+    drawText(c, x + 42, y + 18 + (16.f - sz), val, sz, sz < 12.f ? 1.2f : 1.5f, pal::white);
 }
 
 void encoderBar(Canvas& c, const char* const labels[4], const char* const values[4], const float pos[4]) {
