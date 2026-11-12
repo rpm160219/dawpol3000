@@ -303,11 +303,11 @@ void App::update(const InputState& in, float dt) {
 
 void App::render(Canvas& c) {
     cur_->render(c);
-    // Wskaznik zakladek (3 kropki na dole ekranu): PROJECT, ARRANGE, PIANO ROLL
+    // Wskaznik zakladek (3 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL
     int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : -1));
     if (tab >= 0) {
         for (int i = 0; i < 3; i++) {
-            float x = 308.5f + i * 12, y = 474.5f;
+            float x = 308 + i * 12, y = tab == 0 ? 60 : 38;
             if (i == tab) c.fillCircle(x, y, 2.6f, pal::white);
             else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
         }

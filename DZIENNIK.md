@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 07:20
+**Zmienione:** poprawka mojej pomyłki — `core/ui/app.cpp`: kropki zakładek (PROJECT/ARRANGE/PIANO ROLL) wróciły pod nagłówek; `core/ui/piano_roll.cpp`: kropki warstw paska R3 (L1/R1) przywrócone i przeniesione na dół ekranu (wcześniej leżały na linii). CLAUDE.md — opis położenia obu wskaźników.
+**Następny krok:** ocena Patryka; potem step seq/perkusja albo syntezator.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 07:05
 **Zmienione:** `core/ui/widgets.cpp` — kółko i litera przycisku w pigułkach wyrównane do środka piksela (litera na środku koła), napis BAR w nagłówku wyśrodkowany; `core/ui/app.cpp` — kropki zakładek przeniesione na dół ekranu; `core/ui/piano_roll.cpp` — usunięte kropki warstw spod linii (warstwę pokazuje status „1/2” / „2/2”). CLAUDE.md — zasady.
 **Następny krok:** ocena Patryka; potem step seq/perkusja albo syntezator.
