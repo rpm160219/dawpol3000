@@ -19,8 +19,7 @@ enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LF
 enum LfoDest : uint8_t {
     DEST_WAVE, DEST_DETUNE, DEST_CUTOFF, DEST_RESO, DEST_PITCH, DEST_VOLUME,
     // tryb rozszerzony: fala, wysokosc i glosnosc kazdego oscylatora
-    DEST_W1, DEST_W2, DEST_P1, DEST_P2, DEST_LV1, DEST_LV2,
-    DEST_W12,  // fale obu oscylatorow naraz (dopisane na koncu — zgodnosc zapisanych projektow)
+    DEST_W1, DEST_W2, DEST_P1, DEST_P2, DEST_LV1, DEST_LV2,  // (WAVE = obie fale naraz)
     LFO_DESTS
 };
 // Tryby filtra (tryb rozszerzony WAVETABLE): LP24 = oryginalny ladder

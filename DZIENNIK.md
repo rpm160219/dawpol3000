@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 15:00
+**Zmienione:** `core/synth/wavetable_synth.cpp` — przester nowych filtrów (WAVETABLE+) usunięty: zdjęte sztuczne wzmocnienia BP ×1,5 / HP ×2 sprzed soft clipa, skale wyjść LP12/BP/HP + kompensacja zależna od rezonansu dobrane pomiarem nasycenia soft clipa (teraz zawsze ≤ LP24 = oryginał), suma OSC1+OSC2+SUB normalizowana ponad poziom oryginału, głośność trybów wyrównana czysto za soft clipem (LP12 ×1,35, BP ×2, HP ×1,8; bez dobijania do granicy). Usunięty cel LFO W1+2 (WAVE już przesuwa obie fale; zapisane W1+2 wczytują się jako WAVE) — `core/seq/project.*`. Dokumentacja.
+Pomiar nasycenia wyjścia przy RES 30000 + SUB: przed — LP12 59%, BP 90%, HP 80% (LP24 29%); po — LP12 8,5%, BP 0%, HP 18% (LP24 25%). Oryginał nadal 0 różnic.
+**Następny krok:** Patryk testuje filtry na konsoli.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 14:10
 **Zmienione:** nowy cel LFO **W1+2** (fale obu oscylatorów naraz; dopisany na końcu listy — zapisane projekty bez zmian) — `core/seq/project.*`, `core/synth/wavetable_synth.*`; ekran pokazuje też ruch fali OSC 1 przy W1 / W1+2. Dokończone z poprzedniej sesji: opis trybu rozszerzonego w `docs/ARCHITEKTURA.md`, README, CLAUDE.md; pomiar na konsoli: 6 głosów — oryginał 9,3%, WAVETABLE+ (2 LFO, sub, BP) 10,1% rdzenia. Zgodność oryginału nadal 0 różnic.
 **Następny krok:** Patryk testuje WAVETABLE+ na konsoli.

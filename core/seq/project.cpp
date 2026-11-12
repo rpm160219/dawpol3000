@@ -17,7 +17,7 @@ const char* lfoShapeName(int s) {
     return s >= 0 && s < LFO_SHAPES ? n[s] : "?";
 }
 const char* lfoDestName(int d) {
-    static const char* n[LFO_DESTS] = {"WAVE", "DTUN", "CUT", "RES", "PTCH", "VOL", "W1", "W2", "P1", "P2", "LV1", "LV2", "W1+2"};
+    static const char* n[LFO_DESTS] = {"WAVE", "DTUN", "CUT", "RES", "PTCH", "VOL", "W1", "W2", "P1", "P2", "LV1", "LV2"};
     return d >= 0 && d < LFO_DESTS ? n[d] : "?";
 }
 

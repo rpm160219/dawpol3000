@@ -36,6 +36,16 @@ static inline void wtExtOn(WtExtState* s) {
     s->y[0] = s->y[1] = s->y[2] = s->y[3] = 0;
 }
 
+#ifndef WT_EXT_G_LP12
+#define WT_EXT_G_LP12 22938  // 0.70
+#endif
+#ifndef WT_EXT_G_BP
+#define WT_EXT_G_BP 16384    // 0.50
+#endif
+#ifndef WT_EXT_G_HP
+#define WT_EXT_G_HP 16384    // 0.50
+#endif
+
 static inline const int16_t* waveA(int32_t pos) { return wt_waves[pos >> 15]; }
 static inline const int16_t* waveB(int32_t pos) { return wt_waves[(pos >> 15) + ((pos >> 15) < WT_WAVES - 1)]; }
 
@@ -50,6 +60,8 @@ static inline int16_t wtExtSample(WtExtState* s, uint32_t inc1, uint32_t inc2, c
     const int32_t o2 = wavetable_osc(waveA(pos2), waveB(pos2), pos2 & 0x7FFF, s->ph2);
     const int32_t os = wavetable_read(wt_waves[0], s->phs);
     int32_t x = (((o1 * l1) >> 15) + ((o2 * l2) >> 15) + ((os * ls) >> 15)) >> 2;  // zapas jak w oryginale
+    const int32_t wsum = l1 + l2 + ls;                     // suma poziomow ponad 2 (OSC1+OSC2 jak w oryginale):
+    if (wsum > 65534) x = (int32_t)((int64_t)x * 65534 / wsum);  // normalizacja, zeby SUB nie przesterowywal wejscia
     x = wavetable_soft((x * drive) >> 12);
     int32_t* y = s->y;
     const int32_t u = wavetable_soft(x - ((k * y[3]) >> 12));
@@ -59,12 +71,17 @@ static inline int16_t wtExtSample(WtExtState* s, uint32_t inc1, uint32_t inc2, c
     y[3] += (g * (y[2] - y[3])) >> 15;
     int32_t sel;
     switch (mode) {  // wyjscia ladderu (mieszanki stopni jak w filtrach wielotrybowych)
-    case 1: sel = y[1]; break;                       // LP12
-    case 2: sel = 3 * (y[0] - y[1]); break;          // BP (x1.5 — wyrownanie glosnosci)
-    case 3: sel = 2 * (u - 2 * y[0] + y[1]); break;  // HP12 (x2 — wyrownanie glosnosci)
+    // skale wyjsc dobrane pomiarem tak, by nasycenie soft clipa bylo jak w LP24 (oryginal)
+    // + kompensacja rezonansu: przy wysokim RES wczesniejsze stopnie ladderu niosa wiecej energii szczytu
+    case 1: sel = (((y[1] * WT_EXT_G_LP12) >> 15) * 4096) / (4096 + ((k * 174) >> 10)); break;            // LP12
+    case 2: sel = ((((2 * (y[0] - y[1])) * WT_EXT_G_BP) >> 15) * 4096) / (4096 + ((k * 461) >> 10)); break; // BP
+    case 3: sel = ((u - 2 * y[0] + y[1]) * WT_EXT_G_HP) >> 15; break;                                   // HP12
     default: sel = y[3]; break;                      // LP24 (oryginal)
     }
-    int32_t sample = (wavetable_soft((sel * makeup) >> 12) * level) >> 12;
+    // czyste wyrownanie glosnosci trybow (za soft clipem): LP12 x1.35, BP x2, HP x1.8; LP24 bez zmian
+    static const int32_t kModeGain[4] = {4096, 5530, 8192, 7373};
+    const int32_t lv = mode > 0 && mode < 4 ? (level * kModeGain[mode]) >> 12 : level;
+    int32_t sample = (wavetable_soft((sel * makeup) >> 12) * lv) >> 12;
     return sample > 32767 ? 32767 : sample < -32768 ? -32768 : (int16_t)sample;
 }
 
@@ -118,8 +135,8 @@ void WavetableSynth::setExt(int16_t wave2, int semi1, int semi2, float cents1, f
 void WavetableSynth::renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel) {
     WtExtState* s = SX(sx_, vi);
     auto clampK = [](float v) { return v < 0 ? 0 : (v > 32767 ? 32767 : (int32_t)v); };
-    const int32_t k0 = clampK(vk[0] + (mod[DEST_W1] + mod[DEST_W12]) * 32767.f);
-    const int32_t k0b = clampK(wave2_ + (mod[DEST_WAVE] + mod[DEST_W2] + mod[DEST_W12]) * 32767.f);
+    const int32_t k0 = clampK(vk[0] + mod[DEST_W1] * 32767.f);  // vk[0] zawiera juz WAVE (obie fale)
+    const int32_t k0b = clampK(wave2_ + (mod[DEST_WAVE] + mod[DEST_W2]) * 32767.f);
     const int32_t k2 = vk[2], k3 = vk[3];
     // wysokosc: interwal + rozstrojenie (DTUN skaluje rozstrojenie), P1/P2 = +-1 oktawa przy glebokosci 1
     const float dsc = 1.f + mod[DEST_DETUNE];
