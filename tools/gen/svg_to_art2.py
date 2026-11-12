@@ -41,14 +41,18 @@ for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
         d = attr(tag, 'd')
         for sub in re.findall(r'M[^M]*', d):
             closed = 'Z' in sub or 'z' in sub
-            if 'C' in sub:  # krzywe Beziera (bezwzgledne M/L/C/Z): splaszczone na 8 odcinkow
-                toks = re.findall(r'[MLCZz]|-?[0-9.]+', sub)
+            if any(ch in sub for ch in 'CHV'):  # krzywe Beziera (bezwzgledne M/L/C/H/V/Z): splaszczone na 8 odcinkow
+                toks = re.findall(r'[MLCHVZz]|-?[0-9.]+', sub)
                 out, i, cmd, cur = [], 0, 'M', (0.0, 0.0)
                 while i < len(toks):
                     t = toks[i]
-                    if t in 'MLCZz': cmd = t; i += 1; continue
+                    if t in 'MLCHVZz': cmd = t; i += 1; continue
                     if cmd in 'ML':
                         cur = (float(toks[i]), float(toks[i + 1])); out += cur; i += 2
+                    elif cmd == 'H':
+                        cur = (float(toks[i]), cur[1]); out += cur; i += 1
+                    elif cmd == 'V':
+                        cur = (cur[0], float(toks[i])); out += cur; i += 1
                     elif cmd == 'C':
                         c1 = (float(toks[i]), float(toks[i + 1])); c2 = (float(toks[i + 2]), float(toks[i + 3]))
                         e = (float(toks[i + 4]), float(toks[i + 5])); i += 6

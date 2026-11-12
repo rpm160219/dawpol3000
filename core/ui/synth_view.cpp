@@ -41,10 +41,11 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind monk[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind aek[8] = {K_SOUND, K_TILT, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // AETHER
     static const Kind blk[4] = {K_SOUND, K_VOICE, K_AMP, K_PRESETS};  // BLOT: slide = MODE + GLIDE
     static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : (pm == 8 ? mxk[p] : (pm == 9 ? blk[p] : orig[p]))))))));
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : (pm == 8 ? mxk[p] : (pm == 9 ? blk[p] : (pm == 10 ? aek[p] : orig[p])))))))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -137,6 +138,12 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
+                }
+            } else if (t.engine == ENG_AETHER && alt_) {  // AETHER + L3: DEAD ZONE, TILT RANGE, VIB RATE (0 = 8192)
+                if (i < 3 && d != 0.f) {
+                    if (t.push[i] <= 0) t.push[i] = 8192;
+                    knob(t.push[i]);
+                    if (t.push[i] < 1) t.push[i] = 1;
                 }
             } else if (t.engine == ENG_BLOT && alt_) {  // BLOT + L3 (Shift w OP-1): WAVE, ACCENT, DRIVE
                 if (i < 3 && d != 0.f) {
@@ -232,7 +239,15 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 }
             } else knob(t.knob[i]);
             break;
-        case K_BARS: if (i < 3) knob(t.push[i]); break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
+        case K_BARS: if (i < 3) knob(t.push[i]); break;
+        case K_TILT:  // AETHER: wirtualny czujnik — PITCH TILT (-1..1), VOL TILT, SHAKE
+            if (i < 3 && d != 0.f) {
+                const int lo = i == 0 ? -32767 : 0;
+                int x = t.tilt[i] + (int)lrintf(d * (i == 0 ? 65534.f : 32767.f));
+                x = x < lo ? lo : (x > 32767 ? 32767 : x);
+                if (x != t.tilt[i]) { t.tilt[i] = (int16_t)x; changed = true; }
+            }
+            break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
         case K_OSC1:
         case K_OSC2:
             if (obp) {  // OXBOW+: WAVE, INTERVAL, DETUNE, LEVEL; L3: OSC 1 -> PW, NOISE; OSC 2 -> SYNC, X-MOD, PW, ENV>P2
@@ -342,7 +357,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
             if (alt_ && i == 2) {
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepMDest_.steps(ax, dt, 4.f);
                 if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
                 break;
@@ -391,7 +406,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
                 // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepDest_[l].steps(ax, dt, 4.f);
                 if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
@@ -433,6 +448,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_AETHER) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ae_.draw(c, words, shown, e ? e->aetherCore(track_) : nullptr, k == K_SOUND && alt_);
     } else if (t.engine == ENG_BLOT) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -549,7 +570,7 @@ void SynthView::render(Canvas& c) {
     if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 
     // lewy dol: strona galek
-    static const char* kPage[12] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS"};
+    static const char* kPage[13] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS", "TILT"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
     drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_LFO1 && t.engine == ENG_MIXTUR ? "LFO" : kPage[k]), 13, 1.5f, pc);
     int np = pageCount(pm);
@@ -575,6 +596,8 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_AETHER) { hint = alt_ ? "L3 = ORBIT / FORM / SPACE / DEPTH" : "L3 = DEAD ZONE / TILT RANGE / VIB RATE"; if (alt_) hc = pal::blue; }
+    if (k == K_TILT) hint = "VIRTUAL TILT SENSOR (THE OP-1 IS TILTED)";
     if (k == K_SOUND && t.engine == ENG_BLOT) { hint = alt_ ? "L3 = CUTOFF / RES / ENV MOD" : "L3 = WAVE / ACCENT / DRIVE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_HOLLOW) { hint = alt_ ? "L3 = DRONE / STRINGS / BUZZ / CATHEDRAL" : "L3 = DRONE KEY / RELIC AGE / STROKES / RELIC"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MIXTUR) { hint = alt_ ? "L3 = UNDERTONES" : "L3 = FORMANTS F1 / F2 / RES"; if (alt_) hc = pal::blue; }
@@ -712,7 +735,25 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_BLOT) {  // BLOT: filtr 303, obwiednia, akcent
+    if (k == K_TILT) {  // AETHER: wirtualne przechylenie
+        labels[0] = "PITCH TILT"; snprintf(v[0], 16, "%+d", (int)lrintf(t.tilt[0] * 60.f / 32767.f)); pos[0] = (t.tilt[0] + 32767) / 65534.f;
+        labels[1] = "VOL TILT"; snprintf(v[1], 16, "%d", (int)lrintf(t.tilt[1] * 30.f / 32767.f)); pos[1] = t.tilt[1] / 32767.f;
+        labels[2] = "SHAKE"; snprintf(v[2], 16, "%d", (t.tilt[2] * 100 + 16383) / 32767); pos[2] = t.tilt[2] / 32767.f;
+        labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        strcat(v[0], " DEG"); strcat(v[1], " DEG");
+    } else if (k == K_SOUND && t.engine == ENG_AETHER) {  // AETHER: zakres, barwa, wibrato, sciszanie przechyleniem
+        static const char* L[4] = {"ORBIT", "FORM", "SPACE", "DEPTH"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        snprintf(v[0], 16, "%d ST", 1 + ((t.knob[0] * 23) >> 15));
+        if (t.knob[3] <= 0) snprintf(v[3], 16, "OFF");
+        if (alt_) {
+            const int w5 = t.push[0] > 0 ? t.push[0] : 8192, w6 = t.push[1] > 0 ? t.push[1] : 8192, w7 = t.push[2] > 0 ? t.push[2] : 8192;
+            labels[0] = "DEAD ZONE"; snprintf(v[0], 16, "%.1f DEG", w5 * 10.f / 32767.f); pos[0] = w5 / 32767.f;
+            labels[1] = "TILT RANGE"; snprintf(v[1], 16, "%.0f DEG", 20.f + w6 * 40.f / 32767.f); pos[1] = w6 / 32767.f;
+            labels[2] = "VIB RATE"; snprintf(v[2], 16, "%.2fHZ", 3.f + w7 * 5.f / 32767.f); pos[2] = w7 / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_BLOT) {  // BLOT: filtr 303, obwiednia, akcent
         static const char* L[4] = {"CUTOFF", "RESONANCE", "ENV MOD", "DECAY"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         const float hz = 30.f * powf(2.f, t.knob[0] * 9.f / 32768.f);

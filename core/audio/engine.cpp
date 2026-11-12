@@ -33,7 +33,8 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : 0);
+        wt_[i].setTilt(t.tilt[0] / 32767.f, t.tilt[1] / 32767.f, t.tilt[2] / 32767.f);
         wt_[i].setRelic(t.relic);
         wt_[i].setOctave(t.octave);
         wt_[i].setSsFilter((32767 - t.push[0]) / 32767.f, t.push[1] / 32767.f, t.push[2]);  // SUPERSAW: push = zamkniecie filtra, RES, typ
@@ -64,11 +65,11 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || e == ENG_BLOT || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // SUPERSAW: obwiednia na filtr DAW-POL  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || e == ENG_BLOT || e == ENG_AETHER || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // SUPERSAW: obwiednia na filtr DAW-POL  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);
-        else if (e == ENG_MONOLIT || e == ENG_SUPERSAW || e == ENG_BLOT) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT, SUPERSAW: tylko MODE i GLIDE
+        else if (e == ENG_MONOLIT || e == ENG_SUPERSAW || e == ENG_BLOT || e == ENG_AETHER) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT, SUPERSAW: tylko MODE i GLIDE
         else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], noMod ? 0.f : t.menvAmt, t.menvDest);
         {

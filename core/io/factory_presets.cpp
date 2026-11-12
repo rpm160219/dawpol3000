@@ -606,9 +606,26 @@ static const FactoryPreset kBlot[] = {
     {"RESO DRONE", CAT_FX, 1, "k 12000 32000 8000 32767 env 0.5 1 1 2 push 16384 20000 10000"},
 };
 
+// AETHER: oryginal (op1r, pcppcp) nie ma presetow — 11 wlasnych. tilt PITCH VOL SHAKE (wirtualny czujnik); cele
+// modulacji: 6 = PTLT (przechylenie przod / tyl), 7 = VTLT (bok, sciszanie), 8 = SHAK (potrzasanie).
+static const FactoryPreset kAether[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"CLASSIC THEREMIN", CAT_LEAD, 1, "k 15671 6000 20000 32767 voice 1 0.15 0 0 env 0.08 0.5 1 0.6 tilt 0 0 6000 lfo1 0 0.3 0.08 6 0 0"},
+    {"SPOOKY GLIDE", CAT_LEAD, 1, "k 24000 4000 16000 32767 voice 1 0.3 0 0 env 0.3 0.5 1 1 lfo1 0 0.15 0.5 6 0 0"},
+    {"SINE WHISTLE", CAT_LEAD, 1, "k 4000 0 8000 0 env 0.02 0.3 1 0.3"},
+    {"REED VOICE", CAT_LEAD, 1, "k 8000 26000 16000 16384 env 0.05 0.5 0.9 0.5 tilt 0 0 8000"},
+    {"SHAKY CHOIR", CAT_PAD, 1, "k 10000 14000 32767 0 env 0.3 1 1 1 tilt 0 0 26000"},
+    {"SWELL PAD", CAT_PAD, 1, "k 8000 8000 16000 32767 env 0.1 1 1 1.5 tilt 0 32767 0 menv 1.5 1 1 1.5 -1 7"},
+    {"TREMOLO GHOST", CAT_PAD, 1, "k 16000 4000 16000 32767 env 0.2 1 1 1 lfo1 0 6 0.6 7 0 0"},
+    {"SIREN", CAT_FX, 1, "k 32767 12000 0 0 env 0.05 0.5 1 0.5 lfo1 1 0.5 1 6 0 0"},
+    {"DIVE", CAT_FX, 1, "k 32767 10000 0 0 env 0.001 1 1 0.5 menv 0.001 1.5 0 1 -1 6"},
+    {"UFO", CAT_FX, 1, "k 20000 18000 32767 0 env 0.1 1 1 1 tilt 0 0 32767 lfo1 4 3 0.4 6 0 0"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "aether")) { *n = sizeof kAether / sizeof kAether[0]; *engine = ENG_AETHER; return kAether; }
     if (!__builtin_strcmp(eng, "blot")) { *n = sizeof kBlot / sizeof kBlot[0]; *engine = ENG_BLOT; return kBlot; }
     if (!__builtin_strcmp(eng, "bloodmoon")) { *n = sizeof kBlood / sizeof kBlood[0]; *engine = ENG_BLOOD; return kBlood; }
     if (!__builtin_strcmp(eng, "hollowsaint")) { *n = sizeof kHollow / sizeof kHollow[0]; *engine = ENG_HOLLOW; return kHollow; }

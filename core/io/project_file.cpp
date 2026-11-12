@@ -18,7 +18,7 @@ static void putStr(FILE* f, const char* s) {
 
 void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f",
-            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : (t.engine == ENG_EVA ? "eva" : (t.engine == ENG_MBIRA ? "mbira" : (t.engine == ENG_REACTOR ? "reactor" : (t.engine == ENG_OXBOW ? "oxbow" : (t.engine == ENG_SID ? "sid" : (t.engine == ENG_MONOLIT ? "monolit" : (t.engine == ENG_VAPORA ? "vapora" : (t.engine == ENG_SUPERSAW ? "supersaw" : (t.engine == ENG_MIXTUR ? "mixtur" : (t.engine == ENG_BRASS ? "brass" : (t.engine == ENG_HOLLOW ? "hollowsaint" : (t.engine == ENG_BLOOD ? "bloodmoon" : (t.engine == ENG_BLOT ? "blot" : "wavetable")))))))))))))))), t.knob[0],
+            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : (t.engine == ENG_EVA ? "eva" : (t.engine == ENG_MBIRA ? "mbira" : (t.engine == ENG_REACTOR ? "reactor" : (t.engine == ENG_OXBOW ? "oxbow" : (t.engine == ENG_SID ? "sid" : (t.engine == ENG_MONOLIT ? "monolit" : (t.engine == ENG_VAPORA ? "vapora" : (t.engine == ENG_SUPERSAW ? "supersaw" : (t.engine == ENG_MIXTUR ? "mixtur" : (t.engine == ENG_BRASS ? "brass" : (t.engine == ENG_HOLLOW ? "hollowsaint" : (t.engine == ENG_BLOOD ? "bloodmoon" : (t.engine == ENG_BLOT ? "blot" : (t.engine == ENG_AETHER ? "aether" : "wavetable"))))))))))))))))), t.knob[0],
             t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
     fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
             t.fenvAmt);
@@ -35,9 +35,10 @@ void writeInstrument(FILE* f, const Track& t) {
                 o.cents1, o.level[0], o.level[1], o.pw[0], o.pw[1], o.noise, o.sync, o.xmod, o.envPitch, o.keytrk, o.velflt,
                 o.vint, o.ftype, o.drive);
     }
-    if (t.engine == ENG_PEW || t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_SID || t.engine == ENG_MONOLIT || t.engine == ENG_VAPORA || t.engine == ENG_SUPERSAW || t.engine == ENG_MIXTUR || t.engine == ENG_HOLLOW || t.engine == ENG_BLOT) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
+    if (t.engine == ENG_PEW || t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_SID || t.engine == ENG_MONOLIT || t.engine == ENG_VAPORA || t.engine == ENG_SUPERSAW || t.engine == ENG_MIXTUR || t.engine == ENG_HOLLOW || t.engine == ENG_BLOT || t.engine == ENG_AETHER) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
     if (t.octave) fprintf(f, " oct %d", t.octave);
     if (t.engine == ENG_HOLLOW && t.relic) fprintf(f, " relic 1");
+    if (t.engine == ENG_AETHER && (t.tilt[0] | t.tilt[1] | t.tilt[2])) fprintf(f, " tilt %d %d %d", t.tilt[0], t.tilt[1], t.tilt[2]);
     if (t.engine == ENG_VAPORA && t.sun) fprintf(f, " vsun %d", t.sun);
     if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
@@ -111,7 +112,7 @@ const char* kv(char** tok, int n, int from, const char* key) {
 void parseInstrument(Track& t, char** tok, int n, int start) {
     const char* v;
     if ((v = kv(tok, n, start, "engine")))
-        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : (!strcmp(v, "eva") ? ENG_EVA : (!strcmp(v, "mbira") ? ENG_MBIRA : (!strcmp(v, "reactor") ? ENG_REACTOR : (!strcmp(v, "oxbow") ? ENG_OXBOW : (!strcmp(v, "sid") ? ENG_SID : (!strcmp(v, "monolit") ? ENG_MONOLIT : (!strcmp(v, "vapora") ? ENG_VAPORA : (!strcmp(v, "supersaw") ? ENG_SUPERSAW : (!strcmp(v, "mixtur") ? ENG_MIXTUR : (!strcmp(v, "brass") ? ENG_BRASS : (!strcmp(v, "hollowsaint") ? ENG_HOLLOW : (!strcmp(v, "bloodmoon") ? ENG_BLOOD : (!strcmp(v, "blot") ? ENG_BLOT : ENG_WAVETABLE))))))))))))))));
+        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : (!strcmp(v, "eva") ? ENG_EVA : (!strcmp(v, "mbira") ? ENG_MBIRA : (!strcmp(v, "reactor") ? ENG_REACTOR : (!strcmp(v, "oxbow") ? ENG_OXBOW : (!strcmp(v, "sid") ? ENG_SID : (!strcmp(v, "monolit") ? ENG_MONOLIT : (!strcmp(v, "vapora") ? ENG_VAPORA : (!strcmp(v, "supersaw") ? ENG_SUPERSAW : (!strcmp(v, "mixtur") ? ENG_MIXTUR : (!strcmp(v, "brass") ? ENG_BRASS : (!strcmp(v, "hollowsaint") ? ENG_HOLLOW : (!strcmp(v, "bloodmoon") ? ENG_BLOOD : (!strcmp(v, "blot") ? ENG_BLOT : (!strcmp(v, "aether") ? ENG_AETHER : ENG_WAVETABLE)))))))))))))))));
     // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
     for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu
@@ -171,6 +172,8 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 }
                 if (!strcmp(tok[i], "push") && left >= 3)
                     for (int j = 0; j < 3; j++) { int v = atoi(tok[i + 1 + j]); t.push[j] = (int16_t)(v < 0 ? 0 : v > 32767 ? 32767 : v); }
+                if (!strcmp(tok[i], "tilt") && left >= 3)
+                    for (int j = 0; j < 3; j++) { int v = atoi(tok[i + 1 + j]); t.tilt[j] = (int16_t)(v < -32767 ? -32767 : v > 32767 ? 32767 : v); }
                 if (!strcmp(tok[i], "relic") && left >= 1) t.relic = atoi(tok[i + 1]) != 0;
                 if (!strcmp(tok[i], "oct") && left >= 1) { int v = atoi(tok[i + 1]); t.octave = (int8_t)(v < -3 ? -3 : v > 3 ? 3 : v); }
                 if (!strcmp(tok[i], "vsun") && left >= 1) t.sun = (uint8_t)(atoi(tok[i + 1]) % 7);

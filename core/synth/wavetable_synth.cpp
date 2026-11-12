@@ -17,6 +17,7 @@
 #include "synth/hollowsaint_dsp.h"
 #include "synth/bloodmoon_dsp.h"
 #include "synth/blot_dsp.h"
+#include "synth/aether_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -129,6 +130,7 @@ void WavetableSynth::init(float outRate) {
     if (!hls_) hls_ = hollowCreate();
     if (!bld_) bld_ = bloodCreate();
     if (!blt_) blt_ = blotCreate();
+    if (!aet_) aet_ = aetherCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -446,6 +448,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 15) hollowNoteOn(hls_, slot, knobs_);
     else if (kind_ == 16) bloodNoteOn(bld_, slot, knobs_);
     else if (kind_ == 17) blotNoteOn(blt_, slot, knobs_);
+    else if (kind_ == 18) aetherNoteOn(aet_, slot, knobs_);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -626,7 +629,11 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 17) {  // BLOT (oryginalny DSP op1r)
+        if (kind_ == 18) {  // AETHER (oryginalny DSP op1r): wirtualny czujnik = strona TILT + modulacja PTLT / VTLT / SHAK
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            aetherRender(aet_, vi, out, vk, pitchBuf, v.vel, (int)lrintf(v.env * 32767.f), tilt_[0] + vm[DEST_W1],
+                         tilt_[1] + vm[DEST_W2], tilt_[2] + vm[DEST_P1]);
+        } else if (kind_ == 17) {  // BLOT (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             blotRender(blt_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 16) {  // BLOODMOON (oryginalny DSP op1r)
@@ -756,7 +763,8 @@ void WavetableSynth::renderBlock() {
     // sciezki, po decymacji — DSP i test zgodnosci (lastDecimated) bez zmian
     // VAPORA odwrotnie: oryginal zostawia zapas na 6 glosow (~10 dB ciszej od reszty) — +9,5 dB (x3)
     // SUPERSAW tak jak MONOLIT (geste piły z przesterem): -3 dB
-    const double outGain = kind_ == 10 || kind_ == 12 ? 0.7079 / 32768.0 : kind_ == 11 ? 3.0 / 32768.0 : kind_ == 17 ? 2.0 / 32768.0 : 1.0 / 32768.0;  // BLOT: +6 dB (oryginal x0,6, filtr 303 szybko sie zamyka)
+    const double outGain = kind_ == 10 || kind_ == 12 || kind_ == 18 ? 0.7079 / 32768.0 :  // AETHER: czysty sinus, glosny
+                                 kind_ == 11 ? 3.0 / 32768.0 : kind_ == 17 ? 2.0 / 32768.0 : 1.0 / 32768.0;  // BLOT: +6 dB (oryginal x0,6, filtr 303 szybko sie zamyka)
     for (int i = 0; i < BLOCK / 2; i++) fifo_[i] = (float)(dec_[i] * outGain);
     fifoPos_ = 0;
 }

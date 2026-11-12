@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:56
+**Zmienione — port silnika AETHER (op1r, pcppcp), 1:1 + wirtualny czujnik przechylenia (wybór Patryka: strona TILT + modulacja):**
+- `third_party/op1r_aether/` — oryginalne `aether.c`, geometria, `aether.svg`, `orbit-1.svg`, generator, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `aether_art.h`.
+- `core/synth/aether_dsp.*` — aether.c jako C z czujnikiem wirtualnym (przechylenie przód/tył, bok, potrząsanie skalibrowane do detektora oryginału), stan per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 18, TILT + modulacja (PTLT / VTLT / SHAK), MODE/GLIDE, MOD ENV, 2 LFO, wyjście −3 dB.
+- `core/ui/aether_screen*` — ekran anteny 1:1 (druga kompilacja oryginału; bez tarcz, suwaków i etykiet) + ilustracja; `core/ui/synth_view.*` — nowa strona TILT, SOUND (ORBIT / FORM / SPACE / DEPTH, L3: DEAD ZONE / TILT RANGE / VIB RATE); `core/ui/dialogs.cpp` — AETHER na liście.
+- `tools/gen/svg_to_art2.py` — polecenia ścieżki H / V.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/preset_store.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `aether`, token `tilt`, 11 presetów (oryginał nie ma żadnych).
+- `tests/aether_match.cpp`, `tools/test_aether.sh`; wszystkie skrypty testów linkują AETHER.
+- Testy: AETHER bit w bit (0 różnic, bez przechylenia jak harness), wszystkie 19 testów 0 różnic; CPU na konsoli 6,8% przy 6 głosach. Wysłane na konsolę.
+**Następny krok:** Patryk testuje AETHER (strona TILT, presety SIREN / SPOOKY GLIDE / DIVE).
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 19:43
 **Zmienione — port silnika BLOT (op1r, pcppcp), 1:1:**
 - `third_party/op1r_blot/` — oryginalne `blot.c`, `blot_tables.h`, `blot.svg`, `gen_tables.py`, `plugin.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`.

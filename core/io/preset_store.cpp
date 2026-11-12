@@ -25,6 +25,7 @@ void PresetStore::initInstrument(Track& t) {
     t.ext = d.ext;
     engineDefaultPush(t.engine, t.push);
     t.relic = d.relic;
+    for (int i = 0; i < 3; i++) t.tilt[i] = d.tilt[i];
     t.movSync = d.movSync;
     t.obx = d.obx;
     if (t.engine == ENG_OXBOW && t.alt) {  // OXBOW+: obwiednia filtra jak neutralny glos oryginalu (A 20, D 70, S 40, R 60)
