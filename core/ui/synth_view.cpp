@@ -140,6 +140,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_JUNI && alt_) {  // JUNI + L3: RESONANCE, HPF, PWM RATE (0 = neutralnie)
+                if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_DDDD && alt_) {  // DDDD + L3: FILTER, SPREAD, RATE
                 if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_ARC && alt_) {  // ARC + L3: RATIO (0 = 1:1), COUPLING, BRIGHTNESS (0 = neutralnie)
@@ -457,6 +459,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_JUNI) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        jn_.draw(c, words, shown, e ? e->juniCore(track_) : nullptr);
     } else if (t.engine == ENG_DDDD) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         dd_.draw(c, words, words, e ? e->ddddCore(track_) : nullptr, k == K_SOUND && alt_);
@@ -614,6 +622,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_JUNI) { hint = alt_ ? "L3 = TONE / SHAPE / SWEEP / CHORUS" : "L3 = RESONANCE / HPF / PWM RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_DDDD) { hint = alt_ ? "L3 = SOURCE / FEEDBACK / DESTROY / HANDS" : "L3 = FILTER / SPREAD / RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_ARC) { hint = alt_ ? "L3 = CURRENT / CARBON / HISS / STRIKE" : "L3 = RATIO / COUPLING / BRIGHTNESS"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_AETHER) { hint = alt_ ? "L3 = ORBIT / FORM / SPACE / DEPTH" : "L3 = DEAD ZONE / TILT RANGE / VIB RATE"; if (alt_) hc = pal::blue; }
@@ -755,7 +764,22 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_DDDD) {  // DDDD: zrodlo, sprzezenie, niszczenie, rece
+    if (k == K_SOUND && t.engine == ENG_JUNI) {  // JUNI: makra TONE, SHAPE, SWEEP, CHORUS
+        static const char* L[4] = {"TONE", "SHAPE", "SWEEP", "CHORUS"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        static const char* SH[5] = {"SAW+SUB", "SAW", "SAW+PULSE", "PWM STR", "SAW+PWM+S"};
+        snprintf(v[1], 16, "%s", SH[(t.knob[1] + 4096) >> 13 > 4 ? 4 : (t.knob[1] + 4096) >> 13]);
+        const int ch = t.knob[3];
+        snprintf(v[3], 16, "%s", ch < 3277 ? "OFF" : (ch < 12288 ? "I" : (ch < 24576 ? "II" : (ch < 30000 ? "II>I+II" : "I+II"))));
+        if (alt_) {
+            labels[0] = "RESONANCE"; snprintf(v[0], 16, "%d", (t.push[0] * 100 + 16383) / 32767); pos[0] = t.push[0] / 32767.f;
+            labels[1] = "HPF"; if (t.push[1] <= 0) snprintf(v[1], 16, "FLAT"); else snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767);
+            pos[1] = t.push[1] / 32767.f;
+            const int rq = (t.push[2] * t.push[2]) >> 15;
+            labels[2] = "PWM RATE"; snprintf(v[2], 16, "%.1fHZ", 0.9f + rq * 6.1f / 32767.f); pos[2] = t.push[2] / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_DDDD) {  // DDDD: zrodlo, sprzezenie, niszczenie, rece
         static const char* L[4] = {"SOURCE", "FEEDBACK", "DESTROY", "HANDS"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         static const char* SR[4] = {"NOISE", "CRACKLE", "CHAOS", "METAL"};

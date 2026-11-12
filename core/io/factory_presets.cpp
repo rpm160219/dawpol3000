@@ -657,9 +657,28 @@ static const FactoryPreset kDddd[] = {
     {"NOISE HIT", CAT_FX, 1, "k 6000 16000 26000 12000 env 0.001 0.15 0 0.1"},
 };
 
+// JUNI: 12 presetow oryginalu (third_party/op1r_juni/presets.py: galki i strona 2 RESONANCE / HPF / PWM RATE 1:1, ADSR
+// OP-1 -> sekundy (v / 8192)^1,5; obwiednia prowadzi tez filtr przez SWEEP, jak w oryginale).
+static const FactoryPreset kJuni[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"JUNI PAD", CAT_PAD, 1, "k 17000 24576 6000 20000 push 0 0 0 env 0.407 1.556 0.793 1.556"},
+    {"POLY BRASS", CAT_KEYS, 1, "k 12500 16384 20000 7000 push 4000 0 0 env 0.015 0.79 0.671 0.341"},
+    {"SUB BASS", CAT_BASS, 1, "k 13000 0 15000 0 push 3000 0 0 env 0.001 0.627 0.916 0.169"},
+    {"PLUCK KEYS", CAT_PLUCK, 1, "k 11000 8192 24000 7000 push 0 3000 0 env 0.001 1.152 0.305 0.279"},
+    {"ENSEMBLE", CAT_PAD, 1, "k 21000 26000 3000 32767 push 0 6000 4000 env 0.222 1.152 0.855 1.152"},
+    {"RESO SWEEP", CAT_FX, 1, "k 6000 8192 30000 12000 push 20000 0 0 env 0.169 1.773 0.61 1.152"},
+    {"ORGAN", CAT_KEYS, 1, "k 24000 12288 0 28000 push 0 4000 0 env 0.001 0.121 0.793 0.078"},
+    {"BIG LEAD", CAT_LEAD, 1, "k 19000 32767 9000 6000 push 6000 0 8000 env 0.001 0.79 0.793 0.222"},
+    {"GLASS PAD", CAT_PAD, 1, "k 22000 22000 5000 20000 push 3000 18000 10000 env 0.627 1.773 0.763 1.773"},
+    {"DEEP BASS", CAT_BASS, 1, "k 14000 2000 12000 0 push 9000 0 0 env 0.001 0.477 1.0 0.121"},
+    {"STAB", CAT_KEYS, 1, "k 11000 16384 28000 7000 push 10000 0 0 env 0.001 0.876 0.305 0.103"},
+    {"DREAM PAD", CAT_PAD, 1, "k 15000 30000 12000 26000 push 0 0 6000 env 0.79 1.773 0.763 1.999"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "juni")) { *n = sizeof kJuni / sizeof kJuni[0]; *engine = ENG_JUNI; return kJuni; }
     if (!__builtin_strcmp(eng, "dddd")) { *n = sizeof kDddd / sizeof kDddd[0]; *engine = ENG_DDDD; return kDddd; }
     if (!__builtin_strcmp(eng, "arc")) { *n = sizeof kArc / sizeof kArc[0]; *engine = ENG_ARC; return kArc; }
     if (!__builtin_strcmp(eng, "aether")) { *n = sizeof kAether / sizeof kAether[0]; *engine = ENG_AETHER; return kAether; }

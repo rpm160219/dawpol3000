@@ -19,6 +19,7 @@
 #include "ui/aether_screen.h"
 #include "ui/arc_screen.h"
 #include "ui/dddd_screen.h"
+#include "ui/juni_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -39,7 +40,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 23;
+static const int NENG = 24;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -107,6 +108,9 @@ static const EngineInfo kEngines[NENG] = {
     {"DDDD", "HARSH NOISE WALL",
      {"PORT OF THE OP1R DDDD ENGINE", "BY PCPPCP, BIT-EXACT. ONE SHARED", "NOISE WALL FOR ALL KEYS: SOURCES", "INTO A FEEDBACK LOOP (A TAP PER",
       "HELD KEY), FILTER, FOLD / CLIP /", "CRUSH, LIMITER; RANDOM HANDS.", "L3: FILTER, SPREAD, RATE."}},
+    {"JUNI", "ONE-DCO POLY",
+     {"PORT OF THE OP1R JUNI ENGINE", "BY HUNDEKRAFT, BIT-EXACT. AN EARLY", "80S ONE-DCO POLY: SAW, PULSE, SUB,", "PWM INTO A 4-POLE LADDER, HPF,",
+      "CHORUS I / II / I+II. ONE ENVELOPE", "(AMP ENV) ALSO SWEEPS THE FILTER.", "L3: RESONANCE, HPF, PWM RATE."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
@@ -137,11 +141,11 @@ static int engStep(int idx, int d) {
 }
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 23 : t.engine == ENG_JUNI ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 22 ? ENG_SAW : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 23 ? ENG_SAW : idx == 22 ? ENG_JUNI : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) {  // nowy silnik: domyslne galki i strona 2 (np. SUPERSAW: filtr otwarty)
         engineDefaultKnobs(e, t.knob);
         engineDefaultPush(e, t.push);
@@ -330,6 +334,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 19) drawAetherIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 20) drawArcIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 21) drawDdddIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 22) drawJuniIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
@@ -342,7 +347,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 10 || engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 14) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
-    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 21) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
+    else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 21 || engSel_ == 22) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 19) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  TILT, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 18) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV, GLIDE", 7, 1.f, pal::dim);
     else if (engSel_ == 13) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);

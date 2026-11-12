@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 21:08
+**Zmienione — port silnika JUNI (op1r, Hundekraft), 1:1:**
+- `third_party/op1r_juni/` — oryginalne `juni.c`, geometria, tablice, `juni.svg`, test hosta, generatory, `plugin.json`, `presets.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `juni_art.h`.
+- `core/synth/juni_dsp.*` — juni.c jako C, stan pliku per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 21, sam silnik, obwiednia AMP ENV prowadzi też filtr (SWEEP), wyjście −3 dB (głośny: akordy by przesterowały).
+- `core/ui/juni_screen*` — ekran fiordu 1:1 (druga kompilacja) + ilustracja; `core/ui/synth_view.*` — TONE / SHAPE (5 mieszanek) / SWEEP / CHORUS (OFF, I, II, I+II), L3: RESONANCE / HPF / PWM RATE; `core/ui/dialogs.cpp` — JUNI na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `juni`, 13 presetów (12 z oryginału).
+- OUTATIME: nie ma go w op1r-src (aktualne repo) ani w wyszukiwarce — potrzebny link / plik od Patryka.
+- `tests/juni_match.cpp`, `tools/test_juni.sh`; wszystkie skrypty testów linkują JUNI.
+- Testy: JUNI bit w bit (0 różnic), wszystkie 22 testy 0 różnic; CPU na konsoli 7% przy 6 głosach z chorusem. Wysłane na konsolę.
+**Następny krok:** Patryk testuje JUNI; link do OUTATIME.
+**Wymaga od Patryka:** tak — odsłuch, link do OUTATIME.
+
 ## 2026-11-12 20:56
 **Zmienione — port silnika DDDD (op1r, pcppcp), 1:1:**
 - `third_party/op1r_dddd/` — oryginalne `plugins/dddd/dddd.c`, `dddd.svg`, `plugin.json`, `dddd/dd_core.c/h`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`.
