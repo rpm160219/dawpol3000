@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 14:30
+**Zmienione — OXBOW+ (rozszerzona wersja OXBOW, jak WAVETABLE+):**
+- `third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.c`, `oxbow_plus.h` — zmodyfikowana kopia oxbow.c: stałe neutralnego głosu → parametry ścieżki (2 niezależne oscylatory: fala, interwał, strojenie, poziom, PW; szum, SYNC, X-MOD, ENV→P2, keytrack, velocity, VINTAGE, ADSR obwiedni filtra). Oryginalny oxbow.c bez zmian.
+- `core/synth/oxbow_plus_dsp.*` — opakowanie (stan ścieżki, przeliczenie czasów obwiedni na indeksy tablic); `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 8 = OXBOW+, modulacje PW1/PW2/P1/P2/LV1/LV2 per głos, VOICE (unison, glide, AGE) działa.
+- `core/seq/project.*` (`ObExt`), `core/io/project_file.cpp` (`obx`), `core/io/preset_store.cpp` (INIT = neutralny głos oryginału) — dane OXBOW+.
+- `core/ui/synth_view.*` — strony OSC 1 / OSC 2 / FILTER z warstwami L3, FILTER ENV (AMOUNT = ENV AMOUNT), grafika poziomów, nagłówek „OXBOW+”; `core/ui/dialogs.cpp` — OXBOW+ na liście (11 pozycji, lista ciaśniej); `core/ui/app.h` — presety w `presets/oxbowplus/`.
+- `core/io/factory_presets.cpp` — 30 presetów OXBOW+ (unison, sync, X-MOD, PWM, fale per oscylator, szum, filtry), poziomy sprawdzone.
+- Testy: OXBOW+ z domyślnymi = bit w bit oryginalny OXBOW (`tools/test_oxbowplus.sh`); wszystkie 8 silników nadal 0 różnic; CPU na konsoli 5,2% (6 głosów), 6,3% (wszystko włączone), 6,6% (MONO + unison). Wysłane na konsolę.
+**Następny krok:** Patryk testuje OXBOW+.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 12:30
 **Zmienione — port silnika OXBOW (Hundekraft/kennel wg OberVave zvensona):**
 - Kod OXBOW nie jest w repo op1r — tylko w paczce źródeł Hundekraft 3.0.1 (link w README `Hundekraft/op1-workshop`); pobrana do `~/src_ext/hundekraft-3.0.1/` (suma SHA-256 zgodna).

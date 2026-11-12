@@ -57,9 +57,9 @@ private:
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
     // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA, REACTOR, OXBOW: + MOD ENV i 2 LFO
-    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : 0))); }
+    static int pageMode(const Track& t) { return (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : 0))); }
     int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : (pm == 4 ? 6 : 8)); }
-    RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_;
+    RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_, stepObWave_[2], stepObType_, stepObSync_;
     RelEncoder stepVMode_;
     // przegladarka presetow
     int catSel_ = 0, preSel_ = 0, preFirst_ = 0, focus_ = 1;  // catSel_ 0 = ALL, 1.. = kategorie

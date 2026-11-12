@@ -29,6 +29,12 @@ void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
             x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents, x.osc[1].level,
             x.sub, x.fmode, x.drive);
+    if (t.engine == ENG_OXBOW && t.alt) {
+        const ObExt& o = t.obx;
+        fprintf(f, " obx %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", o.wave[0], o.wave[1], o.semi[0], o.semi[1],
+                o.cents1, o.level[0], o.level[1], o.pw[0], o.pw[1], o.noise, o.sync, o.xmod, o.envPitch, o.keytrk, o.velflt,
+                o.vint, o.ftype, o.drive);
+    }
     if (t.engine == ENG_PEW || t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
     if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
@@ -141,6 +147,21 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 if (!strcmp(tok[i], "sub") && left >= 1) t.ext.sub = (float)atof(tok[i + 1]);
                 if (!strcmp(tok[i], "fmode") && left >= 1) t.ext.fmode = (uint8_t)(atoi(tok[i + 1]) % FLT_MODES);
                 if (!strcmp(tok[i], "drv") && left >= 1) t.ext.drive = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "obx") && left >= 18) {
+                    int v[18];
+                    for (int j = 0; j < 18; j++) v[j] = atoi(tok[i + 1 + j]);
+                    auto cl = [](int x, int lo, int hi) { return x < lo ? lo : x > hi ? hi : x; };
+                    ObExt& o = t.obx;
+                    o.wave[0] = (uint8_t)cl(v[0], 0, 3); o.wave[1] = (uint8_t)cl(v[1], 0, 3);
+                    o.semi[0] = (int8_t)cl(v[2], -24, 24); o.semi[1] = (int8_t)cl(v[3], -24, 24);
+                    o.cents1 = (int8_t)cl(v[4], -50, 50);
+                    o.level[0] = (uint8_t)cl(v[5], 0, 126); o.level[1] = (uint8_t)cl(v[6], 0, 126);
+                    o.pw[0] = (uint8_t)cl(v[7], 1, 127); o.pw[1] = (uint8_t)cl(v[8], 1, 127);
+                    o.noise = (uint8_t)cl(v[9], 0, 126); o.sync = v[10] != 0; o.xmod = (uint8_t)cl(v[11], 0, 127);
+                    o.envPitch = (int8_t)cl(v[12], -64, 63); o.keytrk = (uint8_t)cl(v[13], 0, 128);
+                    o.velflt = (uint8_t)cl(v[14], 0, 127); o.vint = (uint8_t)cl(v[15], 0, 127);
+                    o.ftype = (uint8_t)cl(v[16], 0, 5); o.drive = (uint8_t)cl(v[17], 0, 127);
+                }
                 if (!strcmp(tok[i], "msync") && left >= 2) {
                     t.movSync = atoi(tok[i + 1]) != 0;
                     t.movDiv = (uint8_t)(atoi(tok[i + 2]) % LFO_DIVS);

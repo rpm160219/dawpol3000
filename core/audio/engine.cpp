@@ -33,15 +33,31 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? 7 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : 0);
         const bool bare = e == ENG_ELG;  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
-        const bool simple = bare || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || e == ENG_OXBOW;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
+        const bool simple = bare || e == ENG_EVA || e == ENG_MBIRA || e == ENG_REACTOR || (e == ENG_OXBOW && !t.alt);  // OXBOW+: tryby glosu jak WAVETABLE+
+        const bool oxPlus = e == ENG_OXBOW && t.alt;  // ELG, EVA: bez drugiej obwiedni i trybow glosu (EVA: MOD ENV i LFO sa)
         wt_[i].setKnobs(t.knob);
-        wt_[i].setPush(t.push);
+        if (oxPlus) {  // OXBOW+: FILTER i DRIVE w slowach 6, 7 (jak strona 2 oryginalu); reszta w obx_params
+            const ObExt& o = t.obx;
+            const int16_t pw[3] = {0, (int16_t)(o.ftype * 512 + 256), (int16_t)(o.drive * 32767 / 127)};
+            wt_[i].setPush(pw);
+            obx_params q = OBX_DEFAULTS;
+            q.w1 = o.wave[0]; q.w2 = o.wave[1];
+            q.semi1 = o.semi[0]; q.semi2 = o.semi[1];
+            q.cent8_1 = o.cents1 * 256 / 100; q.cent8_2 = 0;
+            q.lvl1 = o.level[0]; q.lvl2 = o.level[1]; q.lvln = o.noise;
+            q.pw1 = ((uint32_t)o.pw[0] << 25) + (1u << 24); q.pw2 = ((uint32_t)o.pw[1] << 25) + (1u << 24);
+            q.sync = o.sync; q.xmod = o.xmod; q.envo2 = o.envPitch;
+            q.keytrk = o.keytrk; q.velflt = o.velflt; q.vint = o.vint;
+            q.fa = oxbowPlusAttackIndex(t.fenv[0]); q.fd = oxbowPlusDecayIndex(t.fenv[1]); q.fr = oxbowPlusDecayIndex(t.fenv[3]);
+            q.sus = (int32_t)(t.fenv[2] * (float)(1 << 24));
+            wt_[i].setObx(q);
+        } else wt_[i].setPush(t.push);
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || simple ? 0.f : t.fenvAmt);
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || simple || oxPlus ? 0.f : t.fenvAmt);
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);

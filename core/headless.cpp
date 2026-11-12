@@ -241,6 +241,28 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true; in.btn[B_B] = true; in.btn[B_X] = true;  // akord: trzy gwiazdy
         app.update(in, 0.016f);
         for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "obposc1") || !strcmp(screen, "obposc2") || !strcmp(screen, "obpfilt") || !strcmp(screen, "obpfenv")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_OXBOW;
+        tr.alt = true;
+        engineDefaultKnobs(ENG_OXBOW, tr.knob);
+        tr.obx.wave[1] = 2; tr.obx.semi[1] = 7; tr.obx.noise = 30; tr.obx.sync = !strcmp(screen, "obposc2");
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        app.synth.setPageKind(!strcmp(screen, "obposc1") ? SynthView::K_OSC1 : !strcmp(screen, "obposc2") ? SynthView::K_OSC2
+                              : !strcmp(screen, "obpfilt") ? SynthView::K_FILTER : SynthView::K_FENV);
+        if (!strcmp(screen, "obposc2")) app.synth.setAlt(true);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "oxbowplusengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 9; i++) tap(app, B_DOWN);  // OXBOW+
     } else if (!strcmp(screen, "oxbowengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

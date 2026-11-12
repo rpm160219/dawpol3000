@@ -46,6 +46,8 @@ const char* destNameFor(int engine, int d) {
     static const char* obn[4] = {"CUT", "RES", "ENV", "DTUN"};
     if (engine == ENG_REACTOR && d >= 0 && d < 4) return rxn[d];
     if (engine == ENG_OXBOW && d >= 0 && d < 4) return obn[d];
+    if (engine == ENG_OXBOW && d == DEST_W1) return "PW1";  // OXBOW+: szerokosc pulsu zamiast fali
+    if (engine == ENG_OXBOW && d == DEST_W2) return "PW2";
     return lfoDestName(d);
 }
 

@@ -17,7 +17,7 @@ pkg_check_modules(SDL2 REQUIRED sdl2)
 add_library(dpcore STATIC
   core/gfx/canvas.cpp core/gfx/font.cpp core/gfx/icons.cpp
   core/io/image_io.cpp core/io/fs.cpp core/io/project_file.cpp core/io/project_store.cpp core/io/preset_store.cpp core/io/factory_presets.cpp
-  core/synth/tone_synth.cpp core/synth/saw_synth.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp core/synth/eva_dsp.c core/synth/mbira_dsp.c core/synth/reactor_dsp.c core/synth/oxbow_dsp.c
+  core/synth/tone_synth.cpp core/synth/saw_synth.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp core/synth/elg_dsp.cpp core/synth/eva_dsp.c core/synth/mbira_dsp.c core/synth/reactor_dsp.c core/synth/oxbow_dsp.c core/synth/oxbow_plus_dsp.c
   core/seq/pattern.cpp core/seq/project.cpp core/seq/demo_song.cpp core/seq/sequencer.cpp
   core/audio/engine.cpp
   core/ui/test_screen.cpp core/ui/piano_roll.cpp core/ui/arrange.cpp core/ui/dialogs.cpp

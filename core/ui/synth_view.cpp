@@ -62,7 +62,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     Track& t = p.tracks[track_];
     AudioEngine* e = app_->engine();
     const bool wt = t.engine == ENG_WAVETABLE;
-    bool ext = wt && t.alt;
+    bool ext = (wt || t.engine == ENG_OXBOW) && t.alt;  // tryb rozszerzony (WAVETABLE+, OXBOW+)
+    const bool obp = t.engine == ENG_OXBOW && t.alt;
     const int pm = pageMode(t);
 
     if (b.pressed(B_SELECT) && !b.down(B_MENU) && !ed_.active()) {
@@ -139,7 +140,37 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             break;
         case K_BARS: if (i < 3) knob(t.push[i]); break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
         case K_OSC1:
-        case K_OSC2: {  // WAVE, INTERVAL, DETUNE, LEVEL (OSC 1 + L3: SUB)
+        case K_OSC2:
+            if (obp) {  // OXBOW+: WAVE, INTERVAL, DETUNE, LEVEL; L3: OSC 1 -> PW, NOISE; OSC 2 -> SYNC, X-MOD, PW, ENV>P2
+                const int o = k - K_OSC1;
+                ObExt& x = t.obx;
+                auto add = [&](auto& val, int lo, int hi, float range) {
+                    if (d == 0.f) return;
+                    int nv = (int)lrintf(val + d * range);
+                    nv = nv < lo ? lo : (nv > hi ? hi : nv);
+                    if (nv != val) { val = (std::remove_reference_t<decltype(val)>)nv; changed = true; }
+                };
+                if (alt_ && o == 0 && i >= 2) {
+                    if (i == 2) add(x.pw[0], 1, 127, 127.f);
+                    else add(x.noise, 0, 126, 126.f);
+                } else if (alt_ && o == 1) {
+                    if (i == 0) { int st = stepObSync_.steps(ax, dt, 3.f); if (st) { bool sy = st > 0; if (sy != x.sync) { x.sync = sy; changed = true; } } }
+                    else if (i == 1) add(x.xmod, 0, 127, 127.f);
+                    else if (i == 2) add(x.pw[1], 1, 127, 127.f);
+                    else add(x.envPitch, -64, 63, 127.f);
+                } else if (i == 0) {
+                    int st = stepObWave_[o].steps(ax, dt, 4.f);
+                    if (st) { int w = x.wave[o] + st; x.wave[o] = (uint8_t)(w < 0 ? 0 : w > 3 ? 3 : w); changed = true; }
+                } else if (i == 1) {
+                    int st = stepInt_[o].steps(ax, dt, 6.f);
+                    if (st) { int sm = x.semi[o] + st; x.semi[o] = (int8_t)(sm < -24 ? -24 : sm > 24 ? 24 : sm); changed = true; }
+                } else if (i == 2) {
+                    if (o == 0) add(x.cents1, -50, 50, 100.f);
+                    else knob(t.knob[3]);  // OSC 2: galka DETUNE oryginalu (0 .. +50 centow)
+                } else add(x.level[o], 0, 126, 126.f);
+                break;
+            }
+        {  // WAVETABLE+: WAVE, INTERVAL, DETUNE, LEVEL (OSC 1 + L3: SUB)
             int o = k - K_OSC1;
             WtOsc& os = t.ext.osc[o];
             if (i == 0) knob(o == 0 ? t.knob[0] : os.wave);
@@ -174,6 +205,23 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             break;
         }
         case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
+            if (obp) {  // OXBOW+: CUTOFF, RES, TYPE, DRIVE; L3: KEYTRK, VELOCITY, VINTAGE, DRIVE
+                ObExt& x = t.obx;
+                auto add = [&](uint8_t& val, int lo, int hi, float range) {
+                    if (d == 0.f) return;
+                    int nv = (int)lrintf(val + d * range);
+                    nv = nv < lo ? lo : (nv > hi ? hi : nv);
+                    if (nv != val) { val = (uint8_t)nv; changed = true; }
+                };
+                if (alt_ && i < 3) add(i == 0 ? x.keytrk : (i == 1 ? x.velflt : x.vint), 0, i == 0 ? 128 : 127, 127.f);
+                else if (i == 0) knob(t.knob[0]);
+                else if (i == 1) knob(t.knob[1]);
+                else if (i == 2) {
+                    int st = stepObType_.steps(ax, dt, 4.f);
+                    if (st) { x.ftype = (uint8_t)((x.ftype + st % 6 + 6) % 6); changed = true; }
+                } else add(x.drive, 0, 127, 127.f);
+                break;
+            }
             if (i == 0) knob(t.knob[2]);
             else if (i == 1) knob(t.knob[3]);
             else if (i == 2) {
@@ -200,6 +248,10 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         case K_FENV: {  // A D S R (L3: R -> AMOUNT)
             if (d == 0.f) break;
             float* ev = k == K_AMP ? t.env : t.fenv;
+            if (i == 3 && alt_ && obp && k == K_FENV) {  // OXBOW+: AMOUNT = galka ENV AMOUNT oryginalu (srodek = 0)
+                knob(t.knob[2]);
+                break;
+            }
             if (i == 3 && alt_) {
                 float& amt = k == K_AMP ? t.envAmt : t.fenvAmt;
                 float a = amt + d * 2.f;
@@ -264,6 +316,7 @@ void SynthView::render(Canvas& c) {
     bool playing = e && e->isPlaying() && e->playMode() == Sequencer::SONG;
     int tick = playing ? e->playTick() : 0;
     const bool ext = t.engine == ENG_WAVETABLE && t.alt;
+    const bool obp = t.engine == ENG_OXBOW && t.alt;  // OXBOW+
     const int pm = pageMode(t);
     const Kind k = kind(pm);
     char b[64];
@@ -335,7 +388,7 @@ void SynthView::render(Canvas& c) {
     }
     // naglowek na wierzchu (ekran silnika zaczyna sie pod nim)
     c.fillRect(0, 0, 640, 44, pal::bg);
-    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
+    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : (t.engine == ENG_OXBOW && t.alt ? "OXBOW+" : engineName(t.engine)), t.name, tc, tick / TICKS_PER_BAR + 1,
                  (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
     if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 
@@ -355,6 +408,9 @@ void SynthView::render(Canvas& c) {
     if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
     else if (k == K_MENV) { hint = alt_ ? "L3 = SUSTAIN + RELEASE" : "L3 = DEST + AMOUNT"; if (alt_) hc = pal::red; }
     else if (k == K_VOICE) { hint = t.glideSync ? "GLIDE SYNC TO BPM   L3 = FREE" : "GLIDE FREE   L3 = SYNC TO BPM"; if (t.glideSync) hc = pal::blue; }
+    else if (k == K_OSC1 && obp) { hint = alt_ ? "L3 = DETUNE / LEVEL" : "L3 = PW / NOISE"; if (alt_) hc = pal::red; }
+    else if (k == K_OSC2 && obp) { hint = alt_ ? "L3 = WAVE / INT / DETUNE / LEVEL" : "L3 = SYNC / X-MOD / PW / ENV>PITCH"; if (alt_) hc = pal::red; }
+    else if (k == K_FILTER && obp) { hint = alt_ ? "L3 = CUTOFF / RES / TYPE" : "L3 = KEYTRACK / VELOCITY / VINTAGE"; if (alt_) hc = pal::blue; }
     else if (k == K_OSC1) { hint = alt_ ? "L3 = LEVEL" : "L3 = SUB OSC"; if (alt_) hc = pal::red; }
     else if (k == K_LFO1 || k == K_LFO2) {
         bool sy = t.lfo[k - K_LFO1].sync;
@@ -378,7 +434,8 @@ void SynthView::render(Canvas& c) {
         drawText(c, 600, 394, b, 8, 1.1f, t.menvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
     } else if (k == K_FENV) {
         drawEnvelope(c, t.fenv, true, 400, 342, 200, 46);
-        snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.fenvAmt * 100));
+        if (obp) snprintf(b, sizeof b, "AMOUNT %+d%%", (t.knob[2] - 16384) * 100 / 16384);  // OXBOW+: ENV AMOUNT
+        else snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.fenvAmt * 100));
         drawText(c, 600, 394, b, 8, 1.1f, t.fenvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
     } else if (k == K_LFO1 || k == K_LFO2) {
         const Lfo& L = t.lfo[k - K_LFO1];
@@ -424,6 +481,20 @@ void SynthView::render(Canvas& c) {
             c.fillCircle(x1 + wob, 344, 3.f, t.mono ? pal::green : pal::blue);
         }
         snprintf(b, sizeof b, "%s%s", t.mono ? "MONO" : "POLY 6", t.mono && t.unison > 0 ? " UNISON 6" : "");
+        drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
+    } else if (obp && (k == K_OSC1 || k == K_OSC2 || k == K_FILTER)) {
+        // OXBOW+: poziomy OSC 1 (zielony), OSC 2 (czerwony), NOISE (bialy) i typ filtra
+        static const char* F[6] = {"LP12", "HP12", "BP12", "NOTCH", "LP24", "SEM"};
+        const float lv[3] = {t.obx.level[0] / 126.f, t.obx.level[1] / 126.f, t.obx.noise / 126.f};
+        const Color lc[3] = {pal::green, pal::red, pal::white};
+        const char* ln[3] = {"OSC1", "OSC2", "NOISE"};
+        for (int i = 0; i < 3; i++) {
+            float y = 344 + i * 16;
+            drawText(c, 400, y, ln[i], 7, 1.f, lc[i]);
+            c.line(446, y + 3.5f, 600, y + 3.5f, 1.f, pal::faint);
+            if (lv[i] > 0.001f) c.line(446, y + 3.5f, 446 + 154 * lv[i], y + 3.5f, 2.5f, lc[i]);
+        }
+        snprintf(b, sizeof b, "%sFILTER %s", t.obx.sync ? "SYNC  " : (t.obx.xmod ? "X-MOD  " : ""), F[t.obx.ftype % 6]);
         drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
     } else if (k == K_OSC1 || k == K_OSC2 || k == K_FILTER) {
         // mieszanie: poziomy OSC 1 (zielony), OSC 2 (czerwony), SUB (bialy)
@@ -558,6 +629,41 @@ void SynthView::render(Canvas& c) {
         snprintf(v[3], 16, "%d", t.knob[3] * 100 / 32767);
         static const char* L[4] = {"WAVE", "DETUNE", "CUTOFF", "RESONANCE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+    } else if (obp && (k == K_OSC1 || k == K_OSC2)) {  // OXBOW+
+        static const char* W[4] = {"OFF", "SAW", "PULSE", "BOTH"};
+        const int o = k - K_OSC1;
+        const ObExt& x = t.obx;
+        snprintf(v[0], 16, "%s", W[x.wave[o] & 3]);
+        snprintf(v[1], 16, "%+d", x.semi[o]);
+        if (o == 0) snprintf(v[2], 16, "%+dC", x.cents1);
+        else snprintf(v[2], 16, "%.0fC", (t.knob[3] * 128 >> 15) * 50.f / 128.f);
+        snprintf(v[3], 16, "%d", x.level[o] * 100 / 126);
+        labels[0] = "WAVE"; labels[1] = "INTERVAL"; labels[2] = "DETUNE"; labels[3] = "LEVEL";
+        pos[0] = x.wave[o] / 3.f; pos[1] = (x.semi[o] + 24) / 48.f;
+        pos[2] = o == 0 ? (x.cents1 + 50) / 100.f : t.knob[3] / 32767.f; pos[3] = x.level[o] / 126.f;
+        if (alt_ && o == 0) {
+            labels[2] = "PW"; snprintf(v[2], 16, "%d%%", x.pw[0] * 100 / 128); pos[2] = x.pw[0] / 127.f;
+            labels[3] = "NOISE"; snprintf(v[3], 16, "%d", x.noise * 100 / 126); pos[3] = x.noise / 126.f;
+        } else if (alt_) {
+            labels[0] = "SYNC"; snprintf(v[0], 16, "%s", x.sync ? "ON" : "OFF"); pos[0] = x.sync ? 1.f : 0.f;
+            labels[1] = "X-MOD"; snprintf(v[1], 16, "%d", x.xmod * 100 / 127); pos[1] = x.xmod / 127.f;
+            labels[2] = "PW"; snprintf(v[2], 16, "%d%%", x.pw[1] * 100 / 128); pos[2] = x.pw[1] / 127.f;
+            labels[3] = "ENV>PITCH"; snprintf(v[3], 16, "%+.0f", x.envPitch * 24.f / 64.f); pos[3] = (x.envPitch + 64) / 127.f;
+        }
+    } else if (obp && k == K_FILTER) {  // OXBOW+
+        static const char* F[6] = {"LP12", "HP12", "BP12", "NOTCH", "LP24", "SEM"};
+        const ObExt& x = t.obx;
+        snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);
+        snprintf(v[1], 16, "%d", t.knob[1] * 100 / 32767);
+        snprintf(v[2], 16, "%s", F[x.ftype % 6]);
+        snprintf(v[3], 16, "%d", x.drive * 100 / 127);
+        labels[0] = "CUTOFF"; labels[1] = "RES"; labels[2] = "TYPE"; labels[3] = "DRIVE";
+        pos[0] = t.knob[0] / 32767.f; pos[1] = t.knob[1] / 32767.f; pos[2] = x.ftype / 5.f; pos[3] = x.drive / 127.f;
+        if (alt_) {
+            labels[0] = "KEYTRACK"; snprintf(v[0], 16, "%d", x.keytrk * 100 / 128); pos[0] = x.keytrk / 128.f;
+            labels[1] = "VELOCITY"; snprintf(v[1], 16, "%d", x.velflt * 100 / 127); pos[1] = x.velflt / 127.f;
+            labels[2] = "VINTAGE"; snprintf(v[2], 16, "%d", x.vint * 100 / 127); pos[2] = x.vint / 127.f;
+        }
     } else if (k == K_OSC1 || k == K_OSC2) {
         int o = k - K_OSC1;
         const WtOsc& os = t.ext.osc[o];
@@ -615,7 +721,7 @@ void SynthView::render(Canvas& c) {
             if (i == 2) { snprintf(v[i], 16, "%d", (int)lrintf(ev[2] * 100)); pos[i] = ev[2]; }
             else if (i == 3 && alt_) {
                 labels[i] = "AMOUNT";
-                float amt = k == K_AMP ? t.envAmt : t.fenvAmt;
+                float amt = k == K_AMP ? t.envAmt : (obp ? (t.knob[2] - 16384) / 16384.f : t.fenvAmt);
                 snprintf(v[i], 16, "%+d", (int)lrintf(amt * 100));
                 pos[i] = 0.5f + amt * 0.5f;
             } else {

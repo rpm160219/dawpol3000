@@ -334,9 +334,48 @@ static const FactoryPreset kOxbow[] = {
     {"XMOD GROWL", CAT_BASS, 1, "k 12901 5161 29414 3072 push 24576 2304 4500 env 0.003 0.965 0.671 0.407"},
 };
 
+// OXBOW+ (rozszerzony OXBOW): INIT = neutralny glos oryginalu (obwiednia filtra ustawia initInstrument), 30 presetow.
+// obx: w1 w2 semi1 semi2 cents1 lvl1 lvl2 pw1 pw2 noise sync xmod env>p2 keytrk vel vintage ftype drive
+// (fale 0 OFF 1 SAW 2 PULSE 3 BOTH; filtry 0 LP12 1 HP12 2 BP12 3 NOTCH 4 LP24 5 SEM); fenv = obwiednia filtra OXBOW
+// (AMOUNT = galka ENV AMOUNT: k[2], 16384 = 0); cele LFO: 6 PW1, 7 PW2, 8 P1, 9 P2, 10 LV1, 11 LV2.
+static const FactoryPreset kOxbowPlus[] = {
+    {"INIT", CAT_OTHER, 1, "alt 1"},
+    {"OB BASS", CAT_BASS, 1, "alt 1 k 9000 8000 26000 3000 obx 1 2 0 -12 0 100 90 64 40 0 0 0 0 64 40 30 4 20 fenv 0.001 0.3 0.1 0.2 0 env 0.002 0.3 0.9 0.1 voice 1 0.03 0 0"},
+    {"SYNC BASS", CAT_BASS, 1, "alt 1 k 12000 6000 24000 0 obx 1 1 0 7 0 90 100 64 64 0 1 0 40 64 40 30 0 10 fenv 0.001 0.25 0.05 0.2 0 env 0.002 0.3 0.9 0.1 voice 1 0 0 0"},
+    {"UNISON BASS", CAT_BASS, 1, "alt 1 k 10000 5000 25000 2000 obx 1 1 0 -12 0 100 80 64 64 0 0 0 0 64 40 40 4 30 fenv 0.001 0.35 0.15 0.2 0 env 0.003 0.3 0.9 0.1 voice 1 0.02 18 0"},
+    {"PULSE SUB", CAT_BASS, 1, "alt 1 k 8000 4000 22000 0 obx 2 2 0 -12 0 90 100 40 64 0 0 0 0 64 40 30 4 0 fenv 0.001 0.2 0.2 0.2 0 env 0.002 0.3 0.9 0.08 voice 1 0.03 0 0"},
+    {"XMOD BASS", CAT_BASS, 1, "alt 1 k 11000 7000 25000 1000 obx 1 1 0 -12 0 100 60 64 64 0 0 60 0 64 40 30 0 25 fenv 0.001 0.3 0.1 0.2 0 env 0.002 0.3 0.9 0.1 voice 1 0 0 0"},
+    {"FUNK BASS", CAT_BASS, 1, "alt 1 k 9000 16000 29000 0 obx 2 1 0 0 0 100 70 48 64 0 0 0 0 64 60 30 2 15 fenv 0.001 0.18 0 0.12 0 env 0.002 0.25 0.7 0.08 voice 1 0 0 0"},
+    {"SYNC SCREAM", CAT_LEAD, 1, "alt 1 k 16000 9000 26000 0 obx 1 1 0 12 0 80 110 64 64 0 1 0 50 64 40 30 0 60 fenv 0.01 0.6 0.3 0.4 0 env 0.005 0.3 0.9 0.25 voice 1 0.06 0 0"},
+    {"FIFTH LEAD", CAT_LEAD, 1, "alt 1 k 18000 7000 22000 4000 obx 1 1 0 7 0 100 90 64 64 0 0 0 0 64 40 30 0 10 fenv 0.005 0.4 0.5 0.3 0 env 0.005 0.3 0.9 0.3 voice 1 0.05 0 0 lfo1 0 5.5 0.012 4 0 0"},
+    {"UNISON LEAD", CAT_LEAD, 1, "alt 1 k 17000 6000 22000 3000 obx 1 1 0 0 -6 100 100 64 64 0 0 0 0 64 40 40 4 20 fenv 0.005 0.5 0.5 0.3 0 env 0.005 0.3 0.9 0.3 voice 1 0.04 25 0"},
+    {"PWM LEAD", CAT_LEAD, 1, "alt 1 k 16000 8000 22000 2000 obx 2 2 0 0 0 100 90 64 64 0 0 0 0 64 40 30 0 10 fenv 0.005 0.5 0.5 0.3 0 env 0.005 0.3 0.9 0.3 voice 1 0.05 0 0 lfo1 1 4 0.5 6 0 0 lfo2 1 3.3 0.5 7 0 0"},
+    {"XMOD LEAD", CAT_LEAD, 1, "alt 1 k 18000 9000 24000 0 obx 1 1 0 0 0 100 70 64 64 0 0 80 0 64 40 30 0 30 fenv 0.005 0.4 0.4 0.3 0 env 0.005 0.3 0.9 0.3 voice 1 0.04 0 0"},
+    {"PORTA LEAD", CAT_LEAD, 1, "alt 1 k 15000 9000 23000 3000 obx 1 2 0 -12 0 100 60 50 64 0 0 0 0 64 40 30 4 25 fenv 0.01 0.5 0.6 0.3 0 env 0.005 0.3 0.9 0.3 voice 1 0.15 0 0.2"},
+    {"OB STRINGS", CAT_PAD, 1, "alt 1 k 15000 4000 20000 12000 obx 1 1 0 0 -8 100 100 64 64 0 0 0 0 64 30 80 4 0 fenv 0.7 1.2 0.7 1.5 0 env 0.5 1.5 0.85 1.5 voice 0 0 0 0.5"},
+    {"PWM PAD", CAT_PAD, 1, "alt 1 k 14000 5000 20000 6000 obx 2 2 0 0 -5 100 100 64 64 0 0 0 0 64 30 50 4 0 fenv 0.8 1.2 0.6 1.5 0 env 0.6 1.5 0.85 1.8 lfo1 0 0.25 0.6 6 0 0 lfo2 0 0.18 0.6 7 0 0"},
+    {"SEM PAD", CAT_PAD, 1, "alt 1 k 16000 10000 21000 8000 obx 1 3 0 12 0 100 70 64 48 0 0 0 0 64 30 50 5 10 fenv 0.6 1 0.6 1.4 0 env 0.5 1.5 0.85 1.6 voice 0 0 0 0.4"},
+    {"NOTCH PAD", CAT_PAD, 1, "alt 1 k 17000 12000 18000 7000 obx 1 2 0 7 0 100 80 64 64 0 0 0 0 64 30 50 3 0 fenv 0.5 1 0.6 1.5 0 env 0.6 1.5 0.85 1.8 lfo1 1 0.12 0.2 0 0 0"},
+    {"VINTAGE PAD", CAT_PAD, 1, "alt 1 k 15000 6000 20000 10000 obx 1 1 0 0 -10 100 100 64 64 0 0 0 0 64 30 127 4 0 fenv 0.8 1.2 0.7 1.6 0 env 0.7 1.5 0.85 2 voice 0 0 0 1"},
+    {"NOISE WIND", CAT_FX, 1, "alt 1 k 27000 9000 16384 0 obx 0 0 0 0 0 0 0 64 64 126 0 0 0 64 0 30 0 0 fenv 1 1 1 1.5 0 env 0.4 1 1 1.5 lfo1 0 0.12 0.18 0 0 0"},
+    {"OB BRASS", CAT_KEYS, 1, "alt 1 k 12000 6000 27000 6000 obx 1 1 0 0 -4 100 100 64 64 0 0 0 0 64 50 40 4 10 fenv 0.08 0.7 0.55 0.4 0 env 0.04 0.4 0.85 0.35 voice 0 0 0 0.3"},
+    {"BRASS SECTION", CAT_KEYS, 1, "alt 1 k 13000 5000 26000 10000 obx 1 1 0 0 -10 100 100 64 64 0 0 0 0 64 50 60 0 0 fenv 0.12 0.8 0.6 0.5 0 env 0.06 0.5 0.85 0.4 voice 0 0 0 0.5"},
+    {"POLY KEYS", CAT_KEYS, 1, "alt 1 k 15000 5000 24000 3000 obx 2 1 0 0 0 90 90 56 64 0 0 0 0 64 50 30 4 0 fenv 0.002 0.7 0.2 0.4 0 env 0.002 1 0.4 0.4"},
+    {"OCTAVE KEYS", CAT_KEYS, 1, "alt 1 k 16000 4000 23000 2000 obx 1 2 0 12 0 100 60 64 40 0 0 0 0 64 50 30 0 0 fenv 0.002 0.6 0.3 0.4 0 env 0.002 0.9 0.5 0.4"},
+    {"OB PLUCK", CAT_PLUCK, 1, "alt 1 k 9000 8000 30000 3000 obx 1 1 0 0 0 100 90 64 64 0 0 0 0 64 60 30 4 0 fenv 0.001 0.25 0 0.2 0 env 0.001 0.5 0 0.3"},
+    {"SYNC PLUCK", CAT_PLUCK, 1, "alt 1 k 13000 6000 28000 0 obx 1 1 0 12 0 80 100 64 64 0 1 0 45 64 60 30 0 15 fenv 0.001 0.2 0 0.15 0 env 0.001 0.4 0 0.25"},
+    {"HP PLUCK", CAT_PLUCK, 1, "alt 1 k 9000 12000 26000 2000 obx 2 1 0 12 0 100 70 48 64 0 0 0 0 64 60 30 1 0 fenv 0.001 0.3 0 0.2 0 env 0.001 0.45 0 0.3"},
+    {"XMOD BELL", CAT_BELL, 1, "alt 1 k 22000 4000 20000 0 obx 0 1 0 19 0 100 90 64 64 0 0 100 0 64 40 30 0 0 fenv 0.001 1.2 0.1 1 0 env 0.001 1.8 0 1.5"},
+    {"METAL", CAT_BELL, 1, "alt 1 k 20000 8000 24000 0 obx 1 2 0 17 0 90 90 64 30 0 1 70 20 64 40 30 0 10 fenv 0.001 0.8 0.1 0.8 0 env 0.001 1.4 0 1.2"},
+    {"SWEEPER", CAT_FX, 1, "alt 1 k 12000 18000 16384 4000 obx 1 1 0 0 -8 100 100 64 64 0 0 0 0 64 40 40 0 20 fenv 0.01 0.5 0.5 0.5 0 env 0.01 0.5 1 0.6 lfo1 2 0.25 0.6 0 1 0"},
+    {"LASER", CAT_FX, 1, "alt 1 k 20000 12000 20000 0 obx 1 1 0 12 0 60 100 64 64 0 1 0 -64 64 40 30 0 0 fenv 0.001 0.35 0 0.2 0 env 0.001 0.4 0 0.2 menv 0.001 0.3 0 0.2 -0.5 4"},
+    {"NOISE HIT", CAT_FX, 1, "alt 1 k 28000 6000 30000 0 obx 0 0 0 0 0 0 0 64 64 126 0 0 0 32 40 30 0 0 fenv 0.001 0.12 0 0.1 0 env 0.001 0.2 0 0.15"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "oxbowplus")) { *n = sizeof kOxbowPlus / sizeof kOxbowPlus[0]; *engine = ENG_OXBOW; return kOxbowPlus; }
     if (!__builtin_strcmp(eng, "oxbow")) { *n = sizeof kOxbow / sizeof kOxbow[0]; *engine = ENG_OXBOW; return kOxbow; }
     if (!__builtin_strcmp(eng, "reactor")) { *n = sizeof kReactor / sizeof kReactor[0]; *engine = ENG_REACTOR; return kReactor; }
     if (!__builtin_strcmp(eng, "mbira")) { *n = sizeof kMbira / sizeof kMbira[0]; *engine = ENG_MBIRA; return kMbira; }

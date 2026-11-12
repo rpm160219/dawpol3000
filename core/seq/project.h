@@ -39,6 +39,22 @@ struct WtExt {
     float drive = 0.f;     // dodatkowy drive 0..1
     WtExt() { osc[0].cents = -4.f; osc[1].cents = 4.f; }
 };
+// OXBOW+ (rozszerzony OXBOW): dwa niezalezne oscylatory i ustawienia, ktore w oryginale sa stalymi.
+// Domyslne = neutralny glos oryginalu (wtedy OXBOW+ brzmi jak OXBOW z WAVE = SAW).
+struct ObExt {
+    uint8_t wave[2] = {1, 1};     // 0 OFF, 1 SAW, 2 PULSE, 3 BOTH
+    int8_t semi[2] = {0, 0};      // interwal -24..+24 poltonow
+    int8_t cents1 = 0;            // strojenie OSC 1 -50..+50 centow (OSC 2: galka DETUNE)
+    uint8_t level[2] = {94, 78};  // 0..126 (oryginal: 110^2 >> 7, 100^2 >> 7)
+    uint8_t pw[2] = {64, 64};     // szerokosc pulsu 1..127 (64 = 50 %)
+    uint8_t noise = 0;            // 0..126
+    bool sync = false;            // hard sync OSC 2 do OSC 1
+    uint8_t xmod = 0;             // X-MOD OSC 2 -> OSC 1, 0..127
+    int8_t envPitch = 0;          // obwiednia filtra -> wysokosc OSC 2, -64..63 (+-24 poltony)
+    uint8_t keytrk = 64, velflt = 40, vint = 30;  // sledzenie klawiatury (128 = 100 %), velocity -> filtr, VINTAGE
+    uint8_t ftype = 0;            // LP12, HP12, BP12, NOTCH, LP24, SEM
+    uint8_t drive = 0;            // 0..127
+};
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
 const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES; EVA: PRES, FREQ, OXY, COM; MBIRA: STRK, TINE, BOX, BUZZ; REACTOR: COOL, RAD, RODS, HEAT; OXBOW: CUT, RES, ENV, DTUN
@@ -81,6 +97,7 @@ struct Track {
     Lfo lfo[2];
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;
+    ObExt obx;  // OXBOW+ (alt przy silniku OXBOW)
     int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767); EVA: push[2] = oktawa sygnalu (slowo 7); MBIRA: RING, DOUBLE, WAH (slowa 5..7); REACTOR: push[2] = trym presetu (slowo 7); OXBOW: WAVE, FILTER, DRIVE (slowa 5..7)
     // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
     bool mono = false;

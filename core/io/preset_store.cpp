@@ -1,4 +1,5 @@
 #include "io/preset_store.h"
+#include "synth/oxbow_plus_dsp.h"
 #include "io/fs.h"
 #include "io/project_file.h"
 #include "io/project_store.h"
@@ -24,6 +25,13 @@ void PresetStore::initInstrument(Track& t) {
     t.ext = d.ext;
     for (int i = 0; i < 3; i++) t.push[i] = d.push[i];
     t.movSync = d.movSync;
+    t.obx = d.obx;
+    if (t.engine == ENG_OXBOW && t.alt) {  // OXBOW+: obwiednia filtra jak neutralny glos oryginalu (A 20, D 70, S 40, R 60)
+        t.fenv[0] = oxbowPlusAttackSeconds(20);
+        t.fenv[1] = oxbowPlusDecaySeconds(70);
+        t.fenv[2] = 40.f / 127.f;
+        t.fenv[3] = oxbowPlusDecaySeconds(60);
+    }
     t.movDiv = d.movDiv;
     t.mono = d.mono;
     t.glide = d.glide;
@@ -178,6 +186,7 @@ void PresetStore::writeFactory() {
         if (p.ver <= had || find(p.name) >= 0) continue;
         Track t;
         t.engine = (uint8_t)engine;
+        t.alt = !strcmp(eng_, "wavetableplus") || !strcmp(eng_, "oxbowplus");  // tryb rozszerzony przed INIT
         initInstrument(t);
         snprintf(line, sizeof line, "%s", p.inst);
         int nt = tokenize(line, tok, 128);

@@ -7,6 +7,7 @@
 #include "synth/mbira_dsp.h"
 #include "synth/reactor_dsp.h"
 #include "synth/oxbow_dsp.h"
+#include "synth/oxbow_plus_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -109,6 +110,7 @@ void WavetableSynth::init(float outRate) {
     if (!mbira_) mbira_ = mbiraCreate();
     if (!reactor_) reactor_ = reactorCreate();
     if (!oxbow_) oxbow_ = oxbowCreate();
+    if (!oxp_) oxp_ = oxbowPlusCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -386,6 +388,11 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 3) elgNoteOn(elg_, slot);
     else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
+    else if (kind_ == 8) {  // OXBOW+: jak OXBOW
+        for (int i = 0; i < VOICES; i++)
+            if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) oxbowPlusNoteOff(oxp_, i);
+        oxbowPlusNoteOn(oxp_, slot, knobs_, v.vel, &obx_);
+    }
     else if (kind_ == 7) {  // OXBOW: najpierw puszczone klawisze (bramka obwiedni filtra; LFO od pierwszego klawisza)
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) oxbowNoteOff(oxbow_, i);
@@ -445,6 +452,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 8)  // OXBOW+: puszczony klawisz = wybrzmienie obwiedni filtra
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) oxbowPlusNoteOff(oxp_, vi);
     if (kind_ == 7)  // OXBOW: puszczony klawisz = wybrzmienie obwiedni filtra
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) oxbowNoteOff(oxbow_, vi);
@@ -513,7 +523,23 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 7) {  // OXBOW (oryginalny DSP kennel)
+        if (kind_ == 8) {  // OXBOW+ (rozszerzona kopia DSP kennel): modulacje PW1/PW2, P1/P2, LV1/LV2 per glos
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            obx_params q = obx_;
+            auto pwm = [](uint32_t pw, float m) {
+                double x = (double)pw / 4294967296.0 + m * 0.45;
+                x = x < 0.05 ? 0.05 : (x > 0.95 ? 0.95 : x);
+                return (uint32_t)(x * 4294967296.0);
+            };
+            if (vm[DEST_W1] != 0.f) q.pw1 = pwm(q.pw1, vm[DEST_W1]);
+            if (vm[DEST_W2] != 0.f) q.pw2 = pwm(q.pw2, vm[DEST_W2]);
+            if (vm[DEST_P1] != 0.f) q.cent8_1 += (int32_t)lrintf(vm[DEST_P1] * 12.f * 256.f);  // +-1 oktawa
+            if (vm[DEST_P2] != 0.f) q.cent8_2 += (int32_t)lrintf(vm[DEST_P2] * 12.f * 256.f);
+            auto lv = [](int32_t l, float m) { int x = (int)lrintf(l * (1.f + m)); return x < 0 ? 0 : (x > 126 ? 126 : x); };
+            if (vm[DEST_LV1] != 0.f) q.lvl1 = lv(q.lvl1, vm[DEST_LV1]);
+            if (vm[DEST_LV2] != 0.f) q.lvl2 = lv(q.lvl2, vm[DEST_LV2]);
+            oxbowPlusRender(oxp_, vi, out, vk, pitchBuf, v.vel, &q);
+        } else if (kind_ == 7) {  // OXBOW (oryginalny DSP kennel)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             oxbowRender(oxbow_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 6) {  // REACTOR (oryginalny DSP op1r)
