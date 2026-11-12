@@ -58,6 +58,11 @@ const char* destNameFor(int engine, int d) {
     if (engine == ENG_VAPORA && d >= 0 && d < 4) return vpn[d];
     static const char* ssn[4] = {"DTUN", "MRPH", "SUB", "DRV"};
     if (engine == ENG_SUPERSAW && d >= 0 && d < 4) return ssn[d];
+    static const char* mxn[4] = {"UT A", "UT B", "UT C", "UT D"};
+    if (engine == ENG_MIXTUR && d >= 0 && d < 4) return mxn[d];
+    if (engine == ENG_MIXTUR && d == DEST_W1) return "F1";  // formanty (strona 2)
+    if (engine == ENG_MIXTUR && d == DEST_W2) return "F2";
+    if (engine == ENG_MIXTUR && d == DEST_P1) return "RES";
     if (engine == ENG_SUPERSAW && d == DEST_W1) return "CUT";  // filtr DAW-POL
     if (engine == ENG_SUPERSAW && d == DEST_W2) return "RES";
     if (engine == ENG_OXBOW && d >= 0 && d < 4) return obn[d];

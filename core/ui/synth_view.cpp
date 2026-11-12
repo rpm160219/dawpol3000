@@ -39,8 +39,9 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind monk[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : orig[p]))))));
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : (pm == 8 ? mxk[p] : orig[p])))))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -310,7 +311,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
             if (alt_ && i == 2) {
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : DEST_W1);  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepMDest_.steps(ax, dt, 4.f);
                 if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
                 break;
@@ -359,7 +360,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
                 // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : DEST_W1);  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepDest_[l].steps(ax, dt, 4.f);
                 if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
@@ -501,7 +502,7 @@ void SynthView::render(Canvas& c) {
     // lewy dol: strona galek
     static const char* kPage[12] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
-    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : kPage[k], 13, 1.5f, pc);
+    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_LFO1 && t.engine == ENG_MIXTUR ? "LFO" : kPage[k]), 13, 1.5f, pc);
     int np = pageCount(pm);
     for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;

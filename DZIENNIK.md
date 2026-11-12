@@ -1,5 +1,13 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:05
+**Zmienione (prośba Patryka): MIXTUR dostał MOD ENV i jedno LFO.**
+- `core/ui/synth_view.*` — strony MIXTUR: SOUND, AMP ENV, MOD ENV, LFO, PRESETS; cele modulacji: UT A..D (undertony), PTCH, VOL oraz F1, F2, RES (formanty ze strony 2).
+- `core/synth/wavetable_synth.cpp` — modulacja słów 5..7 (F1 / F2 / RES) per głos; `core/audio/engine.cpp` — MIXTUR bez drugiego LFO i bez trybów głosu; `core/seq/project.cpp` — nazwy celów.
+- Bez modulacji nadal bit w bit. Wysłane na konsolę.
+**Następny krok:** port BRASSOPHONE 1:1.
+**Wymaga od Patryka:** nie.
+
 ## 2026-11-12 18:59
 **Zmienione — port silnika MIXTUR (op1r, ultralazr), wybór Patryka: 1:1 bez dodatków:**
 - `third_party/op1r_mixtur/` — oryginalne `mixtur.c`, `mixtur_dsp.h`, tablice, geometria, `mixtur.svg`, generatory, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `seq/seq_text.h`; `mixtur_art.h`.

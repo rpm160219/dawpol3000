@@ -332,7 +332,7 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "mixtur") || !strcmp(screen, "mixturp2")) {
+    } else if (!strcmp(screen, "mixtur") || !strcmp(screen, "mixturp2") || !strcmp(screen, "mixturlfo")) {
         Track& tr = app.project().tracks[1];
         tr.engine = ENG_MIXTUR;
         engineDefaultKnobs(ENG_MIXTUR, tr.knob);
@@ -341,6 +341,7 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "mixturp2")) app.synth.setAlt(true);
+        if (!strcmp(screen, "mixturlfo")) { tr.lfo[0].dest = DEST_W1; tr.lfo[0].depth = 0.3f; app.markDirty(); idle(app); app.synth.setPageKind(SynthView::K_LFO1); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

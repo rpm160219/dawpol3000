@@ -571,6 +571,14 @@ void WavetableSynth::renderBlock() {
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
             }
         }
+        if (kind_ == 13) {  // MIXTUR: modulacja formantow F1 / F2 / RES (slowa 5..7; 0 = 8192 jak w oryginale)
+            static const int dst[3] = {DEST_W1, DEST_W2, DEST_P1};
+            for (int j = 0; j < 3; j++)
+                if (vm[dst[j]] != 0.f) {
+                    int x = (knobs_[5 + j] > 0 ? knobs_[5 + j] : 8192) + (int)lrintf(vm[dst[j]] * 32767.f);
+                    vk[5 + j] = (int16_t)(x < 1 ? 1 : (x > 32767 ? 32767 : x));
+                }
+        }
         if (kind_ == 9 && vm[0] != 0.f) {  // SID: modulacja WAVE skokowo o cale fale (+-5 przy glebokosci 1), bez przelatywania pasm
             int mode = (int)sidWaveMode(knobs_[0]) + (int)lrintf(vm[0] * 5.f);
             mode = mode < 0 ? 0 : (mode > 5 ? 5 : mode);

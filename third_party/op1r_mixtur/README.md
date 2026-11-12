@@ -12,6 +12,6 @@ Odrzucone: `mixtur_dsp.S`, `mixtur_dsp_l1.S` (asembler Blackfin), podglądy PNG/
 W DAW-POL: `core/synth/mixtur_dsp.c` kompiluje `mixtur.c` jako C; pamięć głosu = 6 slotów po 0x24 bajty w instancji
 ścieżki (jak w firmware), tablica sygnatur `own[]` podmieniana per instancja. Sam silnik 1:1 (decyzja Patryka, jak ELG):
 gałki UNDERTONE A..D (krokowo: OFF, 1/1 … 1/24), L3 na SOUND = strona 2 oryginału (FORMANT 1, FORMANT 2, RESONANCE),
-tylko obwiednia głośności (AMP ENV), bez MOD ENV / LFO / VOICE. Oryginał nie ma presetów — 13 własnych z samych gałek.
+AMP ENV, MOD ENV i jedno LFO (dodane na prośbę Patryka; cele: undertony, PTCH, VOL, F1, F2, RES), bez VOICE. Oryginał nie ma presetów — 13 własnych z samych gałek.
 Test bit w bit: `tools/test_mixtur.sh`. Częstotliwość: przy 96 kHz formanty (współczynniki na próbkę) ~9% wyżej, progi
 wyciszania undertonów (25/40 Hz) ~9% wyżej względem 88,2 kHz oryginału.
