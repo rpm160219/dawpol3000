@@ -298,6 +298,29 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "vapora") || !strcmp(screen, "vaporap2") || !strcmp(screen, "vaporafenv")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_VAPORA;
+        engineDefaultKnobs(ENG_VAPORA, tr.knob);
+        tr.push[0] = 3328; tr.push[1] = 18023; tr.push[2] = 12000; tr.octave = -1;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "vaporap2")) app.synth.setAlt(true);
+        if (!strcmp(screen, "vaporafenv")) {
+            tr.fenv[1] = 0.6f; tr.fenvAmt = 0.4f; app.markDirty(); idle(app);
+            app.synth.setPageKind(SynthView::K_FENV);
+        }
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "vaporaengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 12; i++) tap(app, B_DOWN);  // VAPORA
     } else if (!strcmp(screen, "monolitengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

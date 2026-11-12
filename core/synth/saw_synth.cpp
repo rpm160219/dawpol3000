@@ -22,7 +22,7 @@ void SawSynth::noteOn(int pitch, float vel) {
     }
     Voice& v = v_[slot];
     v.pitch = pitch;
-    v.dt = 440.f * powf(2.f, (pitch - 69) / 12.f) / sr_;
+    v.dt = 440.f * powf(2.f, (pitch + octSemi_ - 69) / 12.f) / sr_;
     v.vel = vel;
     v.stage = ATTACK;
     v.age = ++age_;

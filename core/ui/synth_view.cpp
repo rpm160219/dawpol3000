@@ -1,4 +1,5 @@
 #include "ui/synth_view.h"
+#include "ui/vapora_screen_c.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -88,6 +89,9 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         else alt_ = !alt_;
     }
     if (b.pressed(B_START)) app_->togglePlaySong();
+    // L1 / R1 = OCTAVE instrumentu (-3..+3, wszystkie silniki)
+    if (b.pressed(B_L1) && t.octave > -3) { t.octave--; app_->markDirty(); }
+    if (b.pressed(B_R1) && t.octave < 3) { t.octave++; app_->markDirty(); }
 
     // odsluch z przyciskow (C4, bez opisu)
     for (int i = 0; i < 8; i++) {
@@ -127,6 +131,30 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
+                }
+            } else if (t.engine == ENG_VAPORA && alt_) {  // VAPORA + L3: CHARACTER, INTERVAL, SUN (krokowo), SPEED
+                if (i == 3) {
+                    if (t.push[2] <= 0 && d != 0.f) t.push[2] = 8192;  // 0 = 8192 jak w oryginale
+                    knob(t.push[2]);
+                    if (t.push[2] < 1) t.push[2] = 1;
+                } else {
+                    const int st = stepVp_[i].steps(ax, dt, 4.f);
+                    if (st) {
+                        if (i == 0) {  // 14 widm; slowo n*256 (n = 1..14) -> CHARACTER (n + 10) % 14
+                            int c2 = vaporaCharacterOf(t.push[0]) + st;
+                            c2 = c2 < 0 ? 0 : (c2 > 13 ? 13 : c2);
+                            const int n = (c2 + 4) % 14;
+                            t.push[0] = (int16_t)((n ? n : 14) * 256);
+                        } else if (i == 1) {  // 10 interwalow, srodek pasma
+                            int iv = vaporaIntervalOf(t.push[1]) + st;
+                            iv = iv < 0 ? 0 : (iv > 9 ? 9 : iv);
+                            t.push[1] = (int16_t)(iv * 3277 + 1638);
+                        } else {
+                            int sn = t.sun + st;
+                            t.sun = (uint8_t)(sn < 0 ? 0 : (sn > 6 ? 6 : sn));
+                        }
+                        changed = true;
+                    }
                 }
             } else if (t.engine == ENG_SID && i == 0) {  // SID: fala krokowo, srodek pasma 512 (TRIANGLE .. RING)
                 int st = stepSidWave_.steps(ax, dt, 4.f);
@@ -334,6 +362,13 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_VAPORA) {
+        bool live = e && e->wtActive(track_) > 0;
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0x5300, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        vp_.draw(c, words, shown, e ? e->vaporaCore(track_) : nullptr, t.sun, track_);
     } else if (t.engine == ENG_MONOLIT) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -427,6 +462,8 @@ void SynthView::render(Canvas& c) {
         else c.circle(x, 366, 2.2f, 1.f, rgb(90, 90, 90));
     }
     drawText(c, 24 + np * 12 + 4, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
+    snprintf(b, sizeof b, "OCT %+d", t.octave);  // L1 / R1
+    drawText(c, 380, 342, t.octave ? b : "OCT 0", 9, 1.2f, t.octave ? pal::white : rgb(80, 80, 80), ALIGN_RIGHT);
     const char* hint = nullptr;
     Color hc = rgb(80, 80, 80);
     if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
@@ -441,6 +478,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_VAPORA) { hint = alt_ ? "L3 = MORPH / THICKNESS / BRIGHTNESS" : "L3 = CHARACTER / INTERVAL / SUN / SPEED"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MONOLIT) { hint = alt_ ? "L3 = SHAPE / CUTOFF / CONTOUR" : "L3 = BODY / VEL / AGE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OXBOW) { hint = alt_ ? "L3 = CUTOFF / RES / ENV" : "L3 = WAVE / FILTER / DRIVE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MBIRA) { hint = alt_ ? "L3 = STRIKE / TINE / BOX" : "L3 = RING / DOUBLE / WAH"; if (alt_) hc = pal::blue; }
@@ -550,7 +588,20 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_MONOLIT) {  // MONOLIT: makra SHAPE, CUTOFF, CONTOUR, HEAT; L3: BODY, VEL, AGE
+    if (k == K_SOUND && t.engine == ENG_VAPORA) {  // VAPORA: MORPH, THICKNESS, BRIGHTNESS, MOTION; L3: CHARACTER, INTERVAL, SUN, SPEED
+        static const char* L[4] = {"MORPH", "THICKNESS", "BRIGHTNESS", "MOTION"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        if (alt_) {
+            auto up = [](char* o, const char* src) { int j = 0; for (; src[j] && j < 15; j++) o[j] = (char)(src[j] >= 'a' && src[j] <= 'z' ? src[j] - 32 : src[j]); o[j] = 0; };
+            const int ch = vaporaCharacterOf(t.push[0]), iv = vaporaIntervalOf(t.push[1]);
+            labels[0] = "CHARACTER"; up(v[0], vaporaCharacterName(ch)); pos[0] = ch / 13.f;
+            labels[1] = "INTERVAL"; up(v[1], vaporaIntervalName(iv)); pos[1] = iv / 9.f;
+            labels[2] = "SUN"; up(v[2], vaporaSunName(t.sun)); pos[2] = t.sun / 6.f;
+            const int mhz = vaporaSpeedMilliHz(t.push[2]);
+            labels[3] = "SPEED"; snprintf(v[3], 16, "%d.%02d HZ", mhz / 1000, mhz % 1000 / 10);
+            pos[3] = (t.push[2] <= 0 ? 8192 : t.push[2]) / 32767.f;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_MONOLIT) {  // MONOLIT: makra SHAPE, CUTOFF, CONTOUR, HEAT; L3: BODY, VEL, AGE
         static const char* L[4] = {"SHAPE", "CUTOFF", "CONTOUR", "HEAT"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", t.knob[i] * 100 / 32767); }
         static const char* SH[5] = {"SAW", "SAW+SUB", "2 SAWS", "3 SAWS", "STACK"};

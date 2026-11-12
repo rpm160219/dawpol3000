@@ -39,6 +39,7 @@ void PresetStore::initInstrument(Track& t) {
     t.age = d.age;
     t.glideSync = d.glideSync;
     t.glideDiv = d.glideDiv;
+    t.octave = d.octave;  // wzor slonca VAPORA (t.sun) zostaje — to tylko obraz
 }
 
 void PresetStore::init(const char* root, const char* engineDir) {
@@ -167,7 +168,8 @@ void PresetStore::migrateFromWavetable() {
     if (m) fclose(m);
 }
 
-// Zestaw fabryczny: dopisuje presety z wersji nowszych niz najwyzszy znacznik _factory_vN, nigdy nie nadpisuje.
+// Zestaw fabryczny: dopisuje presety z wersji nowszych niz najwyzszy znacznik _factory_vN. Preset o tej samej nazwie
+// nadpisywany tylko, gdy jego wpis ma wersje nowsza niz znacznik (poprawka presetu fabrycznego, np. MONOLIT v3: oktawa).
 void PresetStore::writeFactory() {
     int n = 0, engine = ENG_WAVETABLE;
     const FactoryPreset* list = factoryList(eng_, &n, &engine);
@@ -183,7 +185,7 @@ void PresetStore::writeFactory() {
     char* tok[128];
     for (int i = 0; i < n; i++) {
         const FactoryPreset& p = list[i];
-        if (p.ver <= had || find(p.name) >= 0) continue;
+        if (p.ver <= had || (find(p.name) >= 0 && had == 0)) continue;  // nowsza wersja istniejacego presetu fabrycznego go zastepuje
         Track t;
         t.engine = (uint8_t)engine;
         t.alt = !strcmp(eng_, "wavetableplus") || !strcmp(eng_, "oxbowplus");  // tryb rozszerzony przed INIT

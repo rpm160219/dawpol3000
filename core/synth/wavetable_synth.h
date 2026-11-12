@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -35,6 +35,7 @@ public:
     // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
     // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
     void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG, 4 EVA, 5 MBIRA, 6 REACTOR, 7 OXBOW, 8 OXBOW+, 9 SID, 10 MONOLIT
+    void setOctave(int o) { octSemi_ = 12 * (o < -3 ? -3 : (o > 3 ? 3 : o)); }  // OCTAVE instrumentu (-3..+3): tylko wysokosc dzwieku, nuty klawiszy bez zmian
     void setPush(const int16_t p[3]) { for (int i = 0; i < 3; i++) knobs_[5 + i] = p[i] < 0 ? 0 : p[i]; }  // PEW: strona 2
     const PewCore* pew() const { return pew_; }
     const ElgCore* elg() const { return elg_; }
@@ -44,6 +45,7 @@ public:
     ::OxbowCore* oxbow() const { return oxbow_; }
     const ::OxbowPlusCore* oxbowPlus() const { return oxp_; }
     const ::MonolitCore* monolit() const { return mnl_; }
+    const ::VaporaCore* vapora() const { return vpr_; }
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
@@ -122,6 +124,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::VaporaCore* vpr_ = nullptr;  // VAPORA: glosy tej sciezki (C)
     ::MonolitCore* mnl_ = nullptr;  // MONOLIT: glosy tej sciezki (C)  // SID: glosy tej sciezki (C)  // OXBOW+: glosy tej sciezki (C)
     obx_params obx_ = OBX_DEFAULTS;  // OXBOW: glosy tej sciezki (C)  // REACTOR: glosy tej sciezki (C)  // MBIRA: glosy tej sciezki (C)  // EVA: glosy tej sciezki (C)
     bool movSync_ = false;
@@ -149,6 +152,7 @@ private:
     float outRate_ = 48000.f, voiceRate_ = 96000.f;
     Voice v_[VOICES];
     alignas(8) unsigned char st_[VOICES][96];  // WavetableState z wavetable_dsp.h (rozmiar sprawdzany w .cpp)
+    int octSemi_ = 0;
     int16_t knobs_[8] = {16384, 8192, 20000, 8192, 0, 0, 0, 0};
     float atk_ = 0, dec_k_ = 0, sus_ = 1, rel_k_ = 0;  // przyrosty/wspolczynniki na probke glosu
 

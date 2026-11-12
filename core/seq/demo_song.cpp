@@ -44,6 +44,7 @@ void buildDemoAllEngines(Project& p) {
     const int brass = track(p, "BRASS", "oxbow", "POLY BRASS", 9, 0.4f);     // OXBOW
     const int chip = track(p, "CHIP", "sid", "PULSE KEYS", 10, 0.3f);        // SID
     const int acid = track(p, "ACID", "monolit", "ACID GLIDE", 11, 0.35f);  // MONOLIT (MONO + glide)
+    const int tide = track(p, "TIDE", "vapora", "A FIFTH TIDE", 12, 0.45f);  // VAPORA (pad z kwinta)
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
     int pd = p.addPattern("DRONE", 4);
@@ -134,6 +135,14 @@ void buildDemoAllEngines(Project& p) {
         for (int st = 0; st < 16; st++)
             if (st % 4 != 3) note(p.patterns[pac], b, st, (st % 8 == 6) ? 2 : 1, ROOT[b] - 12 + AC[st], st % 4 ? 85 : 115);
     p.addClip(acid, pac, 8);
+    // VAPORA: pad — pryma i kwinta akordu (preset dodaje kwinte wyzej), calymi taktami; wstep i zakonczenie
+    int pt = p.addPattern("TIDE", 4);
+    for (int b = 0; b < 4; b++) {
+        note(p.patterns[pt], b, 0, 16, ROOT[b] + 12, 80);
+        note(p.patterns[pt], b, 0, 16, CH[b][2], 70);
+    }
+    p.addClip(tide, pt, 0);
+    p.addClip(tide, pt, 12);
     p.addClip(acid, pac, 12);
     p.addClip(chip, pch, 8);
     p.addClip(core, pr, 8);

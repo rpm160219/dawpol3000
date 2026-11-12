@@ -10,6 +10,7 @@
 #include "synth/oxbow_plus_dsp.h"
 #include "synth/sid_dsp_wrap.h"
 #include "synth/monolit_dsp.h"
+#include "synth/vapora_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -115,6 +116,7 @@ void WavetableSynth::init(float outRate) {
     if (!oxp_) oxp_ = oxbowPlusCreate();
     if (!sid_) sid_ = sidCreate();
     if (!mnl_) mnl_ = monolitCreate();
+    if (!vpr_) vpr_ = vaporaCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -155,7 +157,7 @@ static inline uint32_t incOf(double pitch, float vr) {
 void WavetableSynth::setPitchTarget(Voice& v, int pitch) {
     v.pitch = pitch;
     v.pitchTgt = (float)pitch;
-    if (glide_ <= 0) { v.pitchCur = (float)pitch; v.inc = incOf(pitch, voiceRate_); }
+    if (glide_ <= 0) { v.pitchCur = (float)pitch; v.inc = incOf(pitch + octSemi_, voiceRate_); }
 }
 
 // MONO: stos trzymanych nut (ostatnia ma priorytet), legato bez ponownego startu obwiedni, unison 6 glosow.
@@ -376,7 +378,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     if (v.vel < 1) v.vel = 1;
     if (v.vel > 127) v.vel = 127;
     // przyrost fazy jak ENGINE_PITCH: 2^32 * f / czestotliwosc glosu
-    v.inc = (uint32_t)(int32_t)lrint(4294967296.0 * 440.0 * pow(2.0, (pitch - 69) / 12.0) / voiceRate_);
+    v.inc = (uint32_t)(int32_t)lrint(4294967296.0 * 440.0 * pow(2.0, (pitch + octSemi_ - 69) / 12.0) / voiceRate_);
     v.stage = ATTACK;
     v.env = atk_ >= 1.f ? 1.f : 0.f;
     if (v.env >= 1.f) v.stage = DECAY;
@@ -393,6 +395,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 5) mbiraNoteOn(mbira_, slot, knobs_, v.vel);
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
     else if (kind_ == 9) sidNoteOn(sid_, slot, knobs_);
+    else if (kind_ == 11) vaporaNoteOn(vpr_, slot, knobs_);
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) monolitNoteOff(mnl_, i);
@@ -462,6 +465,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 11)  // VAPORA: puszczony klawisz (tylko ekran: koniec "trzymania" fali)
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) vaporaNoteOff(vpr_, vi);
     if (kind_ == 10)  // MONOLIT: puszczony klawisz = wybrzmienie CONTOUR
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) monolitNoteOff(mnl_, vi);
@@ -538,10 +544,13 @@ void WavetableSynth::renderBlock() {
                 int c2 = vk[bi] + (int)lrintf((v.ageC * 0.6f + v.statC * 0.4f) * age_ * 3000.f);
                 vk[bi] = (int16_t)(c2 < 0 ? 0 : (c2 > 32767 ? 32767 : c2));
             }
-            base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
+            base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 10) {  // MONOLIT (oryginalny DSP op1r)
+        if (kind_ == 11) {  // VAPORA (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            vaporaRender(vpr_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 10) {  // MONOLIT (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             monolitRender(mnl_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 9) {  // SID (oryginalny DSP op1r / cRSID)
@@ -640,7 +649,8 @@ void WavetableSynth::renderBlock() {
     }
     // MONOLIT jest glosniejszy od reszty (oryginal bez trymu; 2 nuty dochodzily do pelnej skali): -3 dB na wyjsciu
     // sciezki, po decymacji — DSP i test zgodnosci (lastDecimated) bez zmian
-    const double outGain = kind_ == 10 ? 0.7079 / 32768.0 : 1.0 / 32768.0;
+    // VAPORA odwrotnie: oryginal zostawia zapas na 6 glosow (~10 dB ciszej od reszty) — +9,5 dB (x3)
+    const double outGain = kind_ == 10 ? 0.7079 / 32768.0 : kind_ == 11 ? 3.0 / 32768.0 : 1.0 / 32768.0;
     for (int i = 0; i < BLOCK / 2; i++) fifo_[i] = (float)(dec_[i] * outGain);
     fifoPos_ = 0;
 }

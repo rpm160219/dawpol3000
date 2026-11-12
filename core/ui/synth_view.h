@@ -39,6 +39,7 @@
 #include "ui/oxbow_screen.h"
 #include "ui/sid_screen.h"
 #include "ui/monolit_screen.h"
+#include "ui/vapora_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -61,8 +62,9 @@ private:
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
     // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA, REACTOR, OXBOW: + MOD ENV i 2 LFO; 5 = SID: + FILTER ENV; 6 = MONOLIT: + VOICE (tylko MODE i GLIDE) + FILTER ENV
-    static int pageMode(const Track& t) { return (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : (t.engine == ENG_SID ? 5 : (t.engine == ENG_MONOLIT ? 6 : 0))))); }
+    static int pageMode(const Track& t) { return (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW ? 4 : (t.engine == ENG_SID || t.engine == ENG_VAPORA ? 5 : (t.engine == ENG_MONOLIT ? 6 : 0))))); }
     int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : (pm == 4 ? 6 : (pm == 5 ? 7 : 8))); }
+    RelEncoder stepVp_[3];  // VAPORA + L3: CHARACTER, INTERVAL, SUN krokowo
     RelEncoder stepSidWave_;  // SID: fala krokowo (w oryginale fale powtarzaja sie co 512 — galka "szalala")
     RelEncoder stepMDest_, stepGDiv_, stepMovDiv_, stepOct_, stepObWave_[2], stepObType_, stepObSync_;
     RelEncoder stepVMode_;
@@ -88,6 +90,7 @@ private:
     OxbowScreen ob_;
     SidScreen sd_;
     MonolitScreen mn_;
+    VaporaScreen vp_;
     void releaseAll();
 };
 

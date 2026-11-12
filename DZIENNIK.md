@@ -1,5 +1,18 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:15
+**Zmienione — port silnika VAPORA (op1r, AiAAAA), wybór Patryka: 1:1 + modulacja + FILTER ENV, presety 15 + 15, OCTAVE dla wszystkich silników:**
+- `third_party/op1r_vapora/` — oryginalne `vapora.c`, `vapora_dsp.c/.h`, tablice PADsynth, kod ekranu `vapora_screen.c` z nagłówkami, `vapora.svg`, `plugin.json`, `presets.json`, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`, `seq/seq_text.h`.
+- `core/synth/vapora_dsp.*` — vapora.c jako C, stan głosu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 11, FILTER ENV na BRIGHTNESS, wyjście +9,5 dB (oryginał był ~10 dB ciszej od reszty).
+- `core/ui/vapora_screen*` — ekran = oryginalny kod C rysujący na naszym Canvas (ocean, słońce, gwiazdy, fala przy nucie) + ilustracja na karcie ENGINE; `core/ui/synth_view.*` — SOUND (MORPH/THICKNESS/BRIGHTNESS/MOTION, L3: CHARACTER/INTERVAL/SUN/SPEED, krokowo), strony jak SID; `core/ui/dialogs.cpp` — VAPORA na liście (14 pozycji).
+- OCTAVE: `Track::octave` (−3..+3), L1/R1 w SYNTH dla każdego silnika, odczyt „OCT” obok nazwy strony, zapis `oct` w projekcie i presecie (`core/seq/project.h`, `core/io/project_file.cpp`, `core/synth/saw_synth.*`).
+- `core/io/factory_presets.cpp`, `core/io/preset_store.cpp` — 31 presetów VAPORA; MONOLIT v3: LADDER BASS, PLUCK BASS, SUB DROP, LADDER PING z oktawą −1 jak w oryginale (wpis nowszej wersji zastępuje stary preset o tej samej nazwie).
+- `core/seq/demo_song.cpp`, `core/ui/app.cpp` — demo ALL ENGINES z partią TIDE (VAPORA, wstęp i zakończenie), wersja 6.
+- `tests/vapora_match.cpp`, `tools/test_vapora.sh`; wszystkie skrypty testów linkują VAPORA.
+- Testy: VAPORA bit w bit (0 różnic), wszystkie 12 testów 0 różnic; CPU na konsoli 5,5% przy 6 głosach; demo ~27% rdzenia, szczyt 0,89. Wysłane na konsolę.
+**Następny krok:** Patryk testuje VAPORA i OCTAVE (L1/R1 w SYNTH).
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 19:00
 **Zmienione (uwagi Patryka do MONOLIT):**
 - `core/ui/synth_view.*`, `core/audio/engine.cpp`, `core/synth/wavetable_synth.cpp` — MONOLIT ma stronę FILTER ENV (wspólna obwiednia filtra na CUTOFF = gałka 1, AMOUNT ± pod L3, działa obok CONTOUR); strona VOICE tylko MODE i GLIDE (UNISON i AGE usunięte, w dźwięku wyłączone).

@@ -399,13 +399,14 @@ static const FactoryPreset kSid[] = {
 };
 
 // MONOLIT: 12 presetow oryginalu (third_party/op1r_monolit/presets.py; galki i strona 2 BODY/VEL/AGE 1:1, obwiednia OP-1
-// w przyblizeniu; efekty i oktawa -1 czterech basow pominiete) + wersja 2: 20 z MONO/glide/unison i modulacja.
+// w przyblizeniu; efekty pominiete) + wersja 2: 20 z MONO/glide/unison i modulacja; wersja 3: oktawa -1 czterech basow
+// jak w oryginale (OCTAVE instrumentu; zastepuje wczesniejsze wersje tych presetow).
 static const FactoryPreset kMonolit[] = {
     {"INIT", CAT_OTHER, 1, ""},
-    {"LADDER BASS", CAT_BASS, 1, "k 8192 7000 6000 12000 push 3277 12000 4000 env 0.001 0.965 0.793 0.169"},
-    {"PLUCK BASS", CAT_BASS, 1, "k 4000 3000 9000 20000 push 3277 20000 0 env 0.001 1.349 0.549 0.121"},
-    {"SUB DROP", CAT_BASS, 1, "k 8192 10000 2000 4000 push 29491 6000 0 env 0.001 1.773 0.916 0.341"},
-    {"LADDER PING", CAT_PLUCK, 1, "k 0 1500 3000 31000 push 3277 16000 0 env 0.001 1.152 0.366 0.121"},
+    {"LADDER BASS", CAT_BASS, 3, "k 8192 7000 6000 12000 push 3277 12000 4000 env 0.001 0.965 0.793 0.169 oct -1"},
+    {"PLUCK BASS", CAT_BASS, 3, "k 4000 3000 9000 20000 push 3277 20000 0 env 0.001 1.349 0.549 0.121 oct -1"},
+    {"SUB DROP", CAT_BASS, 3, "k 8192 10000 2000 4000 push 29491 6000 0 env 0.001 1.773 0.916 0.341 oct -1"},
+    {"LADDER PING", CAT_PLUCK, 3, "k 0 1500 3000 31000 push 3277 16000 0 env 0.001 1.152 0.366 0.121 oct -1"},
     {"ACID LINE", CAT_BASS, 1, "k 0 5000 11000 28000 push 3277 24000 2000 env 0.001 0.79 0.61 0.222"},
     {"FAT LEAD", CAT_LEAD, 1, "k 24576 18000 4000 14000 push 22938 8000 9000 env 0.001 1.152 0.916 0.477"},
     {"FIFTH LEAD", CAT_LEAD, 1, "k 24576 15000 8000 18000 push 16384 10000 6000 env 0.001 1.152 0.855 0.477"},
@@ -436,9 +437,47 @@ static const FactoryPreset kMonolit[] = {
     {"SELF OSC", CAT_FX, 2, "k 0 9000 16384 32767 push 3277 0 0 env 0.01 0.4 1 0.5 lfo1 0 0.2 0.2 1 0 0"},
 };
 
+// VAPORA: 15 presetow oryginalu (third_party/op1r_vapora/data/presets.json: galki i strona 2 CHARACTER/INTERVAL/SPEED
+// 1:1, oktawa jak w recipes.json, obwiednia z preview_envelope_ms; efekty OP-1 pominiete) + 15 nowych z FILTER ENV
+// (na BRIGHTNESS), MOD ENV i LFO. CHARACTER: slowo n*256 (n = 1..14) -> widmo (n + 10) % 14; INTERVAL: i*3277+1638.
+static const FactoryPreset kVapora[] = {
+    {"INIT", CAT_OTHER, 1, "push 8192 8192 8192"},
+    {"ASTEROID SWARM", CAT_PAD, 1, "k 0 2500 30000 25000 push 8448 8192 16000 env 3.7 1 0.92 2.5"},
+    {"BREATH CHOIR", CAT_PAD, 1, "k 1700 16000 28500 11500 push 8704 16384 7000 env 0.65 1 0.75 2.5"},
+    {"CAVERN FLUTE", CAT_LEAD, 1, "k 5500 24500 32000 25500 push 8960 31129 28000 env 1.5 1 0.92 2.5"},
+    {"DEEP PRESSURE", CAT_PAD, 1, "k 5500 24500 32000 4000 push 9216 31129 2200 env 5.2 1 0.92 2.5"},
+    {"PINK SURF", CAT_PAD, 1, "k 0 22000 20000 0 push 9472 8192 8192 env 3.7 1 0.92 2.5"},
+    {"PORCELAIN ORBIT", CAT_BELL, 1, "k 5500 24500 32000 25500 push 9728 8192 28000 env 1.5 1 0.79 2.5"},
+    {"SUB LANTERN", CAT_BASS, 1, "k 0 0 18000 0 push 9984 1638 8192 env 0.005 1.8 0.7 2.5 oct -1"},
+    {"A FIFTH TIDE", CAT_PAD, 1, "k 19000 28000 20500 14000 push 8192 16384 6500 env 1.5 1 0.92 2.5"},
+    {"HOLY DUST", CAT_PAD, 1, "k 14000 28500 29000 19000 push 10496 16384 8500 env 3.933 2.2 0.92 3.5"},
+    {"XFIN", CAT_PAD, 1, "k 22000 29500 24500 19000 push 8192 16384 5500 env 3.933 2.2 0.92 3.5"},
+    {"ICE CHAPEL", CAT_PAD, 1, "k 12000 30000 27000 20000 push 11520 31129 7500 env 4.1 2.2 0.92 3.5 oct -1"},
+    {"LAST LIGHT", CAT_PAD, 1, "k 11500 29000 16000 18000 push 10240 16384 5000 env 3.266 2.2 0.92 3.5"},
+    {"MOON CHOIR", CAT_PAD, 1, "k 27000 28000 21000 18000 push 11520 14745 4500 env 3.766 2.2 0.92 3.5"},
+    {"STONE HALL", CAT_PAD, 1, "k 2800 24500 23500 12500 push 10496 8192 6000 env 3.6 2.2 0.92 3.5 oct -3"},
+    {"TIDAL ARC", CAT_PAD, 1, "k 28000 30000 27500 22000 push 11264 16384 6500 env 3.433 2.2 0.92 3.5"},
+    {"SUNRISE SWEEP", CAT_PAD, 1, "k 12000 26000 6000 10000 push 1024 18023 8192 env 2 1 0.9 3 fenv 3 2 0.6 3 0.6"},
+    {"NIGHT TIDE", CAT_PAD, 1, "k 8000 20000 16000 14000 push 512 8192 6000 env 2.5 1 0.9 3.5 lfo1 0 0.08 0.4 0 0 0"},
+    {"GLASS BELLS", CAT_BELL, 1, "k 20000 22000 12000 6000 push 768 31131 12000 env 0.005 2.5 0 2.5 fenv 0.001 1.2 0 1 0.5"},
+    {"VELVET KEYS", CAT_KEYS, 1, "k 10000 18000 12000 8000 push 3072 14746 10000 env 0.01 1.5 0.4 1.2 fenv 0.001 0.8 0.2 0.8 0.4"},
+    {"SUB PULSE", CAT_BASS, 1, "k 4000 6000 14000 2000 push 2816 1638 8192 env 0.01 0.3 0.9 0.3 lfo1 3 2 0.7 5 1 5 oct -1"},
+    {"AURORA DRIFT", CAT_PAD, 1, "k 14000 26000 18000 12000 push 256 27854 7000 env 3 2 0.9 4 lfo1 1 0.05 0.3 2 0 0 lfo2 0 0.11 0.4 0 0 0"},
+    {"NEBULA STRINGS", CAT_PAD, 1, "k 16000 20000 22000 10000 push 3584 31131 9000 env 0.8 1 0.85 2.5 menv 2 2 0.3 2 0.5 1"},
+    {"BREATH LEAD", CAT_LEAD, 1, "k 6000 12000 20000 6000 push 1536 8192 9000 env 0.05 0.5 0.8 0.4 lfo1 0 5 0.01 4 0 0"},
+    {"FLUTE WHISPER", CAT_LEAD, 1, "k 4000 14000 16000 8000 push 1792 31131 12000 env 0.15 0.5 0.8 0.6 fenv 0.2 0.6 0.5 0.6 0.3"},
+    {"PORCELAIN RAIN", CAT_PLUCK, 1, "k 12000 20000 22000 10000 push 2560 18023 16000 env 0.002 1.2 0 1.2 lfo1 4 6 0.3 0 0 0"},
+    {"PRESSURE DROP", CAT_FX, 1, "k 8000 24000 24000 16000 push 2048 4915 14000 env 0.01 2 0 2 menv 0.001 1.5 0 1 -0.5 4"},
+    {"SWARM RISE", CAT_FX, 1, "k 6000 22000 4000 14000 push 1280 24577 12000 env 2 1 1 2.5 fenv 4 0.1 1 2 0.7 lfo1 2 0.25 0.3 3 0 0"},
+    {"CATHEDRAL SWELL", CAT_PAD, 1, "k 6000 26000 8000 14000 push 3328 1638 6000 env 2.5 2 0.9 4 fenv 4 2 0.7 4 0.5 oct -1"},
+    {"OCEAN CHORD", CAT_KEYS, 1, "k 18000 24000 20000 10000 push 512 21300 8192 env 0.02 1 0.6 1.5 lfo1 0 1 0.3 5 1 3"},
+    {"SURF GATE", CAT_FX, 1, "k 4000 22000 22000 8000 push 2304 8192 8192 env 0.01 0.5 1 0.5 lfo1 3 4 0.9 5 1 7"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "vapora")) { *n = sizeof kVapora / sizeof kVapora[0]; *engine = ENG_VAPORA; return kVapora; }
     if (!__builtin_strcmp(eng, "monolit")) { *n = sizeof kMonolit / sizeof kMonolit[0]; *engine = ENG_MONOLIT; return kMonolit; }
     if (!__builtin_strcmp(eng, "sid")) { *n = sizeof kSid / sizeof kSid[0]; *engine = ENG_SID; return kSid; }
     if (!__builtin_strcmp(eng, "oxbowplus")) { *n = sizeof kOxbowPlus / sizeof kOxbowPlus[0]; *engine = ENG_OXBOW; return kOxbowPlus; }

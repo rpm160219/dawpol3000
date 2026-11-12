@@ -17,6 +17,8 @@ public:
     void render(float* out, int n);
     float takePeak() { float p = peak_; peak_ = 0; return p; }  // szczyt od ostatniego odczytu (watek audio)
 
+    void setOctave(int o) { octSemi_ = 12 * (o < -3 ? -3 : (o > 3 ? 3 : o)); }
+
 private:
     enum { OFF, ATTACK, DECAY, RELEASE };
     struct Voice {
@@ -25,6 +27,7 @@ private:
         uint32_t age = 0;
     };
     Voice v_[VOICES];
+    int octSemi_ = 0;
     float sr_ = 48000.f, attack_ = 0, decay_ = 0, release_ = 0, sustain_ = 0.6f, lpK_ = 0;
     float vol_ = 0.7f, volT_ = 0.7f, volK_ = 0;
     uint32_t age_ = 0;
