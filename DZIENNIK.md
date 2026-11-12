@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 03:00
+**Zmienione — port silnika ELG (op1r, Hundekraft), „sam silnik”:**
+- `third_party/op1r_elg/` — oryginalne `elg.c`, `elg_level.h`, `elg_geom.h`, `screen.c`, `elg.svg`, `plugin.json`, LICENSE, NOTICE, README; zaślepka `hk/engine.h`; `elg_art.h` z SVG (`tools/gen/svg_to_art2.py`). `third_party/LICENSES.md`.
+- `core/synth/elg_dsp.*` — DSP 1:1 w klasie (instancja na ścieżkę); `core/synth/wavetable_synth.*` — ELG jako czwarty rodzaj; `core/audio/engine.*` — dla ELG wyłączone dodatki (druga obwiednia, MOD ENV, LFO, tryby głosu), zostaje tylko obwiednia głośności.
+- `core/ui/elg_screen.*` — ekran „łoś” 1:1 (oddech, księżyc, zorza, poroże, gwiazdy) + ilustracja na karcie ENGINE; `core/ui/synth_view.*` — strony SOUND (INTERVAL/DETUNE/TIMBRE/MOVEMENT), AMP ENV, PRESETS; `core/ui/dialogs.cpp` — ELG na liście silników.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `elg`, presety w `presets/elg/` (tylko INIT); `tests/elg_match.cpp`, `tools/test_elg.sh`.
+- Testy: ELG bit w bit z oryginałem (105 984 próbki, 0 różnic), WAVETABLE/TAFFY/PEW nadal 0 różnic; CPU na konsoli przy 6 głosach: ELG 7,6%. Wysłane na konsolę.
+**Następny krok:** Patryk testuje ELG.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-13 02:00
 **Zmienione:** `core/ui/synth_view.*`, `core/audio/engine.cpp` — PEW bez drugiej obwiedni (usunięta strona DRIVE ENV, jej AMOUNT nie działa na organy; uwaga Patryka). `core/ui/splash.*` — ekran startowy dłuższy: ~4,5 s (logo stoi ~2,4 s po animacji). PEW nadal bit w bit. Wysłane na konsolę.
 **Następny krok:** kolejny silnik z op1r — port ściśle 1:1, bez dodatków (decyzja Patryka).

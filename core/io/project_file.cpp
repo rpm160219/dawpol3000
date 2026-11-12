@@ -18,7 +18,7 @@ static void putStr(FILE* f, const char* s) {
 
 void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f",
-            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : "wavetable")), t.knob[0],
+            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : (t.engine == ENG_ELG ? "elg" : "wavetable"))), t.knob[0],
             t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
     fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
             t.fenvAmt);
@@ -101,7 +101,7 @@ const char* kv(char** tok, int n, int from, const char* key) {
 void parseInstrument(Track& t, char** tok, int n, int start) {
     const char* v;
     if ((v = kv(tok, n, start, "engine")))
-        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : ENG_WAVETABLE));
+        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : (!strcmp(v, "elg") ? ENG_ELG : ENG_WAVETABLE)));
     // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
     for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu

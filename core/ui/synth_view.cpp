@@ -32,7 +32,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind extk[10] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind pewk[8] = {K_SOUND, K_BARS, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     int n = pageCount(pm), p = page_ < n ? page_ : n - 1;
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : orig[p]);
+    static const Kind elgk[3] = {K_SOUND, K_AMP, K_PRESETS};
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : orig[p]));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -245,6 +246,10 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_ELG) {
+        ElgView ev = {};
+        if (e) e->elgView(track_, &ev);
+        el_.draw(c, t.knob, ev);
     } else if (t.engine == ENG_PEW) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -385,7 +390,16 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_PEW) {  // organy: rejestracja, perkusja, drive/chorus, Leslie
+    if (k == K_SOUND && t.engine == ENG_ELG) {  // dron: interwal trzeciego glosu, rozstrojenie, barwa, ruch
+        static const char* iv[5] = {"UNISON", "FIFTH", "OCTAVE", "OCT+5TH", "2 OCT"};
+        int st = elgInterval(t.knob[0]);
+        snprintf(v[0], 16, "%s", iv[st > 4 ? 4 : st]);
+        snprintf(v[1], 16, "%.1fC", ((t.knob[1] * 393) >> 15) / 32768.f * 1731.2f);  // ulamek Q15 -> centy
+        snprintf(v[2], 16, "%d", t.knob[2] * 100 / 32767);
+        snprintf(v[3], 16, "%d", t.knob[3] * 100 / 32767);
+        static const char* L[4] = {"INTERVAL", "DETUNE", "TIMBRE", "MOVEMENT"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+    } else if (k == K_SOUND && t.engine == ENG_PEW) {  // organy: rejestracja, perkusja, drive/chorus, Leslie
         snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);  // uklad suwakow widac na grafice obok
         const int g = t.knob[1];
         if (g < 3277) snprintf(v[1], 16, "OFF");

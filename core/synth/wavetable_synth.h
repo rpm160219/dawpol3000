@@ -16,6 +16,7 @@
 
 namespace dp {
 struct PewCore;
+struct ElgCore;
 
 
 class WavetableSynth : public NoteSink {
@@ -31,9 +32,10 @@ public:
     void setVoice(bool mono, float glide, float unison, float age);
     // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
     // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
-    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW
+    void setKind(int k);  // 0 WAVETABLE, 1 TAFFY, 2 PEW, 3 ELG
     void setPush(const int16_t p[3]) { for (int i = 0; i < 3; i++) knobs_[5 + i] = p[i] < 0 ? 0 : p[i]; }  // PEW: strona 2
     const PewCore* pew() const { return pew_; }
+    const ElgCore* elg() const { return elg_; }
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
     int16_t voiceLevel() const { return vLev_.load(std::memory_order_relaxed); }  // obwiednia x velocity, Q15
@@ -102,7 +104,8 @@ private:
     // tryb rozszerzony
     bool alt_ = false;
     int kind_ = 0, tfBase_ = -1;
-    PewCore* pew_ = nullptr;  // PEW: organy tej sciezki (tworzone w init, poza watkiem audio)
+    PewCore* pew_ = nullptr;
+    ElgCore* elg_ = nullptr;  // ELG: glosy tej sciezki  // PEW: organy tej sciezki (tworzone w init, poza watkiem audio)
     std::atomic<int16_t> tfEnv_{0}, vLev_{0};
     int16_t wave2_ = 16384;
     int semi_[2] = {0, 0}, fmode_ = 0;

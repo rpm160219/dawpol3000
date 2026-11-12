@@ -185,9 +185,15 @@ static const FactoryPreset kPew[] = {
     {"PIPE SOLO", CAT_LEAD, 1, "k 0 0 2000 5000 voice 1 0.05 0 0 env 0.04 0.3 1 0.2 push 0 32767 0"},
 };
 
+// ELG: sam silnik 1:1 (decyzja Patryka) — tylko INIT
+static const FactoryPreset kElg[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "elg")) { *n = sizeof kElg / sizeof kElg[0]; *engine = ENG_ELG; return kElg; }
     if (!__builtin_strcmp(eng, "pew")) { *n = sizeof kPew / sizeof kPew[0]; *engine = ENG_PEW; return kPew; }
     if (!__builtin_strcmp(eng, "wavetableplus")) { *n = sizeof kWavetablePlus / sizeof kWavetablePlus[0]; *engine = ENG_WAVETABLE; return kWavetablePlus; }
     *n = sizeof kWavetable / sizeof kWavetable[0];

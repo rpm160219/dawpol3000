@@ -33,23 +33,25 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : 0);
+        const bool bare = e == ENG_ELG;  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci, bez dodatkow
         wt_[i].setKnobs(t.knob);
         wt_[i].setPush(t.push);
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW ? 0.f : t.fenvAmt);
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || bare ? 0.f : t.fenvAmt);
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
-        wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
-        wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
+        if (bare) wt_[i].setVoice(false, 0.f, 0.f, 0.f);
+        else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
+        wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], bare ? 0.f : t.menvAmt, t.menvDest);
         {
             const WtExt& x = t.ext;
             wt_[i].setExt(x.osc[1].wave, x.osc[0].semi, x.osc[1].semi, x.osc[0].cents, x.osc[1].cents, x.osc[0].level,
                           x.osc[1].level, x.sub, x.fmode, x.drive);
         }
         for (int l = 0; l < 2; l++)
-            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest, t.lfo[l].sync,
+            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, bare ? 0.f : t.lfo[l].depth, t.lfo[l].dest, t.lfo[l].sync,
                           lfoDivBeats(t.lfo[l].div));
     }
     applyMutes();

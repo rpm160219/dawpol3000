@@ -10,6 +10,7 @@ const char* engineName(int e) {
     case ENG_SAW: return "TEST SAW";
     case ENG_TAFFY: return "TAFFY";
     case ENG_PEW: return "PEW";
+    case ENG_ELG: return "ELG";
     default: return "?";
     }
 }

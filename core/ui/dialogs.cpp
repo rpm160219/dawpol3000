@@ -2,6 +2,7 @@
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
+#include "ui/elg_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -21,7 +22,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 5;
+static const int NENG = 6;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -35,16 +36,19 @@ static const EngineInfo kEngines[NENG] = {
     {"PEW", "DRAWBAR ORGAN",
      {"PORT OF THE OP1R PEW ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "NINE DRAWBARS THROUGH A ROTARY", "SPEAKER: REGISTER, PERCUSSION,",
       "SCANNER CHORUS AND TUBE DRIVE,", "LESLIE STOP / SLOW / FAST.", "BARS PAGE PUSHES LOW/MID/HIGH."}},
+    {"ELG", "DRONE",
+     {"PORT OF THE OP1R ELG ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "THREE DETUNED SAWS PER VOICE,", "THE THIRD AN INTERVAL ABOVE.",
+      "GROWL DRIVE AND A RESONANT", "LOW-PASS, SLOWLY MOVING.", "THE ENGINE ONLY, AS ORIGINAL."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 4 : (t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 4 ? ENG_SAW : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 5 ? ENG_SAW : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     t.engine = (uint8_t)e;
     t.alt = idx == 1;
@@ -183,7 +187,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
     for (int i = 0; i < NENG; i++) {
-        float y = 80 + i * 56;
+        float y = 78 + i * 52;
         bool sel = i == engSel_;
         if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
         Color col = sel ? rgb(245, 210, 160) : pal::tan;
@@ -192,11 +196,13 @@ void TrackDialog::renderEngineCard(Canvas& c) {
         if (i == cur) c.fillCircle(238, y + 8, 3.5f, pal::green);  // silnik zapisany na sciezce
     }
     c.line(258, 70, 258, 410, 1.5f, pal::steel);
-    drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
+    if (engSel_ == 4) drawElgIllustration(c, 280, 68, 336, 190);
+    else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
     if (engSel_ < 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');

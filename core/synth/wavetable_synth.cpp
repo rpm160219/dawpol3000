@@ -2,6 +2,7 @@
 #include "seq/project.h"
 #include "synth/taffy_dsp.h"
 #include "synth/pew_dsp.h"
+#include "synth/elg_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -99,6 +100,7 @@ void WavetableSynth::init(float outRate) {
     nStack_ = 0;
     lastPitch_ = -1;
     if (!pew_) pew_ = pewCreate();
+    if (!elg_) elg_ = elgCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -369,6 +371,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
     wtExtOn(SX(sx_, slot));
     if (kind_ == 1) taffyNoteOn(tfBase_ + slot);
+    else if (kind_ == 3) elgNoteOn(elg_, slot);
     else if (kind_ == 2) {  // PEW: najpierw zwolnij bramki puszczonych klawiszy (pojedyncze wyzwalanie perkusji)
         for (int i = 0; i < VOICES; i++)
             if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) pewNoteOff(pew_, i);
@@ -476,7 +479,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 2) {  // PEW (oryginalny DSP op1r)
+        if (kind_ == 3) {  // ELG (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            elgRender(elg_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 2) {  // PEW (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             pewRender(pew_, vi, out, vk, pitchBuf, v.vel);
         } else if (kind_ == 1) {  // TAFFY (oryginalny DSP op1r)

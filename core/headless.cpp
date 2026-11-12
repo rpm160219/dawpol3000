@@ -165,6 +165,25 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_X] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "elg") || !strcmp(screen, "elgenv")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_ELG;
+        engineDefaultKnobs(ENG_ELG, tr.knob);
+        tr.knob[2] = 26000; tr.knob[3] = 20000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "elgenv")) app.synth.setPageKind(SynthView::K_AMP);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "elgengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 4; i++) tap(app, B_DOWN);  // ELG
     } else if (!strcmp(screen, "splash")) {
         app.startSplash(1.9f);
     } else if (!strcmp(screen, "pewengine")) {
