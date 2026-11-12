@@ -1,5 +1,6 @@
 #include "gfx/icons.h"
 #include "../../third_party/op1r_taffy/taffy_art.h"
+#include "../../third_party/op1r_taffy/taffy_geom.h"
 #include <math.h>
 
 namespace dp {
@@ -115,33 +116,71 @@ static float illusWave(float m, float p) {
 void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, float h) {
     const Color NAVY = rgb(0x38, 0x35, 0x72), PLUM = rgb(0x51, 0x49, 0x59), GREY = rgb(0x65, 0x65, 0x79);
     const Color GREEN = rgb(0x00, 0xED, 0x95), BLUE = rgb(0x69, 0x8E, 0xFF), RED = rgb(0xFF, 0x3A, 0x5D);
-    if (engine == 2) {  // TAFFY: twarz dziewczyny z grafiki ekranu (taffy.svg: tylko linie twarzy i wlosow)
-        // zakres: linie w kolorze #9A98E1 lezace w calosci na lewo od ust (x <= 136 w jednostkach OP-1)
-        float minx = 1e9f, miny = 1e9f, maxx = -1e9f, maxy = -1e9f;
-        auto face = [](const TFLine& l) {
-            if (l.rgb != 0x9A98E1) return false;
-            for (int i = 0; i < l.count; i++) if (TF_PTS[(l.first + i) * 2] > 136.f) return false;
-            return true;
+    if (engine == 2) {  // TAFFY: dziewczyna z grafiki ekranu (taffy.svg) — twarz, usta, nici gumy (slina), gwiazdki
+        // bez balonu i chmur; nici i iskry przy ustach liczone jak w screen.c dla balonu w spoczynku (makieta)
+        enum { FACE, MOUTH, STAR };
+        auto kind = [](const TFLine& l) -> int {
+            float mx = 0;
+            for (int i = 0; i < l.count; i++) mx = fmaxf(mx, TF_PTS[(l.first + i) * 2]);
+            if (l.rgb == 0x9A98E1 && mx <= 136.f) return FACE;
+            if (l.rgb == 0xFFFFFF && mx <= 140.f) return MOUTH;
+            if (l.rgb == 0xA899FC && mx <= 170.f) return STAR;
+            return -1;
         };
-        for (const TFLine& l : TF_LINES) {
-            if (!face(l)) continue;
-            for (int i = 0; i < l.count; i++) {
-                float px = TF_PTS[(l.first + i) * 2], py = TF_PTS[(l.first + i) * 2 + 1];
-                minx = fminf(minx, px); maxx = fmaxf(maxx, px); miny = fminf(miny, py); maxy = fmaxf(maxy, py);
+        // nici: krzywe kwadratowe od ust do obrysu balonu (jednostki ekranu OP-1)
+        float sp[5][9][2];
+        {
+            float sx[3] = {}, sy[3] = {};
+            const float bx = TF_BX / 1024.f, by = TF_BY / 1024.f, br = TF_BR / 1024.f;
+            const float mx = TF_MX / 1024.f, my = TF_MY / 1024.f;
+            for (int s = 0; s < 5; s++) {
+                const int32_t* d = tf_strand[s];
+                const float an = d[2] * 6.2831853f / 8192.f;
+                const float ex = bx + br * cosf(an), ey = by + br * sinf(an);
+                float x0, y0;
+                if (d[0] < 0) { x0 = mx + (ex - mx) * d[3] / 1024.f; y0 = my + (ey - my) * d[3] / 1024.f; }
+                else { x0 = sx[d[0]]; y0 = sy[d[0]]; }
+                const float x1 = (x0 + ex) * 0.5f, y1 = (y0 + ey) * 0.5f - (ex - x0) * d[4] / 1024.f;
+                auto q = [&](float u, float* ox, float* oy) {
+                    const float v = 1 - u;
+                    *ox = v * v * x0 + 2 * u * v * x1 + u * u * ex;
+                    *oy = v * v * y0 + 2 * u * v * y1 + u * u * ey;
+                };
+                for (int i = 0; i <= 8; i++) q(i / 8.f, &sp[s][i][0], &sp[s][i][1]);
+                const int32_t tq = s == 0 ? tf_strand[3][1] : s == 2 ? tf_strand[4][1] : 0;
+                if (s < 3) q(tq / 1024.f, &sx[s], &sy[s]);
             }
         }
-        float sc = fminf((w - 20) / (maxx - minx), (h - 10) / (maxy - miny));
-        float ox = x + (w - (maxx - minx) * sc) * 0.5f, oy = y + (h - (maxy - miny) * sc) * 0.5f;
-        const Color VIO = rgb(0x9A, 0x98, 0xE1);
+        float minx = 1e9f, miny = 1e9f, maxx = -1e9f, maxy = -1e9f;
+        auto grow = [&](float px, float py) { minx = fminf(minx, px); maxx = fmaxf(maxx, px); miny = fminf(miny, py); maxy = fmaxf(maxy, py); };
+        for (const TFLine& l : TF_LINES)
+            if (kind(l) >= 0) for (int i = 0; i < l.count; i++) grow(TF_PTS[(l.first + i) * 2], TF_PTS[(l.first + i) * 2 + 1]);
+        for (int s = 0; s < 5; s++) for (int i = 0; i <= 8; i++) grow(sp[s][i][0], sp[s][i][1]);
+        const float sc = fminf((w - 16) / (maxx - minx), (h - 10) / (maxy - miny));
+        const float ox = x + (w - (maxx - minx) * sc) * 0.5f, oy = y + (h - (maxy - miny) * sc) * 0.5f;
+        auto X = [&](float u) { return ox + (u - minx) * sc; };
+        auto Y = [&](float u) { return oy + (u - miny) * sc; };
+        const Color VIO = rgb(0x9A, 0x98, 0xE1), STARC = rgb(0xA8, 0x99, 0xFC), WHITE = rgb(255, 255, 255);
         for (const TFLine& l : TF_LINES) {
-            if (!face(l)) continue;
+            const int k = kind(l);
+            if (k < 0) continue;
             c.beginStroke();
             for (int i = 0; i + 1 < l.count; i++) {
                 const float* q = TF_PTS + (l.first + i) * 2;
-                c.strokeSeg(ox + (q[0] - minx) * sc, oy + (q[1] - miny) * sc, ox + (q[2] - minx) * sc, oy + (q[3] - miny) * sc, 1.6f);
+                c.strokeSeg(X(q[0]), Y(q[1]), X(q[2]), Y(q[3]), 1.6f);
             }
-            c.endStroke(VIO);
+            c.endStroke(k == FACE ? VIO : k == MOUTH ? WHITE : STARC);
         }
+        for (const TFCircle& d : TF_CIRCLES)
+            if (d.x <= 170.f) c.fillCircle(X(d.x), Y(d.y), 1.3f, WHITE);
+        for (int s = 0; s < 5; s++) {
+            c.beginStroke();
+            for (int i = 0; i < 8; i++) c.strokeSeg(X(sp[s][i][0]), Y(sp[s][i][1]), X(sp[s][i + 1][0]), Y(sp[s][i + 1][1]), 1.6f);
+            c.endStroke(GREEN);
+        }
+        for (const auto& e : tf_lipspark)  // kreski przy ustach
+            c.line(X(e[0] / 1024.f), Y(e[1] / 1024.f), X(e[2] / 1024.f), Y(e[3] / 1024.f), 1.6f, WHITE);
+        (void)NAVY; (void)PLUM; (void)GREY; (void)BLUE; (void)RED;
         return;
     }
     if (engine == 3) {  // TEST SAW: prosta pila w ramce

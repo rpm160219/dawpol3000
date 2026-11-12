@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 23:45
+**Zmienione:** `core/gfx/icons.cpp` — ilustracja TAFFY na karcie ENGINE uzupełniona: usta, zielone nici gumy wylatujące z ust (liczone jak na ekranie silnika, bez balonu), kreski przy ustach i gwiazdki obok twarzy (uwaga Patryka). Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza ikonę i odsłuchuje nowe presety.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 23:30
 **Zmienione:**
 - `core/gfx/icons.cpp` — ilustracja TAFFY na karcie ENGINE to teraz twarz dziewczyny z oryginalnego SVG (zamiast balonu).
