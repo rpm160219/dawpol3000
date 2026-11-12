@@ -114,7 +114,45 @@ static float illusWave(float m, float p) {
 void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, float h) {
     const Color NAVY = rgb(0x38, 0x35, 0x72), PLUM = rgb(0x51, 0x49, 0x59), GREY = rgb(0x65, 0x65, 0x79);
     const Color GREEN = rgb(0x00, 0xED, 0x95), BLUE = rgb(0x69, 0x8E, 0xFF), RED = rgb(0xFF, 0x3A, 0x5D);
-    if (engine == 2) {  // TEST SAW: prosta pila w ramce
+    if (engine == 2) {  // TAFFY: balon z gumy (obrys = fala CZ z platkami), nici od ust, odblaski i iskry
+        const float bxc = x + w * 0.62f, byc = y + h * 0.45f, R = h * 0.34f;
+        const Color VIO = rgb(0x9A, 0x98, 0xE1);
+        // usta i nici gumy (zielone)
+        const float mx = x + w * 0.2f, my = y + h * 0.55f;
+        c.line(mx - 14, my - 6, mx - 2, my - 2, 1.4f, VIO);
+        c.line(mx - 14, my + 6, mx - 2, my + 2, 1.4f, VIO);
+        for (int s = 0; s < 3; s++) {
+            float ang = 3.14159f * (0.85f + 0.15f * s);
+            float ex = bxc + cosf(ang) * R, ey = byc + sinf(ang) * R;
+            float cx = (mx + ex) * 0.5f, cy = (my + ey) * 0.5f - 10 + s * 8;
+            float px = mx, py = my;
+            for (int i = 1; i <= 10; i++) {
+                float u = i / 10.f, v = 1 - u;
+                float qx = v * v * mx + 2 * u * v * cx + u * u * ex, qy = v * v * my + 2 * u * v * cy + u * u * ey;
+                c.line(px, py, qx, qy, 1.6f, GREEN);
+                px = qx; py = qy;
+            }
+        }
+        // balon: 6 platkow (ksztalt kwadratowy CZ)
+        float pts[2 * 121];
+        for (int i = 0; i <= 120; i++) {
+            float a = i / 120.f * 6.2831853f;
+            float r = R * (1.f + 0.09f * tanhf(1.6f * cosf(6 * a)));  // miekkie, zaokraglone platki
+            pts[i * 2] = bxc + cosf(a) * r;
+            pts[i * 2 + 1] = byc + sinf(a) * r;
+        }
+        c.polyline(pts, 121, 2.2f, BLUE);
+        c.arc(bxc, byc, R * 0.72f, 3.14159f * 1.15f, 3.14159f * 1.4f, 2.f, RED);   // odblaski
+        c.arc(bxc, byc, R * 0.72f, 3.14159f * 1.5f, 3.14159f * 1.58f, 2.f, rgb(255, 255, 255));
+        for (int s = 0; s < 4; s++) {  // iskry
+            float a = 3.14159f * (1.65f + 0.17f * s);
+            c.line(bxc + cosf(a) * (R + 8), byc + sinf(a) * (R + 8), bxc + cosf(a) * (R + 18), byc + sinf(a) * (R + 18), 1.4f,
+                   rgb(255, 255, 255));
+        }
+        for (int s = 0; s < 3; s++) c.fillCircle(x + 20 + s * 90, y + h * (0.1f + 0.35f * (s % 2)), 1.2f, rgb(255, 255, 255));
+        return;
+    }
+    if (engine == 3) {  // TEST SAW: prosta pila w ramce
         c.strokeRoundRect(x, y, w, h, 8, 1.4f, rgb(80, 80, 80));
         float px = x + 16, py = y + h * 0.5f;
         for (int k = 0; k < 4; k++) {

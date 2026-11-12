@@ -24,6 +24,7 @@
 #pragma once
 #include "ui/encoder.h"
 #include "ui/view.h"
+#include "ui/taffy_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -60,6 +61,7 @@ private:
     int held_[8] = {-1, -1, -1, -1, -1, -1, -1, -1};  // nuta grana przez przycisk i
     float dt_ = 0.016f;
     WavetableScreen wt_;
+    TaffyScreen tf_;
     void releaseAll();
 };
 

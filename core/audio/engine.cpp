@@ -31,14 +31,15 @@ void AudioEngine::applyProject() {
         if (e != eng_[i]) {  // zmiana instrumentu: wycisz stary
             sinks_[i]->allOff();
             eng_[i] = e;
-            sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];
+            sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : 0);
         wt_[i].setKnobs(t.knob);
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
         wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], t.fenvAmt);
-        wt_[i].setAlt(t.alt);
+        wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
         {

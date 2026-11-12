@@ -21,18 +21,31 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const EngineInfo kEngines[3] = {
+static const int NENG = 4;
+static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
       "8 WAVES FROM SINE TO DIGITAL.", "4-POLE LADDER FILTER WITH", "RESONANCE UP TO SELF-OSCILLATION.", ""}},
     {"WAVETABLE+", "EXTENDED",
      {"THE SAME CORE, OPENED UP:", "TWO INDEPENDENT OSCILLATORS -", "WAVE, INTERVAL, DETUNE, LEVEL.",
       "SUB OSCILLATOR ONE OCTAVE DOWN.", "FILTER MODES LP24 LP12 BP HP", "WITH DRIVE. LFO TARGETS PER OSC.", ""}},
+    {"TAFFY", "PHASE DISTORTION",
+     {"PORT OF THE OP1R TAFFY ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "CASIO CZ STYLE: A COSINE READ", "THROUGH A BENT PHASE.",
+      "SAW, SQUARE, PULSE, SAW-PULSE.", "DCW = BRIGHTNESS, NO FILTER.", "CZ RESONANT WAVE ON TOP."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
-static int engineIndexOf(const Track& t) { return t.engine == ENG_SAW ? 2 : (t.alt ? 1 : 0); }
+static int engineIndexOf(const Track& t) {
+    return t.engine == ENG_SAW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0));
+}
+// Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
+static void applyEngine(Track& t, int idx) {
+    int e = idx == 3 ? ENG_SAW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE);
+    if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
+    t.engine = (uint8_t)e;
+    t.alt = idx == 1;
+}
 
 // ---------------- NEW TRACK ----------------
 
@@ -66,15 +79,14 @@ void TrackDialog::updateEdit(const Buttons& b) {
     if (b.pressed(B_L2) && card_ > 0) card_--;
     if (b.pressed(B_R2) && card_ < 1 && midi) card_++;
     if (card_ == 1) {  // ENGINE
-        if (b.repeat(B_DOWN) && engSel_ < 2) engSel_++;
+        if (b.repeat(B_DOWN) && engSel_ < NENG - 1) engSel_++;
         if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
         if (b.pressed(B_B)) app_->showArrange();
         if (b.pressed(B_A)) {
             Track& t = p.tracks[edit_];
             memcpy(t.name, name_, sizeof t.name);
             t.color = (uint8_t)color_;
-            t.engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
-            if (engSel_ < 2) t.alt = engSel_ == 1;
+            applyEngine(t, engSel_);
             app_->markDirty();
             app_->showArrange();
         }
@@ -103,10 +115,7 @@ void TrackDialog::updateEdit(const Buttons& b) {
         Track& t = p.tracks[edit_];
         memcpy(t.name, name_, sizeof t.name);
         t.color = (uint8_t)color_;
-        if (t.type == TRACK_MIDI) {  // wybor z karty ENGINE (jesli byla odwiedzona, inaczej bez zmian)
-            t.engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
-            if (engSel_ < 2) t.alt = engSel_ == 1;
-        }
+        if (t.type == TRACK_MIDI) applyEngine(t, engSel_);  // wybor z karty ENGINE (bez zmiany = ten sam silnik)
         app_->markDirty();
         app_->showArrange();
     }
@@ -170,7 +179,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
     headerBar(c, 264, BY, 360, BH, name_, pal::tan);
     const int cur = edit_ >= 0 ? engineIndexOf(app_->project().tracks[edit_]) : -1;  // nowa sciezka: brak
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NENG; i++) {
         float y = 80 + i * 56;
         bool sel = i == engSel_;
         if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
@@ -184,7 +193,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
-    if (engSel_ < 2) drawText(c, 280, 400, "6 VOICES  -  1.4% CPU PER VOICE", 7, 1.f, pal::dim);
+    if (engSel_ < 3) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
@@ -199,7 +208,7 @@ void TrackDialog::update(const Buttons& b, const InputState&, float) {
     if (b.pressed(B_L2) && card_ > 0) card_--;
     if (b.pressed(B_R2) && card_ < 1 && type_ == TRACK_MIDI) card_++;
     if (card_ == 1) {
-        if (b.repeat(B_DOWN) && engSel_ < 2) engSel_++;
+        if (b.repeat(B_DOWN) && engSel_ < NENG - 1) engSel_++;
         if (b.repeat(B_UP) && engSel_ > 0) engSel_--;
     } else {
         int nt = type_;
@@ -213,10 +222,7 @@ void TrackDialog::update(const Buttons& b, const InputState&, float) {
     if (b.pressed(B_B)) app_->showArrange();
     if (b.pressed(B_A) && p.canAddTrack(type_)) {
         int t = p.addTrack(type_, name_);
-        if (type_ == TRACK_MIDI) {  // silnik z karty ENGINE
-            p.tracks[t].engine = engSel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
-            p.tracks[t].alt = engSel_ == 1;
-        }
+        if (type_ == TRACK_MIDI) applyEngine(p.tracks[t], engSel_);  // silnik z karty ENGINE
         app_->markDirty();
         app_->arrange.setCursor(t, 0);
         if (type_ == TRACK_MIDI) app_->openNewPattern(t, 0);

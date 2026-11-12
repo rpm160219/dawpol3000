@@ -32,7 +32,8 @@ public:
     void toast(const char* msg);       // krotki komunikat na srodku dolu ekranu
     ProjectStore& store() { return store_; }
     PresetStore& presets() { return presets_; }
-    void openPresets(const char* root) { presets_.init(root); }
+    PresetStore& presetsFor(int engine) { return engine == ENG_TAFFY ? presetsTf_ : presets_; }
+    void openPresets(const char* root) { presets_.init(root, "wavetable"); presetsTf_.init(root, "taffy"); }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
     bool saveProject();
@@ -63,7 +64,7 @@ private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
     ProjectStore store_;
-    PresetStore presets_;
+    PresetStore presets_, presetsTf_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia

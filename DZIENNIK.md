@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 22:00
+**Zmienione — port silnika TAFFY (op1r, Hundekraft):**
+- `third_party/op1r_taffy/` — oryginalne `taffy.c`, `taffy_tables.h`, `taffy_geom.h`, `screen.c`, `taffy.svg`, LICENSE, NOTICE, README (źródło + commit); zaślepki `hk/engine.h`, `op1_l1.h`; `taffy_art.h` wygenerowany z SVG (`tools/gen/svg_to_art.py`). `third_party/LICENSES.md`.
+- `core/synth/taffy_dsp.*` — osobna jednostka z oryginalnym DSP (CZ phase distortion); `core/synth/wavetable_synth.*` — silnik głosów obsługuje TAFFY (`setKind`): ADSR, druga obwiednia (DCW), MOD ENV, 2 LFO, POLY/MONO/UNISON/GLIDE/AGE, decymacja — spójnie z WAVETABLE.
+- `core/ui/taffy_screen.*` — ekran „bubblegum” 1:1 (statyka z SVG w cache, na żywo balon-fala, nici, odblaski, iskry); `core/ui/synth_view.*` — TAFFY: gałki WAVE/DCW/ENV/RES, strona DCW ENV, nazwy celów modulacji; `core/ui/dialogs.cpp` — TAFFY na liście silników z ilustracją i opisem, zmiana silnika = domyślne gałki nowego silnika; `core/gfx/icons.cpp` — ilustracja TAFFY.
+- `core/io/preset_store.*`, `core/ui/app.h` — presety osobno dla silnika (`presets/wavetable/`, `presets/taffy/`), 11 fabrycznych presetów TAFFY; `core/seq/project.*`, `core/io/project_file.cpp` — silnik `taffy`, domyślne gałki silnika, nazwy celów.
+- Testy: TAFFY bit w bit z oryginalnym harnessem (105 984 próbki, 0 różnic), WAVETABLE nadal 0 różnic; 11 presetów TAFFY bez przesterowania; CPU na konsoli: 6 głosów TAFFY 7,1%, WAVETABLE 8,6%.
+**Następny krok:** Patryk testuje TAFFY.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 20:30
 **Zmienione:** `core/ui/dialogs.*` — okno NEW TRACK ma kartę ENGINE (L2/R2, tylko dla MIDI) jak okno TRACK; na pierwszej karcie tylko nazwa silnika (usunięty wybór L1/R1); CREATE działa z obu kart; nowa ścieżka MIDI domyślnie WAVETABLE. Headless `newengine`. Test: WAVETABLE+ z karty → nowa ścieżka ma WAVETABLE+; bez karty — WAVETABLE; ścieżka AUDIO bez karty ENGINE.
 **Następny krok:** Patryk sprawdza.

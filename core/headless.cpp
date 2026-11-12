@@ -128,6 +128,26 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;  // trzymana nuta
         app.update(in, 0.016f);
         for (int i = 0; i < 60; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "taffy") || !strcmp(screen, "taffypresets")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_TAFFY;
+        engineDefaultKnobs(ENG_TAFFY, tr.knob);
+        tr.knob[3] = 14000; tr.knob[2] = 16000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "taffypresets")) app.synth.setPageKind(SynthView::K_PRESETS);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 20; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "taffyengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        tap(app, B_DOWN);
+        tap(app, B_DOWN);  // TAFFY
     } else if (!strcmp(screen, "newengine")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);      // ADD TRACK

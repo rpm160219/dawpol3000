@@ -11,8 +11,7 @@ namespace dp {
 
 void PresetStore::initInstrument(Track& t) {
     Track d;
-    t.engine = d.engine;
-    memcpy(t.knob, d.knob, sizeof t.knob);
+    engineDefaultKnobs(t.engine, t.knob);  // silnik zostaje (INIT w obrebie silnika sciezki)
     memcpy(t.env, d.env, sizeof t.env);
     t.envAmt = d.envAmt;
     memcpy(t.fenv, d.fenv, sizeof t.fenv);
@@ -32,9 +31,10 @@ void PresetStore::initInstrument(Track& t) {
     t.glideDiv = d.glideDiv;
 }
 
-void PresetStore::init(const char* root) {
+void PresetStore::init(const char* root, const char* engineDir) {
     snprintf(root_, sizeof root_, "%s", root);
-    snprintf(dir_, sizeof dir_, "%s/wavetable", root_);
+    snprintf(eng_, sizeof eng_, "%s", engineDir);
+    snprintf(dir_, sizeof dir_, "%s/%s", root_, eng_);
     fs::makeDirs(dir_);
     refresh();
     writeFactory();  // dopisuje brakujace presety z nowszych wersji zestawu
@@ -136,6 +136,7 @@ static const int16_t W_SINE = 0, W_WARM = 4681, W_TRI = 9362, W_SAW = 14043, W_S
 
 // Zestaw fabryczny. ver = wersja zestawu, w ktorej preset doszedl.
 void PresetStore::writeFactory() {
+    if (!strcmp(eng_, "taffy")) { writeFactoryTaffy(); return; }
     char mark[400];
     snprintf(mark, sizeof mark, "%s/_factory_v%d", dir_, FACTORY_VERSION);
     if (fs::exists(mark)) return;
@@ -244,6 +245,63 @@ void PresetStore::writeFactory() {
         if (!fresh && p.ver <= had) continue;
         if (find(p.name) >= 0) continue;  // nie nadpisuj
         Track t;
+        t.engine = ENG_WAVETABLE;
+        initInstrument(t);
+        p.set(t);
+        save(t, p.name, p.cat);
+    }
+    FILE* f = fopen(mark, "w");
+    if (f) fclose(f);
+}
+
+// Zestaw fabryczny TAFFY (CZ). Galki: WAVE (0 saw, 10923 square, 21846 pulse, 32767 saw-pulse), DCW, ENV, RES;
+// druga obwiednia steruje DCW. Wersjonowany jak zestaw WAVETABLE.
+void PresetStore::writeFactoryTaffy() {
+    char mark[400];
+    snprintf(mark, sizeof mark, "%s/_factory_v1", dir_);
+    if (fs::exists(mark)) return;
+    struct F { const char* name; int cat; void (*set)(Track&); };
+    static const F list[] = {
+        {"INIT", CAT_OTHER, [](Track&) {}},
+        {"CZ BRASS", CAT_LEAD, [](Track& t) {
+             t.knob[0] = 0; t.knob[1] = 9000; t.knob[2] = 22000; t.knob[3] = 0;
+             t.env[0] = 0.03f; t.env[1] = 0.6f; t.env[2] = 0.7f; t.env[3] = 0.25f;
+             t.fenv[0] = 0.04f; t.fenv[1] = 0.5f; t.fenv[2] = 0.3f; t.fenv[3] = 0.3f; t.fenvAmt = 0.2f; }},
+        {"CZ BASS", CAT_BASS, [](Track& t) {
+             t.knob[0] = 10923; t.knob[1] = 6000; t.knob[2] = 26000; t.knob[3] = 0; t.mono = true; t.glide = 0.03f;
+             t.env[0] = 0.002f; t.env[1] = 0.4f; t.env[2] = 0.6f; t.env[3] = 0.08f; }},
+        {"DIGI PIANO", CAT_KEYS, [](Track& t) {
+             t.knob[0] = 32767; t.knob[1] = 4000; t.knob[2] = 20000; t.knob[3] = 0;
+             t.env[0] = 0.002f; t.env[1] = 1.2f; t.env[2] = 0.1f; t.env[3] = 0.6f; }},
+        {"SQUARE ORGAN", CAT_KEYS, [](Track& t) {
+             t.knob[0] = 10923; t.knob[1] = 12000; t.knob[2] = 0; t.knob[3] = 0;
+             t.env[0] = 0.005f; t.env[1] = 0.3f; t.env[2] = 1.f; t.env[3] = 0.1f; }},
+        {"PULSE PLUCK", CAT_PLUCK, [](Track& t) {
+             t.knob[0] = 21846; t.knob[1] = 2000; t.knob[2] = 30000; t.knob[3] = 0;
+             t.env[0] = 0.001f; t.env[1] = 0.3f; t.env[2] = 0.f; t.env[3] = 0.25f; }},
+        {"BUBBLEGUM PAD", CAT_PAD, [](Track& t) {
+             t.knob[0] = 16384; t.knob[1] = 8000; t.knob[2] = 6000; t.knob[3] = 12000; t.age = 0.4f;
+             t.env[0] = 0.7f; t.env[1] = 1.5f; t.env[2] = 0.8f; t.env[3] = 1.5f;
+             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 0.2f; t.lfo[0].depth = 0.2f; t.lfo[0].dest = DEST_WAVE; }},
+        {"CZ BELLS", CAT_BELL, [](Track& t) {
+             t.knob[0] = 32767; t.knob[1] = 14000; t.knob[2] = 16000; t.knob[3] = 18000;
+             t.env[0] = 0.001f; t.env[1] = 1.6f; t.env[2] = 0.f; t.env[3] = 1.4f; }},
+        {"RESO SWEEP", CAT_FX, [](Track& t) {
+             t.knob[0] = 0; t.knob[1] = 3000; t.knob[2] = 0; t.knob[3] = 26000;
+             t.lfo[0].shape = LFO_TRI; t.lfo[0].sync = true; t.lfo[0].div = 1; t.lfo[0].depth = 0.4f; t.lfo[0].dest = DEST_DETUNE;
+             t.env[2] = 0.9f; t.env[3] = 0.5f; }},
+        {"SYNC LEAD", CAT_LEAD, [](Track& t) {
+             t.knob[0] = 0; t.knob[1] = 7000; t.knob[2] = 12000; t.knob[3] = 20000; t.mono = true; t.unison = 15.f;
+             t.glideSync = true; t.glideDiv = 7;
+             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.5f; t.lfo[0].depth = 0.01f; t.lfo[0].dest = DEST_PITCH; }},
+        {"WOBBLE CZ", CAT_FX, [](Track& t) {
+             t.knob[0] = 10923; t.knob[1] = 4000; t.knob[2] = 0; t.knob[3] = 8000; t.mono = true;
+             t.lfo[0].shape = LFO_SINE; t.lfo[0].sync = true; t.lfo[0].div = 5; t.lfo[0].depth = 0.5f; t.lfo[0].dest = DEST_DETUNE; }},
+    };
+    for (const F& p : list) {
+        if (find(p.name) >= 0) continue;
+        Track t;
+        t.engine = ENG_TAFFY;
         initInstrument(t);
         p.set(t);
         save(t, p.name, p.cat);

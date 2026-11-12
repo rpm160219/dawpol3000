@@ -31,6 +31,8 @@ public:
     // Poziom sciezki do VU (0..1, szczyt z opadaniem ~24 dB/s, po glosnosci sciezki, przed masterem).
     // Dla ekranu instrumentu: roznica faz oscylatorow i liczba grajacych glosow WAVETABLE na sciezce
     uint32_t wtDrift(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].drift() : 0; }
+    int16_t voiceLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].voiceLevel() : 0; }
+    int16_t taffyEnv(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].taffyEnv() : 0; }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }

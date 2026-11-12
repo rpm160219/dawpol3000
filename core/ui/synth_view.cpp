@@ -241,6 +241,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_TAFFY) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        tf_.draw(c, shown, live, e ? e->taffyEnv(track_) : 0, e ? e->voiceLevel(track_) : 0);
     } else if (t.engine == ENG_WAVETABLE) {
         // ekran pokazuje galki po modulacji (LFO, obwiednia filtra), gdy cos gra
         bool live = e && e->wtActive(track_) > 0;
@@ -263,7 +269,7 @@ void SynthView::render(Canvas& c) {
     // lewy dol: strona galek
     static const char* kPage[11] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
-    drawText(c, 20, 342, kPage[k], 13, 1.5f, pc);
+    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : kPage[k], 13, 1.5f, pc);
     int np = pageCount(ext);
     for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;
@@ -288,7 +294,7 @@ void SynthView::render(Canvas& c) {
     // prawy dol: grafika strony
     if (k == K_MENV) {
         drawEnvelope(c, t.menv, true, 400, 342, 200, 46);
-        snprintf(b, sizeof b, "-> %s %+d%%", lfoDestName(t.menvDest), (int)lrintf(t.menvAmt * 100));
+        snprintf(b, sizeof b, "-> %s %+d%%", destNameFor(t.engine, t.menvDest), (int)lrintf(t.menvAmt * 100));
         drawText(c, 600, 394, b, 8, 1.1f, t.menvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
     } else if (k == K_FENV) {
         drawEnvelope(c, t.fenv, true, 400, 342, 200, 46);
@@ -315,7 +321,7 @@ void SynthView::render(Canvas& c) {
         }
         c.line(400, 366, 600, 366, 1.f, pal::faint);
         c.polyline(pts, 81, 1.6f, L.depth > 0 ? pal::green : rgb(90, 90, 90));
-        snprintf(b, sizeof b, "-> %s", lfoDestName(L.dest));
+        snprintf(b, sizeof b, "-> %s", destNameFor(t.engine, L.dest));
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
     } else if (k == K_VOICE) {
         // glosy: POLY = 6 niezaleznych kresek, MONO = jedna (albo wachlarz unison); AGE = falowanie
@@ -357,7 +363,17 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_WAVETABLE) {
+    if (k == K_SOUND && t.engine == ENG_TAFFY) {  // CZ: ksztalt (saw -> square -> pulse -> saw-pulse), DCW, ENV, RES
+        static const char* sh[4] = {"SAW", "SQUARE", "PULSE", "SAWPULSE"};
+        int32_t sp = t.knob[0] * 3;
+        int si = sp >> 15, sf = (sp & 0x7FFF) * 100 / 32768;
+        if (sf < 6 || si == 3) snprintf(v[0], 16, "%s", sh[si]);
+        else if (sf > 94) snprintf(v[0], 16, "%s", sh[si + 1]);
+        else snprintf(v[0], 16, "%.3s>%.3s", sh[si], sh[si + 1]);
+        for (int i = 1; i < 4; i++) snprintf(v[i], 16, "%d", t.knob[i] * 100 / 32767);
+        static const char* L[4] = {"WAVE", "DCW", "ENV", "RESONANCE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+    } else if (k == K_SOUND && t.engine == ENG_WAVETABLE) {
         waveName(v[0], 16, t.knob[0]);
         snprintf(v[1], 16, "%.1fC", 14.f * t.knob[1] / 32767.f);
         cutoffName(v[2], t.knob[2]);
@@ -404,7 +420,7 @@ void SynthView::render(Canvas& c) {
         for (int i = 0; i < 4; i++) {
             labels[i] = LA[i];
             if (i == 2 && !alt_) { snprintf(v[i], 16, "%d", (int)lrintf(t.menv[2] * 100)); pos[i] = t.menv[2]; }
-            else if (i == 2) { labels[i] = "DEST"; snprintf(v[i], 16, "%s", lfoDestName(t.menvDest)); pos[i] = t.menvDest / (float)(LFO_DESTS - 1); }
+            else if (i == 2) { labels[i] = "DEST"; snprintf(v[i], 16, "%s", destNameFor(t.engine, t.menvDest)); pos[i] = t.menvDest / (float)(LFO_DESTS - 1); }
             else if (i == 3 && alt_) { labels[i] = "AMOUNT"; snprintf(v[i], 16, "%+d", (int)lrintf(t.menvAmt * 100)); pos[i] = 0.5f + t.menvAmt * 0.5f; }
             else {
                 float s = t.menv[i];
@@ -441,7 +457,7 @@ void SynthView::render(Canvas& c) {
         else snprintf(v[0], 16, "%.1fHZ", L.rate);
         snprintf(v[1], 16, "%d", (int)lrintf(L.depth * 100));
         snprintf(v[2], 16, "%s", lfoShapeName(L.shape));
-        snprintf(v[3], 16, "%s", lfoDestName(L.dest));
+        snprintf(v[3], 16, "%s", destNameFor(t.engine, L.dest));
         pos[0] = L.sync ? L.div / (float)(LFO_DIVS - 1) : log10f(L.rate / 0.05f) / log10f(400.f);
         pos[1] = L.depth;
         pos[2] = L.shape / (float)(LFO_SHAPES - 1);
@@ -454,7 +470,7 @@ void SynthView::render(Canvas& c) {
 // ---------------- PRESETS ----------------
 
 int SynthView::filtered(int* idx, int max) {
-    PresetStore& ps = app_->presets();
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
     int n = 0;
     for (int i = 0; i < ps.count() && n < max; i++)
         if (catSel_ == 0 || ps.category(i) == catSel_ - 1) idx[n++] = i;
@@ -464,7 +480,7 @@ int SynthView::filtered(int* idx, int max) {
 void SynthView::updatePresets(const Buttons& b) {
     Project& p = app_->project();
     Track& t = p.tracks[track_];
-    PresetStore& ps = app_->presets();
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
     if (ed_.active()) {  // wpisywanie nazwy
         ed_.update(b);
         if (!ed_.active()) savePending_ = true;
@@ -541,7 +557,7 @@ void SynthView::updatePresets(const Buttons& b) {
 }
 
 void SynthView::renderPresets(Canvas& c) {
-    PresetStore& ps = app_->presets();
+    PresetStore& ps = app_->presetsFor(app_->project().tracks[track_].engine);
     const Track& t = app_->project().tracks[track_];
     char b[96];
     const float top = 56, rowH = 34;
@@ -591,7 +607,7 @@ void SynthView::renderPresets(Canvas& c) {
         drawText(c, 140, 164, b, 10, 1.3f, pal::tan);
         nameBox(c, 140, 202, 360, 50, "", saveName_, &ed_, pal::steel);
         if (savePending_) {
-            bool exists = app_->presets().find(saveName_) >= 0;
+            bool exists = app_->presetsFor(app_->project().tracks[track_].engine).find(saveName_) >= 0;
             drawText(c, 140, 270, exists ? "A = OVERWRITE   B = CANCEL" : "A = SAVE   B = CANCEL", 9, 1.2f,
                      exists ? pal::red : pal::white);
         } else drawText(c, 140, 270, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 8, 1.1f, pal::dim);

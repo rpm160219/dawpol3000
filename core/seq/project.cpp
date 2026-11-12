@@ -8,6 +8,7 @@ const char* engineName(int e) {
     switch (e) {
     case ENG_WAVETABLE: return "WAVETABLE";
     case ENG_SAW: return "TEST SAW";
+    case ENG_TAFFY: return "TAFFY";
     default: return "?";
     }
 }
@@ -26,6 +27,12 @@ static const struct { const char* name; float beats; } kDivs[LFO_DIVS] = {
     {"1/8", 0.5f},         {"1/8T", 1.f / 3.f},   {"1/16", 0.25f},       {"1/16T", 1.f / 6.f}, {"1/32", 0.125f},
     {"1/32T", 1.f / 12.f}, {"1/64", 1.f / 16.f},  {"1/64T", 1.f / 24.f}, {"1/128", 1.f / 32.f}, {"1/128T", 1.f / 48.f},
 };
+const char* destNameFor(int engine, int d) {
+    static const char* tf[4] = {"WAVE", "DCW", "ENV", "RES"};
+    if (engine == ENG_TAFFY && d >= 0 && d < 4) return tf[d];
+    return lfoDestName(d);
+}
+
 const char* presetCatName(int c) {
     static const char* n[PRESET_CATS] = {"BASS", "LEAD", "PAD", "KEYS", "PLUCK", "BELL", "FX", "OTHER"};
     return c >= 0 && c < PRESET_CATS ? n[c] : "OTHER";
@@ -38,6 +45,12 @@ const char* filterModeName(int m) {
 
 const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : "?"; }
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
+
+void engineDefaultKnobs(int engine, int16_t k[4]) {
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192};
+    const int16_t* s = engine == ENG_TAFFY ? tf : wt;
+    for (int i = 0; i < 4; i++) k[i] = s[i];
+}
 
 float glideSeconds(const Track& t, float bpm) {
     if (!t.glideSync) return t.glide;

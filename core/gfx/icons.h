@@ -26,7 +26,7 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
 void drawSynthIllustration(Canvas& c, float x, float y, float w, float h);
 void drawTapeIllustration(Canvas& c, float x, float y, float w, float h);
 void drawFloppyIllustration(Canvas& c, float x, float y, float w, float h);
-// Ilustracja silnika (okno wyboru silnika): 0 = WAVETABLE, 1 = WAVETABLE+, 2 = TEST SAW.
+// Ilustracja silnika (karta ENGINE): 0 = WAVETABLE, 1 = WAVETABLE+, 2 = TAFFY, 3 = TEST SAW.
 // Styl jak ekran WAVETABLE: stos klatek fal w perspektywie, podloga z kropek, nawias.
 void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, float h);
 // Ikony kategorii presetow (cat = PresetCat, -1 = ALL), siatka 16x16 jak drawIcon

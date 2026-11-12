@@ -28,6 +28,12 @@ public:
     void setVolume(float v) { volT_ = v; }
     // Glosy: MONO (stos nut, legato), portamento (s), unison (centy, tylko MONO: 6 glosow na jedna nute), AGE 0..1
     void setVoice(bool mono, float glide, float unison, float age);
+    // Rodzaj DSP glosu: 0 = WAVETABLE (oryginal/rozszerzony), 1 = TAFFY (CZ, op1r). Reszta (obwiednie, LFO,
+    // glosy, decymacja) wspolna. "Jasnosc" (cel obwiedni filtra i AGE): WAVETABLE = galka 2 (CUTOFF), TAFFY = 1 (DCW).
+    void setKind(int k);
+    int kind() const { return kind_; }
+    int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
+    int16_t voiceLevel() const { return vLev_.load(std::memory_order_relaxed); }  // obwiednia x velocity, Q15
     // Tryb rozszerzony: wl/wyl + parametry (fala OSC 1 = galka 0; CUTOFF/RES = galki 2/3)
     void setAlt(bool on) { alt_ = on; }
     void setExt(int16_t wave2, int semi1, int semi2, float cents1, float cents2, float lvl1, float lvl2, float sub,
@@ -92,6 +98,8 @@ private:
     std::atomic<int16_t> modKnob_[5];
     // tryb rozszerzony
     bool alt_ = false;
+    int kind_ = 0, tfBase_ = -1;
+    std::atomic<int16_t> tfEnv_{0}, vLev_{0};
     int16_t wave2_ = 16384;
     int semi_[2] = {0, 0}, fmode_ = 0;
     float cents_[2] = {-4.f, 4.f}, lvl_[2] = {1.f, 1.f}, sub_ = 0.f, drive_ = 0.f;

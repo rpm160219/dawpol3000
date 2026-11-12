@@ -12,7 +12,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -41,11 +41,13 @@ struct WtExt {
 };
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
+const char* destNameFor(int engine, int d);  // TAFFY: galki 0..3 to WAVE, DCW, ENV, RES
 // Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
 static const int LFO_DIVS = 15;
 const char* lfoDivName(int i);
 float lfoDivBeats(int i);  // dlugosc cyklu w cwiercnutach
-float glideSeconds(const struct Track& t, float bpm);  // czas portamento (z synchronizacja albo bez)
+float glideSeconds(const struct Track& t, float bpm);
+void engineDefaultKnobs(int engine, int16_t k[4]);  // domyslne galki brzmienia silnika (plugin.json oryginalu)  // czas portamento (z synchronizacja albo bez)
 struct Lfo {
     uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
     float rate = 2.f;    // Hz (0.05 .. 20) gdy bez synchronizacji

@@ -12,6 +12,7 @@ W=$SRC/synth_sdk/plugins/wavetable
 "$T/ref" 16384 8192 20000 8192 > "$T/ref.raw" 2>/dev/null
 cp third_party/op1r_wavetable/wavetable_dsp.h third_party/op1r_wavetable/wavetable_level.h "$T/"
 cp third_party/op1r_wavetable/orig_88k/wavetables.h "$T/"
-g++ -std=c++17 -O2 -Icore "-DWT_DSP_HEADER=\"$T/wavetable_dsp.h\"" tests/wavetable_match.cpp core/synth/wavetable_synth.cpp -o "$T/match" -lm
+g++ -std=c++17 -O2 -Icore "-DWT_DSP_HEADER=\"$T/wavetable_dsp.h\"" tests/wavetable_match.cpp core/synth/wavetable_synth.cpp \
+    core/synth/taffy_dsp.cpp core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
 "$T/match" "$T/ref.raw"
 rm -rf "$T"

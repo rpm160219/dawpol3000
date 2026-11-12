@@ -1,5 +1,6 @@
 #include "synth/wavetable_synth.h"
 #include "seq/project.h"
+#include "synth/taffy_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -187,6 +188,13 @@ void WavetableSynth::setFilterEnv(float a, float d, float s, float r, float amou
     fAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
 }
 
+void WavetableSynth::setKind(int k) {
+    if (k == kind_) return;
+    allOff();
+    kind_ = k;
+    if (k == 1 && tfBase_ < 0) tfBase_ = taffyAllocVoices(VOICES);
+}
+
 void WavetableSynth::setExt(int16_t wave2, int semi1, int semi2, float cents1, float cents2, float lvl1, float lvl2,
                             float sub, int fmode, float drive) {
     wave2_ = wave2 < 0 ? 0 : wave2;
@@ -358,6 +366,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     v.gate = 0;
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
     wtExtOn(SX(sx_, slot));
+    if (kind_ == 1) taffyNoteOn(tfBase_ + slot);
 }
 
 void WavetableSynth::noteOff(int pitch) {
@@ -432,7 +441,7 @@ void WavetableSynth::renderBlock() {
         // galki glosu = galki sciezki + LFO + obwiednie (przy zerowych modulacjach — bez zmian)
         for (int i = 0; i < 8; i++) vk[i] = knobs_[i];
         for (int i = 0; i < 4; i++) {
-            float m = vm[i] + (i == 2 ? fAmt_ * v.fenv : 0.f);
+            float m = vm[i] + (i == (kind_ == 1 ? 1 : 2) ? fAmt_ * v.fenv : 0.f);
             if (m != 0.f) {
                 int x = knobs_[i] + (int)lrintf(m * 32767.f);
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
@@ -449,13 +458,17 @@ void WavetableSynth::renderBlock() {
                 v.ageP += (v.ageTp - v.ageP) * 0.003f;  // ~0,4 s na blok 1,33 ms: powolny dryf
                 v.ageC += (v.ageTc - v.ageC) * 0.003f;
                 cents += (v.ageP * 9.f + v.statP * 7.f) * age_;
-                int c2 = vk[2] + (int)lrintf((v.ageC * 0.6f + v.statC * 0.4f) * age_ * 3000.f);
-                vk[2] = (int16_t)(c2 < 0 ? 0 : (c2 > 32767 ? 32767 : c2));
+                const int bi = kind_ == 1 ? 1 : 2;  // jasnosc: CUTOFF albo DCW
+                int c2 = vk[bi] + (int)lrintf((v.ageC * 0.6f + v.statC * 0.4f) * age_ * 3000.f);
+                vk[bi] = (int16_t)(c2 < 0 ? 0 : (c2 > 32767 ? 32767 : c2));
             }
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (alt_) renderExtVoice(vi, out, vk, vm, inc, v.vel);
+        if (kind_ == 1) {  // TAFFY (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            taffyRender(tfBase_ + vi, out, vk, pitchBuf, v.vel);
+        } else if (alt_) renderExtVoice(vi, out, vk, vm, inc, v.vel);
         else {
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             wavetable_dsp_render(ST(st_, vi), out, vk, pitchBuf, v.vel);
@@ -487,7 +500,12 @@ void WavetableSynth::renderBlock() {
         v.mvolPrev = mvol;
         if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel, v.pendDet, v.pendFrom);  // po wyciszeniu
         if (v.env > loudEnv) { loudEnv = v.env; loud = vi; }
-        if (newest < 0 || v.age > v_[newest].age) { newest = vi; for (int i = 0; i < 4; i++) loudK[i] = vk[i]; }
+        if (newest < 0 || v.age > v_[newest].age) {
+            newest = vi;
+            for (int i = 0; i < 4; i++) loudK[i] = vk[i];
+            if (kind_ == 1) tfEnv_.store(taffyVoiceEnv(tfBase_ + vi), std::memory_order_relaxed);
+            vLev_.store((int16_t)(v.env * v.vel * (32767.f / 127.f)), std::memory_order_relaxed);
+        }
     }
     tremPrev_ = trem;
     for (int i = 0; i < 4; i++) modKnob_[i].store(loudK[i], std::memory_order_relaxed);
