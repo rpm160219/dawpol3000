@@ -19,6 +19,7 @@ const char* engineName(int e) {
     case ENG_MONOLIT: return "MONOLIT";
     case ENG_VAPORA: return "VAPORA";
     case ENG_SUPERSAW: return "SUPERSAW";
+    case ENG_MIXTUR: return "MIXTUR";
     default: return "?";
     }
 }
@@ -79,8 +80,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000};
-    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384}, ev[4] = {20000, 16384, 12000, 3000}, mb[4] = {14000, 16384, 12000, 0}, rx[4] = {16384, 3000, 16384, 9000}, ob[4] = {11869, 5677, 23738, 2560}, sd[4] = {6656, 16384, 32136, 8192}, mn[4] = {16384, 14745, 11469, 9830}, vp[4] = {9000, 26000, 18500, 12500}, ss[4] = {8000, 0, 12000, 6000}, mx[4] = {1966, 3277, 4588, 7209};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : engine == ENG_EVA ? ev : engine == ENG_MBIRA ? mb : engine == ENG_REACTOR ? rx : engine == ENG_OXBOW ? ob : engine == ENG_SID ? sd : engine == ENG_MONOLIT ? mn : engine == ENG_VAPORA ? vp : engine == ENG_SUPERSAW ? ss : engine == ENG_MIXTUR ? mx : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

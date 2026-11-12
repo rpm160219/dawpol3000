@@ -45,6 +45,7 @@ void buildDemoAllEngines(Project& p) {
     const int chip = track(p, "CHIP", "sid", "PULSE KEYS", 10, 0.3f);        // SID
     const int acid = track(p, "ACID", "monolit", "ACID GLIDE", 11, 0.35f);  // MONOLIT (MONO + glide)
     const int tide = track(p, "TIDE", "vapora", "A FIFTH TIDE", 12, 0.45f);  // VAPORA (pad z kwinta)
+    const int birds = track(p, "BIRDS", "mixtur", "BIRDS", 14, 0.4f);  // MIXTUR (undertony pod gornym glosem)
     const int saws = track(p, "SAWS", "supersaw", "TRANCE PLUCK", 13, 0.45f);  // SUPERSAW (akordy na off-beat, filtr z obwiednia)
 
     // dron: pryma A przez 4 takty (interwal oktawy w presecie)
@@ -149,6 +150,13 @@ void buildDemoAllEngines(Project& p) {
         for (int st = 2; st < 16; st += 4)
             for (int k = 0; k < 3; k++) note(p.patterns[pss], b, st, 1, CH[b][k] + 12, st == 2 ? 100 : 85);
     p.addClip(saws, pss, 4);
+    // MIXTUR: gorny glos akordu polnutami — undertony f/n dopisuja pod nim akord molowy
+    int pbd = p.addPattern("BIRDS", 4);
+    for (int b = 0; b < 4; b++) {
+        note(p.patterns[pbd], b, 0, 8, CH[b][2] + 12, 90);
+        note(p.patterns[pbd], b, 8, 8, CH[b][1] + 12, 80);
+    }
+    p.addClip(birds, pbd, 12);
     p.addClip(saws, pss, 8);
     p.addClip(tide, pt, 12);
     p.addClip(acid, pac, 12);

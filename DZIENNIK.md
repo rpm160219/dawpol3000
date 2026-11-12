@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:59
+**Zmienione — port silnika MIXTUR (op1r, ultralazr), wybór Patryka: 1:1 bez dodatków:**
+- `third_party/op1r_mixtur/` — oryginalne `mixtur.c`, `mixtur_dsp.h`, tablice, geometria, `mixtur.svg`, generatory, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `seq/seq_text.h`; `mixtur_art.h`.
+- `core/synth/mixtur_dsp.*` — mixtur.c jako C (DSP + ekran), pamięć głosu per ścieżka; `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 13, sam silnik (tylko AMP ENV, jak ELG).
+- `core/ui/mixtur_screen.*` — ekran drabiny undertonów 1:1 (bez dublujących napisów) + ilustracja; `core/ui/synth_view.*` — SOUND: UNDERTONE A..D krokowo (OFF, 1/1 … 1/24, „=” przy powtórzonym — wyciszony jak w oryginale), L3: FORMANT 1 / FORMANT 2 / RESONANCE; `core/ui/dialogs.cpp` — MIXTUR na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `mixtur`, 14 presetów (oryginał nie ma żadnych); demo ALL ENGINES z partią BIRDS (v9).
+- Poprawka VAPORA: wejście w L3 nie zmienia już SPEED „0 = domyślne” na minimum bez ruszania gałki (ten sam błąd wyłapany przy MIXTUR).
+- `tests/mixtur_match.cpp`, `tools/test_mixtur.sh`; wszystkie skrypty testów linkują MIXTUR.
+- Testy: MIXTUR bit w bit (0 różnic), wszystkie 14 testów 0 różnic; CPU na konsoli ~6% przy 6 głosach; demo ~31% rdzenia. Wysłane na konsolę.
+**Następny krok:** Patryk testuje MIXTUR.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 18:48
 **Zmienione (uwaga Patryka):** `core/ui/synth_view.cpp` — odczyt OCTAVE w SYNTH widoczny tylko, gdy oktawa jest przesunięta (L1/R1, np. „OCT −1”); przy 0 nic nie jest wyświetlane. Wysłane na konsolę.
 **Następny krok:** Patryk testuje SUPERSAW.

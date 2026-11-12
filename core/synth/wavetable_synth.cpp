@@ -12,6 +12,7 @@
 #include "synth/monolit_dsp.h"
 #include "synth/vapora_dsp.h"
 #include "synth/supersaw_dsp.h"
+#include "synth/mixtur_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -119,6 +120,7 @@ void WavetableSynth::init(float outRate) {
     if (!mnl_) mnl_ = monolitCreate();
     if (!vpr_) vpr_ = vaporaCreate();
     if (!ssw_) ssw_ = supersawCreate();
+    if (!mxt_) mxt_ = mixturCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -431,6 +433,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 6) reactorNoteOn(reactor_, slot, knobs_, v.vel);
     else if (kind_ == 9) sidNoteOn(sid_, slot, knobs_);
     else if (kind_ == 11) vaporaNoteOn(vpr_, slot, knobs_);
+    else if (kind_ == 13) mixturNoteOn(mxt_, slot, knobs_);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -502,6 +505,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 13)  // MIXTUR: puszczony klawisz (tylko ekran: zegar drabiny staje)
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) mixturNoteOff(mxt_, vi);
     if (kind_ == 12)  // SUPERSAW: puszczony klawisz (tylko ekran: lancuch zwalnia)
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) supersawNoteOff(ssw_, vi);
@@ -588,7 +594,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 12) {  // SUPERSAW (oryginalny DSP op1r)
+        if (kind_ == 13) {  // MIXTUR (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            mixturRender(mxt_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 12) {  // SUPERSAW (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             supersawRender(ssw_, vi, out, vk, pitchBuf, v.vel);
             const float fc = ssCut_ + vm[DEST_W1] + fAmt_ * v.fenv, fr = ssRes_ + vm[DEST_W2];

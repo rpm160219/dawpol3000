@@ -514,9 +514,30 @@ static const FactoryPreset kSupersaw[] = {
     {"FILTER RISE", CAT_FX, 3, "k 32767 0 4000 8000 push 30000 18000 0 env 2 0.1 1 1 fenv 4 0.1 1 1 0.9"},
 };
 
+// MIXTUR: oryginal (op1r, ultralazr) nie ma presetow — 13 wlasnych z samych galek silnika i obwiedni (bez dodatkow).
+// k = undertony A..D (slowo (n*32768 + 16384) / 25, OFF = 655); push F1 F2 RES (F1 = 180 Hz * 2^(4,5 w), F2 = 500 Hz *
+// 2^(3,5 w), w = slowo / 32768; samogloski wg typowych formantow).
+static const FactoryPreset kMixtur[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"BIRDS", CAT_PAD, 1, "k 1966 3277 4588 7209 push 8192 8192 20000 env 0.02 0.4 0.9 0.6"},
+    {"AH CHOIR", CAT_PAD, 1, "k 1966 3277 4588 5898 push 14287 10650 12000 env 0.3 0.5 0.9 1.2"},
+    {"OO PIPE", CAT_KEYS, 1, "k 1966 3277 655 655 push 5378 7477 10000 env 0.01 0.2 1 0.15"},
+    {"EE REED", CAT_LEAD, 1, "k 1966 4588 655 655 push 4260 20614 16000 env 0.02 0.3 0.9 0.3"},
+    {"MINOR CHORD", CAT_KEYS, 1, "k 5898 7209 8519 655 push 12118 7010 8192 env 0.005 0.6 0.6 0.5"},
+    {"SUB TOWER", CAT_BASS, 1, "k 1966 3277 5898 11141 push 6000 6000 6000 env 0.005 0.3 0.9 0.2"},
+    {"DARK ORGAN", CAT_KEYS, 1, "k 1966 3277 5898 655 push 6000 9000 6000 env 0.005 0.1 1 0.1"},
+    {"GLASS DIVIDERS", CAT_BELL, 1, "k 1966 9830 12451 16384 push 22000 24000 26000 env 0.002 1.5 0 1.5"},
+    {"VOWEL LEAD", CAT_LEAD, 1, "k 1966 3277 655 655 push 11344 17666 30000 env 0.01 0.3 0.9 0.3"},
+    {"TRAUTONIUM", CAT_LEAD, 1, "k 1966 3277 4588 655 push 9000 12000 14000 env 0.03 0.3 0.9 0.25"},
+    {"DEEP DRONE", CAT_PAD, 1, "k 4588 7209 9830 13762 push 4000 5000 20000 env 1.5 1 1 3"},
+    {"BUZZ BASS", CAT_BASS, 1, "k 1966 3277 655 655 push 16000 20000 4000 env 0.003 0.4 0.7 0.15 oct -1"},
+    {"THROAT PAD", CAT_PAD, 1, "k 3277 4588 5898 7209 push 8000 6000 24000 env 0.8 1 0.9 2"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "mixtur")) { *n = sizeof kMixtur / sizeof kMixtur[0]; *engine = ENG_MIXTUR; return kMixtur; }
     if (!__builtin_strcmp(eng, "supersaw")) { *n = sizeof kSupersaw / sizeof kSupersaw[0]; *engine = ENG_SUPERSAW; return kSupersaw; }
     if (!__builtin_strcmp(eng, "vapora")) { *n = sizeof kVapora / sizeof kVapora[0]; *engine = ENG_VAPORA; return kVapora; }
     if (!__builtin_strcmp(eng, "monolit")) { *n = sizeof kMonolit / sizeof kMonolit[0]; *engine = ENG_MONOLIT; return kMonolit; }

@@ -1,5 +1,6 @@
 #include "ui/synth_view.h"
 #include "ui/vapora_screen_c.h"
+#include "synth/mixtur_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -133,11 +134,32 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_MIXTUR) {  // MIXTUR: undertony krokowo; L3: F1, F2, RES (strona 2)
+                if (alt_) {
+                    if (i < 3) {
+                        if (d != 0.f) {
+                            if (t.push[i] <= 0) t.push[i] = 8192;  // 0 = 8192 jak w oryginale
+                            knob(t.push[i]);
+                            if (t.push[i] < 1) t.push[i] = 1;
+                        }
+                    }
+                }
+                else {
+                    const int st = stepMx_[i].steps(ax, dt, 6.f);
+                    if (st) {
+                        int n = mixturKnobN(t.knob[i]) + st;
+                        n = n < 0 ? 0 : (n > 24 ? 24 : n);
+                        const int16_t nv = (int16_t)((n * 32768 + 16384) / 25);  // srodek stopnia
+                        if (nv != t.knob[i]) { t.knob[i] = nv; changed = true; }
+                    }
+                }
             } else if (t.engine == ENG_VAPORA && alt_) {  // VAPORA + L3: CHARACTER, INTERVAL, SUN (krokowo), SPEED
                 if (i == 3) {
-                    if (t.push[2] <= 0 && d != 0.f) t.push[2] = 8192;  // 0 = 8192 jak w oryginale
-                    knob(t.push[2]);
-                    if (t.push[2] < 1) t.push[2] = 1;
+                    if (d != 0.f) {
+                        if (t.push[2] <= 0) t.push[2] = 8192;  // 0 = 8192 jak w oryginale
+                        knob(t.push[2]);
+                        if (t.push[2] < 1) t.push[2] = 1;
+                    }
                 } else {
                     const int st = stepVp_[i].steps(ax, dt, 4.f);
                     if (st) {
@@ -379,6 +401,9 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_MIXTUR) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        mx_.draw(c, words, words, e ? e->mixturCore(track_) : nullptr, k == K_SOUND && alt_);
     } else if (t.engine == ENG_SUPERSAW) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
@@ -500,6 +525,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_MIXTUR) { hint = alt_ ? "L3 = UNDERTONES" : "L3 = FORMANTS F1 / F2 / RES"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_VAPORA) { hint = alt_ ? "L3 = MORPH / THICKNESS / BRIGHTNESS" : "L3 = CHARACTER / INTERVAL / SUN / SPEED"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MONOLIT) { hint = alt_ ? "L3 = SHAPE / CUTOFF / CONTOUR" : "L3 = BODY / VEL / AGE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OXBOW) { hint = alt_ ? "L3 = CUTOFF / RES / ENV" : "L3 = WAVE / FILTER / DRIVE"; if (alt_) hc = pal::blue; }
@@ -634,7 +660,27 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_SUPERSAW) {  // SUPERSAW: rozstrojenie, pila -> kwadrat, sub, przester
+    if (k == K_SOUND && t.engine == ENG_MIXTUR) {  // MIXTUR: undertony A..D (f/n); L3: formanty
+        static const char* L[4] = {"UNDERTONE A", "UNDERTONE B", "UNDERTONE C", "UNDERTONE D"};
+        for (int i = 0; i < 4; i++) {
+            const int n = mixturKnobN(t.knob[i]);
+            labels[i] = L[i]; pos[i] = n / 24.f;
+            if (!n) snprintf(v[i], 16, "OFF");
+            else {
+                bool dup = false;
+                for (int j = 0; j < i; j++) dup |= mixturKnobN(t.knob[j]) == n;
+                snprintf(v[i], 16, "1/%d%s", n, dup ? " =" : "");  // "=" : powtorzony (wyciszony, jak w oryginale)
+            }
+        }
+        if (alt_) {
+            auto hz = [](char* o, int f) { if (f >= 1000) snprintf(o, 16, "%d.%dK", f / 1000, (f % 1000 + 50) / 100 % 10); else snprintf(o, 16, "%d", f); };
+            labels[0] = "FORMANT 1"; hz(v[0], mixturF1Hz(t.push[0])); pos[0] = (t.push[0] > 0 ? t.push[0] : 8192) / 32767.f;
+            labels[1] = "FORMANT 2"; hz(v[1], mixturF2Hz(t.push[1])); pos[1] = (t.push[1] > 0 ? t.push[1] : 8192) / 32767.f;
+            const int q = mixturResQ10(t.push[2]);
+            labels[2] = "RESONANCE"; snprintf(v[2], 16, "Q %d.%d", q / 10, q % 10); pos[2] = (t.push[2] > 0 ? t.push[2] : 8192) / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_SUPERSAW) {  // SUPERSAW: rozstrojenie, pila -> kwadrat, sub, przester
         static const char* L[4] = {"DETUNE", "MORPH", "SUB", "DRIVE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         snprintf(v[0], 16, "%.2f%%", (t.knob[0] >> 7) * 100.f / 16384.f);  // rozstrojenie pil (oryginal: do ~1,6 %)

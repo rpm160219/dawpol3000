@@ -332,6 +332,24 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "mixtur") || !strcmp(screen, "mixturp2")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_MIXTUR;
+        engineDefaultKnobs(ENG_MIXTUR, tr.knob);
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "mixturp2")) app.synth.setAlt(true);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "mixturengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 14; i++) tap(app, B_DOWN);  // MIXTUR
     } else if (!strcmp(screen, "supersawengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);
