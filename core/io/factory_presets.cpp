@@ -551,9 +551,31 @@ static const FactoryPreset kBrass[] = {
     {"WOBBLE HORN", CAT_FX, 1, "k 20000 24000 32767 26000 env 0.05 0.3 0.9 0.4"},
 };
 
+// HOLLOW SAINT: 8 presetow oryginalu (third_party/op1r_hollowsaint/presets.py: galki, klucz burdonu, wiek tasmy, tempo
+// uderzen i oktawa 1:1; ADSR OP-1 -> sekundy (v / 8192)^1,5; efekty i tremolo OP-1 pominiete; tasma RELIC wylaczona jak
+// w zapisie oryginalu) + 6 wlasnych z wlaczona tasma RELIC i innymi rytmami kola. push KLUCZ WIEK TEMPO, relic 1 = tasma.
+static const FactoryPreset kHollow[] = {
+    {"INIT", CAT_OTHER, 1, "push 0 8192 21064"},
+    {"HOLLOW SAINT", CAT_PAD, 1, "k 16384 16384 14745 13107 push 1260 8192 21065 env 0.071 1.152 1.0 0.506"},
+    {"MIDNIGHT VIGIL", CAT_PAD, 1, "k 22937 8192 3277 27852 push 8822 19660 7021 env 0.291 1.152 1.0 1.556"},
+    {"HOWLING DOG", CAT_LEAD, 1, "k 18022 23592 28180 7209 push 1260 14745 30427 env 0.025 1.152 1.0 0.222"},
+    {"ASH PROCESSION", CAT_KEYS, 1, "k 20316 18022 19660 16384 push 21425 16384 16384 env 0.086 1.152 1.0 0.627"},
+    {"BONE FLUTE", CAT_LEAD, 1, "k 9175 1966 0 20316 push 1260 11468 21065 env 0.159 1.152 0.916 0.965 oct 1"},
+    {"CRYPT DRONE", CAT_PAD, 1, "k 32767 12451 9830 23592 push 3780 22937 11702 env 0.367 1.152 1.0 1.773 oct -1"},
+    {"PLAGUE DANCE", CAT_LEAD, 1, "k 14745 28180 21626 4587 push 1260 27852 25746 env 0.015 1.152 1.0 0.159"},
+    {"DROWNED BELL", CAT_BELL, 1, "k 13107 11468 5898 32767 push 26466 31129 11702 env 0.121 1.152 1.0 2.234"},
+    {"WORN HYMN", CAT_PAD, 1, "k 20000 12000 6000 24000 push 1260 20000 2340 env 0.4 1.2 1.0 1.8 relic 1"},
+    {"TAVERN TAPE", CAT_LEAD, 1, "k 16000 22000 20000 8000 push 1260 26000 21065 env 0.03 1.152 1.0 0.25 relic 1"},
+    {"GHOST RECORDING", CAT_PAD, 1, "k 26000 6000 0 30000 push 3780 32767 2340 env 1 1.5 1.0 2.5 relic 1"},
+    {"PILGRIM DRONE", CAT_PAD, 1, "k 32767 9000 14000 20000 push 13867 8192 16384 env 0.5 1.2 1.0 2 oct -1"},
+    {"RATTLE DANCE", CAT_LEAD, 1, "k 10000 26000 32767 6000 push 1260 8192 30427 env 0.01 1.152 1.0 0.2"},
+    {"DUSTY BELL", CAT_BELL, 1, "k 0 8000 0 32767 push 1260 28000 2340 env 0.05 1.5 0.8 2.5 relic 1"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "hollowsaint")) { *n = sizeof kHollow / sizeof kHollow[0]; *engine = ENG_HOLLOW; return kHollow; }
     if (!__builtin_strcmp(eng, "brass")) { *n = sizeof kBrass / sizeof kBrass[0]; *engine = ENG_BRASS; return kBrass; }
     if (!__builtin_strcmp(eng, "mixtur")) { *n = sizeof kMixtur / sizeof kMixtur[0]; *engine = ENG_MIXTUR; return kMixtur; }
     if (!__builtin_strcmp(eng, "supersaw")) { *n = sizeof kSupersaw / sizeof kSupersaw[0]; *engine = ENG_SUPERSAW; return kSupersaw; }

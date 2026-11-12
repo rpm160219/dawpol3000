@@ -1,6 +1,7 @@
 #include "ui/synth_view.h"
 #include "ui/vapora_screen_c.h"
 #include "synth/mixtur_dsp.h"
+#include "synth/hollowsaint_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -134,6 +135,28 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
+                }
+            } else if (t.engine == ENG_HOLLOW && alt_) {  // HOLLOW SAINT + L3: KLUCZ BURDONU, WIEK TASMY, TEMPO UDERZEN, RELIC
+                if (i == 1) {
+                    if (d != 0.f) {
+                        if (t.push[1] <= 0) t.push[1] = 8192;  // 0 = 8192 jak w oryginale
+                        knob(t.push[1]);
+                        if (t.push[1] < 1) t.push[1] = 1;
+                    }
+                } else {
+                    const int st = stepMx_[i].steps(ax, dt, 4.f);
+                    if (st) {
+                        if (i == 0) {  // 13 stref: FOLLOW, C .. B (srodek strefy jak presets.py)
+                            int z = hollowDroneKey(t.push[0]) + st;
+                            z = z < 0 ? 0 : (z > 12 ? 12 : z);
+                            t.push[0] = (int16_t)((z * 2 + 1) * 32768 / 26);
+                        } else if (i == 2) {  // 7 stref: steady, 1 bar, 1/2, 1/4, 1/8, 1/8T, 1/16
+                            int z = hollowStrokeZone(t.push[2]) + st;
+                            z = z < 0 ? 0 : (z > 6 ? 6 : z);
+                            t.push[2] = (int16_t)((z * 2 + 1) * 32768 / 14);
+                        } else t.relic = st > 0;
+                        changed = true;
+                    }
                 }
             } else if (t.engine == ENG_MIXTUR) {  // MIXTUR: undertony krokowo; L3: F1, F2, RES (strona 2)
                 if (alt_) {
@@ -402,6 +425,12 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_HOLLOW) {
+        const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        hs_.draw(c, words, shown, e ? e->hollowCore(track_) : nullptr, t.relic);
     } else if (t.engine == ENG_BRASS) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         br_.draw(c, shown);
@@ -529,6 +558,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_HOLLOW) { hint = alt_ ? "L3 = DRONE / STRINGS / BUZZ / CATHEDRAL" : "L3 = DRONE KEY / RELIC AGE / STROKES / RELIC"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MIXTUR) { hint = alt_ ? "L3 = UNDERTONES" : "L3 = FORMANTS F1 / F2 / RES"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_VAPORA) { hint = alt_ ? "L3 = MORPH / THICKNESS / BRIGHTNESS" : "L3 = CHARACTER / INTERVAL / SUN / SPEED"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MONOLIT) { hint = alt_ ? "L3 = SHAPE / CUTOFF / CONTOUR" : "L3 = BODY / VEL / AGE"; if (alt_) hc = pal::blue; }
@@ -664,7 +694,21 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_BRASS) {  // BRASSOPHONE: barwa startowa, przemiatanie obwiednia, wibrato
+    if (k == K_SOUND && t.engine == ENG_HOLLOW) {  // HOLLOW SAINT: burdon, struny, brzeczyk kola, katedra
+        static const char* L[4] = {"DRONE", "STRINGS", "WHEEL BUZZ", "CATHEDRAL"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        if (t.knob[0] <= 0) snprintf(v[0], 16, "OFF");
+        if (alt_) {
+            static const char* KEY[13] = {"FOLLOW", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+            static const char* RATE[7] = {"STEADY", "1 BAR", "1/2", "1/4", "1/8", "1/8T", "1/16"};
+            const int key = hollowDroneKey(t.push[0]), zone = hollowStrokeZone(t.push[2]);
+            const int age = t.push[1] > 0 ? t.push[1] : 8192;
+            labels[0] = "DRONE KEY"; snprintf(v[0], 16, "%s", KEY[key]); pos[0] = key / 12.f;
+            labels[1] = "RELIC AGE"; snprintf(v[1], 16, "%d", (age * 100 + 16383) / 32767); pos[1] = age / 32767.f;
+            labels[2] = "STROKES"; snprintf(v[2], 16, "%s", RATE[zone]); pos[2] = zone / 6.f;
+            labels[3] = "RELIC"; snprintf(v[3], 16, "%s", t.relic ? "ON" : "OFF"); pos[3] = t.relic ? 1.f : 0.f;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_BRASS) {  // BRASSOPHONE: barwa startowa, przemiatanie obwiednia, wibrato
         static const char* L[4] = {"TIMBRE", "SWEEP", "VIBRATO", "VIB RATE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
         const int start = ((32767 - t.knob[0]) * (32767 - t.knob[1])) >> 15;  // jak interp_start_for oryginalu

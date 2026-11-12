@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:23
+**Zmienione — port silnika HOLLOW SAINT (op1r, build kennel), 1:1 bez dodatków:**
+- `third_party/op1r_hollowsaint/` — oryginalne `hollow_saint.c`, geometria, `hollow_saint.svg`, `plugin.json`, `presets.py`, generator ekranu, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `hollow_saint_art.h`.
+- `core/synth/hollowsaint_dsp.*` — hollow_saint.c jako C z flagami kennel; cały stan oryginału (wspólny pogłos, taśma, burdon) osobno dla każdej ścieżki (podmiana przy zmianie ścieżki; sprawdzone: dwie ścieżki nie wpływają na siebie). Obwiednia z AMP ENV, zegar taktu z transportu (`core/synth/wavetable_synth.*`, rodzaj 15); `core/audio/engine.*` — sam silnik, RELIC z `Track::relic`.
+- `core/ui/hollowsaint_screen.*` — ekran liry 1:1 (bez dublujących wskaźników gałek) + ilustracja; `core/ui/synth_view.*` — SOUND: DRONE / STRINGS / WHEEL BUZZ / CATHEDRAL, L3: DRONE KEY / RELIC AGE / STROKES / RELIC; `core/ui/dialogs.cpp` — HOLLOW SAINT na liście; zmiana silnika ustawia domyślną stronę 2 (`engineDefaultPush`).
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/preset_store.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `hollowsaint`, token `relic`, 15 presetów (8 z oryginału + 6 z taśmą RELIC).
+- `tests/hollowsaint_match.cpp`, `tools/test_hollowsaint.sh`; wszystkie skrypty testów linkują HOLLOW SAINT.
+- Testy: HOLLOW SAINT bit w bit (0 różnic), wszystkie 16 testów 0 różnic; CPU na konsoli 6–7% przy 6 głosach. Demo bez zmian (16 ścieżek MIDI = komplet). Wysłane na konsolę.
+**Następny krok:** Patryk testuje HOLLOW SAINT.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 19:11
 **Zmienione — port silnika BRASSOPHONE (op1r, nvmsocool), 1:1 bez dodatków:**
 - `third_party/op1r_brass/` — oryginalne `brass.c`, `horn.c`, `warp_table.h`, `brass-handmade.svg`, `plugin.json`, generator, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `brass_art.h`.

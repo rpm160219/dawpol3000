@@ -359,6 +359,27 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "hollow") || !strcmp(screen, "hollowp2")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_HOLLOW;
+        engineDefaultKnobs(ENG_HOLLOW, tr.knob);
+        engineDefaultPush(ENG_HOLLOW, tr.push);
+        tr.knob[3] = 26000;
+        if (!strcmp(screen, "hollowp2")) tr.relic = true;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "hollowp2")) app.synth.setAlt(true);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "hollowengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 16; i++) tap(app, B_DOWN);  // HOLLOW SAINT
     } else if (!strcmp(screen, "brassengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

@@ -14,6 +14,7 @@
 #include "synth/supersaw_dsp.h"
 #include "synth/mixtur_dsp.h"
 #include "synth/brass_dsp.h"
+#include "synth/hollowsaint_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -123,6 +124,7 @@ void WavetableSynth::init(float outRate) {
     if (!ssw_) ssw_ = supersawCreate();
     if (!mxt_) mxt_ = mixturCreate();
     if (!brs_) brs_ = brassCreate();
+    if (!hls_) hls_ = hollowCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -437,6 +439,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 11) vaporaNoteOn(vpr_, slot, knobs_);
     else if (kind_ == 13) mixturNoteOn(mxt_, slot, knobs_);
     else if (kind_ == 14) brassNoteOn(brs_, slot, knobs_);
+    else if (kind_ == 15) hollowNoteOn(hls_, slot, knobs_);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -508,6 +511,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 15)  // HOLLOW SAINT: puszczony klawisz (smyczek sie unosi)
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) hollowNoteOff(hls_, vi);
     if (kind_ == 14)  // BRASSOPHONE: puszczony klawisz (wibrato wygasa)
         for (int vi = 0; vi < VOICES; vi++)
             if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) brassNoteOff(brs_, vi);
@@ -608,7 +614,15 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 14) {  // BRASSOPHONE (oryginalny DSP op1r): obwiednia glosnosci (AMP ENV) prowadzi barwe i podjazd
+        if (kind_ == 15) {  // HOLLOW SAINT (oryginalny DSP op1r): obwiednia (AMP ENV), zegar taktu z transportu, RELIC
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            const double half = voiceRate_ * 0.5, bpm = tBpm_ < 30.f ? 30.0 : tBpm_;  // probki "44,1 kHz" glosu
+            const double lenS = half * 60.0 / bpm;
+            const double fr = tBeat_ - floor(tBeat_);
+            const int32_t len = (int32_t)(lenS * 16384.0), next = (int32_t)((1.0 - fr) * lenS * 16384.0);
+            hollowRender(hls_, vi, out, vk, pitchBuf, v.vel, (int)lrintf(v.env * 32767.f), relic_, len, next,
+                         tPlaying_ ? 0x100000 : 0);
+        } else if (kind_ == 14) {  // BRASSOPHONE (oryginalny DSP op1r): obwiednia glosnosci (AMP ENV) prowadzi barwe i podjazd
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             brassRender(brs_, vi, out, vk, pitchBuf, v.vel, (int)lrintf(v.env * 32767.f));
         } else if (kind_ == 13) {  // MIXTUR (oryginalny DSP op1r)

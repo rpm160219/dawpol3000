@@ -12,7 +12,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -64,6 +64,7 @@ const char* lfoDivName(int i);
 float lfoDivBeats(int i);  // dlugosc cyklu w cwiercnutach
 float glideSeconds(const struct Track& t, float bpm);
 void engineDefaultKnobs(int engine, int16_t k[4]);  // domyslne galki brzmienia silnika (plugin.json oryginalu)  // czas portamento (z synchronizacja albo bez)
+void engineDefaultPush(int engine, int16_t p[3]);  // strona 2 nowego silnika (HOLLOW SAINT: 0, 8192, 21064; inne 0)
 struct Lfo {
     uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
     float rate = 2.f;    // Hz (0.05 .. 20) gdy bez synchronizacji
@@ -98,7 +99,7 @@ struct Track {
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;
     ObExt obx;  // OXBOW+ (alt przy silniku OXBOW)
-    int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767); EVA: push[2] = oktawa sygnalu (slowo 7); MBIRA: RING, DOUBLE, WAH (slowa 5..7); REACTOR: push[2] = trym presetu (slowo 7); OXBOW: WAVE, FILTER, DRIVE (slowa 5..7); SID: push[2] = trym presetu (slowo 7); MONOLIT: BODY, VEL, AGE (slowa 5..7); VAPORA: CHARACTER, INTERVAL, SPEED (slowa 5..7; 0 = 8192 jak w oryginale); MIXTUR: F1, F2, RES (slowa 5..7; 0 = 8192 jak w oryginale); SUPERSAW: filtr DAW-POL — push[0] = zamkniecie (0 = otwarty, CUTOFF = 32767 - push[0]), push[1] = RES, push[2] = typ 0 LP24, 1 LP12, 2 BP, 3 HP
+    int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767); EVA: push[2] = oktawa sygnalu (slowo 7); MBIRA: RING, DOUBLE, WAH (slowa 5..7); REACTOR: push[2] = trym presetu (slowo 7); OXBOW: WAVE, FILTER, DRIVE (slowa 5..7); SID: push[2] = trym presetu (slowo 7); MONOLIT: BODY, VEL, AGE (slowa 5..7); VAPORA: CHARACTER, INTERVAL, SPEED (slowa 5..7; 0 = 8192 jak w oryginale); HOLLOW SAINT: klucz burdonu, wiek tasmy, tempo uderzen (slowa 5..7; domyslnie 0, 8192, 21064); MIXTUR: F1, F2, RES (slowa 5..7; 0 = 8192 jak w oryginale); SUPERSAW: filtr DAW-POL — push[0] = zamkniecie (0 = otwarty, CUTOFF = 32767 - push[0]), push[1] = RES, push[2] = typ 0 LP24, 1 LP12, 2 BP, 3 HP
     // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
     bool mono = false;
     float glide = 0.f, unison = 0.f, age = 0.f;
@@ -107,6 +108,7 @@ struct Track {
     bool movSync = false;    // ELG: ruch (MOVEMENT) zsynchronizowany z tempem — cykl = podzial movDiv
     uint8_t movDiv = 0;      // indeks podzialu (jak w LFO), domyslnie 1/1
     int8_t octave = 0;       // OCTAVE instrumentu -3..+3 (wszystkie silniki; przesuwa wysokosc dzwieku)
+    bool relic = false;      // HOLLOW SAINT: tasma Lo-Fi Relic wlaczona (w OP-1: strona 2 zielonej galki)
     uint8_t sun = 0;         // VAPORA: wzor slonca na ekranie 0..6 (tylko obraz)
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
