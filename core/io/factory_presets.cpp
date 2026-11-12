@@ -234,6 +234,27 @@ static const FactoryPreset kEva[] = {
     {"RADIO CHOIR", CAT_PAD, 1, "k 20000 14000 10000 17000 env 0.05 0.6 0.85 0.7"},
     {"HOUSTON", CAT_FX, 1, "k 19000 11000 6000 23000 env 0.02 0.35 0.8 0.45"},
     {"LOST SIGNAL", CAT_FX, 1, "k 16000 21000 20000 30000 env 0.03 0.6 0.8 0.8"},
+    // ---- wersja 2: z MOD ENV i LFO (cele: 0 PRES, 1 FREQ, 2 OXY, 3 COM, 4 PTCH, 5 VOL) ----
+    {"VOWEL SWEEP", CAT_PAD, 2, "k 20000 0 14000 2000 env 0.1 0.8 0.9 1.2 menv 2 1 1 1.5 0.95 1"},
+    {"TALKING CHOIR", CAT_PAD, 2, "k 22000 16384 12000 2000 env 0.05 0.6 0.9 1 lfo1 1 0.3 0.45 1 0 0"},
+    {"BREATHING", CAT_PAD, 2, "k 16000 9000 18000 3000 env 0.3 1 0.9 1.5 lfo1 0 0.2 0.35 2 0 0 lfo2 0 0.2 0.15 5 0 0"},
+    {"OO TO EE", CAT_PAD, 2, "k 18000 0 14000 1000 env 0.2 1 0.9 1.4 lfo1 1 1 0.9 1 1 0"},
+    {"PULSAR", CAT_PAD, 2, "k 24000 20000 16000 4000 env 0.05 0.5 0.9 0.9 lfo1 3 2 0.5 5 1 5"},
+    {"DRIFTING CREW", CAT_PAD, 2, "k 14000 12000 22000 5000 env 0.4 1 0.9 2 lfo1 4 0.4 0.03 4 0 0 lfo2 0 0.13 0.3 1 0 0"},
+    {"SOLAR WIND", CAT_PAD, 2, "k 12000 26000 28000 9000 env 1 1 0.9 2.5 lfo1 0 0.08 0.6 2 0 0"},
+    {"SWELL CHOIR", CAT_PAD, 2, "k 6000 14000 16000 2000 env 0.8 1 1 1.5 menv 1.5 1 1 1.5 0.7 0"},
+    {"STARGAZER", CAT_PAD, 2, "k 26000 30000 14000 1500 env 0.1 0.8 0.85 1.6 lfo1 0 4.5 0.02 4 0 0 lfo2 1 0.15 0.4 1 0 0"},
+    {"SIGNAL FADE", CAT_FX, 2, "k 18000 16000 12000 6000 env 0.05 0.8 0.9 1 lfo1 1 0.1 0.8 3 0 0"},
+    {"MISSION CONTROL", CAT_FX, 2, "k 20000 12000 8000 18000 env 0.02 0.4 0.85 0.6 lfo1 4 3 0.35 3 1 7"},
+    {"ORBIT", CAT_FX, 2, "k 22000 18000 18000 14000 env 0.1 0.6 0.9 1 lfo1 0 0.25 0.5 3 1 0 lfo2 0 0.25 0.6 1 1 0"},
+    {"RE-ENTRY", CAT_FX, 2, "k 24000 22000 20000 4000 env 0.01 2 0.6 1 menv 0.01 2.5 0 1 0.85 3"},
+    {"GATED CHOIR", CAT_KEYS, 2, "k 26000 16384 10000 2000 env 0.01 0.4 0.9 0.4 lfo1 3 2 0.9 5 1 7"},
+    {"CHOIR STAB", CAT_KEYS, 2, "k 30000 18000 8000 3000 env 0.005 0.5 0 0.5 menv 0.001 0.3 0 0.3 0.6 0"},
+    {"AH PLUCK", CAT_PLUCK, 2, "k 32767 16384 6000 2000 env 0.002 0.6 0 0.5 menv 0.001 0.25 0 0.2 -0.8 1"},
+    {"SPACE LEAD", CAT_LEAD, 2, "k 28000 24000 6000 4000 env 0.02 0.4 0.9 0.5 lfo1 0 5.5 0.015 4 0 0 menv 0.001 0.15 0 0.1 -0.06 4"},
+    {"VOX LEAD", CAT_LEAD, 2, "k 30000 12000 8000 2000 env 0.01 0.3 0.9 0.4 menv 0.4 0.6 0.4 0.5 0.4 1"},
+    {"COMET", CAT_BELL, 2, "k 32767 31000 20000 2000 env 0.002 1.8 0 2 menv 0.001 1 0 1 -0.5 1"},
+    {"STATION BASS", CAT_BASS, 2, "k 24000 4000 4000 8000 env 0.005 0.5 0.7 0.3 menv 0.001 0.3 0 0.2 0.5 0"},
 };
 
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji

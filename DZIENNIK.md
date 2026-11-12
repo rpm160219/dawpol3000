@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 06:30
+**Zmienione:** `core/io/factory_presets.cpp` — 20 nowych presetów EVA (wersja 2 zestawu) z MOD ENV i LFO: przejścia samogłosek, oddychanie, bramkowanie w tempie, zaniki radia, stab/pluck/lead/bass; poziomy sprawdzone (szczyt ≤ 0,44). Wysłane na konsolę.
+**Następny krok:** kolejny silnik — Patryk nie podał linku.
+**Wymaga od Patryka:** tak — link do silnika.
+
 ## 2026-11-13 06:00
 **Zmienione:** EVA — dodane strony MOD ENV (z wyborem celu) i LFO 1 / LFO 2 (`core/ui/synth_view.*`, `core/audio/engine.cpp`; cele PRES/FREQ/OXY/COM/PTCH/VOL w `core/seq/project.cpp`); bez modulacji nadal bit w bit. `core/ui/widgets.cpp` — wartość gałki zmniejsza się, gdy nie mieści się w kolumnie (np. „RADIO 51” w COM). Wysłane na konsolę.
 **Następny krok:** Patryk testuje EVA z modulacją.
