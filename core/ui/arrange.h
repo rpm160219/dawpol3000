@@ -29,6 +29,7 @@ public:
     int highlightedPattern(int* track) const;
     void clampCursor();
     int cursorBar() const { return curBar_; }
+    int cursorTrack() const { return curTrack_; }
 
 private:
     int curTrack_ = 0, curBar_ = 0, topTrack_ = 0, firstBar_ = 0, zoom_ = 2;

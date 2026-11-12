@@ -35,6 +35,19 @@ private:
     void renderEdit(Canvas& c);
 };
 
+// ENGINE (pasek narzedzi L3, warstwa TRACK -> ENGINE): lista silnikow w jednej kolumnie,
+// po prawej ilustracja i opis. Gora/dol = wybor, A = ustaw na sciezce, B = powrot.
+class EngineDialog : public View {
+public:
+    void open(int track, View* back);
+    void update(const Buttons& b, const InputState& in, float dt) override;
+    void render(Canvas& c) override;
+
+private:
+    int track_ = 0, sel_ = 0;
+    View* back_ = nullptr;
+};
+
 class PatternDialog : public View {
 public:
     void open(int track, int bar);

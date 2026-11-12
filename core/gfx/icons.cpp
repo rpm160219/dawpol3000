@@ -100,6 +100,72 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
     c.endStroke(col);
 }
 
+// Fala do ilustracji (czyste ksztalty, bez falbanek): m 0..1 przechodzi sinus -> trojkat -> pila -> prostokat
+static float illusWave(float m, float p) {
+    float sh[4] = {sinf(p * 6.2831853f), p < 0.25f ? 4 * p : (p < 0.75f ? 2 - 4 * p : 4 * p - 4),
+                   p < 0.5f ? 2 * p : 2 * p - 2, p < 0.5f ? 0.85f : -0.85f};
+    float f = m * 3.f;
+    int i = (int)f;
+    if (i >= 3) return sh[3];
+    float t = f - i;
+    return sh[i] + (sh[i + 1] - sh[i]) * t;
+}
+
+void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, float h) {
+    const Color NAVY = rgb(0x38, 0x35, 0x72), PLUM = rgb(0x51, 0x49, 0x59), GREY = rgb(0x65, 0x65, 0x79);
+    const Color GREEN = rgb(0x00, 0xED, 0x95), BLUE = rgb(0x69, 0x8E, 0xFF), RED = rgb(0xFF, 0x3A, 0x5D);
+    if (engine == 2) {  // TEST SAW: prosta pila w ramce
+        c.strokeRoundRect(x, y, w, h, 8, 1.4f, rgb(80, 80, 80));
+        float px = x + 16, py = y + h * 0.5f;
+        for (int k = 0; k < 4; k++) {
+            float x0 = x + 16 + k * (w - 32) / 4.f, x1 = x0 + (w - 32) / 4.f;
+            c.line(x0, py + h * 0.25f, x1, py - h * 0.25f, 2.f, rgb(150, 150, 150));
+            c.line(x1, py - h * 0.25f, x1, py + h * 0.25f, 2.f, rgb(150, 150, 150));
+            px = x1;
+        }
+        (void)px;
+        return;
+    }
+    const int N = 6;
+    const float fw = w * 0.62f, fh = h * 0.16f;               // klatka: szerokosc, pol-wysokosc
+    const float dx = (w - fw - 14) / (N - 1), dy = -(h * 0.42f) / (N - 1);
+    const float x0 = x + 10, y0 = y + h * 0.72f;              // przednia klatka
+    // podloga z kropek: poprzeczne linie pod klatkami i dwie szyny
+    for (int k = 0; k < N; k++) {
+        float fx = x0 + k * dx, fy = y0 + fh * 0.35f + k * dy;
+        for (float t = 0; t < fw; t += 7) c.fillCircle(fx + t, fy, 0.8f, NAVY);
+    }
+    for (int r = 0; r < 2; r++)
+        for (int k = 0; k < (N - 1) * 6; k++) {
+            float t = k / (float)((N - 1) * 6);
+            c.fillCircle(x0 + r * fw + t * (N - 1) * dx, y0 + fh * 0.35f + t * (N - 1) * dy, 0.8f, GREY);
+        }
+    auto frame = [&](int k, float m, Color col, float lw) {
+        float fx = x0 + k * dx, fy = y0 + k * dy;
+        float pts[2 * 97];
+        for (int i = 0; i <= 96; i++) {
+            float p = i / 96.f;
+            pts[i * 2] = fx + fw * p;
+            pts[i * 2 + 1] = fy - fh * illusWave(m, p);
+        }
+        c.polyline(pts, 97, lw, col);
+    };
+    for (int k = N - 1; k >= 0; k--) frame(k, k / (float)(N - 1), k > 3 ? NAVY : (k > 1 ? PLUM : GREY), 1.2f);
+    if (engine == 1) frame(4, 1.f, RED, 2.f);                 // WAVETABLE+: druga fala (OSC 2) na czerwono
+    frame(1, 0.4f, GREEN, 2.2f);                               // biezaca fala (OSC 1) na zielono
+    // niebieski nawias przy zielonej klatce
+    float bx = x0 + dx - 6, by = y0 + dy;
+    c.line(bx + 4, by - fh - 6, bx, by - fh - 6, 1.6f, BLUE);
+    c.line(bx, by - fh - 7, bx, by + fh + 7, 1.6f, BLUE);
+    c.line(bx, by + fh + 6, bx + 4, by + fh + 6, 1.6f, BLUE);
+    if (engine == 1) {  // czerwony nawias przy klatce OSC 2
+        float rx = x0 + 4 * dx + fw + 6, ry = y0 + 4 * dy;
+        c.line(rx - 4, ry - fh - 6, rx, ry - fh - 6, 1.6f, RED);
+        c.line(rx, ry - fh - 7, rx, ry + fh + 7, 1.6f, RED);
+        c.line(rx, ry + fh + 6, rx - 4, ry + fh + 6, 1.6f, RED);
+    }
+}
+
 void drawCategoryIcon(Canvas& c, int cat, float x, float y, float s, Color col, float lw) {
     float u = s / 16.f;
     auto X = [&](float v) { return x + v * u; };

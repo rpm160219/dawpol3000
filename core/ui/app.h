@@ -46,6 +46,8 @@ public:
     void openSynth(int track);
     void openNewTrack();
     void openTrackEdit(int track);
+    void openEngineSelect(int track);
+    void showView(View* v) { next_ = v ? v : &arrange; }
     void openNewPattern(int track, int bar);
     void togglePlaySong();
 
@@ -56,6 +58,7 @@ public:
     PianoRoll roll;
     TrackDialog trackDlg;
     PatternDialog patDlg;
+    EngineDialog engineDlg;
     SynthView synth;
 
 private:
@@ -69,6 +72,8 @@ private:
     UndoStack undo_, redo_;
     // Pasek narzedzi pod L3 (ARRANGE / PIANO ROLL): B UNDO, A REDO, Y IN/OUT, X LOOP
     bool tools_ = false, inPending_ = false;
+    int toolsLayer_ = 0;  // 0 = EDIT (undo/redo/petla), 1 = TRACK (mute, silnik, solo, ustawienia); L2/R2
+    int toolsTrack() const;  // sciezka dla warstwy TRACK (kursor ARRANGE albo sciezka piano rolla), -1 = brak
     void toolsUpdate(const InputState& in, float dt);
     void toolsRender(Canvas& c);
     void toggleLoop();

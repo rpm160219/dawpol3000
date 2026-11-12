@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:30
+**Zmienione:**
+- `core/ui/synth_view.cpp` — nazwa presetu usunięta z nagłówka SYNTH (zostaje w przeglądarce PRESETS, zielona kropka).
+- `core/ui/app.*` — pasek narzędzi (L3, „shift”) ma 2 warstwy przełączane L2/R2 (decyzja Patryka): EDIT (undo/redo/IN-OUT/loop) i TRACK (MUTE, ENGINE, SOLO, ustawienia ścieżki) dla ścieżki pod kursorem ARRANGE albo ścieżki piano rolla; kropki warstw na dole.
+- `core/ui/dialogs.*` — nowe okno ENGINE: jedna kolumna (WAVETABLE — oryginał 1:1, WAVETABLE+ — rozszerzony, TEST SAW), po prawej ilustracja i opis, zielona kropka = silnik ścieżki; A wybór, B powrót.
+- `core/gfx/icons.*` — ilustracja silnika w stylu ekranu WAVETABLE (stos klatek fal w perspektywie, kropkowana podłoga, nawias; WAVETABLE+ z czerwoną klatką OSC 2).
+- Headless: `engine`, `tracklayer`. Test: wybór WAVETABLE+ / TEST SAW i MUTE z warstwy TRACK działają; oryginał 0 różnic.
+**Następny krok:** Patryk testuje.
+**Wymaga od Patryka:** tak — ocena okna silników.
+
 ## 2026-11-12 18:30
 **Zmienione:**
 - GLIDE zsynchronizowany z tempem (decyzja Patryka: strona VOICE, L3 = FREE ↔ SYNC, gałka GLIDE = podział 1/1 … 1/128T, czas liczony z bieżącego BPM) — `core/seq/project.*` (`glideSync`, `glideDiv`, `glideSeconds`), `core/io/project_file.cpp`, `core/io/preset_store.cpp`, `core/audio/engine.cpp`, `core/ui/synth_view.*`.

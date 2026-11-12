@@ -264,10 +264,7 @@ void SynthView::render(Canvas& c) {
     }
     // naglowek na wierzchu (ekran silnika zaczyna sie pod nim)
     c.fillRect(0, 0, 640, 44, pal::bg);
-    char sub[40];
-    if (t.preset[0]) snprintf(sub, sizeof sub, "%s - %s", t.name, t.preset);
-    else snprintf(sub, sizeof sub, "%s", t.name);
-    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), sub, tc, tick / TICKS_PER_BAR + 1,
+    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
                  (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
     if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 

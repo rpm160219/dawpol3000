@@ -170,6 +170,72 @@ void TrackDialog::render(Canvas& c) {
     pills(c, "NAME", "TYPE", "CREATE", "CANCEL");
 }
 
+// ---------------- ENGINE ----------------
+
+struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
+static const EngineInfo kEngines[3] = {
+    {"WAVETABLE", "ORIGINAL 1:1",
+     {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
+      "8 WAVES FROM SINE TO DIGITAL.", "4-POLE LADDER FILTER WITH", "RESONANCE UP TO SELF-OSCILLATION.", ""}},
+    {"WAVETABLE+", "EXTENDED",
+     {"THE SAME CORE, OPENED UP:", "TWO INDEPENDENT OSCILLATORS -", "WAVE, INTERVAL, DETUNE, LEVEL.",
+      "SUB OSCILLATOR ONE OCTAVE DOWN.", "FILTER MODES LP24 LP12 BP HP", "WITH DRIVE. LFO TARGETS PER OSC.", ""}},
+    {"TEST SAW", "UTILITY",
+     {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
+};
+
+static int engineIndexOf(const Track& t) { return t.engine == ENG_SAW ? 2 : (t.alt ? 1 : 0); }
+
+void EngineDialog::open(int track, View* back) {
+    track_ = track;
+    back_ = back;
+    sel_ = engineIndexOf(app_->project().tracks[track]);
+}
+
+void EngineDialog::update(const Buttons& b, const InputState&, float) {
+    Project& p = app_->project();
+    if (b.repeat(B_DOWN) && sel_ < 2) sel_++;
+    if (b.repeat(B_UP) && sel_ > 0) sel_--;
+    if (b.pressed(B_B)) app_->showView(back_);
+    if (b.pressed(B_A) && track_ < p.nTracks) {
+        Track& t = p.tracks[track_];
+        t.engine = sel_ == 2 ? ENG_SAW : ENG_WAVETABLE;
+        if (sel_ < 2) t.alt = sel_ == 1;
+        app_->markDirty();
+        char m[48];
+        snprintf(m, sizeof m, "%s: %s", t.name, kEngines[sel_].name);
+        app_->toast(m);
+        app_->showView(back_);
+    }
+}
+
+void EngineDialog::render(Canvas& c) {
+    Project& p = app_->project();
+    const Track& t = p.tracks[track_];
+    c.clear(pal::bg);
+    headerBar(c, 16, BY, 236, BH, "ENGINE", pal::silver);
+    headerBar(c, 264, BY, 360, BH, t.name, pal::tan);
+    // lista w jednej kolumnie
+    const int cur = engineIndexOf(t);
+    for (int i = 0; i < 3; i++) {
+        float y = 80 + i * 56;
+        bool sel = i == sel_;
+        if (sel) c.fillRoundRect(16, y - 8, 236, 48, 8, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 60));
+        Color col = sel ? rgb(245, 210, 160) : pal::tan;
+        drawText(c, 30, y, kEngines[i].name, 16, 1.8f, col);
+        drawText(c, 30, y + 22, kEngines[i].sub, 8, 1.1f, sel ? pal::white : pal::dim);
+        if (i == cur) c.fillCircle(238, y + 8, 3.5f, pal::green);  // silnik na tej sciezce
+    }
+    c.line(258, 70, 258, 410, 1.5f, pal::steel);
+    // prawa strona: ilustracja + opis
+    drawEngineIllustration(c, sel_, 280, 68, 336, 190);
+    for (int l = 0; l < 7; l++)
+        if (kEngines[sel_].lines[l][0]) drawText(c, 280, 276 + l * 18, kEngines[sel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
+    if (sel_ < 2) drawText(c, 280, 400, "6 VOICES  -  1.4% CPU PER VOICE", 7, 1.f, pal::dim);
+    pillButton(c, 330, PY, 140, PH, "SELECT", pal::pill, 'A');
+    pillButton(c, 484, PY, 140, PH, "BACK", pal::red, 'B');
+}
+
 // ---------------- NEW PATTERN ----------------
 
 void PatternDialog::open(int track, int bar) {
