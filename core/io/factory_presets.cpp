@@ -474,20 +474,21 @@ static const FactoryPreset kVapora[] = {
     {"SURF GATE", CAT_FX, 1, "k 4000 22000 22000 8000 push 2304 8192 8192 env 0.01 0.5 1 0.5 lfo1 3 4 0.9 5 1 7"},
 };
 
-// SUPERSAW: oryginal (op1r, przyklad pcppcp) nie ma presetow — 24 wlasne: k DETUNE MORPH SUB DRIVE, MONO/unison/glide, LFO.
+// SUPERSAW: oryginal (op1r, przyklad pcppcp) nie ma presetow — 24 wlasne: k DETUNE MORPH SUB DRIVE, MONO/glide, LFO.
+// Wersja 2: bez UNISON i AGE (usuniete z VOICE, decyzja Patryka) — zastepuje presety, ktore ich uzywaly.
 static const FactoryPreset kSupersaw[] = {
     {"INIT", CAT_OTHER, 1, ""},
-    {"TRANCE LEAD", CAT_LEAD, 1, "k 16000 0 8000 8000 voice 1 0.04 18 0 env 0.005 0.3 0.85 0.3"},
-    {"HOOVER", CAT_LEAD, 1, "k 24000 6000 20000 14000 voice 1 0.15 30 0.2 env 0.02 0.3 0.9 0.4 lfo1 0 5.5 0.015 4 0 0"},
+    {"TRANCE LEAD", CAT_LEAD, 2, "k 20000 0 8000 8000 voice 1 0.04 0 0 env 0.005 0.3 0.85 0.3"},
+    {"HOOVER", CAT_LEAD, 2, "k 28000 6000 20000 14000 voice 1 0.15 0 0 env 0.02 0.3 0.9 0.4 lfo1 0 5.5 0.015 4 0 0"},
     {"PWM LEAD", CAT_LEAD, 1, "k 12000 16000 6000 8000 voice 1 0.05 0 0 env 0.01 0.3 0.9 0.3 lfo1 1 0.8 0.4 1 0 0"},
-    {"SCREAM LEAD", CAT_LEAD, 1, "k 20000 10000 8000 32767 voice 1 0.06 15 0 env 0.005 0.3 0.9 0.3"},
-    {"GLIDE LEAD", CAT_LEAD, 1, "k 14000 4000 10000 10000 voice 1 0.2 10 0 env 0.01 0.3 0.9 0.3"},
-    {"SUPER PAD", CAT_PAD, 1, "k 20000 0 10000 4000 env 1 1 0.9 2 voice 0 0 0 0.3 lfo1 0 0.2 0.15 0 0 0"},
-    {"STACK PAD", CAT_PAD, 1, "k 26000 4000 6000 4000 voice 1 0 25 0.2 env 1.5 1 0.9 2.5"},
+    {"SCREAM LEAD", CAT_LEAD, 2, "k 22000 10000 8000 32767 voice 1 0.06 0 0 env 0.005 0.3 0.9 0.3"},
+    {"GLIDE LEAD", CAT_LEAD, 2, "k 16000 4000 10000 10000 voice 1 0.2 0 0 env 0.01 0.3 0.9 0.3"},
+    {"SUPER PAD", CAT_PAD, 2, "k 20000 0 10000 4000 env 1 1 0.9 2 lfo1 0 0.2 0.15 0 0 0"},
+    {"STACK PAD", CAT_PAD, 2, "k 26000 4000 6000 4000 env 1.5 1 0.9 2.5"},
     {"SAW STRINGS", CAT_PAD, 1, "k 12000 0 4000 2000 env 0.4 1 0.85 1.2 lfo1 0 4.5 0.006 4 0 0"},
-    {"DRIFT PAD", CAT_PAD, 1, "k 22000 8000 12000 4000 voice 0 0 0 0.8 env 2 1 0.9 3"},
+    {"DRIFT PAD", CAT_PAD, 2, "k 22000 8000 12000 4000 env 2 1 0.9 3 lfo1 4 0.3 0.2 0 0 0"},
     {"TRANCE GATE", CAT_PAD, 1, "k 20000 0 8000 6000 env 0.005 0.3 1 0.3 lfo1 3 4 0.9 5 1 7"},
-    {"HYPER CHORD", CAT_PAD, 1, "k 30000 0 10000 6000 voice 1 0 40 0.2 env 0.01 0.4 0.8 0.5"},
+    {"HYPER CHORD", CAT_PAD, 2, "k 32767 0 10000 6000 env 0.01 0.4 0.8 0.5"},
     {"SQUARE ORGAN", CAT_KEYS, 1, "k 4000 32767 16000 3000 env 0.005 0.1 1 0.08"},
     {"BRASS STAB", CAT_KEYS, 1, "k 10000 2000 12000 12000 env 0.04 0.3 0.6 0.25 menv 0.001 0.08 0 0.05 -0.03 4"},
     {"CHORD STAB", CAT_KEYS, 1, "k 18000 0 8000 10000 env 0.002 0.35 0 0.25"},
@@ -495,7 +496,7 @@ static const FactoryPreset kSupersaw[] = {
     {"DIRTY KEYS", CAT_KEYS, 1, "k 12000 6000 12000 24000 env 0.003 0.4 0.6 0.3 lfo1 0 6 0.3 5 0 0"},
     {"SAW PLUCK", CAT_PLUCK, 1, "k 14000 0 6000 6000 env 0.001 0.25 0 0.2"},
     {"SUB BASS", CAT_BASS, 1, "k 2000 0 32767 4000 voice 1 0.02 0 0 env 0.003 0.3 0.9 0.1 oct -1"},
-    {"REESE BASS", CAT_BASS, 1, "k 10000 0 20000 16000 voice 1 0 12 0.1 env 0.005 0.3 0.9 0.15 lfo1 1 0.3 0.3 0 0 0 oct -1"},
+    {"REESE BASS", CAT_BASS, 2, "k 10000 0 20000 16000 voice 1 0 0 0 env 0.005 0.3 0.9 0.15 lfo1 1 0.3 0.3 0 0 0 oct -1"},
     {"FUZZ BASS", CAT_BASS, 1, "k 4000 20000 24000 32767 voice 1 0.03 0 0 env 0.002 0.3 0.9 0.1 oct -1"},
     {"SQUARE BASS", CAT_BASS, 1, "k 3000 32767 20000 10000 voice 1 0.05 0 0 env 0.002 0.3 0.8 0.1 oct -1"},
     {"WOBBLE BASS", CAT_BASS, 1, "k 6000 16000 24000 20000 voice 1 0 0 0 env 0.002 0.3 0.9 0.1 lfo1 0 2 0.5 1 1 5 oct -1"},

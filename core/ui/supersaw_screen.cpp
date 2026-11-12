@@ -1,5 +1,5 @@
 // Rysowanie ekranu SUPERSAW: rysunek z supersaw.svg (supersaw_art.h) z przeksztalceniami wezlow (drganie "saw",
-// obrot zebatki "sprk", wskazowki tarcz "bar0..3") i linie z kodu C oryginalu (lancuch, uchwyt, korek, spust, dym).
+// obrot zebatki "sprk"; tarcze "bar0..3" pominiete — zdublowane z galkami DAW-POL) i linie z kodu C oryginalu (lancuch, uchwyt, korek, spust, dym).
 #include "ui/supersaw_screen.h"
 #include <chrono>
 #include "synth/supersaw_dsp.h"
@@ -29,7 +29,7 @@ void artCb(void* u, const int32_t* const* m) {
     for (const SSItem& it : SS_ORDER) {
         if (it.kind == 1) {
             const SSStroke& l = SS_STROKES[it.idx];
-            if (l.group < -1) continue;
+            if (l.group < -1 || l.group >= 2 || SS_PTS[l.first * 2 + 1] > 110.f) continue;  // bez tarcz OP-1 (mamy swoje galki)
             const int32_t* mm = l.group >= 0 ? m[l.group] : nullptr;
             c.beginStroke();
             const int segs = l.closed ? l.count : l.count - 1;
@@ -43,7 +43,7 @@ void artCb(void* u, const int32_t* const* m) {
             c.endStroke(hexc(l.rgb));
         } else if (it.kind == 2) {
             const SSCircle& d = SS_CIRCLES[it.idx];
-            if (d.group < -1) continue;
+            if (d.group < -1 || d.group >= 2 || d.y > 110.f) continue;  // bez tarcz OP-1
             float cx, cy;
             xf(d.group >= 0 ? m[d.group] : nullptr, d.x, d.y, cx, cy);
             if (d.filled) c.fillCircle(x.ox + cx * x.s, x.oy + cy * x.s, d.r * x.s, hexc(d.rgb));
@@ -65,13 +65,13 @@ int frameMs() {
 }  // namespace
 
 void SupersawScreen::draw(Canvas& c, const int16_t live[4], const ::SupersawCore* core) {
-    Ctx x = {&c, 0.f, 44.f, 2.f};
+    Ctx x = {&c, 0.f, 80.f, 2.f};  // nizej niz w oryginale: bez rzedu tarcz pila wypelnia ekran (rysunek y 10..92)
     supersawScreenUpdate(&x, lineCb, artCb, core, live, frameMs());
 }
 
 void drawSupersawIllustration(Canvas& c, float x, float y, float w, float h) {
-    const float s = w / 320.f < h / 160.f ? w / 320.f : h / 160.f;
-    Ctx k = {&c, x + (w - 320.f * s) * 0.5f, y + (h - 160.f * s) * 0.5f, s};
+    const float s = w / 320.f < h / 110.f ? w / 320.f : h / 110.f;  // rysunek bez tarcz: y 0..110
+    Ctx k = {&c, x + (w - 320.f * s) * 0.5f, y + (h - 110.f * s) * 0.5f, s};
     static const int16_t kn[4] = {8000, 0, 12000, 6000};
     supersawScreenUpdate(&k, lineCb, artCb, nullptr, kn, frameMs());
 }

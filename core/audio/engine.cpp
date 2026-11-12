@@ -65,7 +65,7 @@ void AudioEngine::applyProject() {
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);
-        else if (e == ENG_MONOLIT) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT: tylko MODE i GLIDE
+        else if (e == ENG_MONOLIT || e == ENG_SUPERSAW) wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), 0.f, 0.f);  // MONOLIT, SUPERSAW: tylko MODE i GLIDE
         else wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], bare ? 0.f : t.menvAmt, t.menvDest);
         {

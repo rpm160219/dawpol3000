@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:45
+**Zmienione (uwagi Patryka do SUPERSAW):**
+- `core/ui/supersaw_screen.*` — usunięte zdublowane tarcze (rząd gałek OP-1 z oryginalnego ekranu; mamy własne gałki na dole), piła przesunięta niżej, ilustracja bez tarcz.
+- `core/ui/synth_view.cpp`, `core/audio/engine.cpp` — VOICE w SUPERSAW tylko MODE i GLIDE (UNISON i AGE usunięte, w dźwięku wyłączone); `core/ui/dialogs.cpp` — opis bez UNISON/AGE.
+- `core/io/factory_presets.cpp` — presety używające UNISON/AGE poprawione (wersja 2 zastępuje stare: TRANCE LEAD, HOOVER, SCREAM LEAD, GLIDE LEAD, SUPER PAD, STACK PAD, DRIFT PAD — dryf z LFO, HYPER CHORD, REESE BASS).
+- Wysłane na konsolę; SUPERSAW nadal bit w bit.
+**Następny krok:** Patryk sprawdza SUPERSAW.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 18:32
 **Zmienione — port silnika SUPERSAW (op1r, pcppcp), standardowo: 1:1 + pakiet modulacji + VOICE, własne presety:**
 - `third_party/op1r_supersaw/` — oryginalne `supersaw.c`, `supersaw_geom.h`, `supersaw.svg`, `plugin.json`, `gen_svg.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `supersaw_art.h` (rysunek ze SVG).

@@ -10,7 +10,7 @@ jednobiegunowy; + kod ekranu piły łańcuchowej), `supersaw_geom.h`, `supersaw.
 `core/synth/supersaw_dsp.c` kompiluje `supersaw.c` jako C; stan głosu (`voice_t`, „self” jak pamięć głosu OP-1) w instancji
 ścieżki. Ekran = kod C oryginału, rysunek i linie przez funkcje zwrotne (`core/ui/supersaw_screen.cpp`, 2×).
 
-W DAW-POL: gałki DETUNE / MORPH / SUB / DRIVE; strony SOUND, VOICE (POLY/MONO, GLIDE, UNISON, AGE), AMP ENV, MOD ENV,
+W DAW-POL: gałki DETUNE / MORPH / SUB / DRIVE; strony SOUND, VOICE (POLY/MONO i GLIDE; UNISON i AGE usunięte — decyzja Patryka), AMP ENV, MOD ENV,
 LFO 1, LFO 2, PRESETS (bez obwiedni filtra — silnik nie ma filtra sterowanego). Wyjście ścieżki −3 dB po decymacji
 (gęste piły z przesterem, jak MONOLIT). Oryginał nie ma presetów — 24 własne. Test bit w bit: `tools/test_supersaw.sh`.
 Częstotliwość: przy 96 kHz filtr 4,9 kHz oryginału (współczynnik na próbkę) wypada ~9% wyżej.
