@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:48
+**Zmienione (uwaga Patryka):** `core/ui/synth_view.cpp` — odczyt OCTAVE w SYNTH widoczny tylko, gdy oktawa jest przesunięta (L1/R1, np. „OCT −1”); przy 0 nic nie jest wyświetlane. Wysłane na konsolę.
+**Następny krok:** Patryk testuje SUPERSAW.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 18:46
 **Zmienione (uwaga Patryka):** `core/ui/synth_view.*` — filtr SUPERSAW na osobnej stronie FILTER zaraz po SOUND (CUTOFF / RESONANCE / TYPE + wykres charakterystyki filtra), zamiast pod L3 na SOUND. Strony: SOUND, FILTER, VOICE, AMP ENV, FILTER ENV, MOD ENV, LFO 1, LFO 2, PRESETS. Wysłane na konsolę.
 **Następny krok:** Patryk sprawdza stronę FILTER w SUPERSAW.

@@ -485,7 +485,7 @@ void SynthView::render(Canvas& c) {
     }
     drawText(c, 24 + np * 12 + 4, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
     snprintf(b, sizeof b, "OCT %+d", t.octave);  // L1 / R1
-    drawText(c, 380, 342, t.octave ? b : "OCT 0", 9, 1.2f, t.octave ? pal::white : rgb(80, 80, 80), ALIGN_RIGHT);
+    if (t.octave) drawText(c, 380, 342, b, 9, 1.2f, pal::white, ALIGN_RIGHT);  // tylko gdy przesunieta (L1 / R1)
     const char* hint = nullptr;
     Color hc = rgb(80, 80, 80);
     if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
