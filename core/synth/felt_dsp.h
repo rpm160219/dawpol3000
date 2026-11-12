@@ -3,7 +3,9 @@
 // niealikwotowosc, strojenie poprawione o opoznienia fazowe filtrow), mlotek = impuls kontaktu (czas i jasnosc z
 // sily uderzenia i grubosci filcu), grzebien miejsca uderzenia (1/8 struny), plyta rezonansowa = 4 rezonatory,
 // mechanika (stuk klawisza, szelest filcu, opadanie tlumika). Galki: FELT (filc), CORDA (una corda -> tre corde z
-// rozstrojeniem: dudnienie i dwuetapowe wybrzmienie), DECAY (wybrzmienie strun), NOISE (odglosy mechaniki).
+// rozstrojeniem: dudnienie i dwuetapowe wybrzmienie), DECAY (wybrzmienie strun), NOISE (odglosy mechaniki); strona 2
+// (knobs[5..7]): DETUNE (rozstrojenie strun nuty), WORN (rozstrojone pianino: kazdy klawisz na stale inaczej), BODY
+// (plyta rezonansowa i jej pukniecie w ataku).
 // Glos liczony przy 48 kHz, interpolowany do 96 kHz gospodarza.
 #pragma once
 #include <stdint.h>
@@ -23,6 +25,7 @@ int feltStrings(int knob);                  // liczba strun 1..3
 float feltMotion(const struct FeltCore* p);       // drgania strun 0..1
 uint32_t feltStrikes(const struct FeltCore* p);   // licznik uderzen
 int feltHeld(const struct FeltCore* p);           // trzymane klawisze (tlumik w gorze)
+float feltLastCents(const struct FeltCore* p);    // WORN: odchylenie ostatnio uderzonego klawisza (centy)
 
 #ifdef __cplusplus
 }

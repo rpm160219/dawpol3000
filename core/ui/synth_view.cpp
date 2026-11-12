@@ -146,6 +146,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_FELT && alt_) {  // FELT + L3: DETUNE, WORN, BODY
+                if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_OUTATIME && alt_) {  // OUTATIME + L3: SPREAD, TONE, FLUX
                 if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_JUNI && alt_) {  // JUNI + L3: RESONANCE, HPF, PWM RATE (0 = neutralnie)
@@ -472,7 +474,8 @@ void SynthView::render(Canvas& c) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
             for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
-        ft_.draw(c, shown, e ? e->feltCore(track_) : nullptr, dt_);
+        const int16_t words[8] = {shown[0], shown[1], shown[2], shown[3], 0, t.push[0], t.push[1], t.push[2]};
+        ft_.draw(c, words, e ? e->feltCore(track_) : nullptr, dt_);
     } else if (t.engine == ENG_LOUNGE) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
@@ -652,6 +655,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_FELT) { hint = alt_ ? "L3 = FELT / CORDA / DECAY / NOISE" : "L3 = DETUNE / WORN / BODY"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OUTATIME) { hint = alt_ ? "L3 = YEAR / SPEED / POWER / TRAIL" : "L3 = SPREAD / TONE / FLUX"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_JUNI) { hint = alt_ ? "L3 = TONE / SHAPE / SWEEP / CHORUS" : "L3 = RESONANCE / HPF / PWM RATE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_DDDD) { hint = alt_ ? "L3 = SOURCE / FEEDBACK / DESTROY / HANDS" : "L3 = FILTER / SPREAD / RATE"; if (alt_) hc = pal::blue; }
@@ -802,6 +806,13 @@ void SynthView::render(Canvas& c) {
         snprintf(v[1], 16, "%s", C[feltStrings(t.knob[1]) - 1]);
         const float ds = feltDecaySeconds(t.knob[2]);
         snprintf(v[2], 16, "%.1fS", ds);
+        if (alt_) {
+            const float dc = .1f + 14.f * (t.push[0] / 32767.f) * (t.push[0] / 32767.f);
+            labels[0] = "DETUNE"; snprintf(v[0], 16, "%.1fC", dc); pos[0] = t.push[0] / 32767.f;
+            labels[1] = "WORN"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
+            labels[2] = "BODY"; snprintf(v[2], 16, "%d", (t.push[2] * 100 + 16383) / 32767); pos[2] = t.push[2] / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
     } else if (k == K_SOUND && t.engine == ENG_LOUNGE) {  // LOUNGE: BARK, TONE, DECAY, TYPE
         static const char* L[4] = {"BARK", "TONE", "DECAY", "TYPE"};
         static const char* T[3] = {"TINE", "REED", "CLAV"};

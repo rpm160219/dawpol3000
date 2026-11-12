@@ -24,8 +24,10 @@ struct Tr {
 };
 inline Color dim(Color c, float a) { return rgb((uint8_t)(c.r * a), (uint8_t)(c.g * a), (uint8_t)(c.b * a)); }
 
-void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float damper, float dust, float time, bool labels) {
+void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float damper, float dust, float time, bool labels, float cents) {
     const float felt = kn[0] / 32767.f, corda = kn[1] / 32767.f, dec = kn[2] / 32767.f, noise = kn[3] / 32767.f;
+    const float detune = kn[5] / 32767.f, worn = kn[6] / 32767.f;
+    const float spread = .1f + 14.f * detune * detune;  // centy (jak w DSP)
     const int ns = feltStrings(kn[1]);
     // DECAY
     if (labels) t.text(30, 6, "DECAY", 13, kLabel);
@@ -39,6 +41,31 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float da
             pts[2 * i + 1] = t.Y(28 + 36 * (1.f - expf(-u / tau)));
         }
         t.c.polyline(pts, 25, 2.f * t.s, kLine);
+    }
+    // stroik: wskazowka = odchylenie ostatnio uderzonego klawisza (WORN), cienkie = rozstrojenie strun (DETUNE)
+    {
+        const float cx = 220, cy = 74, R = 40;
+        float arcp[2 * 25];
+        for (int i = 0; i <= 24; i++) {
+            const float a = 3.14159f * (1.15f + .7f * i / 24.f);
+            arcp[2 * i] = t.X(cx + R * cosf(a)); arcp[2 * i + 1] = t.Y(cy + R * sinf(a));
+        }
+        t.c.polyline(arcp, 25, 1.4f * t.s, kLabel);
+        for (int i = -2; i <= 2; i++) {  // -50 -25 0 +25 +50 centow
+            const float a = 3.14159f * 1.5f + i * .27f * 1.3f;
+            t.ln(cx + (R - 6) * cosf(a), cy + (R - 6) * sinf(a), cx + R * cosf(a), cy + R * sinf(a), i ? 1.f : 1.6f, i ? kLabel : kLine);
+        }
+        auto needle = [&](float c, float w, Color col, float len) {
+            const float cl = c < -50 ? -50.f : (c > 50 ? 50.f : c);
+            const float a = 3.14159f * 1.5f + cl / 25.f * .351f;
+            t.ln(cx, cy, cx + len * cosf(a), cy + len * sinf(a), w, col);
+        };
+        needle(cents + spread, 1.f, dim(kGreen, .6f), R - 10);
+        needle(cents - spread * .8f, 1.f, dim(kGreen, .6f), R - 10);
+        const float ac = cents < 0 ? -cents : cents;
+        needle(cents, 2.f, ac > 6.f ? kRed : kGreen, R - 4);
+        t.c.fillCircle(t.X(cx), t.Y(cy), 2.5f * t.s, kLine);
+        if (labels) t.text(cx, 8, "TUNE", 12, kLabel, ALIGN_CENTER);
     }
     // obudowa z podniesiona pokrywa i podporka
     t.ln(30, 110, 570, 110, 2.f, kLine);
@@ -65,7 +92,12 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float da
     t.text(300, 120, C[ns - 1], 20, kGreen, ALIGN_CENTER);
     // kolki i mostek
     t.rect(50, 146, 76, 174, 1.6f, kWood);
-    for (int i = 0; i < 3; i++) t.c.circle(t.X(56 + i * 7), t.Y(152 + i * 7), 2.2f * t.s, 1.2f * t.s, kWood);
+    for (int i = 0; i < 3; i++) {
+        const float px = 56 + i * 7, py = 152 + i * 7;
+        t.c.circle(t.X(px), t.Y(py), 2.2f * t.s, 1.2f * t.s, kWood);
+        const float a = .6f + i * 1.9f + worn * 1.2f * sinf(time * (2.f + i) + i * 2.1f);  // luzny kolek sie chwieje
+        t.ln(px, py, px + 4.f * cosf(a), py + 4.f * sinf(a), 1.f, worn > .2f ? dim(kRed, .5f + .5f * worn) : kWood);
+    }
     const float bp[] = {t.X(500), t.Y(166), t.X(512), t.Y(166), t.X(506), t.Y(152)};
     t.c.polyline(bp, 3, 1.6f * t.s, kWood, true);
     // plyta rezonansowa z zebrami
@@ -82,17 +114,26 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float da
     }
     // struny
     const float ph = time * 46.f;
+    static const float sd[3] = {0.f, 1.f, -.8f};
     for (int s = 0; s < 3; s++) {
         const float y = 158 + (s - 1) * 4.f;
         const bool on = s < ns;
         const Color col = on ? (s == 0 ? kLine : dim(kLine, s == 1 ? .75f : .6f)) : dim(kBody, .5f);
+        const float fan = (s - 1) * 7.f * detune;                 // DETUNE: struny rozchodza sie ku mostkowi
+        const float wph = ph * (1.f + sd[s] * spread * .012f);    // i drgaja z rozna predkoscia (widac dudnienie)
         float pts[2 * 41];
         for (int i = 0; i <= 40; i++) {
             const float u = i / 40.f;
             pts[2 * i] = t.X(76 + (500 - 76) * u);
-            pts[2 * i + 1] = t.Y(y + (on ? 7.f * motion * sinf(3.14159f * u) * sinf(ph + s * 1.7f) : 0.f));
+            pts[2 * i + 1] = t.Y(y + fan * u + (on ? 7.f * motion * sinf(3.14159f * u) * sinf(wph + s * 1.7f) : 0.f));
         }
         t.c.polyline(pts, 41, (on ? 1.6f : 1.f) * t.s, col);
+        if (on && worn > .25f) {  // WORN: zalamania na strunach
+            const float kx = 120 + 90 * s + 40 * sinf(s * 3.1f);
+            const float ky = y + fan * (kx - 76) / 424.f;
+            t.ln(kx - 4, ky - 3 * worn, kx, ky + 2 * worn, 1.2f, dim(kRed, .4f + .6f * worn));
+            t.ln(kx, ky + 2 * worn, kx + 4, ky - 3 * worn, 1.2f, dim(kRed, .4f + .6f * worn));
+        }
     }
     // pasek filcu (moderator) miedzy mlotkiem a strunami
     if (felt > .08f) {
@@ -150,7 +191,7 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float da
 }
 }  // namespace
 
-void FeltScreen::draw(Canvas& c, const int16_t knobs[4], const ::FeltCore* core, float dt) {
+void FeltScreen::draw(Canvas& c, const int16_t knobs[8], const ::FeltCore* core, float dt) {
     t_ += dt;
     const uint32_t st = feltStrikes(core);
     if (st != strikes_) { strikes_ = st; swing_ = 0; dust_ = 1; }
@@ -162,14 +203,14 @@ void FeltScreen::draw(Canvas& c, const int16_t knobs[4], const ::FeltCore* core,
     damper_ += (dmp - damper_) * (dt * 14.f > 1.f ? 1.f : dt * 14.f);
     const float s = 290.f / 300.f;
     Tr t{c, (640.f - 600.f * s) * .5f, 44.f, s};
-    drawAll(t, knobs, motion_, swing_, damper_, dust_, t_, true);
+    drawAll(t, knobs, motion_, swing_, damper_, dust_, t_, true, feltLastCents(core));
 }
 
 void drawFeltIllustration(Canvas& c, float x, float y, float w, float h) {
-    static const int16_t kn[4] = {20000, 20000, 20000, 12000};
+    static const int16_t kn[8] = {20000, 20000, 20000, 12000, 0, 16000, 9000, 16384};
     const float s = w / 600.f < h / 300.f ? w / 600.f : h / 300.f;
     Tr t{c, x + (w - 600 * s) * .5f, y + (h - 300 * s) * .5f, s};
-    drawAll(t, kn, .3f, .5f, 1.f, 0.f, 0.f, false);
+    drawAll(t, kn, .3f, .5f, 1.f, 0.f, 0.f, false, -9.f);
 }
 
 }  // namespace dp

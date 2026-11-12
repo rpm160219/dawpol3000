@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 03:50 — FELT: rozstrojenie strun, rozstrojone pianino, więcej fortepianu
+- **Co zmienione:** `core/synth/felt_dsp.*` — strona 2 (L3): DETUNE (rozstrojenie strun nuty 0,1–14 c, oddzielone od CORDA), WORN (każdy klawisz na stałe inaczej rozstrojony: większość lekko, kilka wyraźnie, struny nuty też się rozjeżdżają), BODY (płyta rezonansowa + puknięcie w ataku); brzmienie bardziej fortepianowe: twardszy i jaśniejszy młotek przy forte, szersza dynamika, mniej tłumienia wysokich alikwotów, 6 rezonansów płyty. `core/ui/felt_screen.*` — stroik (wskazówka = odchylenie ostatniego klawisza, czerwona gdy fałszuje; cienkie = rozstrojenie strun), struny rozchodzą się wachlarzem i drgają z różną prędkością (dudnienie), przy WORN chwiejne kołki i czerwone załamania. `synth_view` (L3 DETUNE / WORN / BODY), zapis `push`, domyślne, presety (HONKY TONK v2 + OLD UPRIGHT, SALOON, FORGOTTEN ROOM). Po co: prośba Patryka.
+- Strój bez WORN dokładny; bez przesterów; CPU ~11% rdzenia. Testy bez zmian. Wgrane na konsolę.
+- **Następny krok:** Patryk ocenia, czy FELT brzmi bardziej jak fortepian. **Od Patryka:** ocena.
+
 ## 2026-11-13 03:10 — utwór demo SYNTHWAVE
 - **Co zmienione:** `core/seq/demo_song.*` — nowy utwór `buildDemoSynthwave`: 16 taktów w pętli, 104 BPM, a-moll (Am F C G); GIN (LINN + TONIC), PARALLAX (bas oktawowy, arpeggio, melodia), JUNI (pad ENSEMBLE), OXBOW (akordy brass); aranżacja: wstęp, bębny + bas, melodia, kulminacja. `core/ui/app.*` — dodawany raz do listy PROJECT (znacznik `_demo_synthwave_v1`); `core/headless.cpp` — `--render-wav plik 37 synthwave`.
 - Szczyt miksu 0,86, na konsoli ~24% rdzenia (render 37 s w 8,7 s). Wgrane na konsolę.
