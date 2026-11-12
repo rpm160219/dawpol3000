@@ -26,7 +26,7 @@ void ginNoteOn(struct GinCore* p, int note, int vel127);
 void ginAllOff(struct GinCore* p);
 int ginRender(struct GinCore* p, float* out, int n);   // dodaje n probek 48 kHz (mono, skala 1 = pelna); zwraca liczbe glosow
 void ginRenderNative(struct GinCore* p, int32_t out[128]);  // jeden blok 88,2 kHz (suma glosow po stopniu glosnosci) — test
-int ginKeyOfNote(int note);           // klawisz zestawu 0..23 (nuta 36 = klawisz 0, co 24 polton zawija)
+int ginKeyOfNote(int note);           // klawisz zestawu 0..23: C2 (36) .. B3 (59), kazdy dzwiek na stale; inne nuty = -1 (cisza)
 uint32_t ginHits(const struct GinCore* p);   // licznik uderzen (ekran: wybor dzwieku ostatnio uderzonego klawisza)
 int ginLastKey(const struct GinCore* p);
 

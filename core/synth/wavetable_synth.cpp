@@ -400,7 +400,7 @@ void WavetableSynth::setEnvelope(float a, float d, float s, float r, float amoun
 }
 
 void WavetableSynth::noteOn(int pitch, float vel) {
-    if (kind_ == 23) { ginNoteOn(gin_, pitch, (int)lrintf(vel * 127.f)); return; }  // GIN: klawisz = dzwiek zestawu
+    if (kind_ == 23) { ginNoteOn(gin_, pitch, (int)lrintf(vel * 127.f)); return; }  // GIN: C2..B3 = 24 dzwieki zestawu
     if (mono_) { monoOn(pitch, vel); return; }
     int slot = -1;
     for (int i = 0; i < VOICES; i++)

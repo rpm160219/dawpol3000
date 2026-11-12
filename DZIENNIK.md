@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 23:50 — GIN: stałe mapowanie klawiszy
+- **Co zmienione:** `core/synth/gin_dsp.c/.h` — 24 dźwięki zestawu na stałe na C2..B3 (każdy ma swój jeden klawisz); nuty poza tym zakresem milczą (wcześniej co 24 półtony mapowanie się powtarzało). Opis w `CLAUDE.md`, `docs/ARCHITEKTURA.md`. Po co: prośba Patryka.
+- **Następny krok:** Patryk testuje GIN. **Od Patryka:** ocena.
+
 ## 2026-11-12 23:30 — silnik GIN (perkusja, port 1:1 z paczki Hundekraft 3.1.4)
 - **Co zmienione:** nowy silnik GIN — `third_party/kennel_gin/` (oryginalne źródła SquareWave Studio / libpo32 / kennel bez zmian), `core/synth/gin_dsp.*` (wrapper: zestaw, przydział 12 głosów, 88,2 → 48 kHz, dynamika), `core/ui/gin_screen_c.c` + `ginscreen.*` + `gin_shim/` (oryginalny ekran butelek, napisy naszą czcionką — nowa funkcja `textStrokes` w `gfx/font.cpp`), `Track.gin` + zapis `gink`/`gins` w projekcie i presetach, kategoria presetów DRUMS (ikona bębna), widok SYNTH (11 stron), karta ENGINE, 8 zestawów jako presety, podglądy headless, CMake; test `tools/test_gin.sh` (referencja = oryginalny `gin_fw.c` ze słownikiem współczynników z ich skryptu) + `tools/gin_objs.sh` w pozostałych testach. Po co: Patryk poprosił o GIN z własną czcionką.
 - Zgodność bit w bit: 0 różnic (430 tys. próbek, 8 zestawów) na PC i na konsoli; pozostałe 23 testy też 0 różnic. CPU na konsoli: 5,9% rdzenia (gęste uderzenia z dynamiką). Wgrane na konsolę.

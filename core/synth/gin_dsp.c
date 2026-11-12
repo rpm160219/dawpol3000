@@ -128,11 +128,12 @@ void ginSetKit(struct GinCore* p, int kit, const GinSound* sounds) {
         }
 }
 
-int ginKeyOfNote(int note) { return ((note - 36) % 24 + 24) % 24; }
+int ginKeyOfNote(int note) { return note >= 36 && note < 36 + 24 ? note - 36 : -1; }  /* C2..B3, poza tym cisza */
 
 void ginNoteOn(struct GinCore* p, int note, int vel) {
     if (!p) return;
     const int key = ginKeyOfNote(note);
+    if (key < 0) return;
     if (vel < 1) vel = 1;
     if (vel > 127) vel = 127;
     gin_sdk_activate(&p->rt);
