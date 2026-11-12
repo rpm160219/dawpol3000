@@ -10,6 +10,7 @@
 #include "ui/sid_screen.h"
 #include "ui/monolit_screen.h"
 #include "ui/vapora_screen.h"
+#include "ui/supersaw_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +31,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 14;
+static const int NENG = 15;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -71,16 +72,19 @@ static const EngineInfo kEngines[NENG] = {
     {"VAPORA", "PADSYNTH PAD",
      {"PORT OF THE OP1R VAPORA ENGINE", "BY AIAAAA, BIT-EXACT.", "PADSYNTH SPECTRA, 14 CHARACTERS,", "MORPHED, WITH A SECOND VOICE",
       "AT AN INTERVAL, A SOFT FILTER", "AND SLOW MOTION. L3 ON SOUND:", "CHARACTER, INTERVAL, SUN, SPEED."}},
+    {"SUPERSAW", "DETUNED SAWS",
+     {"PORT OF THE OP1R SUPERSAW ENGINE", "BY PCPPCP, BIT-EXACT.", "TWO DETUNED SAWS MORPHING INTO", "A SQUARE, A SINE SUB ONE OCTAVE",
+      "DOWN AND A SOFT-CLIP DRIVE.", "POLY / MONO, GLIDE, UNISON, AGE", "FOR THE BIG STACKED SOUND."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 13 ? ENG_SAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 14 ? ENG_SAW : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     const bool wasObp = t.engine == ENG_OXBOW && t.alt;
     t.engine = (uint8_t)e;
@@ -252,6 +256,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 10) drawSidIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 11) drawMonolitIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 12) drawVaporaIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 13) drawSupersawIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
@@ -262,6 +267,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 11) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);
     else if (engSel_ < 10) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 10 || engSel_ == 12) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  FENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 13) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  MOD ENV, 2 LFO, VOICE", 7, 1.f, pal::dim);
     drawText(c, 16, 414, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');

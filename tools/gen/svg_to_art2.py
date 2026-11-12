@@ -34,11 +34,32 @@ for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
             group = groups.index(gid) if gid in groups else -1
         continue
     if close: continue
+    gsave = group
+    eid = attr(tag, 'id')
+    if eid in groups: group = groups.index(eid)  # element z wlasnym id (np. <line id="bar0">) = osobna grupa
     if name == 'path':
         d = attr(tag, 'd')
         for sub in re.findall(r'M[^M]*', d):
-            closed = 'Z' in sub
-            nums = [float(v) for v in re.findall(r'-?[0-9.]+', sub)]
+            closed = 'Z' in sub or 'z' in sub
+            if 'C' in sub:  # krzywe Beziera (bezwzgledne M/L/C/Z): splaszczone na 8 odcinkow
+                toks = re.findall(r'[MLCZz]|-?[0-9.]+', sub)
+                out, i, cmd, cur = [], 0, 'M', (0.0, 0.0)
+                while i < len(toks):
+                    t = toks[i]
+                    if t in 'MLCZz': cmd = t; i += 1; continue
+                    if cmd in 'ML':
+                        cur = (float(toks[i]), float(toks[i + 1])); out += cur; i += 2
+                    elif cmd == 'C':
+                        c1 = (float(toks[i]), float(toks[i + 1])); c2 = (float(toks[i + 2]), float(toks[i + 3]))
+                        e = (float(toks[i + 4]), float(toks[i + 5])); i += 6
+                        for k in range(1, 9):
+                            u = k / 8.0; a = (1 - u) ** 3; b = 3 * u * (1 - u) ** 2; c = 3 * u * u * (1 - u); dd = u ** 3
+                            out += (a * cur[0] + b * c1[0] + c * c2[0] + dd * e[0], a * cur[1] + b * c1[1] + c * c2[1] + dd * e[1])
+                        cur = e
+                    else: i += 1
+                nums = out
+            else:
+                nums = [float(v) for v in re.findall(r'-?[0-9.]+', sub)]
             add_poly(nums, tag, closed)
     elif name == 'polyline':
         add_poly([float(v) for v in attr(tag, 'points').replace(',', ' ').split()], tag, False)
@@ -50,7 +71,8 @@ for m in re.finditer(r'<(/?)(\w+)([^>]*)>', svg):
         order.append((2, len(circles)))
         circles.append((float(attr(tag, 'cx')), float(attr(tag, 'cy')), float(attr(tag, 'r')), col(fill if filled else stroke),
                         int(filled), float(attr(tag, 'stroke-width', '1')), group))
-print('/* wygenerowane przez tools/gen/svg_to_art2.py z %s (grafika: Hundekraft, GPL-3.0-or-later) */' % src.split('/')[-1])
+    group = gsave
+print('/* wygenerowane przez tools/gen/svg_to_art2.py z %s (grafika: autorzy op1r, GPL-3.0-or-later) */' % src.split('/')[-1])
 print('#pragma once')
 print('static const float %s_PTS[] = {%s};' % (pre, ', '.join('%.2ff' % v for v in pts)))
 print('struct %sStroke { int first, count; unsigned rgb; float width; int closed, group; };' % pre)

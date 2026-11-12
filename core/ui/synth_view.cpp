@@ -38,7 +38,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind monk[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : orig[p])))));
+    static const Kind ssk[7] = {K_SOUND, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : orig[p]))))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -362,6 +363,11 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_SUPERSAW) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        ss_.draw(c, shown, e ? e->supersawCore(track_) : nullptr);
     } else if (t.engine == ENG_VAPORA) {
         bool live = e && e->wtActive(track_) > 0;
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0x5300, t.push[0], t.push[1], t.push[2]};
@@ -588,7 +594,13 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_VAPORA) {  // VAPORA: MORPH, THICKNESS, BRIGHTNESS, MOTION; L3: CHARACTER, INTERVAL, SUN, SPEED
+    if (k == K_SOUND && t.engine == ENG_SUPERSAW) {  // SUPERSAW: rozstrojenie, pila -> kwadrat, sub, przester
+        static const char* L[4] = {"DETUNE", "MORPH", "SUB", "DRIVE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        snprintf(v[0], 16, "%.2f%%", (t.knob[0] >> 7) * 100.f / 16384.f);  // rozstrojenie pil (oryginal: do ~1,6 %)
+        snprintf(v[1], 16, "%s %d", t.knob[1] < 2000 ? "SAW" : (t.knob[1] > 30767 ? "SQR" : "MIX"), (t.knob[1] * 100 + 16383) / 32767);
+        snprintf(v[3], 16, "%.1fX", 1.f + t.knob[3] * 4.f / 32767.f);
+    } else if (k == K_SOUND && t.engine == ENG_VAPORA) {  // VAPORA: MORPH, THICKNESS, BRIGHTNESS, MOTION; L3: CHARACTER, INTERVAL, SUN, SPEED
         static const char* L[4] = {"MORPH", "THICKNESS", "BRIGHTNESS", "MOTION"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         if (alt_) {

@@ -33,7 +33,7 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : 0);
         wt_[i].setOctave(t.octave);
         synth_[i].setOctave(t.octave);
         const bool bare = e == ENG_ELG;  // ELG: sam silnik 1:1 — tylko obwiednia glosnosci
@@ -61,7 +61,7 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW || e == ENG_SUPERSAW || (simple && !sidFenv) || oxPlus ? 0.f : t.fenvAmt);  // SUPERSAW: bez filtra  // MONOLIT: obwiednia filtra na CUTOFF (obok CONTOUR)
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setMoveSync(e == ENG_ELG && t.movSync, lfoDivBeats(t.movDiv));
         if (simple) wt_[i].setVoice(false, 0.f, 0.f, 0.f);

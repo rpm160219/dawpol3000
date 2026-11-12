@@ -316,6 +316,26 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "supersaw") || !strcmp(screen, "supersawvoice")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_SUPERSAW;
+        engineDefaultKnobs(ENG_SUPERSAW, tr.knob);
+        tr.knob[1] = 12000; tr.knob[2] = 26000; tr.knob[3] = 20000;
+        if (!strcmp(screen, "supersawvoice")) { tr.mono = true; tr.unison = 25.f; }
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "supersawvoice")) app.synth.setPageKind(SynthView::K_VOICE);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "supersawengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 13; i++) tap(app, B_DOWN);  // SUPERSAW
     } else if (!strcmp(screen, "vaporaengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

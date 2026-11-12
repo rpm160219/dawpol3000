@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -46,6 +46,7 @@ public:
     const ::OxbowPlusCore* oxbowPlus() const { return oxp_; }
     const ::MonolitCore* monolit() const { return mnl_; }
     const ::VaporaCore* vapora() const { return vpr_; }
+    const ::SupersawCore* supersaw() const { return ssw_; }
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
@@ -124,6 +125,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::SupersawCore* ssw_ = nullptr;  // SUPERSAW: glosy tej sciezki (C)
     ::VaporaCore* vpr_ = nullptr;  // VAPORA: glosy tej sciezki (C)
     ::MonolitCore* mnl_ = nullptr;  // MONOLIT: glosy tej sciezki (C)  // SID: glosy tej sciezki (C)  // OXBOW+: glosy tej sciezki (C)
     obx_params obx_ = OBX_DEFAULTS;  // OXBOW: glosy tej sciezki (C)  // REACTOR: glosy tej sciezki (C)  // MBIRA: glosy tej sciezki (C)  // EVA: glosy tej sciezki (C)

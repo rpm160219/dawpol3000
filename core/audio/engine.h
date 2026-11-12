@@ -56,6 +56,7 @@ public:
         if (wt_[t].kind() == 8) oxbowPlusView(wt_[t].oxbowPlus(), v);
         else if (wt_[t].oxbow()) dp_oxbowView(wt_[t].oxbow(), v);
     }
+    const ::SupersawCore* supersawCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].supersaw() : nullptr; }
     const ::VaporaCore* vaporaCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].vapora() : nullptr; }
     int32_t monolitEnv(int t) const { return t >= 0 && t < MAX_TRACKS && wt_[t].monolit() ? dp_monolitEnv(wt_[t].monolit()) : 0; }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }

@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:00
+**Zmienione — port silnika SUPERSAW (op1r, pcppcp), standardowo: 1:1 + pakiet modulacji + VOICE, własne presety:**
+- `third_party/op1r_supersaw/` — oryginalne `supersaw.c`, `supersaw_geom.h`, `supersaw.svg`, `plugin.json`, `gen_svg.py`, LICENSE, NOTICE, README; zaślepka `op1_plugin.h`; `supersaw_art.h` (rysunek ze SVG).
+- `tools/gen/svg_to_art2.py` — obsługa krzywych Béziera i elementów z własnym id (potrzebne do rysunku piły).
+- `core/synth/supersaw_dsp.*` — supersaw.c jako C (DSP + ekran); `core/synth/wavetable_synth.*`, `core/audio/engine.*` — rodzaj 12, wyjście −3 dB (gęste piły z przesterem, jak MONOLIT).
+- `core/ui/supersaw_screen.*` — ekran piły łańcuchowej 1:1 + ilustracja; `core/ui/synth_view.*` — SOUND (DETUNE w %, MORPH SAW/MIX/SQR, SUB, DRIVE 1–5X), VOICE z UNISON i AGE, AMP ENV, MOD ENV, 2 LFO; `core/ui/dialogs.cpp` — SUPERSAW na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `supersaw`, 25 presetów (oryginał nie ma żadnych); demo ALL ENGINES z partią SAWS (akordy na off-beat), wersja 7.
+- `tests/supersaw_match.cpp`, `tools/test_supersaw.sh`; wszystkie skrypty testów linkują SUPERSAW.
+- Testy: SUPERSAW bit w bit (0 różnic), wszystkie 13 testów 0 różnic; CPU na konsoli 5,8% przy 6 głosach; demo ~29% rdzenia, szczyt 0,89. Wysłane na konsolę.
+**Następny krok:** Patryk testuje SUPERSAW.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 18:40
 **Zmienione (uwaga Patryka):** `core/ui/dialogs.cpp` — lista silników na karcie ENGINE znowu w normalnym rozmiarze (jak na początku), przewijana: 6 pozycji naraz, zaznaczenie zawsze widoczne, strzałki ^ / v gdy jest coś wyżej/niżej. Podpis SID: FENV zamiast AMP. Wysłane na konsolę.
 **Następny krok:** Patryk testuje VAPORA, OCTAVE i listę; ewentualnie build pod Windows (wymaga jednej komendy z hasłem sudo).
