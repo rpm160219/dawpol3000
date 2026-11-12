@@ -402,6 +402,9 @@ void SynthView::render(Canvas& c) {
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_BRASS) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        br_.draw(c, shown);
     } else if (t.engine == ENG_MIXTUR) {
         const int16_t words[8] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3], 0, t.push[0], t.push[1], t.push[2]};
         mx_.draw(c, words, words, e ? e->mixturCore(track_) : nullptr, k == K_SOUND && alt_);
@@ -661,7 +664,15 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_MIXTUR) {  // MIXTUR: undertony A..D (f/n); L3: formanty
+    if (k == K_SOUND && t.engine == ENG_BRASS) {  // BRASSOPHONE: barwa startowa, przemiatanie obwiednia, wibrato
+        static const char* L[4] = {"TIMBRE", "SWEEP", "VIBRATO", "VIB RATE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+        const int start = ((32767 - t.knob[0]) * (32767 - t.knob[1])) >> 15;  // jak interp_start_for oryginalu
+        snprintf(v[0], 16, "%d%%", (start * 100 + 16383) / 32767);
+        snprintf(v[1], 16, "%d%%", (t.knob[1] * 100 + 16383) / 32767);
+        snprintf(v[2], 16, "%dC", t.knob[2] * 90 / 32767);
+        snprintf(v[3], 16, "%.1fHZ", ((t.knob[3] * t.knob[3]) >> 15) * 32.f / 32767.f);
+    } else if (k == K_SOUND && t.engine == ENG_MIXTUR) {  // MIXTUR: undertony A..D (f/n); L3: formanty
         static const char* L[4] = {"UNDERTONE A", "UNDERTONE B", "UNDERTONE C", "UNDERTONE D"};
         for (int i = 0; i < 4; i++) {
             const int n = mixturKnobN(t.knob[i]);

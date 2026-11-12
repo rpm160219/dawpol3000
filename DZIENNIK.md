@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 19:11
+**Zmienione — port silnika BRASSOPHONE (op1r, nvmsocool), 1:1 bez dodatków:**
+- `third_party/op1r_brass/` — oryginalne `brass.c`, `horn.c`, `warp_table.h`, `brass-handmade.svg`, `plugin.json`, generator, LICENSE, NOTICE, README; zaślepki `op1_plugin.h`, `op1_synth.h`; `brass_art.h`.
+- `core/synth/brass_dsp.*` — brass.c + horn.c jako C, stan głosu per ścieżka; silnik czyta obwiednię głośności głosu — podajemy wartość AMP ENV (`core/synth/wavetable_synth.*`, rodzaj 14); `core/audio/engine.*` — sam silnik (jak ELG).
+- `core/ui/brass_screen.*` — ekran rogu 1:1 (tłumiki, suwak, balon, spinner) + ilustracja; `core/ui/synth_view.*` — SOUND: TIMBRE / SWEEP / VIBRATO / VIB RATE; `core/ui/dialogs.cpp` — BRASSOPHONE na liście.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `core/io/factory_presets.cpp`, `core/ui/app.h` — silnik `brass`, 12 presetów (oryginał nie ma żadnych); demo ALL ENGINES z partią HORN (v10; 16 ścieżek = komplet MIDI).
+- `tests/brass_match.cpp`, `tools/test_brass.sh`; wszystkie skrypty testów linkują BRASSOPHONE.
+- Testy: BRASSOPHONE bit w bit (0 różnic), wszystkie 15 testów 0 różnic; CPU na konsoli 6,8% przy 6 głosach; demo ~32% rdzenia, szczyt 0,89. Wysłane na konsolę.
+**Następny krok:** Patryk testuje BRASSOPHONE (i MIXTUR z MOD ENV / LFO).
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 19:05
 **Zmienione (prośba Patryka): MIXTUR dostał MOD ENV i jedno LFO.**
 - `core/ui/synth_view.*` — strony MIXTUR: SOUND, AMP ENV, MOD ENV, LFO, PRESETS; cele modulacji: UT A..D (undertony), PTCH, VOL oraz F1, F2, RES (formanty ze strony 2).

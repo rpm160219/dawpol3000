@@ -346,6 +346,24 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "brass")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_BRASS;
+        engineDefaultKnobs(ENG_BRASS, tr.knob);
+        tr.knob[2] = 20000; tr.knob[3] = 16000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        InputState in;
+        in.btn[B_A] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 30; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "brassengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 15; i++) tap(app, B_DOWN);  // BRASSOPHONE
     } else if (!strcmp(screen, "mixturengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

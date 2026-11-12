@@ -32,16 +32,17 @@ void App::showProject() { projectView.onShow(); next_ = &projectView; }
 
 void App::openStore(const char* root) {
     store_.init(root);
-    if (!store_.hasMarker("_demo_all_engines_v9")) {  // utwor demo na wszystkich silnikach — raz (usuniety nie wraca)
+    if (!store_.hasMarker("_demo_all_engines_v10")) {  // utwor demo na wszystkich silnikach — raz (usuniety nie wraca)
         static Project demo;
         buildDemoAllEngines(demo);
-        // v9 (+ MIXTUR): nowa wersja zastepuje poprzednia wersje demo; usuniete przez Patryka nie wraca
+        // v10 (+ BRASSOPHONE): nowa wersja zastepuje poprzednia wersje demo; usuniete przez Patryka nie wraca
         const bool hadV1 = store_.hasMarker("_demo_all_engines_v1") || store_.hasMarker("_demo_all_engines_v2") ||
                              store_.hasMarker("_demo_all_engines_v3") || store_.hasMarker("_demo_all_engines_v4") ||
                              store_.hasMarker("_demo_all_engines_v5") || store_.hasMarker("_demo_all_engines_v6") ||
-                             store_.hasMarker("_demo_all_engines_v7") || store_.hasMarker("_demo_all_engines_v8");
+                             store_.hasMarker("_demo_all_engines_v7") || store_.hasMarker("_demo_all_engines_v8") ||
+                             store_.hasMarker("_demo_all_engines_v9");
         if (!store_.exists(demo.name) ? !hadV1 : hadV1) store_.save(demo);
-        store_.setMarker("_demo_all_engines_v9");
+        store_.setMarker("_demo_all_engines_v10");
     }
     static Project tmp;
     if (store_.loadLast(tmp)) {

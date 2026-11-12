@@ -534,9 +534,27 @@ static const FactoryPreset kMixtur[] = {
     {"THROAT PAD", CAT_PAD, 1, "k 3277 4588 5898 7209 push 8000 6000 24000 env 0.8 1 0.9 2"},
 };
 
+// BRASSOPHONE: oryginal (op1r, nvmsocool) nie ma presetow — 12 wlasnych z samych galek i obwiedni (obwiednia AMP ENV
+// prowadzi tu tez barwe i podjazd wysokosci). k TIMBRE SWEEP VIBRATO VIB-RATE.
+static const FactoryPreset kBrass[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"TRUMPET", CAT_LEAD, 1, "k 26000 22000 8000 14000 env 0.04 0.3 0.8 0.15"},
+    {"FLUGEL", CAT_LEAD, 1, "k 32767 12000 10000 10000 env 0.08 0.4 0.75 0.35"},
+    {"MUTED TRUMPET", CAT_LEAD, 1, "k 32767 8000 4000 12000 env 0.02 0.2 0.7 0.12"},
+    {"FANFARE", CAT_LEAD, 1, "k 10000 28000 6000 15000 env 0.015 0.3 0.85 0.2"},
+    {"SINE WHISTLE", CAT_LEAD, 1, "k 32767 0 16000 16000 env 0.05 0.2 1 0.3"},
+    {"SOFT HORNS", CAT_PAD, 1, "k 30000 10000 6000 9000 env 0.25 0.5 0.85 0.6"},
+    {"SWELL SECTION", CAT_PAD, 1, "k 30000 30000 6000 8000 env 1.2 0.5 0.9 1"},
+    {"BRASS STAB", CAT_KEYS, 1, "k 22000 26000 0 0 env 0.01 0.25 0.3 0.15"},
+    {"TUBA", CAT_BASS, 1, "k 28000 14000 0 0 env 0.03 0.3 0.8 0.12 oct -1"},
+    {"HORN PLUCK", CAT_PLUCK, 1, "k 32767 32767 0 0 env 0.002 0.4 0 0.3"},
+    {"WOBBLE HORN", CAT_FX, 1, "k 20000 24000 32767 26000 env 0.05 0.3 0.9 0.4"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "brass")) { *n = sizeof kBrass / sizeof kBrass[0]; *engine = ENG_BRASS; return kBrass; }
     if (!__builtin_strcmp(eng, "mixtur")) { *n = sizeof kMixtur / sizeof kMixtur[0]; *engine = ENG_MIXTUR; return kMixtur; }
     if (!__builtin_strcmp(eng, "supersaw")) { *n = sizeof kSupersaw / sizeof kSupersaw[0]; *engine = ENG_SUPERSAW; return kSupersaw; }
     if (!__builtin_strcmp(eng, "vapora")) { *n = sizeof kVapora / sizeof kVapora[0]; *engine = ENG_VAPORA; return kVapora; }

@@ -15,7 +15,7 @@
 #include "synth/note_sink.h"
 #include "../../third_party/kennel_oxbow/plugins/oxbow/oxbow_plus.h"
 
-extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; }
+extern "C" { struct EvaCore; struct MbiraCore; struct ReactorCore; struct OxbowCore; struct OxbowPlusCore; struct SidCore; struct MonolitCore; struct VaporaCore; struct SupersawCore; struct MixturCore; struct BrassCore; }
 namespace dp {
 struct PewCore;
 struct ElgCore;
@@ -51,6 +51,7 @@ public:
     const ::VaporaCore* vapora() const { return vpr_; }
     const ::SupersawCore* supersaw() const { return ssw_; }
     const ::MixturCore* mixtur() const { return mxt_; }
+    const ::BrassCore* brass() const { return brs_; }
     void setObx(const obx_params& q) { obx_ = q; }  // OXBOW+: parametry sciezki
     int kind() const { return kind_; }
     int16_t taffyEnv() const { return tfEnv_.load(std::memory_order_relaxed); }  // obwiednia barwy (ekran TAFFY)
@@ -129,6 +130,7 @@ private:
     ::OxbowCore* oxbow_ = nullptr;
     ::OxbowPlusCore* oxp_ = nullptr;
     ::SidCore* sid_ = nullptr;
+    ::BrassCore* brs_ = nullptr;  // BRASSOPHONE: glosy tej sciezki (C)
     ::MixturCore* mxt_ = nullptr;  // MIXTUR: glosy tej sciezki (C)
     ::SupersawCore* ssw_ = nullptr;  // SUPERSAW: glosy tej sciezki (C)
     ::VaporaCore* vpr_ = nullptr;  // VAPORA: glosy tej sciezki (C)
