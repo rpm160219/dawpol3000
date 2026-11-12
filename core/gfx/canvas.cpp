@@ -59,6 +59,52 @@ void Canvas::fillCircle(float cx, float cy, float r, Color c) {
         }
 }
 
+// Wielokat wypelniony regula parzystosci (even-odd), 4 podprobki w pionie, dokladne pokrycie w poziomie.
+void Canvas::fillPolygon(const float* xy, int n, Color c) {
+    if (n < 3) return;
+    float minx = xy[0], maxx = xy[0], miny = xy[1], maxy = xy[1];
+    for (int i = 1; i < n; i++) {
+        minx = fminf(minx, xy[2 * i]); maxx = fmaxf(maxx, xy[2 * i]);
+        miny = fminf(miny, xy[2 * i + 1]); maxy = fmaxf(maxy, xy[2 * i + 1]);
+    }
+    const int x0 = (int)clampf(floorf(minx), 0, W), x1 = (int)clampf(ceilf(maxx) + 1, 0, W);
+    const int y0 = (int)clampf(floorf(miny), 0, H), y1 = (int)clampf(ceilf(maxy) + 1, 0, H);
+    if (x0 >= x1 || y0 >= y1) return;
+    static float row[W + 1];
+    static float xs[1024];
+    for (int j = y0; j < y1; j++) {
+        for (int i = x0; i <= x1 && i <= W; i++) row[i] = 0;
+        for (int s = 0; s < 4; s++) {
+            const float sy = j + (s + 0.5f) * 0.25f;
+            int k = 0;
+            for (int e = 0; e < n && k < 1024; e++) {
+                const float ax = xy[2 * e], ay = xy[2 * e + 1];
+                const int f = e + 1 == n ? 0 : e + 1;
+                const float bx = xy[2 * f], by = xy[2 * f + 1];
+                if ((ay <= sy) == (by <= sy)) continue;
+                xs[k++] = ax + (sy - ay) * (bx - ax) / (by - ay);
+            }
+            for (int a = 1; a < k; a++) {  // sortowanie przez wstawianie (malo przeciec w wierszu)
+                float v = xs[a];
+                int b = a - 1;
+                while (b >= 0 && xs[b] > v) { xs[b + 1] = xs[b]; b--; }
+                xs[b + 1] = v;
+            }
+            for (int a = 0; a + 1 < k; a += 2) {
+                const float l = clampf(xs[a], (float)x0, (float)x1), r = clampf(xs[a + 1], (float)x0, (float)x1);
+                if (r <= l) continue;
+                const int il = (int)l, ir = (int)r;
+                if (il == ir) { row[il] += (r - l) * 0.25f; continue; }
+                row[il] += (il + 1 - l) * 0.25f;
+                for (int i = il + 1; i < ir; i++) row[i] += 0.25f;
+                if (ir < W) row[ir] += (r - ir) * 0.25f;
+            }
+        }
+        for (int i = x0; i < x1; i++)
+            if (row[i] > 0.002f) blend(j * W + i, c, row[i] > 1 ? 1.f : row[i]);
+    }
+}
+
 void Canvas::rect(float x, float y, float w, float h, float lw, Color c) {
     float p[8] = {x, y, x + w, y, x + w, y + h, x, y + h};
     polyline(p, 4, lw, c, true);

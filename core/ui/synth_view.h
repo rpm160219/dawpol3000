@@ -5,6 +5,7 @@
 //   (silnik WAVETABLE / WAVETABLE+ wybiera sie na karcie ENGINE w oknie TRACK: Select na sciezce, R2)
 //   Select         nastepna strona galek:
 //                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> DRIVE ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
 // MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
@@ -22,9 +23,11 @@
 // LFO 1/2: RATE (0,05..20 Hz), DEPTH, SHAPE (sinus/trojkat/pila/prostokat/losowy), DEST (cel modulacji).
 // OSC 1/2: WAVE, INTERVAL (-24..+24 poltonow), DETUNE (-50..+50 centow), LEVEL. FILTER: CUTOFF, RES, MODE, DRIVE.
 #pragma once
+#include "seq/project.h"
 #include "ui/encoder.h"
 #include "ui/view.h"
 #include "ui/taffy_screen.h"
+#include "ui/pew_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -32,7 +35,7 @@ namespace dp {
 
 class SynthView : public View {
 public:
-    enum Kind { K_SOUND, K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2, K_VOICE, K_PRESETS, K_MENV };
+    enum Kind { K_SOUND, K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2, K_VOICE, K_PRESETS, K_MENV, K_BARS };
     void open(int track);
     int track() const { return track_; }
     void update(const Buttons& b, const InputState& in, float dt) override;
@@ -45,7 +48,9 @@ private:
     int track_ = 0, page_ = 0, octave_ = 4;
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
-    int pageCount(bool ext) const { return ext ? 10 : 8; }
+    // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
+    static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : 0); }
+    int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 2 ? 9 : 8); }
     RelEncoder stepMDest_, stepGDiv_;
     RelEncoder stepVMode_;
     // przegladarka presetow
@@ -57,11 +62,12 @@ private:
     int filtered(int* idx, int max);                        // presety w wybranej kategorii
     void updatePresets(const Buttons& b);
     void renderPresets(Canvas& c);
-    Kind kind(bool ext) const;
+    Kind kind(int pm) const;
     int held_[8] = {-1, -1, -1, -1, -1, -1, -1, -1};  // nuta grana przez przycisk i
     float dt_ = 0.016f;
     WavetableScreen wt_;
     TaffyScreen tf_;
+    PewScreen pw_;
     void releaseAll();
 };
 

@@ -12,7 +12,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -41,7 +41,7 @@ struct WtExt {
 };
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
-const char* destNameFor(int engine, int d);  // TAFFY: galki 0..3 to WAVE, DCW, ENV, RES
+const char* destNameFor(int engine, int d);  // TAFFY: WAVE, DCW, ENV, RES; PEW: REG, PERC, DRV, LES
 // Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
 static const int LFO_DIVS = 15;
 const char* lfoDivName(int i);
@@ -81,6 +81,7 @@ struct Track {
     Lfo lfo[2];
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;
+    int16_t push[3] = {0, 0, 0};  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich (0..32767)
     // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
     bool mono = false;
     float glide = 0.f, unison = 0.f, age = 0.f;

@@ -27,17 +27,18 @@ static void waveName(char* out, int n, int32_t k) {
     else snprintf(out, n, "%.3s>%.3s", kWaveNames[wi], kWaveNames[wi + 1]);
 }
 
-SynthView::Kind SynthView::kind(bool ext) const {
+SynthView::Kind SynthView::kind(int pm) const {
     static const Kind orig[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind extk[10] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    int n = pageCount(ext), p = page_ < n ? page_ : n - 1;
-    return ext ? extk[p] : orig[p];
+    static const Kind pewk[9] = {K_SOUND, K_BARS, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    int n = pageCount(pm), p = page_ < n ? page_ : n - 1;
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : orig[p]);
 }
 
 void SynthView::setPageKind(int kd) {
     const Track& t = app_->project().tracks[track_];
-    bool ext = t.engine == ENG_WAVETABLE && t.alt;
-    for (int p = 0; p < pageCount(ext); p++) { page_ = p; if (kind(ext) == kd) return; }
+    const int pm = pageMode(t);
+    for (int p = 0; p < pageCount(pm); p++) { page_ = p; if (kind(pm) == kd) return; }
     page_ = 0;
 }
 
@@ -60,14 +61,15 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     AudioEngine* e = app_->engine();
     const bool wt = t.engine == ENG_WAVETABLE;
     bool ext = wt && t.alt;
+    const int pm = pageMode(t);
 
     if (b.pressed(B_SELECT) && !b.down(B_MENU) && !ed_.active()) {
-        page_ = (page_ + 1) % pageCount(ext);
+        page_ = (page_ + 1) % pageCount(pm);
         confirm_ = 0;
         savePending_ = false;
     }
-    if (page_ >= pageCount(ext)) page_ = 0;
-    const Kind k = kind(ext);
+    if (page_ >= pageCount(pm)) page_ = 0;
+    const Kind k = kind(pm);
     if (k == K_PRESETS) {
         releaseAll();
         updatePresets(b);
@@ -110,6 +112,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         };
         switch (k) {
         case K_SOUND: knob(t.knob[i]); break;
+        case K_BARS: if (i < 3) knob(t.push[i]); break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
         case K_OSC1:
         case K_OSC2: {  // WAVE, INTERVAL, DETUNE, LEVEL (OSC 1 + L3: SUB)
             int o = k - K_OSC1;
@@ -236,11 +239,20 @@ void SynthView::render(Canvas& c) {
     bool playing = e && e->isPlaying() && e->playMode() == Sequencer::SONG;
     int tick = playing ? e->playTick() : 0;
     const bool ext = t.engine == ENG_WAVETABLE && t.alt;
-    const Kind k = kind(ext);
+    const int pm = pageMode(t);
+    const Kind k = kind(pm);
     char b[64];
 
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_PEW) {
+        bool live = e && e->wtActive(track_) > 0;
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (live)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        PewView pv = {};
+        if (e) e->pewView(track_, &pv);
+        pw_.draw(c, shown, t.push, pv);
     } else if (t.engine == ENG_TAFFY) {
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -267,10 +279,10 @@ void SynthView::render(Canvas& c) {
     if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 
     // lewy dol: strona galek
-    static const char* kPage[11] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV"};
+    static const char* kPage[12] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
-    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : kPage[k], 13, 1.5f, pc);
-    int np = pageCount(ext);
+    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_FENV && t.engine == ENG_PEW ? "DRIVE ENV" : kPage[k]), 13, 1.5f, pc);
+    int np = pageCount(pm);
     for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;
         if (i == page_) c.fillCircle(x, 366, 2.6f, pal::white);
@@ -323,6 +335,16 @@ void SynthView::render(Canvas& c) {
         c.polyline(pts, 81, 1.6f, L.depth > 0 ? pal::green : rgb(90, 90, 90));
         snprintf(b, sizeof b, "-> %s", destNameFor(t.engine, L.dest));
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
+    } else if (k == K_BARS || (k == K_SOUND && t.engine == ENG_PEW)) {
+        // dziewiec suwakow (16' .. 1') jak brzmia: niskie niebieskie, srodkowe zielone, wysokie biale
+        int32_t lv[9];
+        pewRegistration(t.knob[0], t.push, lv);
+        for (int i = 0; i < 9; i++) {
+            const float x = 420 + i * 20, h = 6 + 40.f * lv[i] / 32768.f;
+            const Color col = i < 3 ? pal::blue : (i < 6 ? pal::green : pal::white);
+            c.line(x, 388, x, 388 - h, 3.f, col);
+        }
+        drawText(c, 600, 394, "DRAWBARS", 8, 1.1f, pal::dim, ALIGN_RIGHT);
     } else if (k == K_VOICE) {
         // glosy: POLY = 6 niezaleznych kresek, MONO = jedna (albo wachlarz unison); AGE = falowanie
         int n = t.mono ? (t.unison > 0 ? 6 : 1) : 6;
@@ -363,7 +385,25 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_TAFFY) {  // CZ: ksztalt (saw -> square -> pulse -> saw-pulse), DCW, ENV, RES
+    if (k == K_SOUND && t.engine == ENG_PEW) {  // organy: rejestracja, perkusja, drive/chorus, Leslie
+        snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);  // uklad suwakow widac na grafice obok
+        const int g = t.knob[1];
+        if (g < 3277) snprintf(v[1], 16, "OFF");
+        else if (g < 14746) snprintf(v[1], 16, "SOFT %d", (g - 3277) * 100 / (14746 - 3277));
+        else if (g < 24576) snprintf(v[1], 16, "SHARP %d", (g - 14746) * 100 / (24576 - 14746));
+        else snprintf(v[1], 16, "CLICK %d", (g - 24576) * 100 / (32767 - 24576));
+        const int w = t.knob[2];
+        if (w <= 14746) snprintf(v[2], 16, w < 300 ? "CLEAN" : "CHO %d", w * 100 / 14746);
+        else snprintf(v[2], 16, "DRV %d", (w - 14746) * 100 / (32767 - 14746));
+        static const char* les[3] = {"STOP", "SLOW", "FAST"};
+        snprintf(v[3], 16, "%s", les[t.knob[3] < 10923 ? 0 : t.knob[3] < 21845 ? 1 : 2]);
+        static const char* L[4] = {"REGISTER", "PERCUSSION", "DRIVE", "LESLIE"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+    } else if (k == K_BARS) {  // PEW: wysuniecie grup suwakow
+        static const char* L[4] = {"LOW BARS", "MID BARS", "HIGH BARS", ""};
+        for (int i = 0; i < 3; i++) { labels[i] = L[i]; snprintf(v[i], 16, "+%d", t.push[i] * 100 / 32767); pos[i] = t.push[i] / 32767.f; }
+        labels[3] = L[3]; v[3][0] = 0; pos[3] = 0;
+    } else if (k == K_SOUND && t.engine == ENG_TAFFY) {  // CZ: ksztalt (saw -> square -> pulse -> saw-pulse), DCW, ENV, RES
         static const char* sh[4] = {"SAW", "SQUARE", "PULSE", "SAWPULSE"};
         int32_t sp = t.knob[0] * 3;
         int si = sp >> 15, sf = (sp & 0x7FFF) * 100 / 32768;
@@ -520,7 +560,7 @@ void SynthView::updatePresets(const Buttons& b) {
     if (b.pressed(B_A) && n > 0) {  // wczytaj
         if (ps.load(idx[preSel_], t)) {
             snprintf(t.preset, sizeof t.preset, "%s", ps.name(idx[preSel_]));
-            page_ = pageCount(t.engine == ENG_WAVETABLE && t.alt) - 1;  // zostan na PRESETS (preset moze zmienic tryb)
+            page_ = pageCount(pageMode(t)) - 1;  // zostan na PRESETS (preset moze zmienic tryb)
             app_->markDirty();
             char m[48];
             snprintf(m, sizeof m, "LOADED %s", ps.name(idx[preSel_]));
@@ -548,7 +588,7 @@ void SynthView::updatePresets(const Buttons& b) {
         else {
             PresetStore::initInstrument(t);
             snprintf(t.preset, sizeof t.preset, "INIT");
-            page_ = pageCount(false) - 1;
+            page_ = pageCount(pageMode(t)) - 1;
             app_->markDirty();
             app_->toast("INIT");
             confirm_ = 0;

@@ -1,4 +1,5 @@
 #include "ui/app.h"
+#include "ui/splash.h"
 #include "gfx/font.h"
 #include <stdio.h>
 #include <string.h>
@@ -273,6 +274,13 @@ void App::update(const InputState& in, float dt) {
     btn_.update(in, dt);
     if (toastT_ > 0) toastT_ -= dt;
     if (in.btn[B_MENU] && in.btn[B_SELECT]) quit_ = true;
+    if (splashT_ >= 0.f) {  // ekran startowy: dowolny przycisk pomija
+        splashT_ += dt;
+        bool any = false;
+        for (int i = 0; i < BTN_COUNT; i++) any |= btn_.pressed(i);
+        if (any || splashT_ >= SPLASH_LEN) splashT_ = -1.f;
+        return;
+    }
     // Zakladki PROJECT | ARRANGE | PIANO ROLL (L2 = w lewo, R2 = w prawo); nie w oknach dialogowych
     bool dialog = cur_ == &trackDlg || cur_ == &patDlg;
     bool toolsView = cur_ == &arrange || cur_ == &roll;
@@ -317,6 +325,7 @@ void App::update(const InputState& in, float dt) {
 }
 
 void App::render(Canvas& c) {
+    if (splashT_ >= 0.f) { drawSplash(c, splashT_); return; }
     cur_->render(c);
     // Wskaznik zakladek (4 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL, SYNTH
     int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : (cur_ == &synth ? 3 : -1)));

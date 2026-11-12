@@ -18,7 +18,7 @@ static void putStr(FILE* f, const char* s) {
 
 void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f",
-            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : "wavetable"), t.knob[0],
+            t.engine == ENG_SAW ? "saw" : (t.engine == ENG_TAFFY ? "taffy" : (t.engine == ENG_PEW ? "pew" : "wavetable")), t.knob[0],
             t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
     fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
             t.fenvAmt);
@@ -29,6 +29,7 @@ void writeInstrument(FILE* f, const Track& t) {
     fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
             x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents, x.osc[1].level,
             x.sub, x.fmode, x.drive);
+    if (t.engine == ENG_PEW) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
     fprintf(f, " menv %.4f %.4f %.4f %.4f %.4f %d", t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
     if (t.preset[0]) { fprintf(f, " preset "); putStr(f, t.preset); }
@@ -100,7 +101,7 @@ const char* kv(char** tok, int n, int from, const char* key) {
 void parseInstrument(Track& t, char** tok, int n, int start) {
     const char* v;
     if ((v = kv(tok, n, start, "engine")))
-        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : ENG_WAVETABLE);
+        t.engine = !strcmp(v, "saw") ? ENG_SAW : (!strcmp(v, "taffy") ? ENG_TAFFY : (!strcmp(v, "pew") ? ENG_PEW : ENG_WAVETABLE));
     // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
     for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu
@@ -139,6 +140,8 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 if (!strcmp(tok[i], "sub") && left >= 1) t.ext.sub = (float)atof(tok[i + 1]);
                 if (!strcmp(tok[i], "fmode") && left >= 1) t.ext.fmode = (uint8_t)(atoi(tok[i + 1]) % FLT_MODES);
                 if (!strcmp(tok[i], "drv") && left >= 1) t.ext.drive = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "push") && left >= 3)
+                    for (int j = 0; j < 3; j++) { int v = atoi(tok[i + 1 + j]); t.push[j] = (int16_t)(v < 0 ? 0 : v > 32767 ? 32767 : v); }
                 if (!strcmp(tok[i], "gsync") && left >= 2) {
                     t.glideSync = atoi(tok[i + 1]) != 0;
                     t.glideDiv = (uint8_t)(atoi(tok[i + 2]) % LFO_DIVS);

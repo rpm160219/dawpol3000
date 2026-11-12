@@ -1,6 +1,7 @@
 #include "synth/wavetable_synth.h"
 #include "seq/project.h"
 #include "synth/taffy_dsp.h"
+#include "synth/pew_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -97,6 +98,7 @@ void WavetableSynth::init(float outRate) {
     }
     nStack_ = 0;
     lastPitch_ = -1;
+    if (!pew_) pew_ = pewCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -367,6 +369,12 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
     wtExtOn(SX(sx_, slot));
     if (kind_ == 1) taffyNoteOn(tfBase_ + slot);
+    else if (kind_ == 2) {  // PEW: najpierw zwolnij bramki puszczonych klawiszy (pojedyncze wyzwalanie perkusji)
+        for (int i = 0; i < VOICES; i++)
+            if (i != slot && (v_[i].stage == OFF || v_[i].stage == RELEASE || v_[i].stage == FADE)) pewNoteOff(pew_, i);
+        pewNoteOff(pew_, slot);
+        pewNoteOn(pew_, slot);
+    }
 }
 
 void WavetableSynth::noteOff(int pitch) {
@@ -409,6 +417,9 @@ void WavetableSynth::renderBlock() {
         else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
 
+    if (kind_ == 2)  // PEW: puszczony klawisz (wybrzmienie, wyciszenie, cisza) zwalnia bramke perkusji
+        for (int vi = 0; vi < VOICES; vi++)
+            if (v_[vi].stage == OFF || v_[vi].stage == RELEASE || v_[vi].stage == FADE) pewNoteOff(pew_, vi);
     int16_t vk[8];
     int16_t loudK[4] = {knobs_[0], knobs_[1], knobs_[2], knobs_[3]};
     int newest = -1;
@@ -465,7 +476,10 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 1) {  // TAFFY (oryginalny DSP op1r)
+        if (kind_ == 2) {  // PEW (oryginalny DSP op1r)
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            pewRender(pew_, vi, out, vk, pitchBuf, v.vel);
+        } else if (kind_ == 1) {  // TAFFY (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             taffyRender(tfBase_ + vi, out, vk, pitchBuf, v.vel);
         } else if (alt_) renderExtVoice(vi, out, vk, vm, inc, v.vel);

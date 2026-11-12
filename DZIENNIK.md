@@ -1,5 +1,17 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 01:30
+**Zmienione — port silnika PEW (op1r, Hundekraft) + ekran startowy:**
+- `third_party/op1r_pew/` — oryginalne `pew.c`, `pew_tables.h`, `pew_macro.h`, `pew_geom.h`, `screen.c`, `pew.svg`, `plugin.json`, LICENSE, NOTICE, README; zaślepka `hk/engine.h`; `pew_art.h` wygenerowany z SVG nowym skryptem `tools/gen/svg_to_art2.py` (ścieżki, wypełnienia, grupy). `third_party/LICENSES.md`.
+- `core/synth/pew_dsp.*` — DSP organów 1:1 w klasie (osobne organy i Leslie na każdą ścieżkę); `core/synth/wavetable_synth.*` — PEW jako trzeci rodzaj silnika głosów (ADSR, DRIVE ENV, MOD ENV, 2 LFO, POLY/MONO/GLIDE/AGE); bramki perkusji zwalniane przy puszczeniu klawisza.
+- `core/ui/pew_screen.*` — ekran „jazz club” (suwaki, nuty, dym, lampa, Leslie, klawisze); `core/gfx/canvas.*` — wypełnianie wielokątów z antyaliasingiem; `core/ui/synth_view.*` — strona SOUND (REGISTER/PERCUSSION/DRIVE/LESLIE) i nowa BARS (LOW/MID/HIGH), grafika suwaków; `core/ui/dialogs.cpp`, `core/gfx/icons.*` — PEW na liście silników z ilustracją (cała scena).
+- `core/seq/project.*`, `core/io/project_file.cpp` — silnik `pew`, pole `push` (strona 2); `core/io/factory_presets.cpp`, `core/ui/app.h` — 31 presetów PEW w `presets/pew/`.
+- `core/ui/splash.*`, `core/ui/app.*`, `platform/main_sdl.cpp` — ekran startowy z nazwą DAW-POL 3000 (fala w 4 kolorach, ~2,6 s, przycisk pomija).
+- Poprawka: INIT na WAVETABLE+ przełączał silnik na zwykły WAVETABLE (`preset_store.cpp`).
+- Testy: PEW bit w bit z oryginalnym harnessem (105 984 próbki, 0 różnic), WAVETABLE i TAFFY nadal 0 różnic; 31 presetów PEW bez przesterowania (szczyt ≤ 0,72); CPU na konsoli przy 6 głosach: PEW 5,6%, TAFFY 6,9%, WAVETABLE 8,6%. Wysłane na konsolę.
+**Następny krok:** Patryk testuje PEW i ekran startowy.
+**Wymaga od Patryka:** tak — odsłuch i ocena.
+
 ## 2026-11-12 23:45
 **Zmienione:** `core/gfx/icons.cpp` — ilustracja TAFFY na karcie ENGINE uzupełniona: usta, zielone nici gumy wylatujące z ust (liczone jak na ekranie silnika, bez balonu), kreski przy ustach i gwiazdki obok twarzy (uwaga Patryka). Wysłane na konsolę.
 **Następny krok:** Patryk sprawdza ikonę i odsłuchuje nowe presety.

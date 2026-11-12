@@ -33,8 +33,9 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : 0);
         wt_[i].setKnobs(t.knob);
+        wt_[i].setPush(t.push);
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);

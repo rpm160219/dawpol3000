@@ -9,6 +9,7 @@ const char* engineName(int e) {
     case ENG_WAVETABLE: return "WAVETABLE";
     case ENG_SAW: return "TEST SAW";
     case ENG_TAFFY: return "TAFFY";
+    case ENG_PEW: return "PEW";
     default: return "?";
     }
 }
@@ -29,7 +30,9 @@ static const struct { const char* name; float beats; } kDivs[LFO_DIVS] = {
 };
 const char* destNameFor(int engine, int d) {
     static const char* tf[4] = {"WAVE", "DCW", "ENV", "RES"};
+    static const char* pw[4] = {"REG", "PERC", "DRV", "LES"};
     if (engine == ENG_TAFFY && d >= 0 && d < 4) return tf[d];
+    if (engine == ENG_PEW && d >= 0 && d < 4) return pw[d];
     return lfoDestName(d);
 }
 
@@ -47,8 +50,8 @@ const char* lfoDivName(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].name : 
 float lfoDivBeats(int i) { return i >= 0 && i < LFO_DIVS ? kDivs[i].beats : 1.f; }
 
 void engineDefaultKnobs(int engine, int16_t k[4]) {
-    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192};
-    const int16_t* s = engine == ENG_TAFFY ? tf : wt;
+    static const int16_t wt[4] = {16384, 8192, 20000, 8192}, tf[4] = {16384, 8192, 0, 8192}, pw[4] = {16384, 12000, 8000, 16384};
+    const int16_t* s = engine == ENG_TAFFY ? tf : engine == ENG_PEW ? pw : wt;
     for (int i = 0; i < 4; i++) k[i] = s[i];
 }
 

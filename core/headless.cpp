@@ -143,6 +143,35 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_A] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 20; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "pew") || !strcmp(screen, "pewbars") || !strcmp(screen, "pewpresets")) {
+        Track& tr = app.project().tracks[1];
+        tr.engine = ENG_PEW;
+        engineDefaultKnobs(ENG_PEW, tr.knob);
+        tr.knob[1] = 20000; tr.knob[2] = 20000; tr.knob[3] = 28000;  // perkusja, drive, Leslie FAST
+        tr.push[2] = 16000;
+        app.openPresets("out/presets_demo");
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        if (!strcmp(screen, "pewbars")) app.synth.setPageKind(SynthView::K_BARS);
+        if (!strcmp(screen, "pewpresets")) app.synth.setPageKind(SynthView::K_PRESETS);
+        InputState in;
+        in.btn[B_A] = true;   // trzymany akord: A, B, X
+        app.update(in, 0.016f);
+        for (int i = 0; i < 6; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+        in.btn[B_B] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 6; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+        in.btn[B_X] = true;
+        app.update(in, 0.016f);
+        for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+    } else if (!strcmp(screen, "splash")) {
+        app.startSplash(1.9f);
+    } else if (!strcmp(screen, "pewengine")) {
+        app.arrange.setCursor(1, 2);
+        tap(app, B_SELECT);
+        tap(app, B_R2);
+        for (int i = 0; i < 3; i++) tap(app, B_DOWN);  // PEW
     } else if (!strcmp(screen, "taffyengine")) {
         app.arrange.setCursor(1, 2);
         tap(app, B_SELECT);

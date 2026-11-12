@@ -1,6 +1,7 @@
 #include "gfx/icons.h"
 #include "../../third_party/op1r_taffy/taffy_art.h"
 #include "../../third_party/op1r_taffy/taffy_geom.h"
+#include "../../third_party/op1r_pew/pew_art.h"
 #include <math.h>
 
 namespace dp {
@@ -183,7 +184,34 @@ void drawEngineIllustration(Canvas& c, int engine, float x, float y, float w, fl
         (void)NAVY; (void)PLUM; (void)GREY; (void)BLUE; (void)RED;
         return;
     }
-    if (engine == 3) {  // TEST SAW: prosta pila w ramce
+    if (engine == 3) {  // PEW: cala scena "jazz club" z pew.svg (nuty na swoich miejscach)
+        const float sc = fminf(w / 320.f, h / 160.f);
+        const float ox = x + (w - 320 * sc) * 0.5f, oy = y + (h - 160 * sc) * 0.5f;
+        auto hc = [](unsigned v) { return rgb((v >> 16) & 255, (v >> 8) & 255, v & 255); };
+        static float buf[2 * 512];
+        for (const PWFill& f : PW_FILLS) {
+            if (f.count > 512) continue;
+            for (int i = 0; i < f.count; i++) {
+                buf[2 * i] = ox + PW_PTS[(f.first + i) * 2] * sc;
+                buf[2 * i + 1] = oy + PW_PTS[(f.first + i) * 2 + 1] * sc;
+            }
+            c.fillPolygon(buf, f.count, hc(f.rgb));
+        }
+        for (const PWStroke& l : PW_STROKES) {
+            c.beginStroke();
+            const int segs = l.closed ? l.count : l.count - 1;
+            for (int i = 0; i < segs; i++) {
+                const int a = l.first + i, b = l.first + (i + 1 == l.count ? 0 : i + 1);
+                c.strokeSeg(ox + PW_PTS[a * 2] * sc, oy + PW_PTS[a * 2 + 1] * sc, ox + PW_PTS[b * 2] * sc, oy + PW_PTS[b * 2 + 1] * sc,
+                            fmaxf(1.1f, l.width * sc * 0.9f));
+            }
+            c.endStroke(hc(l.rgb));
+        }
+        for (const PWCircle& d : PW_CIRCLES) c.circle(ox + d.x * sc, oy + d.y * sc, d.r * sc, 1.f, hc(d.rgb));
+        (void)NAVY; (void)PLUM; (void)GREY; (void)GREEN; (void)BLUE; (void)RED;
+        return;
+    }
+    if (engine == 4) {  // TEST SAW: prosta pila w ramce
         c.strokeRoundRect(x, y, w, h, 8, 1.4f, rgb(80, 80, 80));
         float px = x + 16, py = y + h * 0.5f;
         for (int k = 0; k < 4; k++) {

@@ -103,6 +103,7 @@ int main(int argc, char** argv) {
     static App app2;  // duzy obiekt (projekt) — nie na stosie
     app2.init(&gEngine);
     app2.openStore("projects");
+    app2.startSplash();
     app2.openPresets("presets");  // presety instrumentow (konsola: /userdata/dawpol3000/presets)  // katalog wzgledem biezacego (konsola: /userdata/dawpol3000/projects)
     InputState in;
     SDL_GameController* pad = nullptr;

@@ -8,6 +8,7 @@
 #include "seq/sequencer.h"
 #include "synth/saw_synth.h"
 #include "synth/wavetable_synth.h"
+#include "synth/pew_dsp.h"
 #include "util/spsc.h"
 #include "util/triple_buffer.h"
 
@@ -33,6 +34,7 @@ public:
     uint32_t wtDrift(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].drift() : 0; }
     int16_t voiceLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].voiceLevel() : 0; }
     int16_t taffyEnv(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].taffyEnv() : 0; }
+    void pewView(int t, PewView* v) const { if (t >= 0 && t < MAX_TRACKS && wt_[t].pew()) dp::pewView(wt_[t].pew(), v); }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }

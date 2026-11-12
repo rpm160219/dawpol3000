@@ -21,8 +21,8 @@ void PresetStore::initInstrument(Track& t) {
     t.menvDest = d.menvDest;
     t.lfo[0] = d.lfo[0];
     t.lfo[1] = d.lfo[1];
-    t.alt = d.alt;
     t.ext = d.ext;
+    for (int i = 0; i < 3; i++) t.push[i] = d.push[i];
     t.mono = d.mono;
     t.glide = d.glide;
     t.unison = d.unison;

@@ -147,9 +147,48 @@ static const FactoryPreset kTaffy[] = {
     {"STEPS", CAT_FX, 2, "k 21846 8000 0 12000 lfo1 4 4 0.4 1 1 7 env 0.002 0.3 0.9 0.2"},
 };
 
+// PEW: k REGISTER PERC DRIVE LESLIE; REGISTER 0 = 008000000, 8192 = 888000000, 16384 = 888800000,
+// 24576 = 888808008, 32767 = 888888888; PERC <3277 off, do 14746 miekka 2., do 24576 ostra 3., wyzej klik;
+// DRIVE do 14746 = skaner/chorus, wyzej przester; LESLIE <10923 stop, <21845 wolno, wyzej szybko.
+// push NISKIE SRODKOWE WYSOKIE = wysuniecie grup suwakow.
+static const FactoryPreset kPew[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"JAZZ CLUB", CAT_KEYS, 1, "k 8192 20000 7000 16384 env 0.002 0.3 1 0.08"},
+    {"GOSPEL", CAT_KEYS, 1, "k 16384 12000 12000 28000 env 0.002 0.3 1 0.1"},
+    {"FULL ORGAN", CAT_KEYS, 1, "k 32767 0 20000 28000 env 0.002 0.3 1 0.1"},
+    {"FLUTE 8", CAT_KEYS, 1, "k 0 0 4000 16384 env 0.01 0.3 1 0.12"},
+    {"BALLAD", CAT_KEYS, 1, "k 4000 9000 10000 16384 env 0.01 0.3 1 0.2"},
+    {"SMOKY BAR", CAT_KEYS, 1, "k 8192 18000 14000 5000 env 0.002 0.3 1 0.08"},
+    {"ROCK ORGAN", CAT_KEYS, 1, "k 24576 22000 26000 28000 env 0.002 0.3 1 0.08"},
+    {"GROWL ORGAN", CAT_KEYS, 1, "k 32767 26000 32767 28000 env 0.002 0.3 1 0.08"},
+    {"CLICKY", CAT_KEYS, 1, "k 8192 31000 6000 16384 env 0.001 0.3 1 0.06"},
+    {"CHURCH", CAT_PAD, 1, "k 32767 0 3000 5000 env 0.15 0.5 1 0.8 push 20000 0 10000"},
+    {"CATHEDRAL", CAT_PAD, 1, "k 24576 0 12000 16384 env 0.6 1 1 2 push 32767 8000 16000"},
+    {"SOFT CHORALE", CAT_PAD, 1, "k 4000 0 14000 16384 env 0.4 1 1 1.5"},
+    {"SWELL PAD", CAT_PAD, 1, "k 16384 0 12000 16384 env 1.5 1 1 2 lfo1 0 0.2 0.15 2 0 0"},
+    {"DRONE BOX", CAT_PAD, 1, "k 32767 0 20000 5000 env 2 1 1 3 push 32767 0 0 voice 0 0 0 0.5"},
+    {"ORGAN LEAD", CAT_LEAD, 1, "k 24576 20000 22000 28000 voice 1 0.04 0 0 env 0.002 0.3 1 0.1"},
+    {"WHISTLE BAR", CAT_LEAD, 1, "k 0 0 9000 28000 voice 1 0.06 0 0 push 0 0 32767 env 0.01 0.3 1 0.15"},
+    {"SCREAM", CAT_LEAD, 1, "k 32767 24000 32767 28000 voice 1 0.03 0 0 env 0.002 0.3 1 0.1"},
+    {"GLIDE ORGAN", CAT_LEAD, 1, "k 16384 14000 16000 16384 voice 1 0 0 0 gsync 1 7 env 0.002 0.3 1 0.1"},
+    {"PEDAL BASS", CAT_BASS, 1, "k 8192 0 0 5000 voice 1 0.02 0 0 push 32767 0 0 env 0.003 0.3 1 0.08"},
+    {"WALKING BASS", CAT_BASS, 1, "k 4000 16000 6000 5000 voice 1 0 0 0 env 0.002 0.4 0.4 0.08 push 24000 0 0"},
+    {"DIRTY BASS", CAT_BASS, 1, "k 8192 10000 28000 5000 voice 1 0.02 0 0 push 32767 0 0 env 0.002 0.3 1 0.08"},
+    {"PERC STAB", CAT_PLUCK, 1, "k 4000 24000 8000 16384 env 0.001 0.3 0 0.1"},
+    {"CHIME BARS", CAT_BELL, 1, "k 24576 20000 0 16384 env 0.001 1 0 0.8 push 0 0 32767"},
+    {"MUSIC HALL", CAT_BELL, 1, "k 0 22000 6000 28000 env 0.001 0.8 0.2 0.6 push 0 20000 32767"},
+    {"TREMOLO", CAT_KEYS, 1, "k 16384 0 4000 28000 env 0.005 0.3 1 0.1 lfo1 0 6 0.3 5 0 0"},
+    {"BRAKE", CAT_FX, 1, "k 24576 0 16000 0 env 0.002 0.3 1 0.3 lfo1 3 0.2 0.5 3 1 0"},
+    {"SPIN UP", CAT_FX, 1, "k 16384 0 10000 16384 env 0.002 0.3 1 0.3 menv 2 1 1 1 0.4 3"},
+    {"WARP ORGAN", CAT_FX, 1, "k 24576 10000 20000 28000 env 0.002 0.3 1 0.3 lfo1 1 0.3 0.04 4 0 0 voice 0 0 0 1"},
+    {"TAPE ORGAN", CAT_OTHER, 1, "k 8192 14000 10000 16384 env 0.003 0.3 1 0.15 voice 0 0 0 0.7"},
+    {"PIPE SOLO", CAT_LEAD, 1, "k 0 0 2000 5000 voice 1 0.05 0 0 env 0.04 0.3 1 0.2 push 0 32767 0"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "pew")) { *n = sizeof kPew / sizeof kPew[0]; *engine = ENG_PEW; return kPew; }
     if (!__builtin_strcmp(eng, "wavetableplus")) { *n = sizeof kWavetablePlus / sizeof kWavetablePlus[0]; *engine = ENG_WAVETABLE; return kWavetablePlus; }
     *n = sizeof kWavetable / sizeof kWavetable[0];
     *engine = ENG_WAVETABLE;

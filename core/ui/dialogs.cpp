@@ -21,7 +21,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 4;
+static const int NENG = 5;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -32,16 +32,19 @@ static const EngineInfo kEngines[NENG] = {
     {"TAFFY", "PHASE DISTORTION",
      {"PORT OF THE OP1R TAFFY ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "CASIO CZ STYLE: A COSINE READ", "THROUGH A BENT PHASE.",
       "SAW, SQUARE, PULSE, SAW-PULSE.", "DCW = BRIGHTNESS, NO FILTER.", "CZ RESONANT WAVE ON TOP."}},
+    {"PEW", "DRAWBAR ORGAN",
+     {"PORT OF THE OP1R PEW ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "NINE DRAWBARS THROUGH A ROTARY", "SPEAKER: REGISTER, PERCUSSION,",
+      "SCANNER CHORUS AND TUBE DRIVE,", "LESLIE STOP / SLOW / FAST.", "BARS PAGE PUSHES LOW/MID/HIGH."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0));
+    return t.engine == ENG_SAW ? 4 : (t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 3 ? ENG_SAW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE);
+    int e = idx == 4 ? ENG_SAW : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) { engineDefaultKnobs(e, t.knob); t.preset[0] = 0; }
     t.engine = (uint8_t)e;
     t.alt = idx == 1;
@@ -193,7 +196,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
             drawText(c, 280, 276 + l * 18, kEngines[engSel_].lines[l], 9, 1.2f, l == 0 ? pal::white : rgb(170, 170, 170));
-    if (engSel_ < 3) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    if (engSel_ < 4) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
     drawText(c, 16, 404, "L2 = TRACK", 7, 1.f, rgb(80, 80, 80));
     pillButton(c, 330, PY, 140, PH, edit_ >= 0 ? "OK" : "CREATE", pal::pill, 'A');
     pillButton(c, 484, PY, 140, PH, "CANCEL", pal::red, 'B');
