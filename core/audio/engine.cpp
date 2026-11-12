@@ -39,7 +39,7 @@ void AudioEngine::applyProject() {
         // minimalny atak 1 ms i wybrzmienie 3 ms — bez klikow na poczatku/koncu nuty
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
-        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], t.fenvAmt);
+        wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], e == ENG_PEW ? 0.f : t.fenvAmt);
         wt_[i].setAlt(t.alt && e == ENG_WAVETABLE);
         wt_[i].setVoice(t.mono, glideSeconds(t, p.bpm), t.unison, t.age);
         wt_[i].setModEnv(t.menv[0] < 0.001f ? 0.001f : t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);

@@ -30,7 +30,7 @@ static void waveName(char* out, int n, int32_t k) {
 SynthView::Kind SynthView::kind(int pm) const {
     static const Kind orig[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind extk[10] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    static const Kind pewk[9] = {K_SOUND, K_BARS, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind pewk[8] = {K_SOUND, K_BARS, K_VOICE, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     int n = pageCount(pm), p = page_ < n ? page_ : n - 1;
     return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : orig[p]);
 }
@@ -281,7 +281,7 @@ void SynthView::render(Canvas& c) {
     // lewy dol: strona galek
     static const char* kPage[12] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS", "MOD ENV", "BARS"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
-    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : (k == K_FENV && t.engine == ENG_PEW ? "DRIVE ENV" : kPage[k]), 13, 1.5f, pc);
+    drawText(c, 20, 342, k == K_FENV && t.engine == ENG_TAFFY ? "DCW ENV" : kPage[k], 13, 1.5f, pc);
     int np = pageCount(pm);
     for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;

@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 02:00
+**Zmienione:** `core/ui/synth_view.*`, `core/audio/engine.cpp` — PEW bez drugiej obwiedni (usunięta strona DRIVE ENV, jej AMOUNT nie działa na organy; uwaga Patryka). `core/ui/splash.*` — ekran startowy dłuższy: ~4,5 s (logo stoi ~2,4 s po animacji). PEW nadal bit w bit. Wysłane na konsolę.
+**Następny krok:** kolejny silnik z op1r — port ściśle 1:1, bez dodatków (decyzja Patryka).
+**Wymaga od Patryka:** tak — wybór silnika.
+
 ## 2026-11-13 01:30
 **Zmienione — port silnika PEW (op1r, Hundekraft) + ekran startowy:**
 - `third_party/op1r_pew/` — oryginalne `pew.c`, `pew_tables.h`, `pew_macro.h`, `pew_geom.h`, `screen.c`, `pew.svg`, `plugin.json`, LICENSE, NOTICE, README; zaślepka `hk/engine.h`; `pew_art.h` wygenerowany z SVG nowym skryptem `tools/gen/svg_to_art2.py` (ścieżki, wypełnienia, grupy). `third_party/LICENSES.md`.

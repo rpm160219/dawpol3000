@@ -130,6 +130,6 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - WAVETABLE+ (tryb rozszerzony): 2 oscylatory, sub, filtr LP24/LP12/BP/HP + drive, cele LFO W1/W2/P1/P2/LV1/LV2 (WAVE = obie fale naraz); ~10% rdzenia przy 6 głosach.
 - Presety instrumentów osobno dla silnika (`presets/wavetable/`, `presets/wavetableplus/`, `presets/taffy/`; zestawy fabryczne w `core/io/factory_presets.cpp`: 37 / 45 / 41, kategorie z ikonami); głosy POLY/MONO, glide, unison, AGE.
 - Brakuje: ekran „about” z atrybucją, kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.
-- PEW (port 1:1 z op1r, organy z 9 suwakami + Leslie, ekran „jazz club”): gałki REGISTER/PERCUSSION/DRIVE/LESLIE, strona BARS (wysunięcie suwaków LOW/MID/HIGH), druga obwiednia = DRIVE ENV, 31 presetów w `presets/pew/`; ~5,6% rdzenia przy 6 głosach.
-- Ekran startowy z nazwą programu (~2,6 s, dowolny przycisk pomija).
-- Następny krok: Patryk testuje PEW i ekran startowy na konsoli.
+- PEW (port 1:1 z op1r, organy z 9 suwakami + Leslie, ekran „jazz club”): gałki REGISTER/PERCUSSION/DRIVE/LESLIE, strona BARS (wysunięcie suwaków LOW/MID/HIGH), bez drugiej obwiedni (decyzja Patryka), 31 presetów w `presets/pew/`; ~5,6% rdzenia przy 6 głosach.
+- Ekran startowy z nazwą programu (~4,5 s, dowolny przycisk pomija).
+- Następny silnik z op1r: port ściśle 1:1, bez dodatków (decyzja Patryka) — czekamy na wybór silnika.

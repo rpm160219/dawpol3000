@@ -5,7 +5,7 @@
 //   (silnik WAVETABLE / WAVETABLE+ wybiera sie na karcie ENGINE w oknie TRACK: Select na sciezce, R2)
 //   Select         nastepna strona galek:
 //                    oryginal:    SOUND -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
-//                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> DRIVE ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS
+//                    PEW:         SOUND -> BARS -> VOICE -> AMP ENV -> MOD ENV -> LFO 1 -> LFO 2 -> PRESETS (bez drugiej obwiedni)
 //                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> VOICE -> AMP ENV -> FILTER ENV -> MOD ENV -> LFO 1 ->
 //                                 LFO 2 -> PRESETS
 // MOD ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 biala/czerwona galka = DEST (cel jak w LFO) + AMOUNT (-100..+100).
@@ -50,7 +50,7 @@ private:
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
     static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : 0); }
-    int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 2 ? 9 : 8); }
+    int pageCount(int pm) const { return pm == 1 ? 10 : 8; }
     RelEncoder stepMDest_, stepGDiv_;
     RelEncoder stepVMode_;
     // przegladarka presetow

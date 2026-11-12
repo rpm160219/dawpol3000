@@ -10,6 +10,7 @@ static Color fade(Color c, float a) { return rgb((uint8_t)(c.r * a), (uint8_t)(c
 void drawSplash(Canvas& c, float t) {
     c.clear(pal::bg);
     const float out = 1.f - ramp(t, SPLASH_LEN - 0.4f, SPLASH_LEN);  // wygaszenie calosci
+    // (SPLASH_LEN w splash.h)
     // fala: 4 odcinki w kolorach enkoderow (niebieski, zielony, bialy, czerwony), rysowana od lewej
     const float draw = ramp(t, 0.05f, 0.85f), x0 = 80, x1 = 560, y0 = 300;
     const int N = 160;
