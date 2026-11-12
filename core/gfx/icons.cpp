@@ -100,6 +100,70 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
     c.endStroke(col);
 }
 
+void drawCategoryIcon(Canvas& c, int cat, float x, float y, float s, Color col, float lw) {
+    float u = s / 16.f;
+    auto X = [&](float v) { return x + v * u; };
+    auto Y = [&](float v) { return y + v * u; };
+    auto seg = [&](float x0, float y0, float x1, float y1) { c.strokeSeg(X(x0), Y(y0), X(x1), Y(y1), lw); };
+    c.beginStroke();
+    switch (cat) {
+    case -1:  // ALL: siatka 4 kropek
+        c.endStroke(col);
+        for (int i = 0; i < 4; i++) c.fillCircle(X(4.5f + (i % 2) * 7), Y(4.5f + (i / 2) * 7), 2.f * u, col);
+        return;
+    case 0: {  // BASS: niski, szeroki sinus + podloga
+        float px = X(1.5f), py = Y(8);
+        for (int i = 1; i <= 20; i++) {
+            float t = i / 20.f, nx = X(1.5f + 13 * t), ny = Y(8 + 4 * sinf(t * 6.2831853f));
+            c.strokeSeg(px, py, nx, ny, lw * 1.3f);
+            px = nx; py = ny;
+        }
+        seg(2, 14.5f, 14, 14.5f);
+        break;
+    }
+    case 1:  // LEAD: pila
+        seg(1.5f, 12, 5.5f, 4); seg(5.5f, 4, 5.5f, 12); seg(5.5f, 12, 9.5f, 4); seg(9.5f, 4, 9.5f, 12); seg(9.5f, 12, 14, 4);
+        break;
+    case 2:  // PAD: chmura (trzy luki)
+        c.endStroke(col);
+        c.arc(X(5), Y(9), 3.2f * u, 3.14159f * 0.9f, 3.14159f * 1.9f, lw, col);
+        c.arc(X(8.5f), Y(7.5f), 3.8f * u, 3.14159f * 1.05f, 3.14159f * 1.95f, lw, col);
+        c.arc(X(11.5f), Y(9.5f), 2.8f * u, 3.14159f * 1.2f, 3.14159f * 2.1f, lw, col);
+        c.beginStroke();
+        seg(2, 12, 14.3f, 12);
+        break;
+    case 3:  // KEYS
+        c.endStroke(col);
+        drawIcon(c, ICON_KEYS, x, y, s, col, lw);
+        return;
+    case 4: {  // PLUCK: szpic i wygasanie
+        seg(2, 13, 4, 2.5f);
+        float px = X(4), py = Y(2.5f);
+        for (int i = 1; i <= 12; i++) {
+            float t = i / 12.f, nx = X(4 + 10.5f * t), ny = Y(13 - 10.5f * expf(-4.f * t));
+            c.strokeSeg(px, py, nx, ny, lw);
+            px = nx; py = ny;
+        }
+        break;
+    }
+    case 5:  // BELL: dzwonek
+        seg(8, 1.5f, 8, 3); seg(5, 4, 11, 4); seg(5, 4, 4.5f, 10); seg(11, 4, 11.5f, 10); seg(2.5f, 12, 13.5f, 12);
+        seg(4.5f, 10, 2.5f, 12); seg(11.5f, 10, 13.5f, 12);
+        c.endStroke(col);
+        c.fillCircle(X(8), Y(14), 1.4f * u, col);
+        return;
+    case 6:  // FX: iskra
+        seg(8, 1.5f, 8, 14.5f); seg(1.5f, 8, 14.5f, 8); seg(3.5f, 3.5f, 12.5f, 12.5f); seg(12.5f, 3.5f, 3.5f, 12.5f);
+        break;
+    default:  // OTHER: kolo z kropka
+        c.endStroke(col);
+        c.circle(X(8), Y(8), 6 * u, lw, col);
+        c.fillCircle(X(8), Y(8), 1.8f * u, col);
+        return;
+    }
+    c.endStroke(col);
+}
+
 // Ilustracja: maly syntezator. Wszystko liczone od obudowy (x, y, w, h) z wewnetrznym
 // marginesem, wiec zaden element nie wychodzi poza obrys.
 void drawSynthIllustration(Canvas& c, float x, float y, float w, float h) {

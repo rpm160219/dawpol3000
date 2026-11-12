@@ -6,6 +6,7 @@
 #include "ui/widgets.h"
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 namespace dp {
 
@@ -27,8 +28,8 @@ static void waveName(char* out, int n, int32_t k) {
 }
 
 SynthView::Kind SynthView::kind(bool ext) const {
-    static const Kind orig[5] = {K_SOUND, K_AMP, K_FENV, K_LFO1, K_LFO2};
-    static const Kind extk[7] = {K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2};
+    static const Kind orig[7] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_LFO1, K_LFO2, K_PRESETS};
+    static const Kind extk[9] = {K_OSC1, K_OSC2, K_FILTER, K_VOICE, K_AMP, K_FENV, K_LFO1, K_LFO2, K_PRESETS};
     int n = pageCount(ext), p = page_ < n ? page_ : n - 1;
     return ext ? extk[p] : orig[p];
 }
@@ -61,9 +62,19 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         app_->markDirty();
         app_->toast(ext ? "EXTENDED: 2 OSC + SUB + FILTER MODES" : "ORIGINAL 1:1");
     }
-    if (b.pressed(B_SELECT) && !b.down(B_MENU)) page_ = (page_ + 1) % pageCount(ext);
+    if (b.pressed(B_SELECT) && !b.down(B_MENU) && !ed_.active()) {
+        page_ = (page_ + 1) % pageCount(ext);
+        confirm_ = 0;
+        savePending_ = false;
+    }
     if (page_ >= pageCount(ext)) page_ = 0;
     const Kind k = kind(ext);
+    if (k == K_PRESETS) {
+        releaseAll();
+        updatePresets(b);
+        if (b.pressed(B_START)) app_->togglePlaySong();
+        return;
+    }
     if (b.pressed(B_L3)) {
         if (k == K_LFO1 || k == K_LFO2) { Lfo& L = t.lfo[k - K_LFO1]; L.sync = !L.sync; app_->markDirty(); }
         else alt_ = !alt_;
@@ -116,6 +127,19 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 else os.level = clamp01(os.level + d);
                 changed = true;
             }
+            break;
+        }
+        case K_VOICE: {  // MODE, GLIDE, UNISON, AGE
+            if (i == 0) {
+                int st = stepVMode_.steps(ax, dt, 3.f);
+                if (st) { bool m = st > 0; if (m != t.mono) { t.mono = m; changed = true; } }
+            } else if (i == 1 && d != 0.f) {  // 0 .. 2 s (wykladniczo), 0 = wylaczone
+                float kk = t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f);
+                kk = clamp01(kk + d);
+                t.glide = kk <= 0.01f ? 0.f : 0.005f * powf(400.f, kk);
+                changed = true;
+            } else if (i == 2 && d != 0.f) { float u = t.unison + d * 50.f; t.unison = u < 0 ? 0 : (u > 50 ? 50 : u); changed = true; }
+            else if (i == 3 && d != 0.f) { t.age = clamp01(t.age + d); changed = true; }
             break;
         }
         case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
@@ -198,7 +222,9 @@ void SynthView::render(Canvas& c) {
     const Kind k = kind(ext);
     char b[64];
 
-    if (t.engine == ENG_WAVETABLE) {
+    if (k == K_PRESETS) {
+        renderPresets(c);
+    } else if (t.engine == ENG_WAVETABLE) {
         // ekran pokazuje galki po modulacji (LFO, obwiednia filtra), gdy cos gra
         bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
@@ -213,11 +239,15 @@ void SynthView::render(Canvas& c) {
     }
     // naglowek na wierzchu (ekran silnika zaczyna sie pod nim)
     c.fillRect(0, 0, 640, 44, pal::bg);
-    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
+    char sub[40];
+    if (t.preset[0]) snprintf(sub, sizeof sub, "%s - %s", t.name, t.preset);
+    else snprintf(sub, sizeof sub, "%s", t.name);
+    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), sub, tc, tick / TICKS_PER_BAR + 1,
                  (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
+    if (k == K_PRESETS) return;  // przegladarka ma wlasny dol ekranu
 
     // lewy dol: strona galek
-    static const char* kPage[8] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2"};
+    static const char* kPage[10] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2", "VOICE", "PRESETS"};
     Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
     drawText(c, 20, 342, kPage[k], 13, 1.5f, pc);
     int np = pageCount(ext);
@@ -236,6 +266,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_VOICE && !t.mono && t.unison > 0) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
     if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
     if (t.engine == ENG_WAVETABLE)
         drawText(c, 20, 398, ext ? "R3 = ORIGINAL 1:1" : "R3 = EXTENDED (2 OSC)", 7, 1.f, rgb(80, 80, 80));
@@ -268,6 +299,18 @@ void SynthView::render(Canvas& c) {
         c.polyline(pts, 81, 1.6f, L.depth > 0 ? pal::green : rgb(90, 90, 90));
         snprintf(b, sizeof b, "-> %s", lfoDestName(L.dest));
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
+    } else if (k == K_VOICE) {
+        // glosy: POLY = 6 niezaleznych kresek, MONO = jedna (albo wachlarz unison); AGE = falowanie
+        int n = t.mono ? (t.unison > 0 ? 6 : 1) : 6;
+        for (int i = 0; i < n; i++) {
+            float spread = t.mono && n > 1 ? (2.f * i / (n - 1) - 1.f) * t.unison / 50.f : 0.f;
+            float x0 = t.mono ? 500 : 410 + i * 36, x1 = t.mono ? 500 + spread * 90 : x0;
+            float wob = t.age * 4.f * sinf(i * 1.7f + (float)tick * 0.01f);
+            c.line(x0, 392, x1 + wob, 344, 2.f, t.mono ? pal::green : pal::blue);
+            c.fillCircle(x1 + wob, 344, 3.f, t.mono ? pal::green : pal::blue);
+        }
+        snprintf(b, sizeof b, "%s%s", t.mono ? "MONO" : "POLY 6", t.mono && t.unison > 0 ? " UNISON 6" : "");
+        drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
     } else if (k == K_OSC1 || k == K_OSC2 || k == K_FILTER) {
         // mieszanie: poziomy OSC 1 (zielony), OSC 2 (czerwony), SUB (bialy)
         const float lv[3] = {t.ext.osc[0].level, t.ext.osc[1].level, t.ext.sub};
@@ -315,6 +358,19 @@ void SynthView::render(Canvas& c) {
         labels[0] = "WAVE"; labels[1] = "INTERVAL"; labels[2] = "DETUNE"; labels[3] = sub ? "SUB" : "LEVEL";
         pos[0] = w / 32767.f; pos[1] = (os.semi + 24) / 48.f; pos[2] = (os.cents + 50) / 100.f;
         pos[3] = sub ? t.ext.sub : os.level;
+    } else if (k == K_VOICE) {
+        snprintf(v[0], 16, "%s", t.mono ? "MONO" : "POLY");
+        if (t.glide <= 0.f) snprintf(v[1], 16, "OFF");
+        else if (t.glide < 1.f) snprintf(v[1], 16, "%.0fMS", t.glide * 1000.f);
+        else snprintf(v[1], 16, "%.1fS", t.glide);
+        if (t.unison <= 0.f) snprintf(v[2], 16, "OFF");
+        else snprintf(v[2], 16, "%.0fC%s", t.unison, t.mono ? "" : "*");
+        snprintf(v[3], 16, "%d", (int)lrintf(t.age * 100));
+        labels[0] = "MODE"; labels[1] = "GLIDE"; labels[2] = "UNISON"; labels[3] = "AGE";
+        pos[0] = t.mono ? 1.f : 0.f;
+        pos[1] = t.glide <= 0.f ? 0.f : log10f(t.glide / 0.005f) / log10f(400.f);
+        pos[2] = t.unison / 50.f;
+        pos[3] = t.age;
     } else if (k == K_FILTER) {
         cutoffName(v[0], t.knob[2]);
         snprintf(v[1], 16, "%d", t.knob[3] * 100 / 32767);
@@ -359,6 +415,166 @@ void SynthView::render(Canvas& c) {
     }
     const char* vals[4] = {v[0], v[1], v[2], v[3]};
     encoderBar(c, labels, vals, pos);
+}
+
+// ---------------- PRESETS ----------------
+
+int SynthView::filtered(int* idx, int max) {
+    PresetStore& ps = app_->presets();
+    int n = 0;
+    for (int i = 0; i < ps.count() && n < max; i++)
+        if (catSel_ == 0 || ps.category(i) == catSel_ - 1) idx[n++] = i;
+    return n;
+}
+
+void SynthView::updatePresets(const Buttons& b) {
+    Project& p = app_->project();
+    Track& t = p.tracks[track_];
+    PresetStore& ps = app_->presets();
+    if (ed_.active()) {  // wpisywanie nazwy
+        ed_.update(b);
+        if (!ed_.active()) savePending_ = true;
+        return;
+    }
+    if (savePending_) {  // potwierdzenie zapisu
+        if (b.pressed(B_A)) {
+            int cat = catSel_ == 0 ? CAT_OTHER : catSel_ - 1;
+            if (ps.save(t, saveName_, cat)) {
+                snprintf(t.preset, sizeof t.preset, "%s", saveName_);
+                app_->markDirty();
+                char m[48];
+                snprintf(m, sizeof m, "SAVED %s", saveName_);
+                app_->toast(m);
+                int idx[PresetStore::MAX], n = filtered(idx, PresetStore::MAX), f = ps.find(saveName_);
+                for (int i = 0; i < n; i++) if (idx[i] == f) preSel_ = i;
+                focus_ = 1;
+            } else app_->toast("SAVE FAILED");
+            savePending_ = false;
+        }
+        if (b.pressed(B_B)) savePending_ = false;
+        return;
+    }
+    int idx[PresetStore::MAX], n = filtered(idx, PresetStore::MAX);
+    if (b.repeat(B_LEFT)) { focus_ = 0; confirm_ = 0; }
+    if (b.repeat(B_RIGHT)) { focus_ = 1; confirm_ = 0; }
+    if (focus_ == 0) {
+        int old = catSel_;
+        if (b.repeat(B_DOWN) && catSel_ < PRESET_CATS) catSel_++;
+        if (b.repeat(B_UP) && catSel_ > 0) catSel_--;
+        if (old != catSel_) { preSel_ = 0; preFirst_ = 0; confirm_ = 0; n = filtered(idx, PresetStore::MAX); }
+    } else {
+        if (b.repeat(B_DOWN) && preSel_ < n - 1) { preSel_++; confirm_ = 0; }
+        if (b.repeat(B_UP) && preSel_ > 0) { preSel_--; confirm_ = 0; }
+    }
+    if (preSel_ >= n) preSel_ = n > 0 ? n - 1 : 0;
+    if (b.pressed(B_A) && n > 0) {  // wczytaj
+        if (ps.load(idx[preSel_], t)) {
+            snprintf(t.preset, sizeof t.preset, "%s", ps.name(idx[preSel_]));
+            page_ = pageCount(t.engine == ENG_WAVETABLE && t.alt) - 1;  // zostan na PRESETS (preset moze zmienic tryb)
+            app_->markDirty();
+            char m[48];
+            snprintf(m, sizeof m, "LOADED %s", ps.name(idx[preSel_]));
+            app_->toast(m);
+        }
+        focus_ = 1;
+    }
+    if (b.pressed(B_X)) {  // zapisz: najpierw nazwa
+        snprintf(saveName_, sizeof saveName_, "%s", t.preset[0] ? t.preset : "MY SOUND");
+        ed_.begin(saveName_);
+        confirm_ = 0;
+    }
+    if (b.pressed(B_B) && n > 0 && focus_ == 1) {  // usun (dwa razy)
+        if (confirm_ != 1) confirm_ = 1;
+        else {
+            char m[48];
+            snprintf(m, sizeof m, "DELETED %s", ps.name(idx[preSel_]));
+            ps.remove(idx[preSel_]);
+            app_->toast(m);
+            confirm_ = 0;
+        }
+    }
+    if (b.pressed(B_Y)) {  // INIT (dwa razy)
+        if (confirm_ != 2) confirm_ = 2;
+        else {
+            PresetStore::initInstrument(t);
+            snprintf(t.preset, sizeof t.preset, "INIT");
+            page_ = pageCount(false) - 1;
+            app_->markDirty();
+            app_->toast("INIT");
+            confirm_ = 0;
+        }
+    }
+}
+
+void SynthView::renderPresets(Canvas& c) {
+    PresetStore& ps = app_->presets();
+    const Track& t = app_->project().tracks[track_];
+    char b[96];
+    const float top = 56, rowH = 34;
+    const int rows = 10;
+    // lewa kolumna: kategorie z ikonami
+    for (int i = 0; i <= PRESET_CATS && i < rows; i++) {
+        float y = top + i * rowH;
+        bool sel = i == catSel_;
+        if (sel) {
+            if (focus_ == 0) c.fillRoundRect(20, y - 4, 206, rowH - 6, 6, rgb(pal::tan.r, pal::tan.g, pal::tan.b, 70));
+            else c.strokeRoundRect(20, y - 4, 206, rowH - 6, 6, 1.f, rgb(110, 85, 55));
+        }
+        Color col = sel ? rgb(245, 210, 160) : pal::tan;
+        drawCategoryIcon(c, i - 1, 30, y - 1, 20, col);
+        drawText(c, 62, y + 2, i == 0 ? "ALL" : presetCatName(i - 1), 14, 1.6f, col);
+    }
+    c.line(236, top - 6, 236, top + rows * rowH - 10, 1.5f, pal::steel);
+    // prawa kolumna: presety
+    int idx[PresetStore::MAX], n = filtered(idx, PresetStore::MAX);
+    if (preSel_ < preFirst_) preFirst_ = preSel_;
+    if (preSel_ >= preFirst_ + rows) preFirst_ = preSel_ - rows + 1;
+    if (!ps.ready()) drawText(c, 256, top + 2, "NO STORAGE", 14, 1.6f, pal::dim);
+    else if (n == 0) drawText(c, 256, top + 2, "EMPTY - X = SAVE", 14, 1.6f, pal::dim);
+    for (int r = 0; r < rows && preFirst_ + r < n; r++) {
+        int i = preFirst_ + r, pi = idx[i];
+        float y = top + r * rowH;
+        bool sel = i == preSel_;
+        bool cur = !strcmp(ps.name(pi), t.preset);
+        if (sel) {
+            if (focus_ == 1) c.fillRoundRect(248, y - 4, 372, rowH - 6, 6, rgb(255, 255, 255, 40));
+            else c.strokeRoundRect(248, y - 4, 372, rowH - 6, 6, 1.f, rgb(80, 80, 80));
+        }
+        drawCategoryIcon(c, ps.category(pi), 258, y - 1, 20, sel ? pal::white : rgb(130, 130, 130));
+        drawText(c, 290, y + 2, ps.name(pi), 14, 1.6f, sel ? pal::white : rgb(190, 190, 190));
+        if (cur) c.fillCircle(608, y + 9, 3.f, pal::green);  // aktualnie na sciezce
+    }
+    if (n > rows) {  // pasek przewijania
+        float h = rows * rowH - 10, th = h * rows / n, ty = top - 6 + (h - th) * preFirst_ / (float)(n - rows);
+        c.line(624, ty, 624, ty + th, 3.f, pal::white);
+    }
+    // okno zapisu
+    if (ed_.active() || savePending_) {
+        c.fillRoundRect(120, 150, 400, 150, 12, rgb(12, 12, 12));
+        c.strokeRoundRect(120, 150, 400, 150, 12, 1.5f, pal::steel);
+        int cat = catSel_ == 0 ? CAT_OTHER : catSel_ - 1;
+        snprintf(b, sizeof b, "SAVE PRESET IN %s", presetCatName(cat));
+        drawText(c, 140, 164, b, 10, 1.3f, pal::tan);
+        nameBox(c, 140, 202, 360, 50, "", saveName_, &ed_, pal::steel);
+        if (savePending_) {
+            bool exists = app_->presets().find(saveName_) >= 0;
+            drawText(c, 140, 270, exists ? "A = OVERWRITE   B = CANCEL" : "A = SAVE   B = CANCEL", 9, 1.2f,
+                     exists ? pal::red : pal::white);
+        } else drawText(c, 140, 270, "UP/DOWN = LETTER  LEFT/RIGHT = MOVE  A = DONE", 8, 1.1f, pal::dim);
+    }
+    // dol: pigulki akcji
+    const char* st;
+    if (confirm_ == 1) st = "PRESS B AGAIN TO DELETE";
+    else if (confirm_ == 2) st = "PRESS Y AGAIN TO RESET SOUND (INIT)";
+    else {
+        snprintf(b, sizeof b, "%s  -  %d PRESETS  -  LEFT/RIGHT = COLUMN  -  SELECT = NEXT PAGE",
+                 catSel_ == 0 ? "ALL" : presetCatName(catSel_ - 1), n);
+        st = b;
+    }
+    const char* labels[4] = {confirm_ == 1 ? "SURE?" : "DELETE", "LOAD", confirm_ == 2 ? "SURE?" : "INIT", "SAVE"};
+    const Color cols[4] = {pal::red, pal::pill, pal::tan, pal::steel};
+    const char keys[4] = {'B', 'A', 'Y', 'X'};
+    actionBar(c, labels, cols, keys, st);
 }
 
 }  // namespace dp

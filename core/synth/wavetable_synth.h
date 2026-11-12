@@ -26,6 +26,8 @@ public:
     // Obwiednia: czasy w sekundach, sustain 0..1. Czas 0 = natychmiast.
     void setEnvelope(float a, float d, float s, float r, float amount = 1.f);
     void setVolume(float v) { volT_ = v; }
+    // Glosy: MONO (stos nut, legato), portamento (s), unison (centy, tylko MONO: 6 glosow na jedna nute), AGE 0..1
+    void setVoice(bool mono, float glide, float unison, float age);
     // Tryb rozszerzony: wl/wyl + parametry (fala OSC 1 = galka 0; CUTOFF/RES = galki 2/3)
     void setAlt(bool on) { alt_ = on; }
     void setExt(int16_t wave2, int semi1, int semi2, float cents1, float cents2, float lvl1, float lvl2, float sub,
@@ -56,7 +58,11 @@ private:
         uint32_t inc = 0, age = 0;
         float env = 0;
         int pendPitch = -1;   // nuta czekajaca na koniec wyciszania (FADE)
-        float pendVel = 0;
+        float pendVel = 0, pendDet = 0;
+        float pitchCur = 60, pitchTgt = 60;  // wysokosc (poltony) — portamento
+        float det = 0;                       // rozstrojenie unison (centy)
+        float ageP = 0, ageTp = 0, ageC = 0, ageTc = 0;  // dryf AGE (losowy, powolny)
+        float statP = 0, statC = 0;                      // staly "charakter" glosu dla AGE
         int fstage = OFF;     // obwiednia filtra (licz. raz na blok)
         float fenv = 0;
         float gate = 0;       // 0..1, rampa 3 ms (dla AMOUNT obwiedni glosnosci)
@@ -85,7 +91,17 @@ private:
     float cents_[2] = {-4.f, 4.f}, lvl_[2] = {1.f, 1.f}, sub_ = 0.f, drive_ = 0.f;
     alignas(8) unsigned char sx_[VOICES][128];  // stan glosu trybu rozszerzonego
     void renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel);
-    void startVoice(int slot, int pitch, float vel);
+    void startVoice(int slot, int pitch, float vel, float det = 0.f);
+    bool mono_ = false;
+    float glide_ = 0, glideK_ = 1, unison_ = 0, age_ = 0;
+    int lastPitch_ = -1;
+    int stack_[16];
+    int nStack_ = 0;
+    uint32_t ageSeed_ = 12345;
+    float rnd();  // -1..1
+    void monoOn(int pitch, float vel);
+    void monoOff(int pitch);
+    void setPitchTarget(Voice& v, int pitch);
     float lfoValue(LfoState& l);
     void advanceLfo(int outFrames);  // LFO chodzi w czasie rzeczywistym, tez gdy nic nie gra
     float outRate_ = 48000.f, voiceRate_ = 96000.f;
@@ -95,7 +111,7 @@ private:
     float atk_ = 0, dec_k_ = 0, sus_ = 1, rel_k_ = 0;  // przyrosty/wspolczynniki na probke glosu
 
     int flush_ = 0;                                    // bloki ciszy do wyplukania decymatora
-    uint32_t age_ = 0;
+    uint32_t age_counter_ = 0;  // kolejnosc uderzen (kradziez najstarszego glosu)
     // decymator 2:1 (FIR jak w harnessie op1r, w double — wynik zgodny bit w bit z ich renderem)
     static const int TAPS = 63;
     double h_[TAPS], z_[2 * TAPS];  // bufor kolowy zapisany podwojnie: z_[zp_ + n] = n-ta najnowsza probka

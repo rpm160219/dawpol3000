@@ -53,6 +53,10 @@ struct Lfo {
     uint8_t div = 3;     // podzial (indeks, domyslnie 1/4)
 };
 
+// Kategorie presetow (ikona + nazwa w przegladarce)
+enum PresetCat : uint8_t { CAT_BASS, CAT_LEAD, CAT_PAD, CAT_KEYS, CAT_PLUCK, CAT_BELL, CAT_FX, CAT_OTHER, PRESET_CATS };
+const char* presetCatName(int c);
+
 struct Track {
     uint8_t type = TRACK_MIDI;
     uint8_t color = 0;       // indeks w pal::track (0..31)
@@ -70,6 +74,10 @@ struct Track {
     Lfo lfo[2];
     bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
     WtExt ext;
+    // Glosy: POLY/MONO, portamento (s), unison (rozstrojenie stosu w MONO, centy 0..50), AGE 0..1 (dryf "vintage")
+    bool mono = false;
+    float glide = 0.f, unison = 0.f, age = 0.f;
+    char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };
 

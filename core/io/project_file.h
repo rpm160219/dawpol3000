@@ -17,11 +17,17 @@
 //
 // Nieznane linie sa pomijane. Zapis atomowy: plik.tmp -> fsync -> rename.
 #pragma once
+#include <stdio.h>
 #include "seq/project.h"
 
 namespace dp {
 
 bool saveProjectFile(const Project& p, const char* path);
+// Wspolny zapis/odczyt instrumentu sciezki (projekt i presety): " engine ... k ... env ... voice ..."
+void writeInstrument(FILE* f, const Track& t);
+void parseInstrument(Track& t, char** tok, int n, int start);
+int tokenize(char* line, char** tok, int max);  // slowa i "napisy"
+const char* kv(char** tok, int n, int from, const char* key);
 bool loadProjectFile(Project& out, const char* path, char* err, int errLen);
 
 }  // namespace dp

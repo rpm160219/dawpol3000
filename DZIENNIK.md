@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 16:30
+**Zmienione:**
+- Strona **VOICE** w SYNTH: MODE (POLY/MONO — stos nut, legato bez ponownego startu obwiedni, powrót do trzymanej nuty), GLIDE (portamento 5 ms–2 s, POLY i MONO), UNISON (w MONO 6 głosów na nutę, rozstrojenie symetryczne do ±50 c), AGE (jak „vintage” Prophet-6/OB-6: stały charakter głosu + powolny losowy dryf strojenia i filtra) — `core/synth/wavetable_synth.*`, `core/seq/project.*`, `core/audio/engine.cpp`.
+- **PRESETS** (ostatnia strona Select): przeglądarka jak na podglądzie OP-1 Field (`ref/op1field_presets.jpg`) — kategorie z ikonami (ALL, BASS, LEAD, PAD, KEYS, PLUCK, BELL, FX, OTHER) i lista presetów; A wczytaj, X zapisz (nazwa + kategoria), B usuń, Y INIT; nazwa presetu w nagłówku — `core/io/preset_store.*` (nowy), `core/gfx/icons.*` (ikony kategorii), `core/ui/synth_view.*`, `core/ui/app.*`, `platform/main_sdl.cpp`; 11 presetów fabrycznych.
+- `core/io/project_file.*` — wspólny zapis instrumentu dla projektu i presetów (+ głosy, nazwa presetu); `core/io/fs.*` — lista plików; `core/ui/widgets.cpp` — przycinany podtytuł nagłówka.
+- Testy: oryginał 0 różnic; MONO legato/powrót, UNISON 6 głosów, GLIDE, AGE; obieg presetów (zapis w kategorii, wczytanie na inną ścieżkę, zapis w projekcie, usuwanie); presety fabryczne powstają na karcie konsoli.
+**Następny krok:** Patryk testuje.
+**Wymaga od Patryka:** tak — odsłuch i ocena przeglądarki presetów.
+
 ## 2026-11-12 15:00
 **Zmienione:** `core/synth/wavetable_synth.cpp` — przester nowych filtrów (WAVETABLE+) usunięty: zdjęte sztuczne wzmocnienia BP ×1,5 / HP ×2 sprzed soft clipa, skale wyjść LP12/BP/HP + kompensacja zależna od rezonansu dobrane pomiarem nasycenia soft clipa (teraz zawsze ≤ LP24 = oryginał), suma OSC1+OSC2+SUB normalizowana ponad poziom oryginału, głośność trybów wyrównana czysto za soft clipem (LP12 ×1,35, BP ×2, HP ×1,8; bez dobijania do granicy). Usunięty cel LFO W1+2 (WAVE już przesuwa obie fale; zapisane W1+2 wczytują się jako WAVE) — `core/seq/project.*`. Dokumentacja.
 Pomiar nasycenia wyjścia przy RES 30000 + SUB: przed — LP12 59%, BP 90%, HP 80% (LP24 29%); po — LP12 8,5%, BP 0%, HP 18% (LP24 25%). Oryginał nadal 0 różnic.

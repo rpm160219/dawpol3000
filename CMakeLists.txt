@@ -13,7 +13,7 @@ pkg_check_modules(SDL2 REQUIRED sdl2)
 
 add_library(dpcore STATIC
   core/gfx/canvas.cpp core/gfx/font.cpp core/gfx/icons.cpp
-  core/io/image_io.cpp core/io/fs.cpp core/io/project_file.cpp core/io/project_store.cpp
+  core/io/image_io.cpp core/io/fs.cpp core/io/project_file.cpp core/io/project_store.cpp core/io/preset_store.cpp
   core/synth/tone_synth.cpp core/synth/saw_synth.cpp core/synth/wavetable_synth.cpp
   core/seq/pattern.cpp core/seq/project.cpp core/seq/sequencer.cpp
   core/audio/engine.cpp

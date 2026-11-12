@@ -92,6 +92,16 @@ int headlessPng(const char* path, const char* screen) {
         app.roll.setSelectLayer(1);
         app.roll.selectRect(4, 63, 9, 72);
         app.roll.setCursor(9, 72);
+    } else if (!strcmp(screen, "presets") || !strcmp(screen, "voice")) {
+        app.openPresets("out/presets_demo");
+        Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "voice")) { tr.mono = true; tr.unison = 22; tr.glide = 0.08f; tr.age = 0.4f; }
+        app.markDirty();
+        app.openSynth(1);
+        idle(app);
+        app.synth.setPage(!strcmp(screen, "voice") ? 1 : 6);
+        if (!strcmp(screen, "presets")) { tap(app, B_LEFT); tap(app, B_DOWN); tap(app, B_DOWN); tap(app, B_DOWN); tap(app, B_RIGHT); tap(app, B_A); tap(app, B_DOWN); }
+        idle(app);
     } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv") || !strcmp(screen, "synthfenv") ||
                !strcmp(screen, "synthlfo") || !strcmp(screen, "synthext") || !strcmp(screen, "synthfilt")) {
         Track& tr = app.project().tracks[1];

@@ -26,5 +26,7 @@ void drawIcon(Canvas& c, IconId id, float x, float y, float s, Color col, float 
 void drawSynthIllustration(Canvas& c, float x, float y, float w, float h);
 void drawTapeIllustration(Canvas& c, float x, float y, float w, float h);
 void drawFloppyIllustration(Canvas& c, float x, float y, float w, float h);
+// Ikony kategorii presetow (cat = PresetCat, -1 = ALL), siatka 16x16 jak drawIcon
+void drawCategoryIcon(Canvas& c, int cat, float x, float y, float s, Color col, float lw = 1.5f);
 
 }  // namespace dp

@@ -9,10 +9,27 @@ namespace dp {
 
 static const int FORMAT_VERSION = 1;
 
+
 static void putStr(FILE* f, const char* s) {
     fputc('"', f);
     for (; *s; s++) if (*s != '"' && *s != '\n') fputc(*s, f);
     fputc('"', f);
+}
+
+void writeInstrument(FILE* f, const Track& t) {
+    fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f", t.engine == ENG_SAW ? "saw" : "wavetable", t.knob[0],
+            t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
+    fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
+            t.fenvAmt);
+    for (int l = 0; l < 2; l++)
+        fprintf(f, " lfo%d %d %.4f %.4f %d %d %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest,
+                t.lfo[l].sync, t.lfo[l].div);
+    const WtExt& x = t.ext;
+    fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
+            x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents, x.osc[1].level,
+            x.sub, x.fmode, x.drive);
+    fprintf(f, " voice %d %.4f %.3f %.4f", t.mono, t.glide, t.unison, t.age);
+    if (t.preset[0]) { fprintf(f, " preset "); putStr(f, t.preset); }
 }
 
 bool saveProjectFile(const Project& p, const char* path) {
@@ -28,20 +45,7 @@ bool saveProjectFile(const Project& p, const char* path) {
         fprintf(f, "track %s ", t.type == TRACK_MIDI ? "midi" : "audio");
         putStr(f, t.name);
         fprintf(f, " color %d vol %.3f mute %d solo %d last %d", t.color, t.volume, t.mute, t.solo, t.lastPattern);
-        if (t.type == TRACK_MIDI)
-            fprintf(f, " engine %s k %d %d %d %d env %.4f %.4f %.4f %.4f", t.engine == ENG_SAW ? "saw" : "wavetable",
-                    t.knob[0], t.knob[1], t.knob[2], t.knob[3], t.env[0], t.env[1], t.env[2], t.env[3]);
-        if (t.type == TRACK_MIDI) {
-            fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
-                    t.fenvAmt);
-            for (int l = 0; l < 2; l++)
-                fprintf(f, " lfo%d %d %.4f %.4f %d %d %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest,
-                        t.lfo[l].sync, t.lfo[l].div);
-            const WtExt& x = t.ext;
-            fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
-                    x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents,
-                    x.osc[1].level, x.sub, x.fmode, x.drive);
-        }
+        if (t.type == TRACK_MIDI) writeInstrument(f, t);
         fputc('\n', f);
     }
     fputc('\n', f);
@@ -67,7 +71,7 @@ bool saveProjectFile(const Project& p, const char* path) {
 }
 
 // Prosty tokenizer: slowa i "napisy w cudzyslowie".
-static int tokenize(char* line, char** tok, int max) {
+int tokenize(char* line, char** tok, int max) {
     int n = 0;
     char* p = line;
     while (*p && n < max) {
@@ -86,42 +90,16 @@ static int tokenize(char* line, char** tok, int max) {
 }
 
 // Wartosc po kluczu w linii "klucz wartosc klucz wartosc ...".
-static const char* kv(char** tok, int n, int from, const char* key) {
+const char* kv(char** tok, int n, int from, const char* key) {
     for (int i = from; i + 1 < n; i++) if (!strcmp(tok[i], key)) return tok[i + 1];
     return nullptr;
 }
 
-bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
-    FILE* f = fopen(path, "r");
-    if (!f) { snprintf(err, errLen, "CANNOT OPEN FILE"); return false; }
-    static Project p;  // duzy obiekt — nie na stosie
-    p = Project();
-    p.nTracks = p.nPatterns = p.nClips = 0;
-    char line[2048];
-    char* tok[128];
-    int version = 0, curPat = -1;
-    while (fgets(line, sizeof line, f)) {
-        int n = tokenize(line, tok, 128);
-        if (n == 0) continue;
-        const char* k = tok[0];
-        if (!strcmp(k, "dawpol") && n > 1) version = atoi(tok[1]);
-        else if (!strcmp(k, "name") && n > 1) snprintf(p.name, sizeof p.name, "%s", tok[1]);
-        else if (!strcmp(k, "bpm") && n > 1) p.bpm = (float)atof(tok[1]);
-        else if (!strcmp(k, "master") && n > 1) p.masterVol = (float)atof(tok[1]);
-        else if (!strcmp(k, "track") && n > 2 && p.nTracks < MAX_TRACKS) {
-            Track& t = p.tracks[p.nTracks++];
-            t = Track();
-            t.type = !strcmp(tok[1], "audio") ? TRACK_AUDIO : TRACK_MIDI;
-            snprintf(t.name, sizeof t.name, "%s", tok[2]);
-            const char* v;
-            if ((v = kv(tok, n, 3, "color"))) t.color = (uint8_t)(atoi(v) % pal::TRACK_COLORS);
-            if ((v = kv(tok, n, 3, "vol"))) t.volume = (float)atof(v);
-            if ((v = kv(tok, n, 3, "mute"))) t.mute = atoi(v) != 0;
-            if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
-            if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
-            if ((v = kv(tok, n, 3, "engine"))) t.engine = !strcmp(v, "saw") ? ENG_SAW : ENG_WAVETABLE;
-            // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
-            for (int i = 3; i < n; i++) {
+void parseInstrument(Track& t, char** tok, int n, int start) {
+    const char* v;
+    if ((v = kv(tok, n, start, "engine"))) t.engine = !strcmp(v, "saw") ? ENG_SAW : ENG_WAVETABLE;
+    // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
+    for (int i = start; i < n; i++) {
                 const int left = n - 1 - i;  // ile tokenow po kluczu
                 if (!strcmp(tok[i], "k") && left >= 4)
                     for (int j = 0; j < 4; j++) { int x = atoi(tok[i + 1 + j]); t.knob[j] = (int16_t)(x < 0 ? 0 : x > 32767 ? 32767 : x); }
@@ -158,7 +136,45 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
                 if (!strcmp(tok[i], "sub") && left >= 1) t.ext.sub = (float)atof(tok[i + 1]);
                 if (!strcmp(tok[i], "fmode") && left >= 1) t.ext.fmode = (uint8_t)(atoi(tok[i + 1]) % FLT_MODES);
                 if (!strcmp(tok[i], "drv") && left >= 1) t.ext.drive = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "preset") && left >= 1) snprintf(t.preset, sizeof t.preset, "%s", tok[i + 1]);
+                if (!strcmp(tok[i], "voice") && left >= 4) {
+                    t.mono = atoi(tok[i + 1]) != 0;
+                    t.glide = (float)atof(tok[i + 2]);
+                    t.unison = (float)atof(tok[i + 3]);
+                    t.age = (float)atof(tok[i + 4]);
+                }
             }
+}
+
+bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
+    FILE* f = fopen(path, "r");
+    if (!f) { snprintf(err, errLen, "CANNOT OPEN FILE"); return false; }
+    static Project p;  // duzy obiekt — nie na stosie
+    p = Project();
+    p.nTracks = p.nPatterns = p.nClips = 0;
+    char line[2048];
+    char* tok[128];
+    int version = 0, curPat = -1;
+    while (fgets(line, sizeof line, f)) {
+        int n = tokenize(line, tok, 128);
+        if (n == 0) continue;
+        const char* k = tok[0];
+        if (!strcmp(k, "dawpol") && n > 1) version = atoi(tok[1]);
+        else if (!strcmp(k, "name") && n > 1) snprintf(p.name, sizeof p.name, "%s", tok[1]);
+        else if (!strcmp(k, "bpm") && n > 1) p.bpm = (float)atof(tok[1]);
+        else if (!strcmp(k, "master") && n > 1) p.masterVol = (float)atof(tok[1]);
+        else if (!strcmp(k, "track") && n > 2 && p.nTracks < MAX_TRACKS) {
+            Track& t = p.tracks[p.nTracks++];
+            t = Track();
+            t.type = !strcmp(tok[1], "audio") ? TRACK_AUDIO : TRACK_MIDI;
+            snprintf(t.name, sizeof t.name, "%s", tok[2]);
+            const char* v;
+            if ((v = kv(tok, n, 3, "color"))) t.color = (uint8_t)(atoi(v) % pal::TRACK_COLORS);
+            if ((v = kv(tok, n, 3, "vol"))) t.volume = (float)atof(v);
+            if ((v = kv(tok, n, 3, "mute"))) t.mute = atoi(v) != 0;
+            if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
+            if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
+            parseInstrument(t, tok, n, 3);
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {
             curPat = p.nPatterns++;
             Pattern& pt = p.patterns[curPat];

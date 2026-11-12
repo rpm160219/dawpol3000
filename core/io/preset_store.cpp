@@ -1,0 +1,176 @@
+#include "io/preset_store.h"
+#include "io/fs.h"
+#include "io/project_file.h"
+#include "io/project_store.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+namespace dp {
+
+void PresetStore::initInstrument(Track& t) {
+    Track d;
+    t.engine = d.engine;
+    memcpy(t.knob, d.knob, sizeof t.knob);
+    memcpy(t.env, d.env, sizeof t.env);
+    t.envAmt = d.envAmt;
+    memcpy(t.fenv, d.fenv, sizeof t.fenv);
+    t.fenvAmt = d.fenvAmt;
+    t.lfo[0] = d.lfo[0];
+    t.lfo[1] = d.lfo[1];
+    t.alt = d.alt;
+    t.ext = d.ext;
+    t.mono = d.mono;
+    t.glide = d.glide;
+    t.unison = d.unison;
+    t.age = d.age;
+}
+
+void PresetStore::init(const char* root) {
+    snprintf(root_, sizeof root_, "%s", root);
+    snprintf(dir_, sizeof dir_, "%s/wavetable", root_);
+    fs::makeDirs(dir_);
+    if (refresh() == 0) { writeFactory(); refresh(); }
+}
+
+int PresetStore::refresh() {
+    if (!ready()) return n_ = 0;
+    int nf = fs::listFiles(dir_, ".dpr", files_, MAX);
+    n_ = 0;
+    for (int i = 0; i < nf; i++) {
+        char path[400], line[256];
+        snprintf(path, sizeof path, "%s/%s.dpr", dir_, files_[i]);
+        FILE* f = fopen(path, "r");
+        if (!f) continue;
+        char nm[32];
+        snprintf(nm, sizeof nm, "%s", files_[i]);
+        int cat = CAT_OTHER;
+        while (fgets(line, sizeof line, f)) {
+            char* tok[8];
+            int n = tokenize(line, tok, 8);
+            if (n >= 2 && !strcmp(tok[0], "name")) snprintf(nm, sizeof nm, "%s", tok[1]);
+            if (n >= 2 && !strcmp(tok[0], "category"))
+                for (int c = 0; c < PRESET_CATS; c++) if (!strcmp(tok[1], presetCatName(c))) cat = c;
+            if (n >= 1 && !strcmp(tok[0], "inst")) break;
+        }
+        fclose(f);
+        if (n_ != i) memcpy(files_[n_], files_[i], 32);
+        snprintf(names_[n_], 32, "%s", nm);
+        cats_[n_] = (uint8_t)cat;
+        n_++;
+    }
+    return n_;
+}
+
+int PresetStore::find(const char* name) const {
+    char a[64], b[64];
+    ProjectStore::folderName(name, a, sizeof a);
+    for (int i = 0; i < n_; i++) {
+        ProjectStore::folderName(names_[i], b, sizeof b);
+        if (!strcmp(a, b)) return i;
+    }
+    return -1;
+}
+
+bool PresetStore::load(int i, Track& t) const {
+    if (i < 0 || i >= n_) return false;
+    char path[400];
+    snprintf(path, sizeof path, "%s/%s.dpr", dir_, files_[i]);
+    FILE* f = fopen(path, "r");
+    if (!f) return false;
+    static char line[2048];
+    char* tok[128];
+    bool ok = false;
+    while (fgets(line, sizeof line, f)) {
+        int n = tokenize(line, tok, 128);
+        if (n >= 1 && !strcmp(tok[0], "inst")) {
+            Track tmp = t;
+            initInstrument(tmp);  // brakujace pola = INIT
+            parseInstrument(tmp, tok, n, 1);
+            t = tmp;
+            ok = true;
+        }
+    }
+    fclose(f);
+    return ok;
+}
+
+bool PresetStore::save(const Track& t, const char* name, int category) {
+    if (!ready()) return false;
+    char fn[64], path[400], tmp[420];
+    ProjectStore::folderName(name, fn, sizeof fn);
+    snprintf(path, sizeof path, "%s/%s.dpr", dir_, fn);
+    snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    FILE* f = fopen(tmp, "w");
+    if (!f) return false;
+    fprintf(f, "dawpol-preset 1\nname \"%s\"\ncategory %s\ninst", name, presetCatName(category));
+    writeInstrument(f, t);
+    fputc('\n', f);
+    bool ok = fflush(f) == 0 && fsync(fileno(f)) == 0;
+    ok &= fclose(f) == 0;
+    if (!ok || rename(tmp, path) != 0) { unlink(tmp); return false; }
+    refresh();
+    return true;
+}
+
+bool PresetStore::remove(int i) {
+    if (i < 0 || i >= n_) return false;
+    char path[400];
+    snprintf(path, sizeof path, "%s/%s.dpr", dir_, files_[i]);
+    bool ok = unlink(path) == 0;
+    refresh();
+    return ok;
+}
+
+// Zestaw fabryczny (zapisywany raz, gdy katalog jest pusty)
+void PresetStore::writeFactory() {
+    struct F { const char* name; int cat; void (*set)(Track&); };
+    static const F list[] = {
+        {"INIT", CAT_OTHER, [](Track&) {}},
+        {"SUB BASS", CAT_BASS, [](Track& t) {
+             t.alt = true; t.knob[0] = 9400; t.knob[2] = 9000; t.knob[3] = 6000; t.ext.osc[1].semi = -12;
+             t.ext.osc[1].level = 0.6f; t.ext.sub = 0.7f; t.mono = true; t.glide = 0.04f;
+             t.env[0] = 0.002f; t.env[1] = 0.3f; t.env[2] = 0.7f; t.env[3] = 0.08f; }},
+        {"ACID", CAT_BASS, [](Track& t) {
+             t.knob[0] = 14000; t.knob[1] = 0; t.knob[2] = 5000; t.knob[3] = 26000; t.mono = true; t.glide = 0.09f;
+             t.fenv[0] = 0.002f; t.fenv[1] = 0.18f; t.fenv[2] = 0.f; t.fenv[3] = 0.1f; t.fenvAmt = 0.55f;
+             t.env[1] = 0.25f; t.env[2] = 0.6f; t.env[3] = 0.05f; }},
+        {"SUPERSAW", CAT_LEAD, [](Track& t) {
+             t.alt = true; t.knob[0] = 14000; t.knob[2] = 26000; t.knob[3] = 4000; t.ext.osc[1].wave = 14000;
+             t.mono = true; t.unison = 22.f; t.glide = 0.03f; t.env[2] = 0.9f; t.env[3] = 0.25f; }},
+        {"VOCAL LEAD", CAT_LEAD, [](Track& t) {
+             t.knob[0] = 28000; t.knob[1] = 6000; t.knob[2] = 22000; t.knob[3] = 12000; t.mono = true; t.glide = 0.06f;
+             t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 5.5f; t.lfo[0].depth = 0.012f; t.lfo[0].dest = DEST_PITCH; }},
+        {"WARM PAD", CAT_PAD, [](Track& t) {
+             t.knob[0] = 4700; t.knob[1] = 22000; t.knob[2] = 16000; t.knob[3] = 6000; t.env[0] = 0.6f;
+             t.env[1] = 1.5f; t.env[2] = 0.8f; t.env[3] = 1.5f; t.lfo[0].shape = LFO_SINE; t.lfo[0].rate = 0.3f;
+             t.lfo[0].depth = 0.15f; t.lfo[0].dest = DEST_WAVE; t.age = 0.3f; }},
+        {"OLD PROPHET", CAT_PAD, [](Track& t) {
+             t.alt = true; t.knob[0] = 14000; t.knob[2] = 15000; t.knob[3] = 9000; t.ext.osc[1].wave = 18700;
+             t.ext.osc[0].cents = -7; t.ext.osc[1].cents = 7; t.env[0] = 0.25f; t.env[1] = 1.f; t.env[2] = 0.7f;
+             t.env[3] = 0.8f; t.fenv[0] = 0.3f; t.fenv[1] = 1.2f; t.fenv[2] = 0.2f; t.fenv[3] = 0.8f; t.fenvAmt = 0.3f;
+             t.age = 0.7f; }},
+        {"GLASS KEYS", CAT_KEYS, [](Track& t) {
+             t.knob[0] = 23400; t.knob[1] = 4000; t.knob[2] = 24000; t.knob[3] = 8000; t.env[0] = 0.002f;
+             t.env[1] = 0.9f; t.env[2] = 0.25f; t.env[3] = 0.5f; }},
+        {"PLUCK", CAT_PLUCK, [](Track& t) {
+             t.knob[0] = 14000; t.knob[2] = 6000; t.knob[3] = 10000; t.env[0] = 0.001f; t.env[1] = 0.35f;
+             t.env[2] = 0.f; t.env[3] = 0.25f; t.fenv[0] = 0.001f; t.fenv[1] = 0.15f; t.fenv[2] = 0.f; t.fenv[3] = 0.2f;
+             t.fenvAmt = 0.6f; }},
+        {"DIGI BELL", CAT_BELL, [](Track& t) {
+             t.alt = true; t.knob[0] = 32767; t.knob[2] = 28000; t.ext.osc[1].wave = 0; t.ext.osc[1].semi = 19;
+             t.ext.osc[1].level = 0.5f; t.env[0] = 0.001f; t.env[1] = 1.8f; t.env[2] = 0.f; t.env[3] = 1.5f; }},
+        {"WOBBLE", CAT_FX, [](Track& t) {
+             t.knob[0] = 16000; t.knob[2] = 10000; t.knob[3] = 20000; t.mono = true; t.lfo[0].shape = LFO_SINE;
+             t.lfo[0].sync = true; t.lfo[0].div = 5; t.lfo[0].depth = 0.45f; t.lfo[0].dest = DEST_CUTOFF; }},
+    };
+    for (const F& p : list) {
+        Track t;
+        initInstrument(t);
+        p.set(t);
+        save(t, p.name, p.cat);
+    }
+}
+
+}  // namespace dp

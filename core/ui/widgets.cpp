@@ -80,7 +80,10 @@ void screenHeader(Canvas& c, int icon, Color iconCol, const char* title, const c
     char b[32];
     drawIcon(c, (IconId)icon, 18, 12, 18, iconCol);
     drawText(c, 44, 15, title, 13, 1.5f, pal::white);
-    if (sub && *sub) drawText(c, 44 + textWidth(title, 13) + 12, 17, sub, 10, 1.3f, subCol);
+    if (sub && *sub) {  // podtytul przyciety tak, by nie wchodzil na BAR
+        float sx = 44 + textWidth(title, 13) + 12;
+        drawTextFit(c, sx, 17, sub, 10, 1.3f, subCol, 262 - sx);
+    }
     snprintf(b, sizeof b, "BAR %d.%d", bar, beat);
     drawText(c, 320, 17, b, 11, 1.3f, playing ? pal::white : pal::dim, ALIGN_CENTER);
     drawIcon(c, playing ? ICON_PLAY : ICON_STOP, 418, 13, 16, playing ? pal::green : pal::dim);

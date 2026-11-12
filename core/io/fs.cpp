@@ -73,5 +73,23 @@ int listDirs(const char* dir, char (*names)[32], int max) {
     return n;
 }
 
+int listFiles(const char* dir, const char* ext, char (*names)[32], int max) {
+    DIR* d = opendir(dir);
+    if (!d) return 0;
+    int n = 0;
+    size_t el = strlen(ext);
+    struct dirent* e;
+    while ((e = readdir(d)) && n < max) {
+        size_t l = strlen(e->d_name);
+        if (e->d_name[0] == '.' || l <= el || l - el >= 32 || strcmp(e->d_name + l - el, ext)) continue;
+        memcpy(names[n], e->d_name, l - el);
+        names[n][l - el] = 0;
+        n++;
+    }
+    closedir(d);
+    qsort(names, n, 32, [](const void* a, const void* b) { return strcmp((const char*)a, (const char*)b); });
+    return n;
+}
+
 }  // namespace fs
 }  // namespace dp

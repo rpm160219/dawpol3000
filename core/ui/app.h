@@ -2,6 +2,7 @@
 // publikuje migawke projektu do silnika audio. Zakladki (L2/R2): PROJECT | ARRANGE | PIANO ROLL | SYNTH.
 #pragma once
 #include "audio/engine.h"
+#include "io/preset_store.h"
 #include "io/project_store.h"
 #include "seq/project.h"
 #include "seq/undo_stack.h"
@@ -30,6 +31,8 @@ public:
     void redo();
     void toast(const char* msg);       // krotki komunikat na srodku dolu ekranu
     ProjectStore& store() { return store_; }
+    PresetStore& presets() { return presets_; }
+    void openPresets(const char* root) { presets_.init(root); }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
     bool saveProject();
@@ -59,6 +62,7 @@ private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
     ProjectStore store_;
+    PresetStore presets_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia
