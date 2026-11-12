@@ -96,7 +96,9 @@ int headlessPng(const char* path, const char* screen) {
                !strcmp(screen, "synthlfo")) {
         Track& tr = app.project().tracks[1];
         if (!strcmp(screen, "synthfenv")) { tr.fenv[1] = 0.6f; tr.fenv[2] = 0.3f; tr.fenv[3] = 0.8f; tr.fenvAmt = 0.5f; }
-        if (!strcmp(screen, "synthlfo")) { tr.lfo[0].depth = 0.35f; tr.lfo[0].rate = 3.f; tr.lfo[0].dest = DEST_WAVE; }
+        if (!strcmp(screen, "synthlfo")) {
+            tr.lfo[0].depth = 0.35f; tr.lfo[0].dest = DEST_WAVE; tr.lfo[0].sync = true; tr.lfo[0].div = 8;  // 1/16T
+        }
         app.markDirty();
         app.openSynth(1);
         idle(app);

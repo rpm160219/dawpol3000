@@ -21,6 +21,8 @@ public:
     bool playing() const { return playing_; }
     Mode mode() const { return mode_; }
     int tick() const { return tick_; }  // pozycja w petli (song: od poczatku utworu)
+    float tempo() const { return bpm_; }
+    double beatPos() const { return (tick_ + (spt_ > 0 ? 1.0 - untilTick_ / spt_ : 0.0)) / PPQ; }  // cwiercnuty
 
     int samplesToNextTick() const;
     void advance(int n, NoteSink** sinks);

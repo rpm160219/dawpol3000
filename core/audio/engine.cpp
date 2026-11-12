@@ -38,7 +38,9 @@ void AudioEngine::applyProject() {
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
         wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], t.fenvAmt);
-        for (int l = 0; l < 2; l++) wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest);
+        for (int l = 0; l < 2; l++)
+            wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest, t.lfo[l].sync,
+                          lfoDivBeats(t.lfo[l].div));
     }
     applyMutes();
     master_ = p.masterVol;
@@ -72,8 +74,11 @@ void AudioEngine::process(float* out, int frames) {
     while (pos < frames) {
         int n = seq_.samplesToNextTick();
         if (n > frames - pos) n = frames - pos;
+        const bool pl = seq_.playing();
+        const double bp = seq_.beatPos();
         for (int i = 0; i < MAX_TRACKS; i++) {
             synth_[i].render(out + pos * 2, n);
+            wt_[i].setTransport(pl, bp, seq_.tempo());
             wt_[i].render(out + pos * 2, n);
         }
         seq_.advance(n, sinks_);

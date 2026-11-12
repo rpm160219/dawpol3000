@@ -25,8 +25,10 @@ public:
     void setVolume(float v) { volT_ = v; }
     // Obwiednia filtra: a, d, r w s; s 0..1; amount -1..1 (ulamek zakresu CUTOFF)
     void setFilterEnv(float a, float d, float s, float r, float amount);
-    // LFO i (0/1): ksztalt (LfoShape), Hz, glebokosc 0..1, cel (LfoDest)
-    void setLfo(int i, int shape, float rate, float depth, int dest);
+    // LFO i (0/1): ksztalt (LfoShape), Hz, glebokosc 0..1, cel (LfoDest); sync: cykl = beats cwiercnut
+    void setLfo(int i, int shape, float rate, float depth, int dest, bool sync = false, float beats = 1.f);
+    // Transport (watek audio, przed kazdym odcinkiem): czy gra, pozycja w cwiercnutach, tempo
+    void setTransport(bool playing, double beatPos, float bpm) { tPlaying_ = playing; tBeat_ = beatPos; tBpm_ = bpm; }
     void noteOn(int pitch, float vel) override;
     void noteOff(int pitch) override;
     void allOff() override;
@@ -52,7 +54,18 @@ private:
         float fenv = 0;
         float gate = 0;       // 0..1, rampa 3 ms (dla AMOUNT obwiedni glosnosci)
     };
-    struct LfoState { int shape = 0, dest = 2; float rate = 2.f, depth = 0.f; double ph = 0; float rnd = 0; uint32_t seed = 22222; };
+    struct LfoState {
+        int shape = 0, dest = 2;
+        float rate = 2.f, depth = 0.f, beats = 1.f;
+        bool sync = false;
+        double ph = 0;
+        float rnd = 0, out = 0;  // out = wartosc wygladzona (~3 ms), bez skokow na krawedziach SAW/SQR
+        uint32_t seed = 22222;
+    };
+    bool tPlaying_ = false;
+    double tBeat_ = 0;
+    float tBpm_ = 120.f;
+    float tremPrev_ = 1.f;  // tremolo z poprzedniego bloku (interpolacja probka po probce)
     LfoState lfo_[2];
     float fA_ = 0, fD_ = 0, fS_ = 0, fR_ = 1, fAmt_ = 0;  // obwiednia filtra (przyrost/wspolczynnik na blok)
     float envAmt_ = 1.f, gateK_ = 0;

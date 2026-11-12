@@ -19,10 +19,16 @@ enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LF
 enum LfoDest : uint8_t { DEST_WAVE, DEST_DETUNE, DEST_CUTOFF, DEST_RESO, DEST_PITCH, DEST_VOLUME, LFO_DESTS };
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
+// Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
+static const int LFO_DIVS = 15;
+const char* lfoDivName(int i);
+float lfoDivBeats(int i);  // dlugosc cyklu w cwiercnutach
 struct Lfo {
     uint8_t shape = LFO_SINE, dest = DEST_CUTOFF;
-    float rate = 2.f;    // Hz (0.05 .. 20)
+    float rate = 2.f;    // Hz (0.05 .. 20) gdy bez synchronizacji
     float depth = 0.f;   // 0..1
+    bool sync = false;   // synchronizacja z tempem (faza przypieta do pozycji w utworze)
+    uint8_t div = 3;     // podzial (indeks, domyslnie 1/4)
 };
 
 struct Track {
@@ -35,7 +41,7 @@ struct Track {
     uint8_t engine = ENG_WAVETABLE;
     int16_t knob[4] = {16384, 8192, 20000, 8192};
     float env[4] = {0.005f, 0.4f, 0.75f, 0.3f};
-    float envAmt = 1.f;   // jak mocno obwiednia ksztaltuje glosnosc: 1 = normalnie, 0 = stala glosnosc przy trzymaniu
+    float envAmt = 1.f;   // -1..1: jak obwiednia ksztaltuje glosnosc (1 = normalnie, 0 = stala, ujemne = odwrocona)
     // Obwiednia filtra: A, D, S, R + AMOUNT (-1..1, ulamek zakresu CUTOFF)
     float fenv[4] = {0.005f, 0.3f, 0.f, 0.3f};
     float fenvAmt = 0.f;

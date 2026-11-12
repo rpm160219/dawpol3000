@@ -1,5 +1,15 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 12:20
+**Zmienione:**
+- `core/seq/project.*` — synchronizacja LFO (`sync`, `div`), 15 podziałów 1/1 … 1/128 z triolami; AMOUNT obwiedni głośności −1..1; `core/io/project_file.*` — zapis/odczyt (zgodnie wstecz).
+- `core/synth/wavetable_synth.*` — LFO zsynchronizowane: przy grającym utworze faza = pozycja w ćwierćnutach / długość cyklu (przypięte do bitu), bez transportu biegnie z częstotliwością z tempa; wygładzenie LFO ~3 ms i tremolo interpolowane próbka po próbce (koniec kliknięć przy SAW/SQR → VOL); AMOUNT głośności ujemny = obwiednia odwrócona.
+- `core/seq/sequencer.h` — `beatPos()`, `tempo()`; `core/audio/engine.cpp` — przekazywanie transportu do instrumentów przed każdym odcinkiem.
+- `core/ui/synth_view.*` — L3 na stronach LFO: SYNC/FREE (RATE → podział, etykieta SYNC), AMOUNT ±100 w AMP ENV.
+- Testy: skoki przy SAW/SQR na VOL na poziomie czystego sinusa (brak kliknięć); faza LFO 1/4 zgodna z pozycją w takcie; zgodność z oryginałem 0 różnic.
+**Następny krok:** Patryk testuje.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 11:30
 **Zmienione (przegląd kodu obwiedni i LFO po uwadze Patryka):**
 - `core/synth/wavetable_synth.*` — LFO biegnie w czasie rzeczywistym także w ciszy (wcześniej stał między frazami, więc każda fraza „startowała” go od miejsca, gdzie skończyła poprzednia); SUSTAIN śledzi gałkę w trakcie nuty; szybkie powtórzenie tej samej nuty w trakcie wyciszania nie zajmuje drugiego głosu; obwiednia filtra ma własne RELEASE; AMOUNT obwiedni głośności (0 = stała głośność przy trzymaniu, rampa bramki 3 ms); ekran dostaje modulację ostatnio uderzonej nuty (zamiast „najgłośniejszej”, która skakała między głosami).

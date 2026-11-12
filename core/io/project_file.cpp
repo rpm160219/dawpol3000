@@ -35,7 +35,8 @@ bool saveProjectFile(const Project& p, const char* path) {
             fprintf(f, " envamt %.4f fenv %.4f %.4f %.4f %.4f %.4f", t.envAmt, t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3],
                     t.fenvAmt);
             for (int l = 0; l < 2; l++)
-                fprintf(f, " lfo%d %d %.4f %.4f %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest);
+                fprintf(f, " lfo%d %d %.4f %.4f %d %d %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest,
+                        t.lfo[l].sync, t.lfo[l].div);
         }
         fputc('\n', f);
     }
@@ -134,6 +135,10 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
                     L.rate = (float)atof(tok[i + 2]);
                     L.depth = (float)atof(tok[i + 3]);
                     L.dest = (uint8_t)(atoi(tok[i + 4]) % LFO_DESTS);
+                    if (i + 6 < n && tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9') {  // sync, podzial (nowsze zapisy)
+                        L.sync = atoi(tok[i + 5]) != 0;
+                        L.div = (uint8_t)(atoi(tok[i + 6]) % LFO_DIVS);
+                    }
                 }
             }
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {

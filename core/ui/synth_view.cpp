@@ -36,7 +36,10 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     AudioEngine* e = app_->engine();
 
     if (b.pressed(B_SELECT) && !b.down(B_MENU)) page_ = (page_ + 1) % PAGES;
-    if (b.pressed(B_L3)) alt_ = !alt_;
+    if (b.pressed(B_L3)) {
+        if (page_ >= 3) { Lfo& L = t.lfo[page_ - 3]; L.sync = !L.sync; app_->markDirty(); }
+        else alt_ = !alt_;
+    }
     if (b.pressed(B_START)) app_->togglePlaySong();
 
     // granie nut z przyciskow
@@ -74,8 +77,9 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             if (d == 0.f) break;
             float* ev = page_ == 1 ? t.env : t.fenv;
             if (i == 3 && alt_) {
-                if (page_ == 1) t.envAmt = clamp01(t.envAmt + d);
-                else { float a = t.fenvAmt + d * 2.f; t.fenvAmt = a < -1 ? -1 : (a > 1 ? 1 : a); }
+                float& amt = page_ == 1 ? t.envAmt : t.fenvAmt;
+                float a = amt + d * 2.f;
+                amt = a < -1 ? -1 : (a > 1 ? 1 : a);
             } else if (i == 2) ev[2] = clamp01(ev[2] + d);
             else { float k = clamp01(envKnob(ev[i]) + d); ev[i] = k <= 0 ? 0.f : envTime(k); }
             changed = true;
@@ -83,7 +87,14 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         default: {  // LFO 1 / 2: RATE DEPTH SHAPE DEST
             Lfo& L = t.lfo[page_ - 3];
-            if (i == 0 && d != 0.f) {
+            if (i == 0 && L.sync) {  // podzial taktu, skokowo
+                int st = stepDiv_[page_ - 3].steps(ax, dt, 5.f);
+                if (st) {
+                    int dv = L.div + st;
+                    L.div = (uint8_t)(dv < 0 ? 0 : (dv >= LFO_DIVS ? LFO_DIVS - 1 : dv));
+                    changed = true;
+                }
+            } else if (i == 0 && d != 0.f) {
                 float k = clamp01(log10f(L.rate / 0.05f) / log10f(400.f) + d);  // 0.05 .. 20 Hz
                 L.rate = 0.05f * powf(400.f, k);
                 changed = true;
@@ -153,6 +164,10 @@ void SynthView::render(Canvas& c) {
     drawText(c, 86, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
     if (page_ == 1 || page_ == 2)
         drawText(c, 20, 384, alt_ ? "L3 = RELEASE" : "L3 = AMOUNT", 7, 1.f, alt_ ? pal::red : rgb(80, 80, 80));
+    if (page_ >= 3) {
+        bool sy = t.lfo[page_ - 3].sync;
+        drawText(c, 20, 384, sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM", 7, 1.f, sy ? pal::blue : rgb(80, 80, 80));
+    }
 
     // prawy dol: grafika strony (obwiednie / LFO)
     if (page_ == 2) {
@@ -184,7 +199,7 @@ void SynthView::render(Canvas& c) {
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
     } else {
         drawEnvelope(c, t.env, page_ == 1, 400, 342, 200, 46);
-        snprintf(b, sizeof b, "AMOUNT %d%%", (int)lrintf(t.envAmt * 100));
+        snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.envAmt * 100));
         drawText(c, 600, 394, b, 8, 1.1f, page_ == 1 ? pal::white : pal::dim, ALIGN_RIGHT);
     }
 
@@ -213,8 +228,9 @@ void SynthView::render(Canvas& c) {
             if (i == 2) { snprintf(v[i], 16, "%d", (int)lrintf(ev[2] * 100)); pos[i] = ev[2]; }
             else if (i == 3 && alt_) {
                 labels[i] = "AMOUNT";
-                if (page_ == 1) { snprintf(v[i], 16, "%d", (int)lrintf(t.envAmt * 100)); pos[i] = t.envAmt; }
-                else { snprintf(v[i], 16, "%+d", (int)lrintf(t.fenvAmt * 100)); pos[i] = 0.5f + t.fenvAmt * 0.5f; }
+                float amt = page_ == 1 ? t.envAmt : t.fenvAmt;
+                snprintf(v[i], 16, "%+d", (int)lrintf(amt * 100));
+                pos[i] = 0.5f + amt * 0.5f;
             } else {
                 float s = ev[i];
                 if (s < 1.f) snprintf(v[i], 16, "%.0fMS", s * 1000.f);
@@ -226,12 +242,14 @@ void SynthView::render(Canvas& c) {
         const Lfo& L = t.lfo[page_ - 3];
         static const char* LL[4] = {"RATE", "DEPTH", "SHAPE", "DEST"};
         for (int i = 0; i < 4; i++) labels[i] = LL[i];
-        if (L.rate < 1.f) snprintf(v[0], 16, "%.2fHZ", L.rate);
+        if (L.sync) labels[0] = "SYNC";
+        if (L.sync) snprintf(v[0], 16, "%s", lfoDivName(L.div));
+        else if (L.rate < 1.f) snprintf(v[0], 16, "%.2fHZ", L.rate);
         else snprintf(v[0], 16, "%.1fHZ", L.rate);
         snprintf(v[1], 16, "%d", (int)lrintf(L.depth * 100));
         snprintf(v[2], 16, "%s", lfoShapeName(L.shape));
         snprintf(v[3], 16, "%s", lfoDestName(L.dest));
-        pos[0] = log10f(L.rate / 0.05f) / log10f(400.f);
+        pos[0] = L.sync ? L.div / (float)(LFO_DIVS - 1) : log10f(L.rate / 0.05f) / log10f(400.f);
         pos[1] = L.depth;
         pos[2] = L.shape / (float)(LFO_SHAPES - 1);
         pos[3] = L.dest / (float)(LFO_DESTS - 1);

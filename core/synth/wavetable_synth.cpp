@@ -46,8 +46,10 @@ void WavetableSynth::setFilterEnv(float a, float d, float s, float r, float amou
     fAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
 }
 
-void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest) {
+void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest, bool sync, float beats) {
     if (i < 0 || i > 1) return;
+    lfo_[i].sync = sync;
+    lfo_[i].beats = beats > 0 ? beats : 1.f;
     lfo_[i].shape = shape;
     lfo_[i].rate = rate;
     lfo_[i].depth = depth < 0 ? 0 : (depth > 1 ? 1 : depth);
@@ -55,15 +57,25 @@ void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest)
 }
 
 // Przesuniecie faz LFO o czas (wywolywane dla kazdej porcji wyjscia — takze w ciszy).
+// Synchronizowane LFO przy grajacym utworze: faza = pozycja w utworze / dlugosc cyklu (przypieta do bitu).
+// Bez transportu (albo bez sync): swobodny bieg, przy sync z czestotliwoscia wynikajaca z tempa.
 void WavetableSynth::advanceLfo(int outFrames) {
     for (auto& l : lfo_) {
-        l.ph += l.rate * outFrames / outRate_;
-        if (l.ph >= 1.0) {
+        double old = l.ph;
+        if (l.sync && tPlaying_) {
+            double c = tBeat_ / l.beats;
+            l.ph = c - floor(c);
+        } else {
+            double hz = l.sync ? tBpm_ / 60.0 / l.beats : l.rate;
+            l.ph += hz * outFrames / outRate_;
             l.ph -= floor(l.ph);
-            l.seed = l.seed * 1664525u + 1013904223u;  // nowa wartosc losowa co cykl
+        }
+        if (l.ph < old) {  // nowy cykl: nowa wartosc losowa
+            l.seed = l.seed * 1664525u + 1013904223u;
             l.rnd = (int32_t)(l.seed >> 8) / 8388608.f - 1.f;
         }
     }
+    if (tPlaying_) tBeat_ += (double)outFrames / outRate_ * tBpm_ / 60.0;
 }
 
 // Wartosc LFO -1..1 w biezacej fazie.
@@ -83,7 +95,7 @@ void WavetableSynth::setKnobs(const int16_t k[4]) {
 }
 
 void WavetableSynth::setEnvelope(float a, float d, float s, float r, float amount) {
-    envAmt_ = amount < 0 ? 0 : (amount > 1 ? 1 : amount);
+    envAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
     atk_ = a > 0 ? 1.f / (a * voiceRate_) : 2.f;
     dec_k_ = d > 0 ? 1.f - expf(-5.f / (d * voiceRate_)) : 1.f;  // ~ -43 dB po czasie d
     sus_ = s < 0 ? 0 : (s > 1 ? 1 : s);
@@ -160,7 +172,9 @@ void WavetableSynth::renderBlock() {
     float mod[6] = {0, 0, 0, 0, 0, 0};
     float trem = 1.f;
     for (int l = 0; l < 2; l++) {
-        float val = lfoValue(lfo_[l]);  // faza przesuwana w render() w czasie rzeczywistym
+        // faza przesuwana w render() w czasie rzeczywistym; wygladzenie ~3 ms (2 bloki) zaokragla krawedzie SAW/SQR
+        lfo_[l].out += (lfoValue(lfo_[l]) - lfo_[l].out) * 0.4f;
+        float val = lfo_[l].out;
         if (lfo_[l].depth <= 0) continue;
         if (lfo_[l].dest == 5) trem *= 1.f - lfo_[l].depth * 0.5f * (1.f - val);
         else mod[lfo_[l].dest] += val * lfo_[l].depth;
@@ -201,18 +215,24 @@ void WavetableSynth::renderBlock() {
             case FADE: v.env -= fade_; if (v.env <= 0.f) { v.env = 0; v.stage = OFF; } break;
             }
             float g = v.env;
-            if (envAmt_ < 1.f) {  // AMOUNT < 100%: czesc glosnosci = bramka (rampa 3 ms) zamiast obwiedni
+            if (envAmt_ < 1.f) {  // AMOUNT < 100%: czesc glosnosci = bramka (rampa 3 ms); ujemny = obwiednia odwrocona
                 bool open = v.stage != RELEASE && v.stage != FADE && v.stage != OFF;
                 v.gate += open ? (v.gate < 1.f ? gateK_ : 0.f) : (v.gate > 0.f ? -gateK_ : 0.f);
                 v.gate = v.gate < 0 ? 0 : (v.gate > 1 ? 1 : v.gate);
-                g = (1.f - envAmt_) * v.gate + envAmt_ * v.env;
+                if (envAmt_ >= 0.f) g = (1.f - envAmt_) * v.gate + envAmt_ * v.env;
+                else {
+                    float inv = v.gate - v.env;  // przy szczycie obwiedni najciszej
+                    g = (1.f + envAmt_) * v.gate - envAmt_ * (inv > 0 ? inv : 0.f);
+                }
             }
-            sum[i] += trem != 1.f ? (double)out[i] * g * trem : (double)out[i] * g;
+            if (trem != 1.f || tremPrev_ != 1.f) g *= tremPrev_ + (trem - tremPrev_) * (i + 1) * (1.f / BLOCK);
+            sum[i] += (double)out[i] * g;
         }
         if (v.stage == OFF && v.pendPitch >= 0) startVoice(vi, v.pendPitch, v.pendVel);  // po wyciszeniu
         if (v.env > loudEnv) { loudEnv = v.env; loud = vi; }
         if (newest < 0 || v.age > v_[newest].age) { newest = vi; for (int i = 0; i < 4; i++) loudK[i] = vk[i]; }
     }
+    tremPrev_ = trem;
     for (int i = 0; i < 4; i++) modKnob_[i].store(loudK[i], std::memory_order_relaxed);
     if (loud >= 0) drift_.store(ST(st_, loud)->ph2 - ST(st_, loud)->ph1, std::memory_order_relaxed);
     active_.store(act, std::memory_order_relaxed);
