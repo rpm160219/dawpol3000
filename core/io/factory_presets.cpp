@@ -731,9 +731,30 @@ static const FactoryPreset kParallax[] = {
     {"ZAP", CAT_FX, 1, "k 8192 0 20000 20000 env 0.001 0.2 0 0.1 menv 0.001 0.12 0 0.05 1 4"},
 };
 
+// LOUNGE: wlasne presety. k BARK TONE DECAY TYPE (0 TINE, 16384 REED, 32767 CLAV); tremolo = LFO na VOL (cel 5).
+static const FactoryPreset kLounge[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"SUITCASE", CAT_KEYS, 1, "k 14000 16384 18000 0 env 0.001 1 1 0.25"},
+    {"SUITCASE TREMOLO", CAT_KEYS, 1, "k 14000 16384 18000 0 env 0.001 1 1 0.25 lfo1 0 4.5 0.35 5 0 0"},
+    {"BARKING TINES", CAT_KEYS, 1, "k 30000 21000 16000 0 env 0.001 1 1 0.2"},
+    {"SOFT BALLAD", CAT_KEYS, 1, "k 4000 12000 22000 0 env 0.003 1 1 0.4"},
+    {"BELL TINES", CAT_BELL, 1, "k 22000 28000 24000 0 env 0.001 1 1 0.6"},
+    {"DARK STAGE", CAT_KEYS, 1, "k 18000 5000 17000 0 env 0.001 1 1 0.2"},
+    {"AUTO PAN TINES", CAT_KEYS, 1, "k 16000 16384 19000 0 env 0.001 1 1 0.3 lfo1 1 3 0.25 1 0 0"},
+    {"REED SCHOOL", CAT_KEYS, 1, "k 14000 16384 15000 16384 env 0.001 1 1 0.15"},
+    {"REED GROWL", CAT_KEYS, 1, "k 30000 22000 14000 16384 env 0.001 1 1 0.12"},
+    {"REED MELLOW", CAT_KEYS, 1, "k 6000 6000 17000 16384 env 0.002 1 1 0.25 lfo1 0 5 0.25 5 0 0"},
+    {"FUNK CLAV", CAT_PLUCK, 1, "k 20000 8000 9000 32767 env 0.001 1 1 0.05"},
+    {"CLAV BRIGHT", CAT_PLUCK, 1, "k 26000 26000 10000 32767 env 0.001 1 1 0.05"},
+    {"CLAV MUTED", CAT_PLUCK, 1, "k 10000 12000 4000 32767 env 0.001 0.3 0 0.04"},
+    {"CLAV WAH", CAT_PLUCK, 1, "k 22000 16384 9000 32767 env 0.001 1 1 0.05 lfo1 0 2.5 0.35 1 1 6"},
+    {"TINE PLUCK", CAT_PLUCK, 1, "k 20000 18000 8000 0 env 0.001 0.6 0 0.2"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "lounge")) { *n = sizeof kLounge / sizeof kLounge[0]; *engine = ENG_LOUNGE; return kLounge; }
     if (!__builtin_strcmp(eng, "parallax")) { *n = sizeof kParallax / sizeof kParallax[0]; *engine = ENG_PARALLAX; return kParallax; }
     if (!__builtin_strcmp(eng, "gin")) { *n = sizeof kGin / sizeof kGin[0]; *engine = ENG_GIN; return kGin; }
     if (!__builtin_strcmp(eng, "outatime")) { *n = sizeof kOutatime / sizeof kOutatime[0]; *engine = ENG_OUTATIME; return kOutatime; }

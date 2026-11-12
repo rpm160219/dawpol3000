@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 01:30 — silnik LOUNGE (własne modelowane klawisze w stylu KEYS z „OP-1 Mods”)
+- **Co zmienione:** nowy silnik LOUNGE — `core/synth/lounge_dsp.*` (własne modele fizyczne: ząb Rhodesa z przetwornikiem magnetycznym, języczek Wurlitzera z przetwornikiem elektrostatycznym, struna clavu Karplus-Strong; głos 48 kHz → 96 kHz), `core/ui/lounge_screen.*` (własny rysunek przekroju w układzie zrzutu KEYS: DECAY, LID z koktajlem, młotek, drgania, przetwornik, głosy), wpięcie (rodzaj 25), projekt, zapis, widok SYNTH (SOUND / AMP ENV / MOD ENV / 2 LFO), karta ENGINE, 16 presetów, CMake, podglądy, testy (`tools/gin_objs.sh`). Clean room: kod KEYS niepubliczny (repo j3threejay/op1-mod = tylko łatka binarna bez licencji).
+- Strój sprawdzony (TINE i CLAV ±1 cent). CPU na konsoli: 5,3–5,8% rdzenia (6 głosów). Wszystkie 24 testy zgodności bez zmian. Wgrane na konsolę.
+- **Następny krok:** Patryk testuje LOUNGE. **Od Patryka:** ocena brzmień i ekranu.
+
 ## 2026-11-13 00:40 — silnik PARALLAX (własny, w stylu „dimension” z Opus)
 - **Co zmienione:** nowy silnik PARALLAX — `core/synth/parallax_dsp.*` (własny DSP od zera: fala PULSE/SQUARE/SAW/SAW+SUB/NOISE płynnie, unison Juno 3 oscylatory, filtr drabinkowy w stylu 303; głos przy 48 kHz → 96 kHz), `core/ui/parallax_screen.*` (ekran wg zrzutu wzorca: koło fal, oscyloskop XY z cieniem unison, szczyt rezonansu), wpięcie w silnik głosów (rodzaj 24), projekt, zapis, widok SYNTH (strony jak SID z obwiedniami i 2 LFO), kartę ENGINE, 22 presety, CMake (`-O3 -ffast-math`), podgląd headless; `tools/gin_objs.sh` linkuje też PARALLAX w testach. Clean room: kod „dimension” nie jest publiczny — tylko opis („subtraktywny z filtrem 303 i unisonem Juno”) i zrzut ekranu; nazwa własna (Dimension = silnik TE OP-1 Field).
 - CPU na konsoli: 12,4% rdzenia (6 głosów, pełny unison, wysoki rezonans). Filtr stabilny w całym zakresie. Wszystkie 24 testy zgodności bez zmian. Wgrane na konsolę.

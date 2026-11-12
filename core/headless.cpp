@@ -439,6 +439,28 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
+    } else if (!strcmp(screen, "lounge") || !strcmp(screen, "loungereed") || !strcmp(screen, "loungeclav") || !strcmp(screen, "loungeengine")) {
+        if (!strcmp(screen, "loungeengine")) {
+            app.arrange.setCursor(1, 2);
+            tap(app, B_SELECT);
+            tap(app, B_R2);
+            for (int i = 0; i < 30; i++) tap(app, B_UP);
+            for (int i = 0; i < 11; i++) tap(app, B_DOWN);  // LOUNGE
+        } else {
+            Track& tr = app.project().tracks[1];
+            tr.engine = ENG_LOUNGE;
+            engineDefaultKnobs(ENG_LOUNGE, tr.knob);
+            if (!strcmp(screen, "loungereed")) tr.knob[3] = 16384;
+            if (!strcmp(screen, "loungeclav")) { tr.knob[3] = 32767; tr.knob[1] = 9000; }
+            app.openPresets("out/presets_demo");
+            app.markDirty();
+            app.openSynth(1);
+            idle(app);
+            InputState in;
+            in.btn[B_A] = true;
+            app.update(in, 0.016f);
+            for (int i = 0; i < 12; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+        }
     } else if (!strcmp(screen, "parallax") || !strcmp(screen, "parallaxengine")) {
         if (!strcmp(screen, "parallaxengine")) {
             app.arrange.setCursor(1, 2);

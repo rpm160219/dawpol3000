@@ -6,6 +6,7 @@
 #include "synth/arc_dsp.h"
 #include "synth/outatime_dsp.h"
 #include "synth/parallax_dsp.h"
+#include "synth/lounge_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -466,6 +467,11 @@ void SynthView::render(Canvas& c) {
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_LOUNGE) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        lg_.draw(c, shown, e ? e->loungeCore(track_) : nullptr, e ? e->wtActive(track_) : 0, dt_);
     } else if (t.engine == ENG_PARALLAX) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
@@ -783,7 +789,14 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_PARALLAX) {  // PARALLAX: fala, unison, filtr 303
+    if (k == K_SOUND && t.engine == ENG_LOUNGE) {  // LOUNGE: BARK, TONE, DECAY, TYPE
+        static const char* L[4] = {"BARK", "TONE", "DECAY", "TYPE"};
+        static const char* T[3] = {"TINE", "REED", "CLAV"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        const float ds = loungeDecaySeconds(t.knob[2]);
+        if (ds < 1.f) snprintf(v[2], 16, "%.0fMS", ds * 1000.f); else snprintf(v[2], 16, "%.1fS", ds);
+        snprintf(v[3], 16, "%s", T[loungeType(t.knob[3])]);
+    } else if (k == K_SOUND && t.engine == ENG_PARALLAX) {  // PARALLAX: fala, unison, filtr 303
         static const char* L[4] = {"WAVEFORM", "UNISON", "FILTER FREQ", "RES"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
         parallaxWaveName(t.knob[0], v[0], 16);

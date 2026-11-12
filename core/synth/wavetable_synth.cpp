@@ -24,6 +24,7 @@
 #include "synth/outatime_dsp.h"
 #include "synth/gin_dsp.h"
 #include "synth/parallax_dsp.h"
+#include "synth/lounge_dsp.h"
 #include <math.h>
 #include <string.h>
 
@@ -143,6 +144,7 @@ void WavetableSynth::init(float outRate) {
     if (!ota_) ota_ = outatimeCreate();
     if (!gin_) gin_ = ginCreate();
     if (!prx_) prx_ = parallaxCreate();
+    if (!lng_) lng_ = loungeCreate();
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -468,6 +470,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
     else if (kind_ == 21) juniNoteOn(jun_, slot, knobs_);
     else if (kind_ == 22) outatimeNoteOn(ota_, slot, knobs_);
     else if (kind_ == 24) parallaxNoteOn(prx_, slot);
+    else if (kind_ == 25) loungeNoteOn(lng_, slot);
     else if (kind_ == 12) { supersawNoteOn(ssw_, slot, knobs_); ssf_[slot].ready = false; }  // filtr od zera, jak stan oryginalu
     else if (kind_ == 10) {  // MONOLIT: puszczone klawisze najpierw (wybrzmienie CONTOUR), potem nowa nuta
         for (int i = 0; i < VOICES; i++)
@@ -668,7 +671,9 @@ void WavetableSynth::renderBlock() {
             base = incOf(v.pitchCur + octSemi_ + cents / 100.0, voiceRate_);
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
-        if (kind_ == 24) {  // PARALLAX (wlasny DSP: fala, unison, filtr 303)
+        if (kind_ == 25) {  // LOUNGE (wlasny model: zab / jezyczek / struna + przetwornik)
+            loungeRender(lng_, vi, out, vk, inc, voiceRate_, v.vel);
+        } else if (kind_ == 24) {  // PARALLAX (wlasny DSP: fala, unison, filtr 303)
             parallaxRender(prx_, vi, out, vk, inc, voiceRate_);
         } else if (kind_ == 22) {  // OUTATIME (oryginalny DSP z paczki Hundekraft)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
