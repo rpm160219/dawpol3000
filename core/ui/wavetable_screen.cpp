@@ -83,13 +83,13 @@ static int curveShape(int32_t k3, int32_t* cy) {
 }
 
 // Krzywa (biala albo duch): kolano w kx (Q10), przycieta do panelu; plaska linia na lewo, podloga na prawo.
-static void drawCurve(Canvas& c, const int32_t* cy, int32_t kx, int32_t w, Color col, bool ticks) {
+static void drawCurve(Canvas& c, const int32_t* cy, int32_t kx, int32_t w, Color col, bool ticks, int32_t endY = WT_BOT_Y * 1024) {
     int32_t px = kx - WT_CI * 1024, py = cy[0];
     if (px > WT_PX0) ln(c, WT_PX0, py, px, py, w, col);
     for (int i = 1; i <= WT_CN && px < WT_PX1; i++) {
         int32_t x, y;
         if (i < WT_CN) { x = kx + (i - WT_CI) * 1024; y = cy[i]; }
-        else { x = WT_PX1; y = WT_BOT_Y * 1024; }
+        else { x = WT_PX1; y = endY; }
         if (x <= px) continue;
         int32_t ax = px, ay = py, bx = x, by = y;
         px = x; py = y;
@@ -223,6 +223,27 @@ void WavetableScreen::draw(Canvas& c, const int16_t kin[4], float level, uint32_
         ln(c, x, WT_HB_Y, x, WT_HB_Y - h, WT_W_BAR, i ? C_LAV : C_GREEN);
     }
 
+    // Tryb rozszerzony: klatka OSC 2 na czerwono, na swojej glebokosci (rysowana za zielona)
+    if (wave2_ >= 0) {
+        static const Color C_OSC2 = rgb(0xFF, 0x3A, 0x5D);
+        const int32_t f2 = wave2_ * 9216 / 32767;
+        const int32_t ox2 = WT_X0 + (f2 * WT_DX >> 10), oy2 = WT_Y0 + (f2 * WT_DY >> 10);
+        const int32_t sc = (int32_t)(((int64_t)amp << 15) / WT_PEAK);
+        c.beginStroke();
+        float px = 0, py = 0;
+        for (int j = 0; j <= WT_NW; j++) {
+            int32_t v = wavetableShape(wave2_, (uint32_t)((uint64_t)(j % WT_NW) * (0x100000000ull / WT_NW)));
+            float x = PX((ox2 + WT_W * j / WT_NW) / 1024.f), y = PY((oy2 - (int32_t)(((int64_t)v * sc) >> 15)) / 1024.f);
+            if (j) c.strokeSeg(px, py, x, y, LW(WT_W_GREEN / 1024.f / 1.25f));
+            px = x; py = y;
+        }
+        c.endStroke(C_OSC2);
+        const int32_t bx2 = ox2 + WT_W + 5 * 1024, bt2 = oy2 - WT_H - 4 * 1024, bb2 = oy2 + WT_H + 4 * 1024;  // nawias po prawej
+        ln(c, bx2 - 3 * 1024, bt2, bx2, bt2, WT_W_BLUE, C_OSC2);
+        ln(c, bx2, bt2 - 700, bx2, bb2 + 700, WT_W_BLUE, C_OSC2);
+        ln(c, bx2, bb2, bx2 - 3 * 1024, bb2, WT_W_BLUE, C_OSC2);
+    }
+
     // Klatka (zielona) i jej kopia przesunieta o DETUNE + dryf
     auto frame = [&](int32_t x0, int32_t y0, int32_t off, int32_t w, Color col) {
         const int32_t sc = (int32_t)(((int64_t)amp << 15) / WT_PEAK);
@@ -260,12 +281,23 @@ void WavetableScreen::draw(Canvas& c, const int16_t kin[4], float level, uint32_
 
     // Panel filtra: biala krzywa (CUTOFF = kolano, RESONANCE = szczyt), czerwone luki
     const int32_t kx = WT_KNEE0 + (k[2] * 15 >> 1);
+    // ksztalt krzywej wg trybu filtra: LP24 = oryginal, LP12 = polowa nachylenia, HP = odbicie wokol kolana, BP = oba
+    const int32_t flat = WT_FLAT_Y * 1024, bot = WT_BOT_Y * 1024;
+    for (int i = 0; i < WT_CN; i++) {
+        int32_t lp = cy_[i], hp = cy_[(2 * WT_CI - i) < 0 ? 0 : ((2 * WT_CI - i) >= WT_CN ? WT_CN - 1 : 2 * WT_CI - i)];
+        int32_t y = lp;
+        if (fmode_ == 1) y = flat + (lp - flat) / 2;
+        else if (fmode_ == 3) y = flat + (hp - flat) / 2;
+        else if (fmode_ == 2) { int32_t a = flat + (lp - flat) / 2, b2 = flat + (hp - flat) / 2; y = a > b2 ? a : b2; }
+        cyShown_[i] = y > bot ? bot : y;
+    }
+    const int32_t* cy = wave2_ >= 0 ? cyShown_ : cy_;
     c.beginStroke();
-    drawCurve(c, cy_, kx, WT_W_WHITE, C_WHITE, true);
+    drawCurve(c, cy, kx, WT_W_WHITE, C_WHITE, true, wave2_ >= 0 ? cy[WT_CN - 1] : WT_BOT_Y * 1024);
     int32_t px = kx + (peak_ - WT_CI) * 1024;
     if (px < WT_PX0) px = WT_PX0;
     if (px > WT_PX1) px = WT_PX1;
-    const int32_t py = cy_[peak_];
+    const int32_t py = cy[peak_];
     const int narcs = 1 + k[3] * 3 / 32767;
     for (int a = 0; a < narcs; a++) {
         const int32_t rad = (5 + 4 * a) * 1024, ccy = py + rad * 3 / 10;

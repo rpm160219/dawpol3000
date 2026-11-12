@@ -93,8 +93,12 @@ int headlessPng(const char* path, const char* screen) {
         app.roll.selectRect(4, 63, 9, 72);
         app.roll.setCursor(9, 72);
     } else if (!strcmp(screen, "synth") || !strcmp(screen, "synthenv") || !strcmp(screen, "synthfenv") ||
-               !strcmp(screen, "synthlfo")) {
+               !strcmp(screen, "synthlfo") || !strcmp(screen, "synthext") || !strcmp(screen, "synthfilt")) {
         Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "synthext") || !strcmp(screen, "synthfilt")) {
+            tr.alt = true; tr.knob[0] = 9400; tr.ext.osc[1].wave = 26000; tr.ext.osc[1].semi = 7; tr.ext.osc[1].level = 0.7f;
+            tr.ext.sub = 0.4f; tr.ext.fmode = !strcmp(screen, "synthfilt") ? FLT_BP : FLT_LP24; tr.knob[3] = 18000;
+        }
         if (!strcmp(screen, "synthfenv")) { tr.fenv[1] = 0.6f; tr.fenv[2] = 0.3f; tr.fenv[3] = 0.8f; tr.fenvAmt = 0.5f; }
         if (!strcmp(screen, "synthlfo")) {
             tr.lfo[0].depth = 0.35f; tr.lfo[0].dest = DEST_WAVE; tr.lfo[0].sync = true; tr.lfo[0].div = 8;  // 1/16T
@@ -105,6 +109,8 @@ int headlessPng(const char* path, const char* screen) {
         if (!strcmp(screen, "synthenv")) app.synth.setPage(1);
         if (!strcmp(screen, "synthfenv")) { app.synth.setPage(2); app.synth.setAlt(true); }
         if (!strcmp(screen, "synthlfo")) app.synth.setPage(3);
+        if (!strcmp(screen, "synthext")) app.synth.setPage(1);
+        if (!strcmp(screen, "synthfilt")) app.synth.setPage(2);
         InputState in;
         in.btn[B_A] = true;  // trzymana nuta
         app.update(in, 0.016f);

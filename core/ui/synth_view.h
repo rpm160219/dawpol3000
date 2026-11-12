@@ -2,8 +2,11 @@
 //
 // Sterowanie:
 //   D-pad + ABXY   odsluch: 8 stopni skali C-dur od C4 (bez opisu na ekranie)
-//   Select         nastepna strona galek: SOUND -> AMP ENV -> FILTER ENV -> LFO 1 -> LFO 2
-//   L3             na stronach obwiedni: czerwona galka RELEASE <-> AMOUNT;
+//   R3             tryb silnika: ORYGINAL 1:1 <-> ROZSZERZONY (2 niezalezne oscylatory, sub, tryby filtra)
+//   Select         nastepna strona galek:
+//                    oryginal:    SOUND -> AMP ENV -> FILTER ENV -> LFO 1 -> LFO 2
+//                    rozszerzony: OSC 1 -> OSC 2 -> FILTER -> AMP ENV -> FILTER ENV -> LFO 1 -> LFO 2
+//   L3             na stronach obwiedni: czerwona galka RELEASE <-> AMOUNT; na OSC 1: LEVEL <-> SUB;
 //                  na stronach LFO: synchronizacja z tempem wl/wyl (RATE = podzial 1/1 .. 1/128T)
 //   Start          play / stop aranzacji
 //   L2             powrot do PIANO ROLL
@@ -11,6 +14,7 @@
 // AMP ENV / FILTER ENV: ATTACK, DECAY, SUSTAIN, RELEASE; po L3 zamiast RELEASE — AMOUNT
 // (AMP i FILTER: -100..+100 %, srodek = 0; AMP ujemny = obwiednia odwrocona).
 // LFO 1/2: RATE (0,05..20 Hz), DEPTH, SHAPE (sinus/trojkat/pila/prostokat/losowy), DEST (cel modulacji).
+// OSC 1/2: WAVE, INTERVAL (-24..+24 poltonow), DETUNE (-50..+50 centow), LEVEL. FILTER: CUTOFF, RES, MODE, DRIVE.
 #pragma once
 #include "ui/encoder.h"
 #include "ui/view.h"
@@ -28,10 +32,12 @@ public:
     void setAlt(bool a) { alt_ = a; }
 
 private:
-    static const int PAGES = 5;
+    enum Kind { K_SOUND, K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2 };
     int track_ = 0, page_ = 0, octave_ = 4;
     bool alt_ = false;  // L3: czerwona galka = AMOUNT
-    RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2];
+    RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
+    int pageCount(bool ext) const { return ext ? 7 : 5; }
+    Kind kind(bool ext) const;
     int held_[8] = {-1, -1, -1, -1, -1, -1, -1, -1};  // nuta grana przez przycisk i
     float dt_ = 0.016f;
     WavetableScreen wt_;

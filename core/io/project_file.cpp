@@ -37,6 +37,10 @@ bool saveProjectFile(const Project& p, const char* path) {
             for (int l = 0; l < 2; l++)
                 fprintf(f, " lfo%d %d %.4f %.4f %d %d %d", l + 1, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest,
                         t.lfo[l].sync, t.lfo[l].div);
+            const WtExt& x = t.ext;
+            fprintf(f, " alt %d o1 %d %d %.2f %.4f o2 %d %d %.2f %.4f sub %.4f fmode %d drv %.4f", t.alt, x.osc[0].wave,
+                    x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents,
+                    x.osc[1].level, x.sub, x.fmode, x.drive);
         }
         fputc('\n', f);
     }
@@ -93,11 +97,11 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
     static Project p;  // duzy obiekt — nie na stosie
     p = Project();
     p.nTracks = p.nPatterns = p.nClips = 0;
-    char line[512];
-    char* tok[24];
+    char line[2048];
+    char* tok[128];
     int version = 0, curPat = -1;
     while (fgets(line, sizeof line, f)) {
-        int n = tokenize(line, tok, 24);
+        int n = tokenize(line, tok, 128);
         if (n == 0) continue;
         const char* k = tok[0];
         if (!strcmp(k, "dawpol") && n > 1) version = atoi(tok[1]);
@@ -116,30 +120,44 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
             if ((v = kv(tok, n, 3, "engine"))) t.engine = !strcmp(v, "saw") ? ENG_SAW : ENG_WAVETABLE;
-            for (int i = 3; i + 4 < n; i++) {
-                if (!strcmp(tok[i], "k"))
+            // pary "klucz wartosci..." — kazdy klucz sprawdza, czy ma dosc wartosci za soba
+            for (int i = 3; i < n; i++) {
+                const int left = n - 1 - i;  // ile tokenow po kluczu
+                if (!strcmp(tok[i], "k") && left >= 4)
                     for (int j = 0; j < 4; j++) { int x = atoi(tok[i + 1 + j]); t.knob[j] = (int16_t)(x < 0 ? 0 : x > 32767 ? 32767 : x); }
-                if (!strcmp(tok[i], "env"))
+                if (!strcmp(tok[i], "env") && left >= 4)
                     for (int j = 0; j < 4; j++) t.env[j] = (float)atof(tok[i + 1 + j]);
-                if (!strcmp(tok[i], "envamt")) t.envAmt = (float)atof(tok[i + 1]);
-                if (!strcmp(tok[i], "fenv")) {
+                if (!strcmp(tok[i], "envamt") && left >= 1) t.envAmt = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "fenv") && left >= 4) {
                     // nowy zapis: A D S R AMOUNT; pierwsza wersja (A D S AMOUNT, bez R) — rozpoznawana po 4 liczbach
-                    bool five = i + 5 < n && (tok[i + 5][0] == '-' || tok[i + 5][0] == '.' || (tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9'));
+                    bool five = left >= 5 && (tok[i + 5][0] == '-' || tok[i + 5][0] == '.' || (tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9'));
                     for (int j = 0; j < 3; j++) t.fenv[j] = (float)atof(tok[i + 1 + j]);
                     if (five) { t.fenv[3] = (float)atof(tok[i + 4]); t.fenvAmt = (float)atof(tok[i + 5]); }
                     else { t.fenv[3] = t.env[3]; t.fenvAmt = (float)atof(tok[i + 4]); }
                 }
-                if (!strcmp(tok[i], "lfo1") || !strcmp(tok[i], "lfo2")) {
+                if ((!strcmp(tok[i], "lfo1") || !strcmp(tok[i], "lfo2")) && left >= 4) {
                     Lfo& L = t.lfo[tok[i][3] - '1'];
                     L.shape = (uint8_t)(atoi(tok[i + 1]) % LFO_SHAPES);
                     L.rate = (float)atof(tok[i + 2]);
                     L.depth = (float)atof(tok[i + 3]);
                     L.dest = (uint8_t)(atoi(tok[i + 4]) % LFO_DESTS);
-                    if (i + 6 < n && tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9') {  // sync, podzial (nowsze zapisy)
+                    if (left >= 6 && tok[i + 5][0] >= '0' && tok[i + 5][0] <= '9') {  // sync, podzial (nowsze zapisy)
                         L.sync = atoi(tok[i + 5]) != 0;
                         L.div = (uint8_t)(atoi(tok[i + 6]) % LFO_DIVS);
                     }
                 }
+                if (!strcmp(tok[i], "alt") && left >= 1) t.alt = atoi(tok[i + 1]) != 0;
+                if ((!strcmp(tok[i], "o1") || !strcmp(tok[i], "o2")) && left >= 4) {
+                    WtOsc& o = t.ext.osc[tok[i][1] - '1'];
+                    int w = atoi(tok[i + 1]), sm = atoi(tok[i + 2]);
+                    o.wave = (int16_t)(w < 0 ? 0 : w > 32767 ? 32767 : w);
+                    o.semi = (int8_t)(sm < -24 ? -24 : sm > 24 ? 24 : sm);
+                    o.cents = (float)atof(tok[i + 3]);
+                    o.level = (float)atof(tok[i + 4]);
+                }
+                if (!strcmp(tok[i], "sub") && left >= 1) t.ext.sub = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "fmode") && left >= 1) t.ext.fmode = (uint8_t)(atoi(tok[i + 1]) % FLT_MODES);
+                if (!strcmp(tok[i], "drv") && left >= 1) t.ext.drive = (float)atof(tok[i + 1]);
             }
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {
             curPat = p.nPatterns++;

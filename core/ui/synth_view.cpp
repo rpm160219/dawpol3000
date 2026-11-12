@@ -16,6 +16,22 @@ static const char* kWaveNames[8] = {"SINE", "WARM", "TRI", "SAW", "SQUARE", "PUL
 // Czasy obwiedni: galka 0..1 -> 1 ms .. 10 s (wykladniczo)
 static float envTime(float v) { return 0.001f * powf(10000.f, v); }
 static float envKnob(float t) { return t <= 0.001f ? 0.f : log10f(t / 0.001f) / 4.f; }
+static float clamp01(float x) { return x < 0 ? 0.f : (x > 1 ? 1.f : x); }
+
+static void waveName(char* out, int n, int32_t k) {
+    int32_t wp = k * 7;
+    int wi = wp >> 15, wf = (wp & 0x7FFF) * 100 / 32768;
+    if (wf < 6 || wi == 7) snprintf(out, n, "%s", kWaveNames[wi]);
+    else if (wf > 94) snprintf(out, n, "%s", kWaveNames[wi + 1]);
+    else snprintf(out, n, "%.3s>%.3s", kWaveNames[wi], kWaveNames[wi + 1]);
+}
+
+SynthView::Kind SynthView::kind(bool ext) const {
+    static const Kind orig[5] = {K_SOUND, K_AMP, K_FENV, K_LFO1, K_LFO2};
+    static const Kind extk[7] = {K_OSC1, K_OSC2, K_FILTER, K_AMP, K_FENV, K_LFO1, K_LFO2};
+    int n = pageCount(ext), p = page_ < n ? page_ : n - 1;
+    return ext ? extk[p] : orig[p];
+}
 
 void SynthView::open(int track) {
     if (track != track_) releaseAll();
@@ -34,15 +50,27 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     if (track_ >= p.nTracks) return;
     Track& t = p.tracks[track_];
     AudioEngine* e = app_->engine();
+    const bool wt = t.engine == ENG_WAVETABLE;
+    bool ext = wt && t.alt;
 
-    if (b.pressed(B_SELECT) && !b.down(B_MENU)) page_ = (page_ + 1) % PAGES;
+    if (b.pressed(B_R3) && wt) {  // tryb silnika
+        t.alt = !t.alt;
+        ext = t.alt;
+        page_ = 0;
+        alt_ = false;
+        app_->markDirty();
+        app_->toast(ext ? "EXTENDED: 2 OSC + SUB + FILTER MODES" : "ORIGINAL 1:1");
+    }
+    if (b.pressed(B_SELECT) && !b.down(B_MENU)) page_ = (page_ + 1) % pageCount(ext);
+    if (page_ >= pageCount(ext)) page_ = 0;
+    const Kind k = kind(ext);
     if (b.pressed(B_L3)) {
-        if (page_ >= 3) { Lfo& L = t.lfo[page_ - 3]; L.sync = !L.sync; app_->markDirty(); }
+        if (k == K_LFO1 || k == K_LFO2) { Lfo& L = t.lfo[k - K_LFO1]; L.sync = !L.sync; app_->markDirty(); }
         else alt_ = !alt_;
     }
     if (b.pressed(B_START)) app_->togglePlaySong();
 
-    // granie nut z przyciskow
+    // odsluch z przyciskow (C4, bez opisu)
     for (int i = 0; i < 8; i++) {
         if (b.pressed(kNoteBtn[i]) && e) {
             int pitch = 12 * (octave_ + 1) + kMajor[i];
@@ -62,49 +90,79 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
     for (int i = 0; i < 4; i++) {
         float ax = in.axis[axisOf[i]] * sign[i];
         float d = RelEncoder::delta(ax, dt, 0.7f);
-        auto clamp01 = [](float x) { return x < 0 ? 0.f : (x > 1 ? 1.f : x); };
         bool changed = false;
-        switch (page_) {
-        case 0: {  // SOUND
-            if (d == 0.f) break;
-            int v = t.knob[i] + (int)lrintf(d * 32767.f);
-            v = v < 0 ? 0 : (v > 32767 ? 32767 : v);
-            if (v != t.knob[i]) { t.knob[i] = (int16_t)v; changed = true; }
+        auto knob = [&](int16_t& v) {
+            if (d == 0.f) return;
+            int x = v + (int)lrintf(d * 32767.f);
+            x = x < 0 ? 0 : (x > 32767 ? 32767 : x);
+            if (x != v) { v = (int16_t)x; changed = true; }
+        };
+        switch (k) {
+        case K_SOUND: knob(t.knob[i]); break;
+        case K_OSC1:
+        case K_OSC2: {  // WAVE, INTERVAL, DETUNE, LEVEL (OSC 1 + L3: SUB)
+            int o = k - K_OSC1;
+            WtOsc& os = t.ext.osc[o];
+            if (i == 0) knob(o == 0 ? t.knob[0] : os.wave);
+            else if (i == 1) {
+                int st = stepInt_[o].steps(ax, dt, 6.f);
+                if (st) { int sm = os.semi + st; os.semi = (int8_t)(sm < -24 ? -24 : sm > 24 ? 24 : sm); changed = true; }
+            } else if (i == 2 && d != 0.f) {
+                float c = os.cents + d * 100.f;
+                os.cents = c < -50 ? -50 : (c > 50 ? 50 : c);
+                changed = true;
+            } else if (i == 3 && d != 0.f) {
+                if (o == 0 && alt_) t.ext.sub = clamp01(t.ext.sub + d);
+                else os.level = clamp01(os.level + d);
+                changed = true;
+            }
             break;
         }
-        case 1:
-        case 2: {  // AMP ENV / FILTER ENV: A D S R (L3: R -> AMOUNT)
+        case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
+            if (i == 0) knob(t.knob[2]);
+            else if (i == 1) knob(t.knob[3]);
+            else if (i == 2) {
+                int st = stepMode_.steps(ax, dt, 4.f);
+                if (st) { t.ext.fmode = (uint8_t)((t.ext.fmode + st % FLT_MODES + FLT_MODES) % FLT_MODES); changed = true; }
+            } else if (d != 0.f) { t.ext.drive = clamp01(t.ext.drive + d); changed = true; }
+            break;
+        }
+        case K_AMP:
+        case K_FENV: {  // A D S R (L3: R -> AMOUNT)
             if (d == 0.f) break;
-            float* ev = page_ == 1 ? t.env : t.fenv;
+            float* ev = k == K_AMP ? t.env : t.fenv;
             if (i == 3 && alt_) {
-                float& amt = page_ == 1 ? t.envAmt : t.fenvAmt;
+                float& amt = k == K_AMP ? t.envAmt : t.fenvAmt;
                 float a = amt + d * 2.f;
                 amt = a < -1 ? -1 : (a > 1 ? 1 : a);
             } else if (i == 2) ev[2] = clamp01(ev[2] + d);
-            else { float k = clamp01(envKnob(ev[i]) + d); ev[i] = k <= 0 ? 0.f : envTime(k); }
+            else { float kk = clamp01(envKnob(ev[i]) + d); ev[i] = kk <= 0 ? 0.f : envTime(kk); }
             changed = true;
             break;
         }
         default: {  // LFO 1 / 2: RATE DEPTH SHAPE DEST
-            Lfo& L = t.lfo[page_ - 3];
+            int l = k - K_LFO1;
+            Lfo& L = t.lfo[l];
             if (i == 0 && L.sync) {  // podzial taktu, skokowo
-                int st = stepDiv_[page_ - 3].steps(ax, dt, 5.f);
+                int st = stepDiv_[l].steps(ax, dt, 5.f);
                 if (st) {
                     int dv = L.div + st;
                     L.div = (uint8_t)(dv < 0 ? 0 : (dv >= LFO_DIVS ? LFO_DIVS - 1 : dv));
                     changed = true;
                 }
             } else if (i == 0 && d != 0.f) {
-                float k = clamp01(log10f(L.rate / 0.05f) / log10f(400.f) + d);  // 0.05 .. 20 Hz
-                L.rate = 0.05f * powf(400.f, k);
+                float kk = clamp01(log10f(L.rate / 0.05f) / log10f(400.f) + d);  // 0.05 .. 20 Hz
+                L.rate = 0.05f * powf(400.f, kk);
                 changed = true;
             } else if (i == 1 && d != 0.f) { L.depth = clamp01(L.depth + d); changed = true; }
             else if (i == 2) {
-                int st = stepShape_[page_ - 3].steps(ax, dt, 4.f);
+                int st = stepShape_[l].steps(ax, dt, 4.f);
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
-                int st = stepDest_[page_ - 3].steps(ax, dt, 4.f);
-                if (st) { L.dest = (uint8_t)((L.dest + st % LFO_DESTS + LFO_DESTS) % LFO_DESTS); changed = true; }
+                // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
+                int nd = ext ? LFO_DESTS : DEST_W1;
+                int st = stepDest_[l].steps(ax, dt, 4.f);
+                if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
             break;
         }
@@ -136,13 +194,18 @@ void SynthView::render(Canvas& c) {
     Color tc = pal::track[t.color % pal::TRACK_COLORS];
     bool playing = e && e->isPlaying() && e->playMode() == Sequencer::SONG;
     int tick = playing ? e->playTick() : 0;
+    const bool ext = t.engine == ENG_WAVETABLE && t.alt;
+    const Kind k = kind(ext);
     char b[64];
 
     if (t.engine == ENG_WAVETABLE) {
         // ekran pokazuje galki po modulacji (LFO, obwiednia filtra), gdy cos gra
+        bool live = e && e->wtActive(track_) > 0;
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
-        if (e && e->wtActive(track_) > 0)
+        if (live)
             for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        if (ext) shown[1] = 0;  // w trybie rozszerzonym rozstrojenie jest per oscylator
+        wt_.setExtended(ext ? (live ? e->wtModKnob(track_, 4) : t.ext.osc[1].wave) : -1, ext ? t.ext.fmode : 0);
         wt_.draw(c, shown, e ? e->trackLevel(track_) : 0.f, e ? e->wtDrift(track_) : 0, e ? e->wtActive(track_) : 0, dt_);
     } else {
         drawText(c, 320, 170, "TEST SAW", 22, 1.8f, rgb(90, 90, 90), ALIGN_CENTER);
@@ -150,42 +213,50 @@ void SynthView::render(Canvas& c) {
     }
     // naglowek na wierzchu (ekran silnika zaczyna sie pod nim)
     c.fillRect(0, 0, 640, 44, pal::bg);
-    screenHeader(c, ICON_KEYS, tc, engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
+    screenHeader(c, ICON_KEYS, tc, ext ? "WAVETABLE+" : engineName(t.engine), t.name, tc, tick / TICKS_PER_BAR + 1,
                  (tick % TICKS_PER_BAR) / PPQ + 1, playing, p.bpm);
 
     // lewy dol: strona galek
-    static const char* kPage[PAGES] = {"SOUND", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2"};
-    drawText(c, 20, 342, kPage[page_], 13, 1.5f, pal::white);
-    for (int i = 0; i < PAGES; i++) {
+    static const char* kPage[8] = {"SOUND", "OSC 1", "OSC 2", "FILTER", "AMP ENV", "FILTER ENV", "LFO 1", "LFO 2"};
+    Color pc = k == K_OSC1 ? pal::green : (k == K_OSC2 ? pal::red : pal::white);
+    drawText(c, 20, 342, kPage[k], 13, 1.5f, pc);
+    int np = pageCount(ext);
+    for (int i = 0; i < np; i++) {
         float x = 24 + i * 12;
         if (i == page_) c.fillCircle(x, 366, 2.6f, pal::white);
         else c.circle(x, 366, 2.2f, 1.f, rgb(90, 90, 90));
     }
-    drawText(c, 86, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
-    if (page_ == 1 || page_ == 2)
-        drawText(c, 20, 384, alt_ ? "L3 = RELEASE" : "L3 = AMOUNT", 7, 1.f, alt_ ? pal::red : rgb(80, 80, 80));
-    if (page_ >= 3) {
-        bool sy = t.lfo[page_ - 3].sync;
-        drawText(c, 20, 384, sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM", 7, 1.f, sy ? pal::blue : rgb(80, 80, 80));
+    drawText(c, 24 + np * 12 + 4, 362, "SELECT = NEXT PAGE", 7, 1.f, rgb(80, 80, 80));
+    const char* hint = nullptr;
+    Color hc = rgb(80, 80, 80);
+    if (k == K_AMP || k == K_FENV) { hint = alt_ ? "L3 = RELEASE" : "L3 = AMOUNT"; if (alt_) hc = pal::red; }
+    else if (k == K_OSC1) { hint = alt_ ? "L3 = LEVEL" : "L3 = SUB OSC"; if (alt_) hc = pal::red; }
+    else if (k == K_LFO1 || k == K_LFO2) {
+        bool sy = t.lfo[k - K_LFO1].sync;
+        hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
+        if (sy) hc = pal::blue;
     }
+    if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
+    if (t.engine == ENG_WAVETABLE)
+        drawText(c, 20, 398, ext ? "R3 = ORIGINAL 1:1" : "R3 = EXTENDED (2 OSC)", 7, 1.f, rgb(80, 80, 80));
 
-    // prawy dol: grafika strony (obwiednie / LFO)
-    if (page_ == 2) {
+    // prawy dol: grafika strony
+    if (k == K_FENV) {
         drawEnvelope(c, t.fenv, true, 400, 342, 200, 46);
         snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.fenvAmt * 100));
         drawText(c, 600, 394, b, 8, 1.1f, t.fenvAmt == 0 ? pal::dim : pal::white, ALIGN_RIGHT);
-    } else if (page_ >= 3) {
-        const Lfo& L = t.lfo[page_ - 3];
+    } else if (k == K_LFO1 || k == K_LFO2) {
+        const Lfo& L = t.lfo[k - K_LFO1];
         float pts[2 * 81];
         uint32_t seed = 7;
         float rv = 0;
         for (int i = 0; i <= 80; i++) {
-            float p = fmodf(i / 80.f * 2.f, 1.f), v;  // dwa cykle
+            float ph = fmodf(i / 80.f * 2.f, 1.f), v;  // dwa cykle
             switch (L.shape) {
-            case LFO_SINE: v = sinf(6.2831853f * p); break;
-            case LFO_TRI: v = p < 0.5f ? 4.f * p - 1.f : 3.f - 4.f * p; break;
-            case LFO_SAW: v = 1.f - 2.f * p; break;
-            case LFO_SQUARE: v = p < 0.5f ? 1.f : -1.f; break;
+            case LFO_SINE: v = sinf(6.2831853f * ph); break;
+            case LFO_TRI: v = ph < 0.5f ? 4.f * ph - 1.f : 3.f - 4.f * ph; break;
+            case LFO_SAW: v = 1.f - 2.f * ph; break;
+            case LFO_SQUARE: v = ph < 0.5f ? 1.f : -1.f; break;
             default:
                 if (i % 10 == 0) { seed = seed * 1664525u + 1013904223u; rv = (int32_t)(seed >> 8) / 8388608.f - 1.f; }
                 v = rv;
@@ -197,38 +268,70 @@ void SynthView::render(Canvas& c) {
         c.polyline(pts, 81, 1.6f, L.depth > 0 ? pal::green : rgb(90, 90, 90));
         snprintf(b, sizeof b, "-> %s", lfoDestName(L.dest));
         drawText(c, 600, 394, b, 9, 1.2f, L.depth > 0 ? pal::white : pal::dim, ALIGN_RIGHT);
+    } else if (k == K_OSC1 || k == K_OSC2 || k == K_FILTER) {
+        // mieszanie: poziomy OSC 1 (zielony), OSC 2 (czerwony), SUB (bialy)
+        const float lv[3] = {t.ext.osc[0].level, t.ext.osc[1].level, t.ext.sub};
+        const Color lc[3] = {pal::green, pal::red, pal::white};
+        const char* ln[3] = {"OSC1", "OSC2", "SUB"};
+        for (int i = 0; i < 3; i++) {
+            float y = 344 + i * 16;
+            drawText(c, 400, y, ln[i], 7, 1.f, lc[i]);
+            c.line(440, y + 3.5f, 600, y + 3.5f, 1.f, pal::faint);
+            if (lv[i] > 0.001f) c.line(440, y + 3.5f, 440 + 160 * lv[i], y + 3.5f, 2.5f, lc[i]);
+        }
+        snprintf(b, sizeof b, "FILTER %s", filterModeName(t.ext.fmode));
+        drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
     } else {
-        drawEnvelope(c, t.env, page_ == 1, 400, 342, 200, 46);
+        drawEnvelope(c, t.env, k == K_AMP, 400, 342, 200, 46);
         snprintf(b, sizeof b, "AMOUNT %+d%%", (int)lrintf(t.envAmt * 100));
-        drawText(c, 600, 394, b, 8, 1.1f, page_ == 1 ? pal::white : pal::dim, ALIGN_RIGHT);
+        drawText(c, 600, 394, b, 8, 1.1f, k == K_AMP ? pal::white : pal::dim, ALIGN_RIGHT);
     }
 
     // galki
     char v[4][16];
     float pos[4];
     const char* labels[4];
-    if (page_ == 0 && t.engine == ENG_WAVETABLE) {
-        int32_t wp = t.knob[0] * 7;
-        int wi = wp >> 15, wf = (wp & 0x7FFF) * 100 / 32768;
-        if (wf < 6 || wi == 7) snprintf(v[0], 16, "%s", kWaveNames[wi]);
-        else if (wf > 94) snprintf(v[0], 16, "%s", kWaveNames[wi + 1]);
-        else snprintf(v[0], 16, "%.3s>%.3s", kWaveNames[wi], kWaveNames[wi + 1]);
+    auto cutoffName = [](char* out, int16_t kn) {
+        float hz = 30.f * powf(16000.f / 30.f, kn / 32767.f);
+        if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
+        else snprintf(out, 16, "%.0f", hz);
+    };
+    if (k == K_SOUND && t.engine == ENG_WAVETABLE) {
+        waveName(v[0], 16, t.knob[0]);
         snprintf(v[1], 16, "%.1fC", 14.f * t.knob[1] / 32767.f);
-        float hz = 30.f * powf(16000.f / 30.f, t.knob[2] / 32767.f);
-        if (hz >= 1000) snprintf(v[2], 16, "%.1fK", hz / 1000.f);
-        else snprintf(v[2], 16, "%.0f", hz);
+        cutoffName(v[2], t.knob[2]);
         snprintf(v[3], 16, "%d", t.knob[3] * 100 / 32767);
         static const char* L[4] = {"WAVE", "DETUNE", "CUTOFF", "RESONANCE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
-    } else if (page_ <= 2) {
-        const float* ev = page_ == 2 ? t.fenv : t.env;
+    } else if (k == K_OSC1 || k == K_OSC2) {
+        int o = k - K_OSC1;
+        const WtOsc& os = t.ext.osc[o];
+        int16_t w = o == 0 ? t.knob[0] : os.wave;
+        waveName(v[0], 16, w);
+        snprintf(v[1], 16, "%+d", os.semi);
+        snprintf(v[2], 16, "%+.0fC", os.cents);
+        bool sub = o == 0 && alt_;
+        snprintf(v[3], 16, "%d", (int)lrintf((sub ? t.ext.sub : os.level) * 100));
+        labels[0] = "WAVE"; labels[1] = "INTERVAL"; labels[2] = "DETUNE"; labels[3] = sub ? "SUB" : "LEVEL";
+        pos[0] = w / 32767.f; pos[1] = (os.semi + 24) / 48.f; pos[2] = (os.cents + 50) / 100.f;
+        pos[3] = sub ? t.ext.sub : os.level;
+    } else if (k == K_FILTER) {
+        cutoffName(v[0], t.knob[2]);
+        snprintf(v[1], 16, "%d", t.knob[3] * 100 / 32767);
+        snprintf(v[2], 16, "%s", filterModeName(t.ext.fmode));
+        snprintf(v[3], 16, "%d", (int)lrintf(t.ext.drive * 100));
+        labels[0] = "CUTOFF"; labels[1] = "RES"; labels[2] = "MODE"; labels[3] = "DRIVE";
+        pos[0] = t.knob[2] / 32767.f; pos[1] = t.knob[3] / 32767.f; pos[2] = t.ext.fmode / (float)(FLT_MODES - 1);
+        pos[3] = t.ext.drive;
+    } else if (k == K_AMP || k == K_FENV) {
+        const float* ev = k == K_FENV ? t.fenv : t.env;
         static const char* LA[4] = {"ATTACK", "DECAY", "SUSTAIN", "RELEASE"};
         for (int i = 0; i < 4; i++) {
             labels[i] = LA[i];
             if (i == 2) { snprintf(v[i], 16, "%d", (int)lrintf(ev[2] * 100)); pos[i] = ev[2]; }
             else if (i == 3 && alt_) {
                 labels[i] = "AMOUNT";
-                float amt = page_ == 1 ? t.envAmt : t.fenvAmt;
+                float amt = k == K_AMP ? t.envAmt : t.fenvAmt;
                 snprintf(v[i], 16, "%+d", (int)lrintf(amt * 100));
                 pos[i] = 0.5f + amt * 0.5f;
             } else {
@@ -239,7 +342,7 @@ void SynthView::render(Canvas& c) {
             }
         }
     } else {
-        const Lfo& L = t.lfo[page_ - 3];
+        const Lfo& L = t.lfo[k - K_LFO1];
         static const char* LL[4] = {"RATE", "DEPTH", "SHAPE", "DEST"};
         for (int i = 0; i < 4; i++) labels[i] = LL[i];
         if (L.sync) labels[0] = "SYNC";

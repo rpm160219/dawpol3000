@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 13:40
+**Zmienione:** tryb ROZSZERZONY WAVETABLE (R3 w SYNTH; oryginał 1:1 zostaje domyślny i nadal zgodny bit w bit): własny DSP wzorowany na `wavetable_sample` — 2 niezależne oscylatory (fala, interwał ±24, detune ±50 c, poziom), SUB (sinus −1 okt., L3 na OSC 1), filtr LP24 (oryginał) / LP12 / BP / HP + DRIVE; strony OSC 1, OSC 2, FILTER; nowe cele LFO W1 W2 P1 P2 LV1 LV2; na ekranie fala OSC 2 na czerwono, krzywa filtra wg trybu. Pliki: `core/seq/project.*`, `core/io/project_file.cpp` (naprawiony parser długich linii), `core/synth/wavetable_synth.*`, `core/audio/engine.*`, `core/ui/synth_view.*`, `core/ui/wavetable_screen.*`, `core/headless.*`.
+Testy: oryginał 0 różnic; rozszerzony z ustawieniami jak oryginał różni się o ~−77 dB; tryby filtra i SUB działają.
+**Do zrobienia:** aktualizacja `docs/ARCHITEKTURA.md` i README o tryb rozszerzony; test wydajności trybu rozszerzonego na konsoli.
+**Wymaga od Patryka:** odsłuch na konsoli.
+
 ## 2026-11-12 12:20
 **Zmienione:**
 - `core/seq/project.*` — synchronizacja LFO (`sync`, `div`), 15 podziałów 1/1 … 1/128 z triolami; AMOUNT obwiedni głośności −1..1; `core/io/project_file.*` — zapis/odczyt (zgodnie wstecz).

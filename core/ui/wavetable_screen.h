@@ -17,6 +17,8 @@ public:
     static constexpr float OY = 44.f;
     // k = galki 0..32767; level = poziom sciezki 0..1; drift = ph2-ph1 najglosniejszego glosu; voices = ile gra
     void draw(Canvas& c, const int16_t k[4], float level, uint32_t drift, int voices, float dt);
+    // Tryb rozszerzony: fala OSC 2 (czerwona klatka; -1 = brak) i tryb filtra (ksztalt krzywej)
+    void setExtended(int32_t wave2, int fmode) { wave2_ = wave2; fmode_ = fmode; }
 
 private:
     Canvas* cache_ = nullptr;
@@ -25,6 +27,9 @@ private:
     int32_t k0_ = -1, k3_ = -1, nwave_ = 0, peak_ = 0;
     int32_t wx_[65], wy_[65];
     int32_t cy_[241];
+    int32_t cyShown_[241];
+    int32_t wave2_ = -1;
+    int fmode_ = 0;
     void buildCache();
 };
 

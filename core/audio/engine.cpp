@@ -38,6 +38,12 @@ void AudioEngine::applyProject() {
         wt_[i].setEnvelope(t.env[0] < 0.001f ? 0.001f : t.env[0], t.env[1], t.env[2], t.env[3] < 0.003f ? 0.003f : t.env[3],
                            t.envAmt);
         wt_[i].setFilterEnv(t.fenv[0] < 0.001f ? 0.001f : t.fenv[0], t.fenv[1], t.fenv[2], t.fenv[3], t.fenvAmt);
+        wt_[i].setAlt(t.alt);
+        {
+            const WtExt& x = t.ext;
+            wt_[i].setExt(x.osc[1].wave, x.osc[0].semi, x.osc[1].semi, x.osc[0].cents, x.osc[1].cents, x.osc[0].level,
+                          x.osc[1].level, x.sub, x.fmode, x.drive);
+        }
         for (int l = 0; l < 2; l++)
             wt_[i].setLfo(l, t.lfo[l].shape, t.lfo[l].rate, t.lfo[l].depth, t.lfo[l].dest, t.lfo[l].sync,
                           lfoDivBeats(t.lfo[l].div));

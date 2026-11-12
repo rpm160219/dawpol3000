@@ -16,7 +16,28 @@ enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
-enum LfoDest : uint8_t { DEST_WAVE, DEST_DETUNE, DEST_CUTOFF, DEST_RESO, DEST_PITCH, DEST_VOLUME, LFO_DESTS };
+enum LfoDest : uint8_t {
+    DEST_WAVE, DEST_DETUNE, DEST_CUTOFF, DEST_RESO, DEST_PITCH, DEST_VOLUME,
+    // tryb rozszerzony: fala, wysokosc i glosnosc kazdego oscylatora
+    DEST_W1, DEST_W2, DEST_P1, DEST_P2, DEST_LV1, DEST_LV2, LFO_DESTS
+};
+// Tryby filtra (tryb rozszerzony WAVETABLE): LP24 = oryginalny ladder
+enum FilterMode : uint8_t { FLT_LP24, FLT_LP12, FLT_BP, FLT_HP, FLT_MODES };
+const char* filterModeName(int m);
+// Tryb rozszerzony WAVETABLE (R3): dwa niezalezne oscylatory + sub + tryby filtra
+struct WtOsc {
+    int16_t wave = 16384;  // 0..32767 (OSC 1 korzysta z knob[0])
+    int8_t semi = 0;       // interwal -24..+24 poltonow
+    float cents = 0.f;     // -50..+50
+    float level = 1.f;     // 0..1
+};
+struct WtExt {
+    WtOsc osc[2];
+    float sub = 0.f;       // sinus oktawe nizej od OSC 1, 0..1
+    uint8_t fmode = FLT_LP24;
+    float drive = 0.f;     // dodatkowy drive 0..1
+    WtExt() { osc[0].cents = -4.f; osc[1].cents = 4.f; }
+};
 const char* lfoShapeName(int s);
 const char* lfoDestName(int d);
 // Podzialy synchronizacji LFO z tempem: 1/1 .. 1/128 i triole (T)
@@ -46,6 +67,8 @@ struct Track {
     float fenv[4] = {0.005f, 0.3f, 0.f, 0.3f};
     float fenvAmt = 0.f;
     Lfo lfo[2];
+    bool alt = false;  // tryb rozszerzony WAVETABLE (R3 w SYNTH); false = oryginal 1:1
+    WtExt ext;
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };
 

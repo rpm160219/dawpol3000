@@ -1,4 +1,5 @@
 #include "synth/wavetable_synth.h"
+#include "seq/project.h"
 #include <math.h>
 #include <string.h>
 
@@ -15,6 +16,57 @@ static_assert(sizeof(WavetableState) <= 96, "WavetableState nie miesci sie w buf
 static inline WavetableState* ST(unsigned char (*st)[96], int i) { return (WavetableState*)st[i]; }
 
 int32_t wavetableShape(int32_t k0, uint32_t ph) { return wavetable_dsp_shape(k0, ph); }
+
+// ---- Tryb rozszerzony ----
+// Stan glosu: fazy OSC 1, OSC 2, sub; stopnie ladderu; kontrolki poprzedniego bloku (rampy jak w oryginale).
+struct WtExtState {
+    uint32_t ph1, ph2, phs;
+    int32_t y[4];
+    int32_t control[10];
+    int ready;
+};
+static_assert(sizeof(WtExtState) <= 128, "WtExtState nie miesci sie w buforze glosu");
+static inline WtExtState* SX(unsigned char (*sx)[128], int i) { return (WtExtState*)sx[i]; }
+
+static inline void wtExtOn(WtExtState* s) {
+    s->ready = 0;
+    s->ph1 = 0;
+    s->ph2 = 0x55555555u;  // jak oryginal: drugi oscylator przesuniety o 1/3 okresu
+    s->phs = 0;
+    s->y[0] = s->y[1] = s->y[2] = s->y[3] = 0;
+}
+
+static inline const int16_t* waveA(int32_t pos) { return wt_waves[pos >> 15]; }
+static inline const int16_t* waveB(int32_t pos) { return wt_waves[(pos >> 15) + ((pos >> 15) < WT_WAVES - 1)]; }
+
+// Jedna probka: arytmetyka jak wavetable_sample (oryginal), z niezaleznymi oscylatorami i wyjsciem wg trybu filtra.
+static inline int16_t wtExtSample(WtExtState* s, uint32_t inc1, uint32_t inc2, const int32_t* c, int mode) {
+    const int32_t pos1 = c[0], pos2 = c[1], l1 = c[2], l2 = c[3], ls = c[4];
+    const int32_t g = c[5], k = c[6], drive = c[7], makeup = c[8], level = c[9];
+    s->ph1 += inc1;
+    s->ph2 += inc2;
+    s->phs += inc1 >> 1;  // sub: oktawe nizej od OSC 1
+    const int32_t o1 = wavetable_osc(waveA(pos1), waveB(pos1), pos1 & 0x7FFF, s->ph1);
+    const int32_t o2 = wavetable_osc(waveA(pos2), waveB(pos2), pos2 & 0x7FFF, s->ph2);
+    const int32_t os = wavetable_read(wt_waves[0], s->phs);
+    int32_t x = (((o1 * l1) >> 15) + ((o2 * l2) >> 15) + ((os * ls) >> 15)) >> 2;  // zapas jak w oryginale
+    x = wavetable_soft((x * drive) >> 12);
+    int32_t* y = s->y;
+    const int32_t u = wavetable_soft(x - ((k * y[3]) >> 12));
+    y[0] += (g * (u - y[0])) >> 15;
+    y[1] += (g * (y[0] - y[1])) >> 15;
+    y[2] += (g * (y[1] - y[2])) >> 15;
+    y[3] += (g * (y[2] - y[3])) >> 15;
+    int32_t sel;
+    switch (mode) {  // wyjscia ladderu (mieszanki stopni jak w filtrach wielotrybowych)
+    case 1: sel = y[1]; break;                       // LP12
+    case 2: sel = 3 * (y[0] - y[1]); break;          // BP (x1.5 — wyrownanie glosnosci)
+    case 3: sel = 2 * (u - 2 * y[0] + y[1]); break;  // HP12 (x2 — wyrownanie glosnosci)
+    default: sel = y[3]; break;                      // LP24 (oryginal)
+    }
+    int32_t sample = (wavetable_soft((sel * makeup) >> 12) * level) >> 12;
+    return sample > 32767 ? 32767 : sample < -32768 ? -32768 : (int16_t)sample;
+}
 
 void WavetableSynth::init(float outRate) {
     outRate_ = outRate;
@@ -33,6 +85,8 @@ void WavetableSynth::init(float outRate) {
     fade_ = 1.f / (0.002f * voiceRate_);  // ~2 ms
     gateK_ = 1.f / (0.003f * voiceRate_); // ~3 ms
     for (int i = 0; i < 4; i++) modKnob_[i].store(knobs_[i]);
+    modKnob_[4].store(wave2_);
+    for (int i = 0; i < VOICES; i++) wtExtOn(SX(sx_, i));
     setEnvelope(0.005f, 0.4f, 0.75f, 0.3f);
     setFilterEnv(0.005f, 0.3f, 0.f, 0.3f, 0.f);
 }
@@ -44,6 +98,61 @@ void WavetableSynth::setFilterEnv(float a, float d, float s, float r, float amou
     fS_ = s < 0 ? 0 : (s > 1 ? 1 : s);
     fR_ = r > 0 ? 1.f - expf(-5.f / (r * br)) : 1.f;
     fAmt_ = amount < -1 ? -1 : (amount > 1 ? 1 : amount);
+}
+
+void WavetableSynth::setExt(int16_t wave2, int semi1, int semi2, float cents1, float cents2, float lvl1, float lvl2,
+                            float sub, int fmode, float drive) {
+    wave2_ = wave2 < 0 ? 0 : wave2;
+    semi_[0] = semi1;
+    semi_[1] = semi2;
+    cents_[0] = cents1;
+    cents_[1] = cents2;
+    lvl_[0] = lvl1;
+    lvl_[1] = lvl2;
+    sub_ = sub;
+    fmode_ = fmode;
+    drive_ = drive;
+}
+
+// Jeden blok glosu w trybie rozszerzonym. vk = galki po modulacji (0 fala OSC 1, 2 CUTOFF, 3 RES).
+void WavetableSynth::renderExtVoice(int vi, int16_t* out, const int16_t* vk, const float* mod, uint32_t inc, int vel) {
+    WtExtState* s = SX(sx_, vi);
+    auto clampK = [](float v) { return v < 0 ? 0 : (v > 32767 ? 32767 : (int32_t)v); };
+    const int32_t k0 = clampK(vk[0] + mod[DEST_W1] * 32767.f);
+    const int32_t k0b = clampK(wave2_ + (mod[DEST_WAVE] + mod[DEST_W2]) * 32767.f);
+    const int32_t k2 = vk[2], k3 = vk[3];
+    // wysokosc: interwal + rozstrojenie (DTUN skaluje rozstrojenie), P1/P2 = +-1 oktawa przy glebokosci 1
+    const float dsc = 1.f + mod[DEST_DETUNE];
+    const double r1 = pow(2.0, (semi_[0] + cents_[0] * dsc / 100.0) / 12.0 + mod[DEST_P1]);
+    const double r2 = pow(2.0, (semi_[1] + cents_[1] * dsc / 100.0) / 12.0 + mod[DEST_P2]);
+    const uint32_t inc1 = (uint32_t)(inc * r1), inc2 = (uint32_t)(inc * r2);
+    auto lv = [](float v) { return (int32_t)((v < 0 ? 0 : (v > 1 ? 1 : v)) * 32767.f); };
+    // kontrolki jak w wavetable_dsp_render (cutoff z tabeli, rezonans, drive, makeup, kompensacja poziomu)
+    const int32_t ci = k2 * WT_CUTOFFS;
+    const int32_t g0 = wt_cutoff[ci >> 15];
+    const int32_t g = g0 + (((wt_cutoff[(ci >> 15) + 1] - g0) * (ci & 0x7FFF)) >> 15);
+    const int32_t kk = (k3 * 15974) >> 15;
+    const int32_t drive = 4096 + (k3 * 3 >> 3) + (int32_t)(drive_ * 12288.f);  // + do 3x wiecej
+    int32_t makeup = (((((3072 + (kk >> 2)) * vel) >> 7) * 4755 >> 12) * 8192) >> 13;
+    if (makeup > 32767) makeup = 32767;
+    const int32_t level = wt_level_at(k0, k2, k3);
+    const int32_t target[10] = {k0 * (WT_WAVES - 1), k0b * (WT_WAVES - 1), lv(lvl_[0] + mod[DEST_LV1]),
+                                lv(lvl_[1] + mod[DEST_LV2]), lv(sub_), g, kk, drive, makeup, level};
+    int32_t control[10], delta[10];
+    for (int j = 0; j < 10; j++) {
+        const int32_t prev = s->ready ? s->control[j] : target[j];
+        control[j] = prev * BLOCK;
+        delta[j] = target[j] - prev;
+        s->control[j] = target[j];
+    }
+    s->ready = 1;
+    int32_t c[10];
+    for (int i = 0; i < BLOCK; i++) {
+        for (int j = 0; j < 10; j++) c[j] = control[j] >> 7;
+        out[i] = wtExtSample(s, inc1, inc2, c, fmode_);
+        for (int j = 0; j < 10; j++) control[j] += delta[j];
+    }
+    modKnob_[4].store((int16_t)k0b, std::memory_order_relaxed);
 }
 
 void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest, bool sync, float beats) {
@@ -139,6 +248,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel) {
     v.fenv = 0;
     v.gate = 0;
     wavetable_dsp_on(ST(st_, slot));  // engine_note_on
+    wtExtOn(SX(sx_, slot));
 }
 
 void WavetableSynth::noteOff(int pitch) {
@@ -169,17 +279,17 @@ void WavetableSynth::renderBlock() {
     float loudEnv = -1;
     // LFO raz na blok (wspolne dla glosow sciezki)
     // cele 0..3 = galki silnika, 4 = PITCH (glebokosc 1 = +-1 oktawa), 5 = VOLUME (tremolo: 1 - glebokosc .. 1)
-    float mod[6] = {0, 0, 0, 0, 0, 0};
+    float mod[LFO_DESTS] = {};
     float trem = 1.f;
     for (int l = 0; l < 2; l++) {
         // faza przesuwana w render() w czasie rzeczywistym; wygladzenie ~3 ms (2 bloki) zaokragla krawedzie SAW/SQR
         lfo_[l].out += (lfoValue(lfo_[l]) - lfo_[l].out) * 0.4f;
         float val = lfo_[l].out;
         if (lfo_[l].depth <= 0) continue;
-        if (lfo_[l].dest == 5) trem *= 1.f - lfo_[l].depth * 0.5f * (1.f - val);
-        else mod[lfo_[l].dest] += val * lfo_[l].depth;
+        if (lfo_[l].dest == DEST_VOLUME) trem *= 1.f - lfo_[l].depth * 0.5f * (1.f - val);
+        else if (lfo_[l].dest < LFO_DESTS) mod[lfo_[l].dest] += val * lfo_[l].depth;
     }
-    const float pitchMul = mod[4] != 0 ? powf(2.f, mod[4]) : 1.f;
+    const float pitchMul = mod[DEST_PITCH] != 0 ? powf(2.f, mod[DEST_PITCH]) : 1.f;
     int16_t vk[8];
     int16_t loudK[4] = {knobs_[0], knobs_[1], knobs_[2], knobs_[3]};
     int newest = -1;
@@ -204,8 +314,11 @@ void WavetableSynth::renderBlock() {
             }
         }
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)v.inc * pitchMul) : v.inc;
-        for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
-        wavetable_dsp_render(ST(st_, vi), out, vk, pitchBuf, v.vel);
+        if (alt_) renderExtVoice(vi, out, vk, mod, inc, v.vel);
+        else {
+            for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
+            wavetable_dsp_render(ST(st_, vi), out, vk, pitchBuf, v.vel);
+        }
         for (int i = 0; i < BLOCK; i++) {
             switch (v.stage) {
             case ATTACK: v.env += atk_; if (v.env >= 1.f) { v.env = 1.f; v.stage = DECAY; } break;
