@@ -92,6 +92,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - W PATTERN/ARRANGE: D-pad = kursor (kroki/ścieżki/klipy), A = wstaw/przełącz, B = usuń, X/Y = narzędzia (kopiuj, klonuj), analogi = enkodery (wartości, zoom/scroll). Poniższe mapowanie nut dotyczy trybu grania (KEYS).
 - D-pad + ABXY = 8 nut skali (skala/tonacja wybieralna), L1/R1 = oktawa −/+.
 - L2/R2 = zakładki w lewo/prawo: PROJECT ↔ ARRANGE ↔ PIANO ROLL (docelowo też SYNTH, DRUM, TAPE, MIXER). R2 z ARRANGE otwiera pattern pod kursorem (albo ostatni na ścieżce).
+- L3 (klik lewej gałki) = undo wszędzie poza oknami dialogowymi. R3 (klik prawej gałki) = tryb zaznaczania w piano rollu: dolny pasek gałek zamienia się w pigułki B SELECT / A DELETE / Y COPY / X PASTE; R3 ponownie = wyjście. Na PC: U = L3, O = R3. RG35XX: L3 = przycisk 12, R3 = 15.
 - Pozycja w nagłówkach zawsze w formacie „BAR takt.miara”, w tym samym miejscu (wspólny `screenHeader`). Teksty w klipach/polach przycinane do obrysu (`drawTextFit`). Start = play/stop, Select = rec (później). Menu+Select = wyjście.
 - W oknach dialogowych: A = zatwierdź, B = anuluj, X = edycja nazwy (góra/dół litera, lewo/prawo pozycja); pigułki na dole pokazują literę przycisku.
 - Mapowanie trzymać w jednej tabeli (łatwo przestawić po testach na urządzeniu).
@@ -121,5 +122,6 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Działa: ARRANGE (ścieżki max 16 MIDI + 4 audio, zmiana nazwy/koloru i usuwanie ścieżki (Select), mute/solo (L1/R1) ze wskaźnikami M/S, klipy patternów z miniaturą nut, BPM w nagłówku, wstawianie/klonowanie/przesuwanie/usuwanie klipów, play całej aranżacji w pętli), okna NEW TRACK i NEW PATTERN (nazwa, długość 1–16 taktów, wybór istniejącego patternu), PIANO ROLL wielotaktowy, testowa piła na każdej ścieżce, łagodny limiter. Ikony i ilustracje wektorowe. CPU na konsoli ~2.5% rdzenia przy 3 ścieżkach.
 - Ścieżki AUDIO: na razie puste (klipy audio dojdą z nagrywaniem z taśmy).
 - Projekty: zakładka PROJECT (zapis/wczytanie/nowy/usuń), format tekstowy `.dpp` w `projects/<NAZWA>/` (na konsoli `/userdata/dawpol3000/projects`), start z ostatnim projektem, autozapis przy wyjściu (też Hotkey+Start).
-- Brakuje: pętli/markerów, step seq, właściwych instrumentów, cofania (undo).
-- Następny krok: ocena Patryka na konsoli; potem do wyboru: step sequencer / perkusja, pętla i markery w ARRANGE, undo, pierwszy prawdziwy syntezator.
+- Undo (L3, 32 kroki) i zaznaczanie w piano rollu (R3: zaznacz, prostokąt, usuń, kopiuj, wklej).
+- Brakuje: redo, pętli/markerów, step seq, właściwych instrumentów, zaznaczania klipów w ARRANGE.
+- Następny krok: ocena Patryka na konsoli; potem do wyboru: step sequencer / perkusja, pętla i markery w ARRANGE, pierwszy prawdziwy syntezator.

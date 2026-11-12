@@ -1,5 +1,16 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 05:15
+**Zmienione:**
+- `core/ui/input.h`, `platform/controls_map.h`, `core/ui/test_screen.cpp` — nowe przyciski L3/R3 (klik gałek; konsola: 12 i 15, PC: U i O).
+- Nowy `core/seq/undo_stack.h` — historia 32 migawek projektu.
+- `core/ui/app.*` — undo pod L3; krok historii zamyka się, gdy przyciski i gałki są puszczone (jedno wciśnięcie / pokręcenie = jeden krok, okno dialogowe = jeden krok); po undo poprawka kursorów/ekranów; komunikaty „toast”; historia czyszczona przy wczytaniu/nowym projekcie.
+- `core/ui/piano_roll.*` — tryb zaznaczania pod R3: dolny pasek → pigułki B SELECT / A DELETE / Y COPY / X PASTE; B = zaznacz nutę, B + D-pad = prostokąt, B na pustym = wyczyść; schowek działa między patternami; wklejone nuty zostają zaznaczone.
+- `core/ui/arrange.*` — `clampCursor()`. Headless: ekran `select`. Dokumentacja/README/CLAUDE.md.
+- Testy (symulacja przycisków): pokręcenie BPM = 1 krok undo; wklej → usuń → undo → undo poprawnie; undo dodania ścieżki + patternu OK.
+**Następny krok:** ocena Patryka; potem wybór: step seq/perkusja, pętla/markery, syntezator.
+**Wymaga od Patryka:** tak — test na konsoli.
+
 ## 2026-11-12 04:30
 **Zmienione:**
 - `core/gfx/icons.*` — dyskietka zamiast notatnika (ilustracja w polu 196×150 + mała ikona projektu).

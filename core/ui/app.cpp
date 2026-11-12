@@ -1,4 +1,5 @@
 #include "ui/app.h"
+#include "gfx/font.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -38,6 +39,44 @@ void App::openStore(const char* root) {
     }
 }
 
+// ---- Undo ----
+void App::resetHistory() {
+    undo_.clear();
+    committed_ = prj_;
+    pending_ = edited_ = false;
+}
+
+void App::commitStep() {
+    undo_.push(committed_);  // stan sprzed gestu
+    committed_ = prj_;
+    pending_ = false;
+}
+
+void App::undo() {
+    if (pending_) commitStep();
+    if (!undo_.pop(prj_)) { toast("NOTHING TO UNDO"); return; }
+    committed_ = prj_;
+    dirty_ = modified_ = true;
+    edited_ = false;
+    validateViews();
+    roll.onProjectReplaced();
+    char b[40];
+    snprintf(b, sizeof b, "UNDO  (%d LEFT)", undo_.size());
+    toast(b);
+}
+
+// Po cofnieciu ekrany moga wskazywac na nieistniejace sciezki/patterny.
+void App::validateViews() {
+    if (lastPattern_ >= prj_.nPatterns || lastTrack_ >= prj_.nTracks) lastPattern_ = -1;
+    if (cur_ == &roll && !roll.valid()) cur_ = &arrange;
+    arrange.clampCursor();
+}
+
+void App::toast(const char* msg) {
+    snprintf(toast_, sizeof toast_, "%s", msg);
+    toastT_ = 1.2f;
+}
+
 void App::afterLoad() {
     if (eng_) eng_->send(EC_STOP);
     lastPattern_ = -1;
@@ -48,6 +87,7 @@ void App::afterLoad() {
     dirty_ = true;
     publish();
     modified_ = false;
+    resetHistory();
 }
 
 bool App::isOwnSave(const char* name) const {
@@ -120,9 +160,11 @@ void App::togglePlaySong() {
 
 void App::update(const InputState& in, float dt) {
     btn_.update(in, dt);
+    if (toastT_ > 0) toastT_ -= dt;
     if (in.btn[B_MENU] && in.btn[B_SELECT]) quit_ = true;
     // Zakladki PROJECT | ARRANGE | PIANO ROLL (L2 = w lewo, R2 = w prawo); nie w oknach dialogowych
     bool dialog = cur_ == &trackDlg || cur_ == &patDlg;
+    if (!dialog && btn_.pressed(B_L3)) { undo(); if (dirty_) publish(); return; }
     bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
     if (!dialog && btn_.pressed(B_L2)) {
         if (cur_ == &roll) showArrange();
@@ -137,6 +179,15 @@ void App::update(const InputState& in, float dt) {
     } else cur_->update(btn_, in, dt);
     if (next_) { cur_ = next_; next_ = nullptr; }
     if (dirty_) publish();
+    // Krok historii konczy sie, gdy wszystkie przyciski sa puszczone i galki w spoczynku:
+    // jedno wcisniecie = jeden krok, cale pokrecenie galka / przytrzymanie X+strzalka = jeden krok.
+    // W oknach dialogowych czekamy do ich zamkniecia (cale okno = jeden krok).
+    bool inDialog = cur_ == &trackDlg || cur_ == &patDlg;
+    bool idle = true;
+    for (int a = 0; a < AXIS_COUNT; a++) if (in.axis[a] > 0.2f || in.axis[a] < -0.2f) idle = false;
+    for (int k = 0; k < BTN_COUNT; k++) if (in.btn[k]) idle = false;
+    if (edited_) { pending_ = true; edited_ = false; }
+    else if (pending_ && !inDialog && idle) commitStep();
 }
 
 void App::render(Canvas& c) {
@@ -149,6 +200,12 @@ void App::render(Canvas& c) {
             if (i == tab) c.fillCircle(x, y, 2.6f, pal::white);
             else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
         }
+    }
+    if (toastT_ > 0) {  // komunikat (np. UNDO)
+        float w = textWidth(toast_, 12) + 36, x = 320 - w * 0.5f, y = 368;
+        c.fillRoundRect(x, y, w, 30, 15, rgb(30, 30, 30));
+        c.strokeRoundRect(x, y, w, 30, 15, 1.2f, pal::dim);
+        drawText(c, 320, y + 9, toast_, 12, 1.5f, pal::white, ALIGN_CENTER);
     }
 }
 
@@ -183,6 +240,7 @@ void App::loadDemo() {
     dirty_ = true;
     publish();
     modified_ = false;
+    resetHistory();
 }
 
 }  // namespace dp

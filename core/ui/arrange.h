@@ -10,6 +10,7 @@
 //   X (krotko)     sklonuj klip za nim;  X + lewo/prawo = przesun klip
 //   Select         ustawienia sciezki (nazwa, kolor, usuwanie)
 //   L1 / R1        mute / solo sciezki (male wskazniki M i S przy nazwie)
+//   L3             cofnij (undo) — globalnie w App
 //   Start          play / stop calej aranzacji
 //   R2             piano roll patternu pod kursorem (albo ostatniego na tej sciezce)
 // Enkodery: niebieski = VOLUME sciezki, zielony = ZOOM, bialy = MASTER, czerwony = BPM.
@@ -26,6 +27,7 @@ public:
     void setCursor(int track, int bar) { curTrack_ = track; curBar_ = bar; }
     // Pattern "podswietlony" kursorem: klip pod kursorem, inaczej ostatni na sciezce. -1 = brak.
     int highlightedPattern(int* track) const;
+    void clampCursor();
 
 private:
     int curTrack_ = 0, curBar_ = 0, topTrack_ = 0, firstBar_ = 0, zoom_ = 2;

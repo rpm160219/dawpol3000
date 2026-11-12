@@ -45,6 +45,117 @@ void PianoRoll::open(int pattern, int track) {
     scrollToCursor();
 }
 
+bool PianoRoll::valid() {
+    const Project& p = app_->project();
+    return pat_ < p.nPatterns && track_ < p.nTracks;
+}
+
+void PianoRoll::onProjectReplaced() { clearSel(); bHeld_ = false; }
+
+void PianoRoll::clearSel() { for (auto& s : sel_) s = false; }
+
+int PianoRoll::selCount() {
+    int n = 0;
+    for (int i = 0; i < pat().count; i++) n += sel_[i];
+    return n;
+}
+
+void PianoRoll::removeNote(int i) {
+    Pattern& p = pat();
+    int last = p.count - 1;
+    p.remove(i);  // Pattern::remove przenosi ostatnia nute na miejsce i
+    sel_[i] = sel_[last];
+    sel_[last] = false;
+}
+
+void PianoRoll::selectRect(int s0, int p0, int s1, int p1) {
+    Pattern& p = pat();
+    int sa = s0 < s1 ? s0 : s1, sb = s0 < s1 ? s1 : s0, pa = p0 < p1 ? p0 : p1, pb = p0 < p1 ? p1 : p0;
+    clearSel();
+    for (int i = 0; i < p.count; i++) {
+        const Note& n = p.notes[i];
+        int st = n.start / TICKS_PER_STEP, en = (n.start + n.len - 1) / TICKS_PER_STEP;
+        if (en >= sa && st <= sb && n.pitch >= pa && n.pitch <= pb) sel_[i] = true;
+    }
+}
+
+void PianoRoll::updateSelect(const Buttons& b) {
+    Pattern& p = pat();
+    int nsteps = steps();
+    int os = curStep_, op = curPitch_;
+    if (b.repeat(B_RIGHT) && curStep_ < nsteps - 1) curStep_++;
+    if (b.repeat(B_LEFT) && curStep_ > 0) curStep_--;
+    if (b.repeat(B_UP) && curPitch_ < 127) curPitch_++;
+    if (b.repeat(B_DOWN) && curPitch_ > 0) curPitch_--;
+    bool moved = os != curStep_ || op != curPitch_;
+
+    // B: klik = przelacz nute, trzymanie + ruch = prostokat
+    if (b.pressed(B_B)) { bHeld_ = true; bMoved_ = false; anchorStep_ = curStep_; anchorPitch_ = curPitch_; }
+    if (bHeld_ && moved) bMoved_ = true;
+    if (bHeld_ && bMoved_) selectRect(anchorStep_, anchorPitch_, curStep_, curPitch_);
+    if (b.released(B_B) && bHeld_) {
+        bHeld_ = false;
+        if (!bMoved_) {
+            int n = noteAtCursor();
+            if (n >= 0) sel_[n] = !sel_[n];
+            else clearSel();
+        }
+    }
+    // A: usun zaznaczone (albo nute pod kursorem)
+    if (b.pressed(B_A)) {
+        int removed = 0;
+        for (int i = p.count - 1; i >= 0; i--)
+            if (sel_[i]) { removeNote(i); removed++; }
+        if (!removed) { int n = noteAtCursor(); if (n >= 0) { removeNote(n); removed = 1; } }
+        if (removed) {
+            app_->markDirty();
+            char m[32];
+            snprintf(m, sizeof m, "DELETED %d", removed);
+            app_->toast(m);
+        }
+    }
+    // Y: kopiuj (czas wzgledem pierwszej nuty, wysokosc wzgledem kursora)
+    if (b.pressed(B_Y)) {
+        int minStart = 1 << 30;
+        for (int i = 0; i < p.count; i++) if (sel_[i] && p.notes[i].start < minStart) minStart = p.notes[i].start;
+        if (minStart == (1 << 30)) { app_->toast("NOTHING SELECTED"); }
+        else {
+            clip_.n = 0;
+            clip_.refPitch = curPitch_;
+            for (int i = 0; i < p.count; i++)
+                if (sel_[i]) {
+                    Note n = p.notes[i];
+                    n.start = (uint16_t)(n.start - minStart);
+                    clip_.notes[clip_.n++] = n;
+                }
+            char m[32];
+            snprintf(m, sizeof m, "COPIED %d", clip_.n);
+            app_->toast(m);
+        }
+    }
+    // X: wklej w miejscu kursora; wklejone zostaja zaznaczone
+    if (b.pressed(B_X)) {
+        if (clip_.n == 0) { app_->toast("CLIPBOARD EMPTY"); return; }
+        clearSel();
+        int base = curStep_ * TICKS_PER_STEP, dpitch = curPitch_ - clip_.refPitch, added = 0;
+        for (int i = 0; i < clip_.n; i++) {
+            Note n = clip_.notes[i];
+            int st = base + n.start, pt = n.pitch + dpitch;
+            if (st >= p.lengthTicks || pt < 0 || pt > 127) continue;
+            int ex = p.find(st, pt);  // wklejana nuta zastepuje istniejaca w tym miejscu
+            if (ex >= 0) removeNote(ex);
+            n.start = (uint16_t)st;
+            n.pitch = (uint8_t)pt;
+            int idx = p.add(n);
+            if (idx >= 0) { sel_[idx] = true; added++; }
+        }
+        if (added) app_->markDirty();
+        char m[32];
+        snprintf(m, sizeof m, "PASTED %d", added);
+        app_->toast(m);
+    }
+}
+
 void PianoRoll::scrollToCursor() {
     const int m = 2;  // margines wierszy przy krawedzi
     if (curPitch_ > topPitch_ - m) topPitch_ = curPitch_ + m;
@@ -82,6 +193,21 @@ void PianoRoll::update(const Buttons& b, const InputState& in, float dt) {
     Pattern& p = pat();
     AudioEngine* eng = app_->engine();
     if (previewPitch_ >= 0 && (previewLeft_ -= dt) <= 0.f) stopPreview();
+
+    if (b.pressed(B_R3)) {
+        selMode_ = !selMode_;
+        bHeld_ = false;
+        if (!selMode_) clearSel();
+    }
+    if (selMode_) {
+        updateSelect(b);
+        scrollToCursor();
+        if (b.pressed(B_START) && eng) {
+            if (eng->isPlaying()) eng->send(EC_STOP);
+            else eng->send(EC_PLAY_PATTERN, track_, 0, pat_);
+        }
+        return;
+    }
 
     int sel = noteAtCursor();
     bool xHeld = b.down(B_X), yHeld = b.down(B_Y);
@@ -129,7 +255,7 @@ void PianoRoll::update(const Buttons& b, const InputState& in, float dt) {
         } else preview(p.notes[sel].pitch, p.notes[sel].vel);
         sel = noteAtCursor();
     }
-    if (b.pressed(B_B) && sel >= 0) { p.remove(sel); app_->markDirty(); sel = -1; }
+    if (b.pressed(B_B) && sel >= 0) { removeNote(sel); app_->markDirty(); sel = -1; }
 
     if (b.pressed(B_START) && eng) {
         stopPreview();
@@ -235,7 +361,10 @@ void PianoRoll::render(Canvas& c) {
         float w = xe - x, y = GY + r * RH + 4, h = RH - 8;
         Color col = velColor(n.vel);
         c.fillRoundRect(x, y, w, h, h * 0.5f, col);
-        if (i == sel) {
+        if (sel_[i]) {  // zaznaczona: gruba biala obwodka + jasny srodek
+            c.strokeRoundRect(x - 2.5f, y - 2.5f, w + 5, h + 5, h * 0.5f + 2.5f, 2.f, pal::white);
+            c.fillRoundRect(x + 3, y + h * 0.5f - 1, w - 6 > 0 ? w - 6 : 0, 2, 1, pal::white);
+        } else if (i == sel && !selMode_) {
             c.strokeRoundRect(x - 2, y - 2, w + 4, h + 4, h * 0.5f + 2, 1.5f, pal::white);
             c.fillCircle(xe - h * 0.5f, y + h * 0.5f, 3.f, pal::blue);
         }
@@ -250,6 +379,20 @@ void PianoRoll::render(Canvas& c) {
         c.beginStroke();
         for (auto& q : pts) c.strokeSeg(q[0], q[1], q[2], q[3], 1.5f);
         c.endStroke(pal::white);
+    }
+
+    // Prostokat zaznaczania (B + D-pad)
+    if (selMode_ && bHeld_ && bMoved_) {
+        int sa = anchorStep_ < curStep_ ? anchorStep_ : curStep_, sb = anchorStep_ < curStep_ ? curStep_ : anchorStep_;
+        int pa = anchorPitch_ > curPitch_ ? anchorPitch_ : curPitch_, pb = anchorPitch_ > curPitch_ ? curPitch_ : anchorPitch_;
+        float x0 = GX + (sa - viewStep0) * SW, x1 = GX + (sb + 1 - viewStep0) * SW;
+        float y0 = GY + (topPitch_ - pa) * RH, y1 = GY + (topPitch_ - pb + 1) * RH;
+        if (x0 < GX) x0 = GX;
+        if (x1 > GX + GW) x1 = GX + GW;
+        if (y0 < GY) y0 = GY;
+        if (y1 > GY + GH) y1 = GY + GH;
+        c.fillRect(x0, y0, x1 - x0, y1 - y0, rgb(64, 128, 255, 40));
+        c.rect(x0, y0, x1 - x0, y1 - y0, 1.f, pal::steel);
     }
 
     // Glowica: w trybie PATTERN pozycja w patternie; w SONG — jesli klip tego patternu gra na tej sciezce
@@ -270,6 +413,8 @@ void PianoRoll::render(Canvas& c) {
         }
     }
 
+    if (selMode_) { renderSelectBar(c); return; }
+
     // Enkodery
     int len = sel >= 0 ? p.notes[sel].len : lastLen_;
     int vel = sel >= 0 ? p.notes[sel].vel : lastVel_;
@@ -282,6 +427,18 @@ void PianoRoll::render(Canvas& c) {
     const char* vals[4] = {v0, v1, v2, v3};
     float pos[4] = {(float)len / TICKS_PER_BAR, vel / 127.f, tr.volume, (prj.bpm - 40) / 200.f};
     encoderBar(c, labels, vals, pos);
+}
+
+// Tryb zaznaczania: zamiast galek — pigulki akcji (jak w oknach dialogowych).
+void PianoRoll::renderSelectBar(Canvas& c) {
+    char b[96];
+    snprintf(b, sizeof b, "SELECT MODE  -  %d SELECTED  -  CLIPBOARD %d  -  R3 = EXIT", selCount(), clip_.n);
+    drawText(c, 320, 418, b, 7, 1.f, pal::steel, ALIGN_CENTER);
+    const float py = 430, ph = 34;
+    pillButton(c, 16, py, 140, ph, "SELECT", pal::steel, 'B');
+    pillButton(c, 170, py, 140, ph, "DELETE", pal::red, 'A');
+    pillButton(c, 330, py, 140, ph, "COPY", pal::tan, 'Y');
+    pillButton(c, 484, py, 140, ph, "PASTE", pal::pill, 'X');
 }
 
 }  // namespace dp

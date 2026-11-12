@@ -12,6 +12,7 @@ static const KeyMap kKeyMap[] = {
     {SDLK_x, B_A}, {SDLK_z, B_B}, {SDLK_s, B_X}, {SDLK_a, B_Y},
     {SDLK_q, B_L1}, {SDLK_w, B_R1}, {SDLK_1, B_L2}, {SDLK_2, B_R2},
     {SDLK_RSHIFT, B_SELECT}, {SDLK_RETURN, B_START}, {SDLK_TAB, B_MENU},
+    {SDLK_u, B_L3}, {SDLK_o, B_R3},
 };
 
 // Klawiatura udajaca analogi: {klawisz, os, kierunek}.
@@ -32,6 +33,7 @@ static const PadMap kPadMap[] = {
     {SDL_CONTROLLER_BUTTON_LEFTSHOULDER, B_L1}, {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, B_R1},
     {SDL_CONTROLLER_BUTTON_BACK, B_SELECT}, {SDL_CONTROLLER_BUTTON_START, B_START},
     {SDL_CONTROLLER_BUTTON_GUIDE, B_MENU},
+    {SDL_CONTROLLER_BUTTON_LEFTSTICK, B_L3}, {SDL_CONTROLLER_BUTTON_RIGHTSTICK, B_R3},
 };
 // L2/R2 jako osie triggerow (prog 0.5).
 static const SDL_GameControllerAxis kPadL2 = SDL_CONTROLLER_AXIS_TRIGGERLEFT;
@@ -47,7 +49,7 @@ static const int kRawQuitA = 11, kRawQuitB = 9;  // Menu + Select = wyjscie (sur
 struct RawBtnMap { int joyButton; int btn; };
 static const RawBtnMap kRawBtnMap[] = {
     {4, B_A}, {3, B_B}, {5, B_X}, {6, B_Y}, {7, B_L1}, {8, B_R1}, {13, B_L2}, {14, B_R2},
-    {9, B_SELECT}, {10, B_START}, {11, B_MENU},
+    {9, B_SELECT}, {10, B_START}, {11, B_MENU}, {12, B_L3}, {15, B_R3},
 };
 struct RawAxisMap { int joyAxis; int axis; float scale; };
 static const RawAxisMap kRawAxisMap[] = {

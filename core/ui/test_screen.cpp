@@ -132,7 +132,7 @@ void TestScreen::render(Canvas& c, const InputState& in, const AudioInfo& ai, fl
 
     // Przyciski
     static const char* lab[BTN_COUNT] = {"UP", "DN", "LT", "RT", "A", "B", "X", "Y",
-                                         "L1", "R1", "L2", "R2", "SEL", "STA", "MEN"};
+                                         "L1", "R1", "L2", "R2", "SEL", "STA", "MEN", "L3", "R3"};
     for (int i = 0; i < BTN_COUNT; i++) {
         int row = i < 8 ? 0 : 1, col = i < 8 ? i : i - 8;
         float x = 40 + col * 46, y = 360 + row * 34;

@@ -4,6 +4,7 @@
 #include "audio/engine.h"
 #include "io/project_store.h"
 #include "seq/project.h"
+#include "seq/undo_stack.h"
 #include "ui/arrange.h"
 #include "ui/dialogs.h"
 #include "ui/piano_roll.h"
@@ -23,7 +24,9 @@ public:
 
     Project& project() { return prj_; }
     AudioEngine* engine() { return eng_; }
-    void markDirty() { dirty_ = true; modified_ = true; }
+    void markDirty() { dirty_ = true; modified_ = true; edited_ = true; }
+    void undo();                       // L3 (klikniecie lewej galki)
+    void toast(const char* msg);       // krotki komunikat na srodku dolu ekranu
     ProjectStore& store() { return store_; }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
@@ -54,6 +57,15 @@ private:
     ProjectStore store_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
+    // Undo: stan przed biezacym gestem + historia
+    UndoStack undo_;
+    Project committed_;
+    bool edited_ = false, pending_ = false;
+    char toast_[40] = "";
+    float toastT_ = 0;
+    void commitStep();
+    void resetHistory();
+    void validateViews();
     void afterLoad();
     Buttons btn_;
     View* cur_ = &arrange;

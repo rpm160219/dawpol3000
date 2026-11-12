@@ -37,6 +37,12 @@ static int testScreenPng(const char* path) {
     return savePng(c, path);
 }
 
+// Pusta klatka (zatwierdza przelaczenie ekranu).
+static void idle(App& app) {
+    InputState in;
+    app.update(in, 0.016f);
+}
+
 // Symuluje wcisniecie przycisku (jedna klatka wcisniety, jedna puszczony).
 static void tap(App& app, int btn) {
     InputState in;
@@ -66,11 +72,18 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_L2);  // ARRANGE -> PROJECT
     } else if (!strcmp(screen, "roll")) {
         app.openPattern(1, 1);  // HOOK na sciezce LEAD
-        tap(app, B_SELECT);     // (neutralna klatka — zatwierdza przelaczenie ekranu)
+        idle(app);
         app.roll.setCursor(14, 70);
         app.roll.setView(75);
         tap(app, B_START);
         for (int i = 0; i < 160; i++) eng.process(buf, 256);
+    } else if (!strcmp(screen, "select")) {
+        app.openPattern(1, 1);
+        idle(app);
+        app.roll.setView(75);
+        tap(app, B_R3);                    // tryb zaznaczania
+        app.roll.selectRect(4, 63, 9, 72);  // zaznacz 3 nuty
+        app.roll.setCursor(9, 72);
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK

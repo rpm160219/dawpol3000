@@ -25,6 +25,12 @@ int ArrangeView::highlightedPattern(int* track) const {
     return p.tracks[curTrack_].lastPattern;
 }
 
+void ArrangeView::clampCursor() {
+    int n = app_->project().nTracks;
+    if (curTrack_ > n) curTrack_ = n;
+    if (topTrack_ > curTrack_) topTrack_ = curTrack_;
+}
+
 void ArrangeView::scroll() {
     int vb = visibleBars();
     if (curBar_ < firstBar_) firstBar_ = curBar_;

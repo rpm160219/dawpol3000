@@ -9,6 +9,14 @@
 //   Y + D-pad      przesun nute (czas / wysokosc)
 //   L1 / R1        kursor oktawe w dol / w gore
 //   Start          play / stop patternu (w petli, na instrumencie sciezki)
+//   L3             cofnij (undo)
+//   R3             tryb ZAZNACZANIA (dolny pasek zmienia sie w pigulki akcji):
+//                    B          zaznacz/odznacz nute; trzymaj B + D-pad = zaznaczenie prostokatem;
+//                               B na pustym polu = wyczysc zaznaczenie
+//                    A          usun zaznaczone
+//                    Y          kopiuj zaznaczone (schowek dziala miedzy patternami)
+//                    X          wklej w miejscu kursora (wklejone zostaja zaznaczone)
+//                    R3         wyjscie z trybu
 //   L2             powrot do ARRANGE
 // Enkodery: niebieski = LENGTH, zielony = VELOCITY, bialy = VOLUME sciezki, czerwony = BPM.
 #pragma once
@@ -25,6 +33,10 @@ public:
     void render(Canvas& c) override;
     void setCursor(int step, int pitch) { curStep_ = step; curPitch_ = pitch; scrollToCursor(); }
     void setView(int topPitch) { topPitch_ = topPitch; scrollToCursor(); }
+    bool valid();                 // czy pattern/sciezka nadal istnieja (np. po undo)
+    void onProjectReplaced();     // po undo/wczytaniu: czysci zaznaczenie
+    void setSelectMode(bool on) { selMode_ = on; clearSel(); }  // (testy/headless)
+    void selectRect(int s0, int p0, int s1, int p1);             // (testy/headless)
 
 private:
     int pat_ = 0, track_ = 0;
@@ -33,6 +45,17 @@ private:
     int lastLen_ = 2 * TICKS_PER_STEP, lastVel_ = 100;
     int previewPitch_ = -1;
     float previewLeft_ = 0.f;
+    // Zaznaczanie
+    bool selMode_ = false;
+    bool sel_[Pattern::MAX_NOTES] = {};
+    bool bHeld_ = false, bMoved_ = false;
+    int anchorStep_ = 0, anchorPitch_ = 0;
+    struct Clipboard { Note notes[Pattern::MAX_NOTES]; int n = 0; int refPitch = 60; } clip_;
+    void clearSel();
+    int selCount();
+    void removeNote(int i);  // usuwa z patternu, przenosi flage zaznaczenia jak Pattern::remove
+    void updateSelect(const Buttons& b);
+    void renderSelectBar(Canvas& c);
 
     Pattern& pat();
     int steps();

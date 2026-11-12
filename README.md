@@ -17,4 +17,5 @@ Select = ustawienia ścieżki (nazwa, kolor, usuń), L1 = mute, R1 = solo.
 Piano roll — klawiatura na PC (konsola: te same funkcje na D-padzie/ABXY/analogach):
 strzałki = kursor, X = wstaw nutę (A na konsoli), Z = usuń (B), S + ←/→ = długość (X), A + strzałki = przesuń (Y),
 Q/W = oktawa, Enter = play/stop, gałki: F/H długość, T/G velocity, J/L głośność, I/K tempo, Esc = wyjście.
+Undo: klik lewej gałki (PC: U). Zaznaczanie w piano rollu: klik prawej gałki (PC: O) → B zaznacz (trzymaj + strzałki = prostokąt), A usuń, Y kopiuj, X wklej.
 `--test` uruchamia ekran testu sprzętu.
