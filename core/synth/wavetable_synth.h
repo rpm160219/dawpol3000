@@ -84,7 +84,7 @@ private:
     int semi_[2] = {0, 0}, fmode_ = 0;
     float cents_[2] = {-4.f, 4.f}, lvl_[2] = {1.f, 1.f}, sub_ = 0.f, drive_ = 0.f;
     alignas(8) unsigned char sx_[VOICES][128];  // stan glosu trybu rozszerzonego
-    void renderExtVoice(int vi, int16_t* out, const int16_t* vk, const float* mod, uint32_t inc, int vel);
+    void renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel);
     void startVoice(int slot, int pitch, float vel);
     float lfoValue(LfoState& l);
     void advanceLfo(int outFrames);  // LFO chodzi w czasie rzeczywistym, tez gdy nic nie gra

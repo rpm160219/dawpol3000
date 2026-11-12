@@ -115,11 +115,11 @@ void WavetableSynth::setExt(int16_t wave2, int semi1, int semi2, float cents1, f
 }
 
 // Jeden blok glosu w trybie rozszerzonym. vk = galki po modulacji (0 fala OSC 1, 2 CUTOFF, 3 RES).
-void WavetableSynth::renderExtVoice(int vi, int16_t* out, const int16_t* vk, const float* mod, uint32_t inc, int vel) {
+void WavetableSynth::renderExtVoice(int vi, int16_t* out, int16_t* vk, const float* mod, uint32_t inc, int vel) {
     WtExtState* s = SX(sx_, vi);
     auto clampK = [](float v) { return v < 0 ? 0 : (v > 32767 ? 32767 : (int32_t)v); };
-    const int32_t k0 = clampK(vk[0] + mod[DEST_W1] * 32767.f);
-    const int32_t k0b = clampK(wave2_ + (mod[DEST_WAVE] + mod[DEST_W2]) * 32767.f);
+    const int32_t k0 = clampK(vk[0] + (mod[DEST_W1] + mod[DEST_W12]) * 32767.f);
+    const int32_t k0b = clampK(wave2_ + (mod[DEST_WAVE] + mod[DEST_W2] + mod[DEST_W12]) * 32767.f);
     const int32_t k2 = vk[2], k3 = vk[3];
     // wysokosc: interwal + rozstrojenie (DTUN skaluje rozstrojenie), P1/P2 = +-1 oktawa przy glebokosci 1
     const float dsc = 1.f + mod[DEST_DETUNE];
@@ -153,6 +153,7 @@ void WavetableSynth::renderExtVoice(int vi, int16_t* out, const int16_t* vk, con
         for (int j = 0; j < 10; j++) control[j] += delta[j];
     }
     modKnob_[4].store((int16_t)k0b, std::memory_order_relaxed);
+    vk[0] = (int16_t)k0;  // ekran: fala OSC 1 po modulacji W1 / W1+2
 }
 
 void WavetableSynth::setLfo(int i, int shape, float rate, float depth, int dest, bool sync, float beats) {

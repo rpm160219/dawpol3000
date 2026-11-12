@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 14:10
+**Zmienione:** nowy cel LFO **W1+2** (fale obu oscylatorów naraz; dopisany na końcu listy — zapisane projekty bez zmian) — `core/seq/project.*`, `core/synth/wavetable_synth.*`; ekran pokazuje też ruch fali OSC 1 przy W1 / W1+2. Dokończone z poprzedniej sesji: opis trybu rozszerzonego w `docs/ARCHITEKTURA.md`, README, CLAUDE.md; pomiar na konsoli: 6 głosów — oryginał 9,3%, WAVETABLE+ (2 LFO, sub, BP) 10,1% rdzenia. Zgodność oryginału nadal 0 różnic.
+**Następny krok:** Patryk testuje WAVETABLE+ na konsoli.
+**Wymaga od Patryka:** tak — odsłuch.
+
 ## 2026-11-12 13:40
 **Zmienione:** tryb ROZSZERZONY WAVETABLE (R3 w SYNTH; oryginał 1:1 zostaje domyślny i nadal zgodny bit w bit): własny DSP wzorowany na `wavetable_sample` — 2 niezależne oscylatory (fala, interwał ±24, detune ±50 c, poziom), SUB (sinus −1 okt., L3 na OSC 1), filtr LP24 (oryginał) / LP12 / BP / HP + DRIVE; strony OSC 1, OSC 2, FILTER; nowe cele LFO W1 W2 P1 P2 LV1 LV2; na ekranie fala OSC 2 na czerwono, krzywa filtra wg trybu. Pliki: `core/seq/project.*`, `core/io/project_file.cpp` (naprawiony parser długich linii), `core/synth/wavetable_synth.*`, `core/audio/engine.*`, `core/ui/synth_view.*`, `core/ui/wavetable_screen.*`, `core/headless.*`.
 Testy: oryginał 0 różnic; rozszerzony z ustawieniami jak oryginał różni się o ~−77 dB; tryby filtra i SUB działają.

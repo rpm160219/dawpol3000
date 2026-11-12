@@ -19,6 +19,6 @@ strzałki = kursor, X = wstaw nutę (A na konsoli), Z = usuń (B), S + ←/→ =
 Q/W = oktawa, Enter = play/stop, gałki: F/H długość, T/G velocity, J/L głośność, I/K tempo, Esc = wyjście.
 Narzędzia: klik lewej gałki (PC: U) → B undo, A redo, Y IN/OUT pętli, X pętla wł/wył. Zaznaczanie w piano rollu: klik prawej gałki (PC: O) → B zaznacz (trzymaj + strzałki = prostokąt), A usuń, Y kopiuj, X wklej;
 L2/R2 (PC: 1/2) = druga warstwa: trzymaj B + góra/dół = transpozycja, trzymaj A + strzałki = przesuń, trzymaj Y + góra/dół = oktawa, X = duplikat.
-SYNTH (R2 z piano rolla): Select = następna strona (SOUND, AMP ENV, FILTER ENV, LFO 1, LFO 2), L3 na stronach obwiedni = RELEASE ↔ AMOUNT, gałki = parametry; odsłuch z przycisków (PC: strzałki + A/S/Z/X).
+SYNTH (R2 z piano rolla): R3 = WAVETABLE oryginał ↔ WAVETABLE+ (2 oscylatory, sub, filtr LP24/LP12/BP/HP); Select = następna strona; L3: na obwiedniach RELEASE ↔ AMOUNT, na OSC 1 LEVEL ↔ SUB, na LFO synchronizacja z BPM; gałki = parametry; odsłuch z przycisków (PC: strzałki + A/S/Z/X).
 Silniki: WAVETABLE (port 1:1 z op1r, Hundekraft, GPL-3.0-or-later — `third_party/op1r_wavetable`), TEST SAW.
 `--test` uruchamia ekran testu sprzętu. `tools/test_wavetable.sh` — test zgodności WAVETABLE z oryginałem.
