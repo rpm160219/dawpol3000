@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-12 18:46
+**Zmienione (uwaga Patryka):** `core/ui/synth_view.*` — filtr SUPERSAW na osobnej stronie FILTER zaraz po SOUND (CUTOFF / RESONANCE / TYPE + wykres charakterystyki filtra), zamiast pod L3 na SOUND. Strony: SOUND, FILTER, VOICE, AMP ENV, FILTER ENV, MOD ENV, LFO 1, LFO 2, PRESETS. Wysłane na konsolę.
+**Następny krok:** Patryk sprawdza stronę FILTER w SUPERSAW.
+**Wymaga od Patryka:** tak — ocena.
+
 ## 2026-11-12 18:43
 **Zmienione — filtr w SUPERSAW (wybór Patryka: opcja 1, filtr w samym silniku):**
 - `core/synth/wavetable_synth.*` — filtr DAW-POL za oryginalnym silnikiem: SVF (LP24 / LP12 / BP / HP), rezonans do Q 10 z kompensacją głośności, wygładzanie; obwiednia filtra i cele LFO/MOD ENV CUT/RES. Filtr w pełni otwarty bez rezonansu = dźwięk oryginału bit w bit (test 0 różnic).

@@ -38,7 +38,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind evak[6] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind sidk[7] = {K_SOUND, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
     static const Kind monk[8] = {K_SOUND, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};
-    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : orig[p])))));
+    static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
+    return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : orig[p]))))));
 }
 
 void SynthView::setPageKind(int kd) {
@@ -131,20 +132,6 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     t.movSync = pos > 0;
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
-                }
-            } else if (t.engine == ENG_SUPERSAW && alt_) {  // SUPERSAW + L3: filtr DAW-POL — CUTOFF, RESONANCE, TYPE
-                if (i == 0 && d != 0.f) {  // push[0] = zamkniecie (0 = otwarty)
-                    int x = t.push[0] - (int)lrintf(d * 32767.f);
-                    x = x < 0 ? 0 : (x > 32767 ? 32767 : x);
-                    if (x != t.push[0]) { t.push[0] = (int16_t)x; changed = true; }
-                } else if (i == 1) knob(t.push[1]);
-                else if (i == 2) {
-                    const int st = stepVp_[2].steps(ax, dt, 4.f);
-                    if (st) {
-                        int m = t.push[2] + st;
-                        m = m < 0 ? 0 : (m > 3 ? 3 : m);
-                        if (m != t.push[2]) { t.push[2] = (int16_t)m; changed = true; }
-                    }
                 }
             } else if (t.engine == ENG_VAPORA && alt_) {  // VAPORA + L3: CHARACTER, INTERVAL, SUN (krokowo), SPEED
                 if (i == 3) {
@@ -258,6 +245,22 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             break;
         }
         case K_FILTER: {  // CUTOFF, RES, MODE, DRIVE
+            if (t.engine == ENG_SUPERSAW) {  // SUPERSAW: filtr DAW-POL — CUTOFF, RESONANCE, TYPE
+                if (i == 0 && d != 0.f) {  // push[0] = zamkniecie (0 = otwarty)
+                    int x = t.push[0] - (int)lrintf(d * 32767.f);
+                    x = x < 0 ? 0 : (x > 32767 ? 32767 : x);
+                    if (x != t.push[0]) { t.push[0] = (int16_t)x; changed = true; }
+                } else if (i == 1) knob(t.push[1]);
+                else if (i == 2) {
+                    const int st = stepVp_[2].steps(ax, dt, 4.f);
+                    if (st) {
+                        int m = t.push[2] + st;
+                        m = m < 0 ? 0 : (m > 3 ? 3 : m);
+                        if (m != t.push[2]) { t.push[2] = (int16_t)m; changed = true; }
+                    }
+                }
+                break;
+            }
             if (obp) {  // OXBOW+: CUTOFF, RES, TYPE, DRIVE; L3: KEYTRK, VELOCITY, VINTAGE, DRIVE
                 ObExt& x = t.obx;
                 auto add = [&](uint8_t& val, int lo, int hi, float range) {
@@ -497,7 +500,6 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
-    if (k == K_SOUND && t.engine == ENG_SUPERSAW) { hint = alt_ ? "L3 = DETUNE / MORPH / SUB / DRIVE" : "L3 = CUTOFF / RESONANCE / TYPE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_VAPORA) { hint = alt_ ? "L3 = MORPH / THICKNESS / BRIGHTNESS" : "L3 = CHARACTER / INTERVAL / SUN / SPEED"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_MONOLIT) { hint = alt_ ? "L3 = SHAPE / CUTOFF / CONTOUR" : "L3 = BODY / VEL / AGE"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OXBOW) { hint = alt_ ? "L3 = CUTOFF / RES / ENV" : "L3 = WAVE / FILTER / DRIVE"; if (alt_) hc = pal::blue; }
@@ -580,6 +582,30 @@ void SynthView::render(Canvas& c) {
         }
         snprintf(b, sizeof b, "%sFILTER %s", t.obx.sync ? "SYNC  " : (t.obx.xmod ? "X-MOD  " : ""), F[t.obx.ftype % 6]);
         drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
+    } else if (k == K_FILTER && t.engine == ENG_SUPERSAW) {
+        // charakterystyka filtra (SVF jak w dzwieku): 30 Hz .. 16 kHz, -36 .. +12 dB
+        const float cut = (32767 - t.push[0]) / 32767.f, r = t.push[1] / 32767.f;
+        const int mode = t.push[2] & 3;
+        const float fc = 30.f * powf(16000.f / 30.f, cut);
+        const float k2 = mode == 0 ? 0.765f * (1.f - r) + 0.1f * r : 1.414f * (1.f - r) + 0.1f * r;
+        const float inG = mode == 2 ? 1.f : 1.f - (mode == 0 ? 0.4f : 0.55f) * r;
+        float pts[2 * 81];
+        for (int i = 0; i <= 80; i++) {
+            const float f = 30.f * powf(16000.f / 30.f, i / 80.f), w = f / fc, w2 = w * w;
+            auto mag = [&](float k) { return 1.f / sqrtf((1.f - w2) * (1.f - w2) + k * k * w2); };
+            float h = cut >= 1.f && r <= 0.f ? 1.f
+                    : mode == 0 ? mag(1.848f) * mag(k2) * inG
+                    : mode == 1 ? mag(k2) * inG
+                    : mode == 2 ? k2 * w * mag(k2) * (1.f + 2.f * r) : w2 * mag(k2) * inG;
+            float db = 20.f * log10f(h > 1e-6f ? h : 1e-6f);
+            db = db < -36.f ? -36.f : (db > 12.f ? 12.f : db);
+            pts[2 * i] = 400.f + i * 2.5f;
+            pts[2 * i + 1] = 360.f - db * 0.75f;  // +12 dB: y 351, -36 dB: y 387
+        }
+        c.line(400, 360, 600, 360, 1.f, pal::faint);  // 0 dB
+        c.polyline(pts, 81, 2.f, pal::blue);
+        snprintf(b, sizeof b, "FILTER %s", cut >= 1.f && r <= 0.f ? "OPEN" : filterModeName(mode));
+        drawText(c, 600, 394, b, 8, 1.1f, pal::white, ALIGN_RIGHT);
     } else if (k == K_OSC1 || k == K_OSC2 || k == K_FILTER) {
         // mieszanie: poziomy OSC 1 (zielony), OSC 2 (czerwony), SUB (bialy)
         const float lv[3] = {t.ext.osc[0].level, t.ext.osc[1].level, t.ext.sub};
@@ -614,13 +640,6 @@ void SynthView::render(Canvas& c) {
         snprintf(v[0], 16, "%.2f%%", (t.knob[0] >> 7) * 100.f / 16384.f);  // rozstrojenie pil (oryginal: do ~1,6 %)
         snprintf(v[1], 16, "%s %d", t.knob[1] < 2000 ? "SAW" : (t.knob[1] > 30767 ? "SQR" : "MIX"), (t.knob[1] * 100 + 16383) / 32767);
         snprintf(v[3], 16, "%.1fX", 1.f + t.knob[3] * 4.f / 32767.f);
-        if (alt_) {  // filtr DAW-POL
-            const int16_t cut = (int16_t)(32767 - t.push[0]);
-            labels[0] = "CUTOFF"; if (cut >= 32767) snprintf(v[0], 16, "OPEN"); else cutoffName(v[0], cut); pos[0] = cut / 32767.f;
-            labels[1] = "RESONANCE"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
-            labels[2] = "TYPE"; snprintf(v[2], 16, "%s", filterModeName(t.push[2] & 3)); pos[2] = (t.push[2] & 3) / 3.f;
-            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
-        }
     } else if (k == K_SOUND && t.engine == ENG_VAPORA) {  // VAPORA: MORPH, THICKNESS, BRIGHTNESS, MOTION; L3: CHARACTER, INTERVAL, SUN, SPEED
         static const char* L[4] = {"MORPH", "THICKNESS", "BRIGHTNESS", "MOTION"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
@@ -828,6 +847,12 @@ void SynthView::render(Canvas& c) {
         pos[2] = t.unison / 50.f;
         pos[3] = t.age;
         if (t.engine == ENG_MONOLIT || t.engine == ENG_SUPERSAW) { labels[2] = ""; labels[3] = ""; v[2][0] = v[3][0] = 0; pos[2] = pos[3] = 0; }  // MONOLIT: tylko MODE i GLIDE
+    } else if (k == K_FILTER && t.engine == ENG_SUPERSAW) {  // filtr DAW-POL
+        const int16_t cut = (int16_t)(32767 - t.push[0]);
+        labels[0] = "CUTOFF"; if (cut >= 32767) snprintf(v[0], 16, "OPEN"); else cutoffName(v[0], cut); pos[0] = cut / 32767.f;
+        labels[1] = "RESONANCE"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
+        labels[2] = "TYPE"; snprintf(v[2], 16, "%s", filterModeName(t.push[2] & 3)); pos[2] = (t.push[2] & 3) / 3.f;
+        labels[3] = ""; v[3][0] = 0; pos[3] = 0;
     } else if (k == K_FILTER) {
         cutoffName(v[0], t.knob[2]);
         snprintf(v[1], 16, "%d", t.knob[3] * 100 / 32767);

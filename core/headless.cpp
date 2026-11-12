@@ -327,7 +327,7 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "supersawvoice")) app.synth.setPageKind(SynthView::K_VOICE);
-        if (!strcmp(screen, "supersawfilter")) { tr.push[0] = 14000; tr.push[1] = 20000; tr.push[2] = 0; tr.fenvAmt = 0.5f; app.markDirty(); idle(app); app.synth.setAlt(true); }
+        if (!strcmp(screen, "supersawfilter")) { tr.push[0] = 14000; tr.push[1] = 20000; tr.push[2] = 0; tr.fenvAmt = 0.5f; app.markDirty(); idle(app); app.synth.setPageKind(SynthView::K_FILTER); }
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);
