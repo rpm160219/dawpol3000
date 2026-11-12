@@ -12,7 +12,8 @@ namespace dp {
 struct ElgCore;
 ElgCore* elgCreate();  // poza watkiem audio
 void elgNoteOn(ElgCore* p, int voice);
-void elgRender(ElgCore* p, int voice, int16_t* out, const int16_t* knobs, const uint32_t* pitch, int vel);
+// syncPh >= 0: faza ruchu (LFO MOVEMENT) przypieta do tempa, 0..2^32 jako int64; < 0 = swobodny bieg jak w oryginale
+void elgRender(ElgCore* p, int voice, int16_t* out, const int16_t* knobs, const uint32_t* pitch, int vel, int64_t syncPh = -1);
 
 struct ElgView { uint32_t blocks; int32_t level, lfo; int16_t knobs[4]; };  // dla ekranu (jak volatile w oryginale)
 void elgView(const ElgCore* p, ElgView* v);

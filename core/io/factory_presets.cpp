@@ -185,9 +185,41 @@ static const FactoryPreset kPew[] = {
     {"PIPE SOLO", CAT_LEAD, 1, "k 0 0 2000 5000 voice 1 0.05 0 0 env 0.04 0.3 1 0.2 push 0 32767 0"},
 };
 
-// ELG: sam silnik 1:1 (decyzja Patryka) — tylko INIT
+// ELG: k INTERVAL DETUNE TIMBRE MOVEMENT. INTERVAL co 512 jednostek powtarza 5 stopni: 256 UNISON, 768 FIFTH,
+// 1280 OCTAVE, 1792 OCT+5TH, 2304 2 OCT. DETUNE 0..32767 = 0..~20 c; TIMBRE = filtr 40 Hz..6 kHz + przester;
+// MOVEMENT = predkosc i glebokosc ruchu; msync 1 PODZIAL = ruch w tempie. Tylko obwiednia glosnosci (sam silnik).
 static const FactoryPreset kElg[] = {
     {"INIT", CAT_OTHER, 1, ""},
+    {"NORTHERN LIGHTS", CAT_PAD, 2, "k 1280 9000 20000 12000 env 1.5 1 1 3"},
+    {"TUNDRA", CAT_PAD, 2, "k 768 6000 14000 8000 env 2 1 1 3.5"},
+    {"MOOSE CALL", CAT_LEAD, 2, "k 768 4000 24000 6000 env 0.08 0.5 0.9 0.6"},
+    {"DEEP DRONE", CAT_PAD, 2, "k 256 3000 9000 5000 env 2.5 1 1 4"},
+    {"FROST", CAT_PAD, 2, "k 2304 14000 26000 14000 env 1.2 1 0.9 3"},
+    {"FJORD", CAT_PAD, 2, "k 1792 10000 17000 10000 env 1.8 1 1 3"},
+    {"AURORA PULSE", CAT_PAD, 2, "k 1280 8000 20000 22000 msync 1 3 env 0.8 1 1 2"},
+    {"SLOW BREATH", CAT_PAD, 2, "k 768 7000 15000 18000 msync 1 0 env 1.5 1 1 3"},
+    {"WIDE OCTAVES", CAT_PAD, 2, "k 2304 20000 18000 9000 env 1 1 1 2.5"},
+    {"DARK FOREST", CAT_PAD, 2, "k 256 12000 7000 15000 env 2 1 1 3"},
+    {"GROWL BASS", CAT_BASS, 2, "k 256 5000 22000 3000 env 0.005 0.4 0.8 0.15"},
+    {"FIFTH BASS", CAT_BASS, 2, "k 768 3000 16000 2000 env 0.005 0.3 0.9 0.12"},
+    {"SUB DRONE", CAT_BASS, 2, "k 256 1000 8000 4000 env 0.05 0.5 1 0.8"},
+    {"WOBBLE BASS", CAT_BASS, 2, "k 1280 4000 18000 26000 msync 1 5 env 0.005 0.3 1 0.15"},
+    {"FUZZ BASS", CAT_BASS, 2, "k 1280 8000 30000 2000 env 0.003 0.3 0.9 0.1"},
+    {"SAW LEAD", CAT_LEAD, 2, "k 1280 10000 26000 4000 env 0.01 0.3 0.9 0.3"},
+    {"OCTAVE LEAD", CAT_LEAD, 2, "k 1280 3000 23000 7000 env 0.02 0.4 0.85 0.4"},
+    {"HOWL", CAT_LEAD, 2, "k 1792 16000 28000 16000 env 0.1 0.5 0.9 0.8"},
+    {"DRIFTER", CAT_LEAD, 2, "k 768 22000 20000 20000 env 0.05 0.4 0.9 0.6"},
+    {"SNOW KEYS", CAT_KEYS, 2, "k 2304 6000 21000 5000 env 0.005 1.2 0.3 0.8"},
+    {"ICE ORGAN", CAT_KEYS, 2, "k 1280 2000 17000 3000 env 0.005 0.3 1 0.1"},
+    {"RUNE PLUCK", CAT_PLUCK, 2, "k 768 5000 25000 6000 env 0.001 0.5 0 0.4"},
+    {"ANTLER PLUCK", CAT_PLUCK, 2, "k 1792 9000 22000 4000 env 0.001 0.35 0 0.25"},
+    {"MOON BELL", CAT_BELL, 2, "k 2304 2000 30000 10000 env 0.001 2 0 2"},
+    {"STORM", CAT_FX, 2, "k 1792 30000 32767 32767 env 0.8 1 1 2"},
+    {"SHIVER", CAT_FX, 2, "k 2304 26000 24000 30000 msync 1 9 env 0.3 1 1 1"},
+    {"WIND", CAT_FX, 2, "k 256 32767 11000 28000 env 1.5 1 1 2.5"},
+    {"HEARTBEAT", CAT_FX, 2, "k 256 2000 12000 24000 msync 1 3 env 0.01 0.4 1 0.3"},
+    {"RITUAL", CAT_OTHER, 2, "k 768 11000 19000 17000 msync 1 1 env 1 1 1 3"},
+    {"CAMPFIRE", CAT_OTHER, 2, "k 1280 7000 13000 11000 env 0.6 1 1 2"},
 };
 
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji

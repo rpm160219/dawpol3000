@@ -112,7 +112,19 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
             if (x != v) { v = (int16_t)x; changed = true; }
         };
         switch (k) {
-        case K_SOUND: knob(t.knob[i]); break;
+        case K_SOUND:
+            if (t.engine == ENG_ELG && alt_ && i == 3) {  // ELG + L3: czerwona galka = SYNC (OFF, 1/1 .. 1/128T)
+                int st = stepMovDiv_.steps(ax, dt, 5.f);
+                if (st) {
+                    int pos = t.movSync ? t.movDiv + 1 : 0;  // 0 = OFF
+                    pos += st;
+                    pos = pos < 0 ? 0 : (pos > LFO_DIVS ? LFO_DIVS : pos);
+                    t.movSync = pos > 0;
+                    if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
+                    changed = true;
+                }
+            } else knob(t.knob[i]);
+            break;
         case K_BARS: if (i < 3) knob(t.push[i]); break;  // PEW: wysuniecie suwakow niskich / srodkowych / wysokich
         case K_OSC1:
         case K_OSC2: {  // WAVE, INTERVAL, DETUNE, LEVEL (OSC 1 + L3: SUB)
@@ -305,6 +317,10 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_ELG) {
+        hint = alt_ ? "L3 = MOVEMENT" : (t.movSync ? "MOVEMENT SYNC TO BPM   L3 = SYNC" : "L3 = MOVEMENT SYNC");
+        if (alt_ || t.movSync) hc = alt_ ? pal::red : pal::blue;
+    }
     if (k == K_VOICE && !t.mono && t.unison > 0) { hint = "UNISON WORKS IN MONO"; hc = pal::dim; }
     if (hint) drawText(c, 20, 384, hint, 7, 1.f, hc);
 
@@ -399,6 +415,11 @@ void SynthView::render(Canvas& c) {
         snprintf(v[3], 16, "%d", t.knob[3] * 100 / 32767);
         static const char* L[4] = {"INTERVAL", "DETUNE", "TIMBRE", "MOVEMENT"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; }
+        if (alt_) {  // L3: synchronizacja ruchu z tempem
+            labels[3] = "SYNC";
+            snprintf(v[3], 16, "%s", t.movSync ? lfoDivName(t.movDiv) : "OFF");
+            pos[3] = t.movSync ? (t.movDiv + 1) / (float)LFO_DIVS : 0.f;
+        } else if (t.movSync) snprintf(v[3], 16, "%d %s", t.knob[3] * 100 / 32767, lfoDivName(t.movDiv));
     } else if (k == K_SOUND && t.engine == ENG_PEW) {  // organy: rejestracja, perkusja, drive/chorus, Leslie
         snprintf(v[0], 16, "%d", t.knob[0] * 100 / 32767);  // uklad suwakow widac na grafice obok
         const int g = t.knob[1];

@@ -294,6 +294,10 @@ void WavetableSynth::advanceLfo(int outFrames) {
             l.rnd = (int32_t)(l.seed >> 8) / 8388608.f - 1.f;
         }
     }
+    if (movSync_) {  // ELG: faza ruchu jak synchronizowane LFO (przy grajacym utworze przypieta do bitu)
+        if (tPlaying_) { double c = tBeat_ / movBeats_; movPh_ = c - floor(c); }
+        else { movPh_ += tBpm_ / 60.0 / movBeats_ * outFrames / outRate_; movPh_ -= floor(movPh_); }
+    }
     if (tPlaying_) tBeat_ += (double)outFrames / outRate_ * tBpm_ / 60.0;
 }
 
@@ -481,7 +485,7 @@ void WavetableSynth::renderBlock() {
         uint32_t inc = pitchMul != 1.f ? (uint32_t)((double)base * pitchMul) : base;
         if (kind_ == 3) {  // ELG (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
-            elgRender(elg_, vi, out, vk, pitchBuf, v.vel);
+            elgRender(elg_, vi, out, vk, pitchBuf, v.vel, movSync_ ? (int64_t)(movPh_ * 4294967296.0) % 4294967296LL : -1);
         } else if (kind_ == 2) {  // PEW (oryginalny DSP op1r)
             for (int i = 0; i < BLOCK; i++) pitchBuf[i] = inc;
             pewRender(pew_, vi, out, vk, pitchBuf, v.vel);

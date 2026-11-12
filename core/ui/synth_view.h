@@ -54,7 +54,7 @@ private:
     // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS)
     static int pageMode(const Track& t) { return t.engine == ENG_WAVETABLE && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG ? 3 : 0)); }
     int pageCount(int pm) const { return pm == 1 ? 10 : (pm == 3 ? 3 : 8); }
-    RelEncoder stepMDest_, stepGDiv_;
+    RelEncoder stepMDest_, stepGDiv_, stepMovDiv_;
     RelEncoder stepVMode_;
     // przegladarka presetow
     int catSel_ = 0, preSel_ = 0, preFirst_ = 0, focus_ = 1;  // catSel_ 0 = ALL, 1.. = kategorie

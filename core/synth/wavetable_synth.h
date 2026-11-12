@@ -50,6 +50,7 @@ public:
     // LFO i (0/1): ksztalt (LfoShape), Hz, glebokosc 0..1, cel (LfoDest); sync: cykl = beats cwiercnut
     void setLfo(int i, int shape, float rate, float depth, int dest, bool sync = false, float beats = 1.f);
     // Transport (watek audio, przed kazdym odcinkiem): czy gra, pozycja w cwiercnutach, tempo
+    void setMoveSync(bool on, float beats) { movSync_ = on; movBeats_ = beats > 0 ? beats : 1.f; }  // ELG: ruch z tempem
     void setTransport(bool playing, double beatPos, float bpm) { tPlaying_ = playing; tBeat_ = beatPos; tBpm_ = bpm; }
     void noteOn(int pitch, float vel) override;
     void noteOff(int pitch) override;
@@ -105,7 +106,10 @@ private:
     bool alt_ = false;
     int kind_ = 0, tfBase_ = -1;
     PewCore* pew_ = nullptr;
-    ElgCore* elg_ = nullptr;  // ELG: glosy tej sciezki  // PEW: organy tej sciezki (tworzone w init, poza watkiem audio)
+    ElgCore* elg_ = nullptr;
+    bool movSync_ = false;
+    float movBeats_ = 4.f;
+    double movPh_ = 0;  // faza ruchu ELG przy synchronizacji (0..1)  // ELG: glosy tej sciezki  // PEW: organy tej sciezki (tworzone w init, poza watkiem audio)
     std::atomic<int16_t> tfEnv_{0}, vLev_{0};
     int16_t wave2_ = 16384;
     int semi_[2] = {0, 0}, fmode_ = 0;

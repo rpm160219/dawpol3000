@@ -30,6 +30,7 @@ void writeInstrument(FILE* f, const Track& t) {
             x.osc[0].semi, x.osc[0].cents, x.osc[0].level, x.osc[1].wave, x.osc[1].semi, x.osc[1].cents, x.osc[1].level,
             x.sub, x.fmode, x.drive);
     if (t.engine == ENG_PEW) fprintf(f, " push %d %d %d", t.push[0], t.push[1], t.push[2]);
+    if (t.engine == ENG_ELG) fprintf(f, " msync %d %d", t.movSync, t.movDiv);
     fprintf(f, " voice %d %.4f %.3f %.4f gsync %d %d", t.mono, t.glide, t.unison, t.age, t.glideSync, t.glideDiv);
     fprintf(f, " menv %.4f %.4f %.4f %.4f %.4f %d", t.menv[0], t.menv[1], t.menv[2], t.menv[3], t.menvAmt, t.menvDest);
     if (t.preset[0]) { fprintf(f, " preset "); putStr(f, t.preset); }
@@ -140,6 +141,10 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 if (!strcmp(tok[i], "sub") && left >= 1) t.ext.sub = (float)atof(tok[i + 1]);
                 if (!strcmp(tok[i], "fmode") && left >= 1) t.ext.fmode = (uint8_t)(atoi(tok[i + 1]) % FLT_MODES);
                 if (!strcmp(tok[i], "drv") && left >= 1) t.ext.drive = (float)atof(tok[i + 1]);
+                if (!strcmp(tok[i], "msync") && left >= 2) {
+                    t.movSync = atoi(tok[i + 1]) != 0;
+                    t.movDiv = (uint8_t)(atoi(tok[i + 2]) % LFO_DIVS);
+                }
                 if (!strcmp(tok[i], "push") && left >= 3)
                     for (int j = 0; j < 3; j++) { int v = atoi(tok[i + 1 + j]); t.push[j] = (int16_t)(v < 0 ? 0 : v > 32767 ? 32767 : v); }
                 if (!strcmp(tok[i], "gsync") && left >= 2) {

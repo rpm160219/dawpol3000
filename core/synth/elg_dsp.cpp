@@ -26,7 +26,15 @@ void elgNoteOn(ElgCore* p, int voice) {
     p->note_on((void*)(uintptr_t)voice, k);
 }
 
-void elgRender(ElgCore* p, int voice, int16_t* out, const int16_t* knobs, const uint32_t* pitch, int vel) {
+void elgRender(ElgCore* p, int voice, int16_t* out, const int16_t* knobs, const uint32_t* pitch, int vel, int64_t syncPh) {
+    if (syncPh >= 0) {
+        // synchronizacja z tempem (dodatek DAW-POL): render dodaje do fazy przyrost z galki MOVEMENT, wiec ustawiamy
+        // faze = docelowa - ten sam przyrost (wzor jak w elg.c); glebokosc ruchu dalej z galki
+        const int32_t k3 = knobs[3] < 0 ? 0 : knobs[3];
+        const int32_t e = p->exp2q((k3 * 24800) >> 15);
+        const uint32_t inc = (uint32_t)(187000 * (e >> 12) + ((187000 * (e & 4095)) >> 12));
+        p->voices[voice].lfo = (uint32_t)syncPh - inc;
+    }
     p->pitch_ = pitch;
     p->vel_ = vel;
     p->render((void*)(uintptr_t)voice, out, knobs);

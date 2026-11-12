@@ -165,8 +165,9 @@ int headlessPng(const char* path, const char* screen) {
         in.btn[B_X] = true;
         app.update(in, 0.016f);
         for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
-    } else if (!strcmp(screen, "elg") || !strcmp(screen, "elgenv")) {
+    } else if (!strcmp(screen, "elg") || !strcmp(screen, "elgenv") || !strcmp(screen, "elgsync")) {
         Track& tr = app.project().tracks[1];
+        if (!strcmp(screen, "elgsync")) { tr.movSync = true; tr.movDiv = 3; }
         tr.engine = ENG_ELG;
         engineDefaultKnobs(ENG_ELG, tr.knob);
         tr.knob[2] = 26000; tr.knob[3] = 20000;
@@ -175,6 +176,7 @@ int headlessPng(const char* path, const char* screen) {
         app.openSynth(1);
         idle(app);
         if (!strcmp(screen, "elgenv")) app.synth.setPageKind(SynthView::K_AMP);
+        if (!strcmp(screen, "elgsync")) app.synth.setAlt(true);
         InputState in;
         in.btn[B_A] = true;
         app.update(in, 0.016f);

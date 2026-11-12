@@ -14,7 +14,8 @@ Zaślepka zamiast firmware: `hk/engine.h`. `elg.c` trzyma głosy i wartości dla
 firmware (`elg_plugin.c`, `elg_src_*.c`), `gen_svg.py`.
 
 Port „sam silnik” (decyzja Patryka): tylko 4 gałki oryginału i obwiednia głośności (jak stockowa obwiednia OP-1);
-bez drugiej obwiedni, MOD ENV, LFO, trybów głosu i fabrycznych presetów (tylko INIT).
+bez drugiej obwiedni, MOD ENV, LFO i trybów głosu. Dodatki na prośbę Patryka: synchronizacja ruchu (MOVEMENT) z tempem —
+`elgRender` ustawia fazę LFO głosu przed blokiem (bez zmian w `elg.c`); 30 presetów.
 
 Różnica wynikająca z częstotliwości: na OP-1 głos liczony jest przy 88,2 kHz, u nas przy 96 kHz. Dźwięk jest
 identyczny (test bit w bit przy 88,2 kHz: `tools/test_elg.sh`), ale LFO ruchu i dryf liczone „na blok” biegną przy

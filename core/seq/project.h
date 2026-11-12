@@ -87,6 +87,8 @@ struct Track {
     float glide = 0.f, unison = 0.f, age = 0.f;
     bool glideSync = false;  // GLIDE zsynchronizowany z tempem (czas = podzial nutowy przy biezacym BPM)
     uint8_t glideDiv = 7;    // indeks podzialu (jak w LFO), domyslnie 1/16
+    bool movSync = false;    // ELG: ruch (MOVEMENT) zsynchronizowany z tempem — cykl = podzial movDiv
+    uint8_t movDiv = 0;      // indeks podzialu (jak w LFO), domyslnie 1/1
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
 };

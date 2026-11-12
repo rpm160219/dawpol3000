@@ -132,5 +132,5 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Brakuje: ekran „about” z atrybucją, kolejne silniki op1r/Pico, perkusja/step seq, LFO, efekty, audio/taśma, MIDI.
 - PEW (port 1:1 z op1r, organy z 9 suwakami + Leslie, ekran „jazz club”): gałki REGISTER/PERCUSSION/DRIVE/LESLIE, strona BARS (wysunięcie suwaków LOW/MID/HIGH), bez drugiej obwiedni (decyzja Patryka), 31 presetów w `presets/pew/`; ~5,6% rdzenia przy 6 głosach.
 - Ekran startowy z nazwą programu (~4,5 s, dowolny przycisk pomija).
-- ELG (port 1:1 z op1r, dron z 3 piłami, ekran „łoś”): „sam silnik” — gałki INTERVAL/DETUNE/TIMBRE/MOVEMENT, tylko obwiednia głośności, strony SOUND / AMP ENV / PRESETS (tylko INIT); ~7,6% rdzenia przy 6 głosach.
-- Następny krok: Patryk testuje ELG na konsoli.
+- ELG (port 1:1 z op1r, dron z 3 piłami, ekran „łoś”): „sam silnik” — gałki INTERVAL/DETUNE/TIMBRE/MOVEMENT (L3 = czerwona gałka SYNC: ruch w tempie, OFF / 1/1 … 1/128T), tylko obwiednia głośności, strony SOUND / AMP ENV / PRESETS (31 presetów); ~7,6% rdzenia przy 6 głosach.
+- Następny krok: port EVA (op1r) — 1:1, sam silnik.

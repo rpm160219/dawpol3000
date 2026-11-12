@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 04:00
+**Zmienione:** ELG — synchronizacja ruchu (MOVEMENT) z tempem pod L3: czerwona gałka = SYNC (OFF, 1/1 … 1/128T), MOVEMENT dalej ustawia głębokość; faza przypięta do bitu jak w LFO (`core/synth/elg_dsp.*`, `wavetable_synth.*`, `audio/engine.cpp`, `ui/synth_view.*`, `seq/project.h`, `io/project_file.cpp`; `elg.c` bez zmian, bez sync nadal bit w bit). 30 presetów ELG (`io/factory_presets.cpp`), poziomy sprawdzone. Test: 120 BPM, 1/1 → okres ruchu 2,000 s. Wysłane na konsolę.
+**Następny krok:** port EVA z op1r.
+**Wymaga od Patryka:** nie.
+
 ## 2026-11-13 03:00
 **Zmienione — port silnika ELG (op1r, Hundekraft), „sam silnik”:**
 - `third_party/op1r_elg/` — oryginalne `elg.c`, `elg_level.h`, `elg_geom.h`, `screen.c`, `elg.svg`, `plugin.json`, LICENSE, NOTICE, README; zaślepka `hk/engine.h`; `elg_art.h` z SVG (`tools/gen/svg_to_art2.py`). `third_party/LICENSES.md`.
