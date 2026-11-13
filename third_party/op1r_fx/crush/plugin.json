@@ -1,0 +1,28 @@
+{
+  "name": "crush",
+  "kind": "fx",
+  "symbol": "FX_crush",
+  "stereo": true,
+  "sources": [
+    "crush.c",
+    "crush_dsp.c",
+    "crush_screen.c"
+  ],
+  "defaults": [
+    10922,
+    21239,
+    8192,
+    32767
+  ],
+  "screen": {
+    "svg": "crush.svg",
+    "symbol": "SCREEN_crush"
+  },
+  "loadable": true,
+  "claims": [],
+  "author": "Maiko; kennel port by Hundekraft",
+  "cost": {
+    "call": 4319,
+    "init": 4252
+  }
+}

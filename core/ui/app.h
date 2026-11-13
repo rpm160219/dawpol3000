@@ -89,7 +89,7 @@ public:
 
     void loadDemo();  // przykladowy projekt (headless, pierwsze uruchomienie)
     void loadDemoEtude();       // utwor "REVOLUTIONARY" (headless: render WAV)
-    void loadDemoSynthwave(bool mix = false);  // utwor "SYNTHWAVE" / "SYNTHWAVE MIX" (headless: render WAV)
+    void loadDemoSynthwave(bool mix = false, bool fxTour = false);  // utwor "SYNTHWAVE" / "SYNTHWAVE MIX" (headless: render WAV)
     void loadDemoAllEngines();  // utwor "ALL ENGINES" (headless: render WAV)
 
     ProjectView projectView;

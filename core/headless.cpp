@@ -1,4 +1,6 @@
 #include "headless.h"
+#include <chrono>
+#include "audio/mixer.h"
 #include "fx/fx_registry.h"
 #include "audio/engine.h"
 #include "gfx/canvas.h"
@@ -742,6 +744,21 @@ int headlessPng(const char* path, const char* screen) {
             app.mixer.setCursor(0, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP);
             if (!strcmp(screen, "mixerfetadv")) tap(app, B_L3);
         }
+        if (!strncmp(screen, "mixerfx", 7) && atoi(screen + 7) > 0) {  // mixerfx3..9: ekran efektu (AUX A albo insert 1 DRUMS)
+            const int id = atoi(screen + 7);
+            const FxInfo& fi = fxInfo(id);
+            if (fi.cls == FXC_AUX) {
+                fxDefaults(p.aux[0].fx, id);
+                for (int t = 0; t < p.nTracks; t++) p.tracks[t].send[0] = .5f;
+                app.markDirty();
+                app.mixer.setCursor(p.nTracks, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0);
+            } else {
+                fxDefaults(p.tracks[0].ins[0], id);
+                app.markDirty();
+                app.mixer.setCursor(0, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0);
+            }
+            for (int i = 0; i < 200; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); }
+        }
         if (!strcmp(screen, "mixerbypass")) { p.tracks[2].ins[0].bypass = true; app.markDirty(); app.mixer.setCursor(2, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixerbus")) { app.mixer.setCursor(-1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_BUS); }
         if (!strcmp(screen, "mixerfx")) { app.mixer.setCursor(1, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
@@ -776,6 +793,32 @@ int headlessPng(const char* path, const char* screen) {
     return savePng(c, path);
 }
 
+int headlessBenchFx() {
+    struct Case { int fx; int unit; const char* name; };
+    static const Case cases[] = {{FX_JUNI_CHORUS, -1, "JUNI CHORUS"}, {FX_SISTER, -1, "SISTER"}, {FX_SNOWGLOBE, -1, "SNOWGLOBE"},
+                                 {FX_RACKVERB, 0, "RACKVERB VERB I"}, {FX_RACKVERB, 1, "RACKVERB VERB II"}, {FX_RACKVERB, 3, "RACKVERB QUAD"},
+                                 {FX_TAPE, -1, "TAPE"}, {FX_FATHER, -1, "FATHER"}, {FX_STUTTER, -1, "STUTTER"}, {FX_CRUSH, -1, "CRUSH"},
+                                 {FX_ENTE, -1, "ENTE"}};
+    const int n = 256, blocks = 48000 * 10 / n;
+    static float l[256], r[256];
+    for (const Case& c : cases) {
+        FxHost h;
+        h.setType(c.fx);
+        FxSlot s;
+        fxDefaults(s, c.fx);
+        if (c.unit >= 0) s.w[7] = fxWordOfStep(fxInfo(c.fx), 7, c.unit);
+        uint32_t rs = 1;
+        const auto t0 = std::chrono::steady_clock::now();
+        for (int b = 0; b < blocks; b++) {
+            for (int i = 0; i < n; i++) { rs = rs * 1664525u + 1013904223u; l[i] = r[i] = ((int32_t)(rs >> 16) - 32768) / 98304.f; }
+            h.process(l, r, n, s.w, nullptr, b * n * (120.0 / 60.0 / 48000.0), 120.0 / 60.0 / 48000.0, 120.f);
+        }
+        const double sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        printf("%-18s %5.1f %% rdzenia\n", c.name, sec / 10.0 * 100.0);
+    }
+    return 0;
+}
+
 int headlessWav(const char* path, float seconds, const char* song) {
     const int sr = 48000, block = 256;
     int frames = (int)(seconds * sr);
@@ -787,6 +830,7 @@ int headlessWav(const char* path, float seconds, const char* song) {
     if (song && !strcmp(song, "allengines")) app.loadDemoAllEngines();
     else if (song && !strcmp(song, "synthwave")) app.loadDemoSynthwave();
     else if (song && !strcmp(song, "synthwavemix")) app.loadDemoSynthwave(true);
+    else if (song && !strcmp(song, "synthwavefx")) app.loadDemoSynthwave(true, true);
     else if (song && !strcmp(song, "etude")) app.loadDemoEtude();
     else app.loadDemo();
     eng.send(EC_PLAY_SONG);

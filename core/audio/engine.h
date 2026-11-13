@@ -81,7 +81,11 @@ public:
     float auxPeak(int a) const { return a >= 0 && a < MIX_AUX ? mixer_.aux[a].peak.load(std::memory_order_relaxed) : 0.f; }
     float masterPeak() const { return mixer_.master.peak.load(std::memory_order_relaxed); }
     // telemetria efektu: kanal + insert, albo AUX (ch = -1 - a)
-    const uint8_t* fxTelemetry(int ch, int k) const { return ch >= 0 ? mixer_.insert(ch < MAX_TRACKS ? ch : 0, k).telemetry() : mixer_.auxFx((-1 - ch) % MIX_AUX).telemetry(); }
+    // NULL, gdy w slocie dziala jeszcze inny efekt (watek audio nie przelaczyl go po zmianie w UI)
+    const uint8_t* fxTelemetry(int ch, int k, int fx) const {
+        const FxHost& h = ch >= 0 ? mixer_.insert(ch < MAX_TRACKS ? ch : 0, k) : mixer_.auxFx((-1 - ch) % MIX_AUX);
+        return h.type() == fx && h.telReady() ? h.telemetry() : nullptr;
+    }
     float masterGr() const { return mixer_.master.gr.load(std::memory_order_relaxed); }
     float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione

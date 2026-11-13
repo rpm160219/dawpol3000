@@ -120,6 +120,7 @@ void AudioEngine::process(float* out, int frames) {
         float* trk[MAX_TRACKS];
         bool act[MAX_TRACKS];
         for (int i = 0; i < MAX_TRACKS; i++) { trk[i] = trkBuf_[i]; memset(trkBuf_[i], 0, sizeof(float) * 2 * m); }
+        mixer_.setTransport(seq_.tempo(), seq_.playing(), seq_.beatPos(), m);  // zegar tempa efektow (STUTTER, TAPE, ENTE)
         int pos = 0;
         while (pos < m) {
             int n = seq_.samplesToNextTick();

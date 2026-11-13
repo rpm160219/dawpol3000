@@ -27,12 +27,15 @@ target_include_directories(dpcore PUBLIC core)
 
 # Efekty op1r (Hundekraft) dla miksera: oryginalne pliki w trybie OP1_HOST (wersje C kerneli SISTER)
 set(FX_V ${CMAKE_SOURCE_DIR}/third_party/op1r_fx)
-set(FX_SOURCES core/fx/fx_juni_chorus.c core/fx/fx_sister.c ${FX_V}/sister/sister_dsp.c ${FX_V}/sister/sister_kern.c)
+set(FX_SOURCES core/fx/fx_juni_chorus.c core/fx/fx_sister.c ${FX_V}/sister/sister_dsp.c ${FX_V}/sister/sister_kern.c
+  core/fx/fx_common.c core/fx/fx_tape.c core/fx/fx_stutter.c core/fx/fx_ente.c core/fx/fx_crush.c core/fx/fx_father.c core/fx/fx_rackverb.c core/fx/fx_snowglobe.c
+  ${FX_V}/crush/crush_dsp.c ${FX_V}/father/father_dsp.c ${FX_V}/rackverb/rv_mv.c ${FX_V}/rackverb/rv_quad.c)
 target_sources(dpcore PRIVATE ${FX_SOURCES})
-set(FXSCR_SOURCES core/ui/fx_screen_host.c core/ui/fx_screen_jc.c core/ui/fx_screen_si.c)
+set(FXSCR_SOURCES core/ui/fx_screen_host.c core/ui/fx_screen_jc.c core/ui/fx_screen_si.c core/ui/fx_screen_tape.c core/ui/fx_screen_stutter.c
+  core/ui/fx_screen_ente.c core/ui/fx_screen_father.c core/ui/fx_screen_rackverb.c core/ui/fx_screen_crush.c core/ui/fx_screen_snowglobe.c)
 target_sources(dpcore PRIVATE ${FXSCR_SOURCES} core/ui/fx_screen.cpp)
-set_source_files_properties(${FXSCR_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR}/core;-I${CMAKE_SOURCE_DIR}/core/ui/fx_shim;-I${FX_V};-I${FX_V}/juni_chorus;-I${FX_V}/sister;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
-set_source_files_properties(${FX_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR};-I${FX_V};-I${FX_V}/sister;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
+set_source_files_properties(${FXSCR_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR};-I${CMAKE_SOURCE_DIR}/core;-I${CMAKE_SOURCE_DIR}/core/ui/fx_shim;-I${CMAKE_SOURCE_DIR}/core/ui/fx_shim/inc/rel;-I${FX_V};-I${FX_V}/juni_chorus;-I${FX_V}/sister;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
+set_source_files_properties(${FX_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR};-I${FX_V};-I${FX_V}/sister;-I${CMAKE_SOURCE_DIR}/core/ui/fx_shim;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
 
 # GIN (Hundekraft 3.1.4 / SquareWave Studio, libpo32): oryginalne pliki jako osobne jednostki, flagi jak plugin.json.
 set(GIN_V ${CMAKE_SOURCE_DIR}/third_party/kennel_gin/gin/vendor)

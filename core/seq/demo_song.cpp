@@ -179,7 +179,7 @@ void buildDemoAllEngines(Project& p) {
 
 // SYNTHWAVE: 16 taktow, 104 BPM, a-moll (Am F C G po takcie). Wstep (1-4): pad + arpeggio; 5-8: + bebny i bas;
 // 9-12: + melodia; 13-16: kulminacja z akordami brass i crashem.
-void buildDemoSynthwave(Project& p, bool mix) {
+void buildDemoSynthwave(Project& p, bool mix, bool fxTour) {
     p = Project();
     snprintf(p.name, sizeof p.name, "SYNTHWAVE");
     p.bpm = 104.f;
@@ -206,6 +206,25 @@ void buildDemoSynthwave(Project& p, bool mix) {
         p.tracks[bass].eq.gain[0] = 2.f; p.tracks[bass].eq.freq[0] = 80.f;
         p.tracks[lead].eq.gain[2] = 2.5f;
         p.bus.on = true; p.bus.thresh = .75f; p.bus.makeup = 3.f;
+    }
+    if (mix && fxTour) {  // "SYNTHWAVE FX": efekty z op1r 68 / hundekraft na wszystkich AUX i insertach
+        snprintf(p.name, sizeof p.name, "SYNTHWAVE FX");
+        fxDefaults(p.aux[1].fx, FX_SNOWGLOBE);
+        fxDefaults(p.aux[2].fx, FX_RACKVERB);
+        fxDefaults(p.aux[3].fx, FX_TAPE);
+        p.aux[3].fx.w[7] = 6;  // TAPE: echo 1/8 z kropka w tempie
+        fxDefaults(p.aux[4].fx, FX_FATHER);
+        p.tracks[lead].send[1] = .35f;   // SNOWGLOBE
+        p.tracks[pad].send[2] = .3f;     // RACKVERB
+        p.tracks[arp].send[3] = .4f;     // TAPE
+        p.tracks[brass].send[4] = .3f;   // FATHER
+        p.tracks[drums].send[4] = .15f;
+        fxDefaults(p.tracks[drums].ins[1], FX_STUTTER);
+        p.tracks[drums].ins[1].w[3] = 9000;  // CHANCE: co jakis czas
+        fxDefaults(p.tracks[bass].ins[0], FX_CRUSH);
+        p.tracks[bass].ins[0].w[3] = 9000;  // MIX: odrobina
+        fxDefaults(p.tracks[pad].ins[1], FX_ENTE);
+        p.tracks[pad].ins[1].w[0] = 14000; p.tracks[pad].ins[1].w[3] = fxWordOfStep(fxInfo(FX_ENTE), 3, 1);  // ducking od DRUMS (T1)
     }
     static const int SC[4][3] = {{57, 60, 64}, {53, 57, 60}, {55, 60, 64}, {55, 59, 62}};  // Am F C G
     static const int SR[4] = {33, 29, 36, 31};

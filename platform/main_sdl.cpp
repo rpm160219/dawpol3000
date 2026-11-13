@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
 #endif
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--render-png") && i + 1 < argc) return headlessPng(argv[i + 1], i + 2 < argc ? argv[i + 2] : "arrange");
+        if (!strcmp(argv[i], "--bench-fx")) return headlessBenchFx();
         if (!strcmp(argv[i], "--render-wav") && i + 1 < argc) {
             float secs = (i + 2 < argc) ? (float)atof(argv[i + 2]) : 5.f;
             return headlessWav(argv[i + 1], secs > 0 ? secs : 5.f, i + 3 < argc ? argv[i + 3] : nullptr);

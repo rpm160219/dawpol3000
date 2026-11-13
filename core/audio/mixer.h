@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include "seq/project.h"
 
+struct FxImpl;
+
 namespace dp {
 
 float eqResponseDb(const MixEq& e, float hz, float fs);  // odpowiedz EQ (dB) — podglad i okno EQ (watek UI)
@@ -55,14 +57,20 @@ public:
     int type() const { return type_; }
     void setBypass(bool b) { bypass_ = b; }
     bool active() const { return type_ != FX_NONE && !bypass_; }  // efekt pracuje (nie NONE i nie BYPASS)
-    void process(float* l, float* r, int n, const int16_t* w);
+    // sc = zrodlo sidechain 48 kHz (n probek, mono) albo NULL; beat0 = pozycja w cwiercnutach na poczatku, beatInc na probke
+    void process(float* l, float* r, int n, const int16_t* w, const float* sc, double beat0, double beatInc, float bpm);
+    int scSource(const int16_t* w) const;  // ENTE: zrodlo sidechain wg galek (0 = brak)
     // telemetria ekranu efektu (kopia po kazdym bloku; czytana w watku UI — wylacznie do rysowania)
     const uint8_t* telemetry() const { return tel_; }
+    bool telReady() const { return telReady_; }  // telemetria po co najmniej jednym bloku obecnego efektu
 private:
-    alignas(32) uint8_t tel_[64] = {};
+    alignas(32) uint8_t tel_[256] = {};
     int type_ = FX_NONE;
-    bool bypass_ = false;
-    void* inst_ = nullptr;
+    bool bypass_ = false, telReady_ = false;
+    const struct FxImpl* impl_ = nullptr;
+    void* inst_[2] = {nullptr, nullptr};
+    float scIn_[4] = {};
+    int16_t scBlk_[64];
     // wejscie 48 kHz -> 44,1 kHz
     float inL_[4] = {}, inR_[4] = {};  // ostatnie 4 probki (interpolacja Hermite'a)
     double posIn_ = 0;                 // pozycja wyjscia 44,1 kHz w probkach wejscia (wzgledem inL_[1])
@@ -81,6 +89,7 @@ public:
     void init(float fs);
     void apply(const Project& p);  // parametry z projektu (watek audio, po publikacji)
     void setGain(int ch, float g) { if (ch >= 0 && ch < MAX_TRACKS) gainT_[ch] = g; }
+    void setTransport(float bpm, bool playing, double beatPos, int n);  // przed process: zegar tempa dla efektow
     // tracks: bufory przeplatane L R (n ramek) kazdej sciezki; out: przeplatane L R (nadpisywane)
     void process(float* const* tracks, const bool* active, int nTracks, float* out, int n);
     ChannelMeter ch[MAX_TRACKS], aux[MIX_AUX], master;
@@ -100,7 +109,9 @@ private:
     int tail_[MAX_TRACKS] = {};
     int auxTail_[MIX_AUX] = {};  // ramki ogona efektu AUX po ostatniej wysylce
     float auxBuf_[MIX_AUX][2][256];
-    float l_[256], r_[256];
+    float l_[256], r_[256], scBuf_[256];
+    float bpm_ = 120.f;
+    double beat0_ = 0, beatInc_ = 0, freeBeat_ = 0;
 };
 
 }  // namespace dp

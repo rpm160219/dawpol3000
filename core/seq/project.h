@@ -84,7 +84,7 @@ const char* presetCatName(int c);
 // ---- MIKSER ----
 static const int MIX_AUX = 6;      // szyny AUX (wysylki A..F)
 static const int MIX_INSERTS = 4;  // inserty na kanal
-enum FxId : uint8_t { FX_NONE, FX_JUNI_CHORUS, FX_SISTER, FX_COUNT };  // efekty (inserty i AUX)
+enum FxId : uint8_t { FX_NONE, FX_JUNI_CHORUS, FX_SISTER, FX_SNOWGLOBE, FX_RACKVERB, FX_TAPE, FX_FATHER, FX_STUTTER, FX_CRUSH, FX_ENTE, FX_COUNT };  // efekty (inserty i AUX)
 enum CompType : uint8_t { COMP_OPTO, COMP_VCA, COMP_FET, COMP_TYPES };  // modele kompresora kanalu (w stylu LA-2A, dbx 160, 1176)
 // EQ 3-pasmowy: LOW = polka niska, MID = dzwon, HIGH = polka wysoka; wzmocnienia w dB, czestotliwosci w Hz
 struct MixEq {

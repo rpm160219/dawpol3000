@@ -161,7 +161,9 @@ void MixerView::openWindow(int w, int slot) {
     if (w == W_FX) {
         const Project& p = app_->project();
         const FxSlot& s = strip_ >= p.nTracks ? p.aux[strip_ - p.nTracks].fx : p.tracks[strip_].ins[slot];
-        fxSel_ = s.fx ? s.fx : 1;
+        int lst[FX_COUNT];
+        const int nl = fxListOf(strip_ >= p.nTracks ? FXC_AUX : FXC_INSERT, lst, FX_COUNT);
+        fxSel_ = s.fx ? s.fx : (nl ? lst[0] : 0);
         fxList_ = s.fx == FX_NONE;  // pusty slot: od razu lista wyboru
     }
 }
@@ -316,8 +318,11 @@ void MixerView::updateFx(const Buttons& b, const InputState& in, float dt) {
     bool ch = false;
     if (fxList_) {  // lista wyboru efektu
         if (b.pressed(B_B)) { if (s->fx) fxList_ = false; else win_ = W_NONE; return; }
-        if (b.repeat(B_UP) && fxSel_ > 0) fxSel_--;
-        if (b.repeat(B_DOWN) && fxSel_ < FX_COUNT - 1) fxSel_++;
+        int lst[FX_COUNT], nl = fxListOf(strip_ < p.nTracks ? FXC_INSERT : FXC_AUX, lst, FX_COUNT), cur = 0;
+        for (int i = 0; i < nl; i++) if (lst[i] == fxSel_) cur = i;
+        if (b.repeat(B_UP) && cur > 0) cur--;
+        if (b.repeat(B_DOWN) && cur < nl - 1) cur++;
+        if (nl) fxSel_ = lst[cur];
         if (b.pressed(B_A)) {
             if (fxSel_ != s->fx) { fxDefaults(*s, fxSel_); ch = true; }
             fxPage_ = 0;
@@ -333,16 +338,24 @@ void MixerView::updateFx(const Buttons& b, const InputState& in, float dt) {
     if (b.pressed(B_Y)) { fxDefaults(*s, FX_NONE); app_->markDirty(); win_ = W_NONE; return; }
     if (b.pressed(B_A)) { s->bypass = !s->bypass; app_->markDirty(); }
     const FxInfo& fi = fxInfo(s->fx);
-    const bool hasP2 = fi.page2[0][0] || fi.page2[1][0] || fi.page2[2][0];
+    const bool hasP2 = fi.page2[0][0] || fi.page2[1][0] || fi.page2[2][0] || fi.page2[3][0];
     if (b.pressed(B_L3) && hasP2) fxPage_ ^= 1;
     for (int i = 0; i < 4; i++) {
-        const float d = stick(in, i, dt);
-        if (d == 0.f) continue;
-        if (fxPage_ && (i > 2 || !fi.page2[i][0])) continue;
-        const int w = fxPage_ ? 5 + i : i;
-        int x = s->w[w] + (int)lrintf(d * 32767.f);
-        s->w[w] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
-        ch = true;
+        const char* nm = fxPage_ ? fi.page2[i] : fi.knob[i];
+        if (!nm[0]) continue;
+        const int w = fxKnobWord(fxPage_, i);
+        if (fi.kind[w] == FXK_CONT) {
+            const float d = stick(in, i, dt);
+            if (d == 0.f) continue;
+            int x = s->w[w] + (int)lrintf(d * 32767.f);
+            s->w[w] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
+            ch = true;
+        } else {  // galka krokowa: jeden krok na zabek
+            const int st = stepEnc_[i].steps(in.axis[axisOf[i]] * sgn[i], dt, 5.f);
+            if (!st) continue;
+            s->w[w] = fxWordOfStep(fi, w, fxStepOf(fi, w, s->w[w]) + st);
+            ch = true;
+        }
     }
     if (ch) app_->markDirty();
 }
@@ -1333,16 +1346,19 @@ void MixerView::renderFxList(Canvas& c) {
     Project& p = app_->project();
     FxSlot* s = fxTarget(p, strip_, slot_);
     if (!s) return;
-    const char* items[FX_COUNT - 1];
-    for (int i = 1; i < FX_COUNT; i++) items[i - 1] = fxInfo(i).name;
-    const int sel = fxSel_ < 1 ? 0 : fxSel_ - 1;
-    listBox(c, 20, 60, 250, 300, items, FX_COUNT - 1, sel, 0, pal::tan);
-    for (int i = 1; i < FX_COUNT; i++) if (i == s->fx) c.fillCircle(256, 74 + (i - 1) * 50, 4.f, pal::green);
+    int lst[FX_COUNT];
+    const int nl = fxListOf(strip_ < p.nTracks ? FXC_INSERT : FXC_AUX, lst, FX_COUNT);
+    const char* items[FX_COUNT];
+    int sel = 0;
+    for (int i = 0; i < nl; i++) { items[i] = fxInfo(lst[i]).name; if (lst[i] == fxSel_) sel = i; }
+    listBox(c, 20, 60, 250, 300, items, nl, sel, 0, pal::tan);
+    for (int i = 0; i < nl; i++) if (lst[i] == s->fx) c.fillCircle(256, 74 + i * 50, 4.f, pal::green);
     c.line(282, 60, 282, 370, 1.f, pal::steel);
-    const FxInfo& fi = fxInfo(fxSel_ < 1 ? 1 : fxSel_);
+    const int show = nl ? lst[sel] : 0;
+    const FxInfo& fi = fxInfo(show);
     drawText(c, 300, 66, fi.name, 14, 1.7f, pal::white);
     for (int k = 0; k < 4; k++) drawText(c, 300, 100 + k * 18, fi.desc[k], 8, 1.1f, rgb(190, 190, 190));
-    drawFxScreen(c, fxSel_ < 1 ? 1 : fxSel_, fxInfo(fxSel_ < 1 ? 1 : fxSel_).def, false, nullptr, fxReset_, 300, 190, 1.0f);
+    drawFxScreen(c, show, fi.def, false, nullptr, fxReset_, 300, 190, 1.0f);
     fxReset_ = false;
     drawText(c, 620, 394, "UP/DOWN = CHOOSE   A = USE   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
     const char* L[4] = {"", "", "", ""};
@@ -1365,7 +1381,7 @@ void MixerView::renderFx(Canvas& c) {
     drawText(c, 620, 17, cur.name, 10, 1.3f, pal::tan, ALIGN_RIGHT);
     // ekran efektu (oryginal op1r) z telemetria egzemplarza w mikserze
     AudioEngine* e = app_->engine();
-    const uint8_t* tel = e ? e->fxTelemetry(strip_ < p.nTracks ? strip_ : -1 - (strip_ - p.nTracks), slot_) : nullptr;
+    const uint8_t* tel = e ? e->fxTelemetry(strip_ < p.nTracks ? strip_ : -1 - (strip_ - p.nTracks), slot_, s->fx) : nullptr;
     drawFxScreen(c, s->fx, s->w, fxPage_ != 0, tel, fxReset_, 0, 52, 2.f);
     fxReset_ = false;
     if (s->bypass) {  // jak na OP-1: przyciemnienie i napis na srodku
@@ -1373,19 +1389,20 @@ void MixerView::renderFx(Canvas& c) {
         c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
         drawText(c, 320, 205, "BYPASS", 13, 1.6f, pal::red, ALIGN_CENTER);
     }
-    const bool hasP2 = cur.page2[0][0] || cur.page2[1][0] || cur.page2[2][0];
+    const bool hasP2 = cur.page2[0][0] || cur.page2[1][0] || cur.page2[2][0] || cur.page2[3][0];
     drawText(c, 20, 394, hasP2 ? (fxPage_ ? "L3 = PAGE 1" : "L3 = PAGE 2") : "", 8, 1.1f, pal::white);
     drawText(c, 620, 394, s->bypass ? "A = ON   X = CHANGE   Y = REMOVE   B = BACK" : "A = BYPASS   X = CHANGE   Y = REMOVE   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
     char v[4][16];
     const char* L[4];
     float pos[4];
     for (int k = 0; k < 4; k++) {
-        const bool p2 = fxPage_ != 0;
-        L[k] = p2 ? (k < 3 ? cur.page2[k] : "") : cur.knob[k];
-        const int16_t w = s->w[p2 ? 5 + k : k];
-        snprintf(v[k], 16, "%d", (w * 99 + 16383) / 32767);
+        L[k] = fxPage_ ? cur.page2[k] : cur.knob[k];
+        const int wi = fxKnobWord(fxPage_, k);
+        const int16_t w = s->w[wi];
+        fxValueText(cur, wi, w, v[k], 16);
         if (!L[k][0]) v[k][0] = 0;
-        pos[k] = w / 32767.f;
+        if (cur.kind[wi] == FXK_CONT) pos[k] = w / 32767.f;
+        else { const int n = cur.steps[wi] > 1 ? cur.steps[wi] : 2; pos[k] = fxStepOf(cur, wi, w) / (float)(n - 1); }
     }
     const char* vals[4] = {v[0], v[1], v[2], v[3]};
     encoderBar(c, L, vals, pos);

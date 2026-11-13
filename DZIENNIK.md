@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 14:30 — 7 nowych efektów miksera z op1r / hundekraft
+- **Co zmienione:** AUX: SNOWGLOBE, RACKVERB, TAPE, FATHER; inserty: STUTTER, CRUSH, ENTE — oryginalny kod (op1r 68; CRUSH z paczki hundekraft 3.1.4) skopiowany do `third_party/op1r_fx/`, bez zmian. `core/fx/fxw.h` + `core/fx/fx_*.c` (wiele egzemplarzy: tablice stanu przekierowane makrem na pamięć egzemplarza), `core/fx/fx_common.c` (tabela efektów, zegar tempa, sidechain), `core/audio/mixer.*` (efekty mono jako para L/R, zegar tempa z sekwencera dla STUTTER/TAPE/ENTE, sidechain ENTE: T1..T4 = ścieżki 1..4, TAPE = suma ścieżek; telemetria ekranu tylko od właściwego efektu), `core/fx/fx_registry.*` (klasy INSERT/AUX, gałki krokowe i listy, FREEZE STUTTER w słowie 4), `core/ui/mixer_view.cpp` (listy wg rodzaju slotu, gałki krokowe), oryginalne ekrany wszystkich efektów (`core/ui/fx_screen_*.c`, węzły SVG w `fx_screen_host.c`, rysunki `*_art.h`), utwór „SYNTHWAVE FX”, `--bench-fx`, test `tools/test_fx7.sh`.
+- Wszystkie efekty bit w bit z oryginałem (2 egzemplarze na zmianę, z zegarem tempa i sidechainem). CPU na konsoli: 1,2–2,6% rdzenia na efekt; SYNTHWAVE FX ~40%.
+- **Następny krok:** Patryk ogląda i słucha efektów (SYNTHWAVE FX na liście PROJECT). **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 11:30 — OPTO: lampka i przesłona aparatu zamiast ręki
 - **Co zmienione:** `core/ui/mixer_view.*` (`renderOptoLight`, zamiast młotka z ręką — decyzja Patryka) — interfejs z gałką PEAK REDUCTION → lampka (jasność = sygnał × PEAK REDUCTION, zapala się szybko, gaśnie powoli jak fotokomórka) → COMPRESS: matowa szybka, ciepłe rozproszone światło / LIMIT: soczewka, chłodna skupiona wiązka (wsuwane ~0,3 s) → pryzmat: łuk światła nad przesłoną = MIX (im mniej MIX, tym jaśniej) → przesłona aparatu z 7 listkami, domyka się o GR (odczyt F/… i GR) → fotokomórka → kabel do głośnika rosnącego z GAIN. Odpowiedź na pytanie Patryka: wskaźnik VCA jest OK (przy 1:1 DSP daje 0 dB; „GR -1” na makiecie to opadające ściszanie po poprzednim FET). Makieta `mixeroptolim`.
 - Testy bit w bit OK.

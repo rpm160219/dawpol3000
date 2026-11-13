@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include "fx/op1r_fx.h"
+#include <stdlib.h>
 
 namespace dp {
 
@@ -194,20 +195,25 @@ void BusCompressor::process(float* l, float* r, int n) {
 }
 
 // ---------------- efekty op1r ----------------
-FxHost::~FxHost() { if (inst_) free(inst_); }
+FxHost::~FxHost() { setType(FX_NONE); }
 
 void FxHost::setType(int fx) {
     if (fx == type_) return;
-    if (inst_) { free(inst_); inst_ = nullptr; }
+    if (impl_) for (int c = 0; c < 2; c++) if (inst_[c]) impl_->destroy(inst_[c]);
+    inst_[0] = inst_[1] = nullptr;
     type_ = fx;
-    if (fx == FX_JUNI_CHORUS) inst_ = fxJuniChorusCreate();
-    else if (fx == FX_SISTER) inst_ = fxSisterCreate();
-    memset(inL_, 0, sizeof inL_); memset(inR_, 0, sizeof inR_);
+    impl_ = fxImpl(fx);
+    if (impl_) {
+        inst_[0] = impl_->create();
+        if (!impl_->stereo) inst_[1] = impl_->create();  // efekt mono: osobny egzemplarz na prawy kanal
+    }
+    memset(inL_, 0, sizeof inL_); memset(inR_, 0, sizeof inR_); memset(scIn_, 0, sizeof scIn_);
     posIn_ = 0; blkN_ = 0;
     midN_ = 96;  // wyprzedzenie kolejki wyjscia (~2 ms)
     memset(midL_, 0, sizeof midL_); memset(midR_, 0, sizeof midR_);
     posOut_ = 1.0;
     memset(tel_, 0, sizeof tel_);
+    telReady_ = false;
 }
 
 static inline float herm(float y0, float y1, float y2, float y3, float t) {
@@ -216,20 +222,31 @@ static inline float herm(float y0, float y1, float y2, float y3, float t) {
 }
 static inline int16_t toS16(float x) { x *= 32767.f; return (int16_t)(x > 32767.f ? 32767 : (x < -32767.f ? -32767 : x)); }
 
-void FxHost::process(float* l, float* r, int n, const int16_t* w) {
-    if (!inst_ || type_ == FX_NONE || bypass_) return;
+void FxHost::process(float* l, float* r, int n, const int16_t* w, const float* sc, double beat0, double beatInc, float bpm) {
+    if (!impl_ || !inst_[0] || bypass_) return;
     const double stepIn = 48000.0 / 44100.0, stepOut = 44100.0 / 48000.0;
     for (int i = 0; i < n; i++) {
         // wejscie: nowa probka 48 kHz, wyjscia 44,1 kHz miedzy inL_[1] a inL_[2]
         inL_[0] = inL_[1]; inL_[1] = inL_[2]; inL_[2] = inL_[3]; inL_[3] = l[i];
         inR_[0] = inR_[1]; inR_[1] = inR_[2]; inR_[2] = inR_[3]; inR_[3] = r[i];
+        scIn_[0] = scIn_[1]; scIn_[1] = scIn_[2]; scIn_[2] = scIn_[3]; scIn_[3] = sc ? sc[i] : 0.f;
         while (posIn_ < 1.0) {
             const float t = (float)posIn_;
             blkL_[blkN_] = toS16(herm(inL_[0], inL_[1], inL_[2], inL_[3], t));
             blkR_[blkN_] = toS16(herm(inR_[0], inR_[1], inR_[2], inR_[3], t));
+            scBlk_[blkN_] = toS16(herm(scIn_[0], scIn_[1], scIn_[2], scIn_[3], t));
             if (++blkN_ == 64) {
-                if (type_ == FX_JUNI_CHORUS) { fxJuniChorusProcess(inst_, blkL_, blkR_, w); fxJuniChorusTelemetry(tel_); }
-                else { fxSisterProcess(inst_, blkL_, blkR_, w); fxSisterTelemetry(inst_, tel_); }
+                {   // zegar tempa w chwili bloku i sidechain, potem efekt (mono: L i R osobno)
+                    const float b = bpm < 30.f ? 30.f : (bpm > 300.f ? 300.f : bpm);
+                    const double ph = beat0 + i * beatInc, fr = ph - floor(ph);
+                    const double lenS = 44100.0 * 60.0 / b;
+                    fxSetBeat((int32_t)(lenS * 16384.0), (int32_t)((1.0 - fr) * lenS * 16384.0), 1);
+                    fxSetSidechain(sc ? scBlk_ : nullptr);
+                    if (impl_->stereo) impl_->stereoFn(inst_[0], blkL_, blkR_, w);
+                    else { impl_->mono(inst_[0], blkL_, w); impl_->mono(inst_[1], blkR_, w); }
+                    impl_->telemetry(inst_[0], tel_);
+                    telReady_ = true;
+                }
                 if (midN_ + 64 <= 512)
                     for (int k = 0; k < 64; k++) { midL_[midN_ + k] = blkL_[k] * (1.f / 32768.f); midR_[midN_ + k] = blkR_[k] * (1.f / 32768.f); }
                 midN_ += midN_ + 64 <= 512 ? 64 : 0;
@@ -255,7 +272,17 @@ void FxHost::process(float* l, float* r, int n, const int16_t* w) {
     }
 }
 
+int FxHost::scSource(const int16_t* w) const { return impl_ && impl_->scSource ? impl_->scSource(w) : 0; }
+
 // ---------------- mikser ----------------
+void MixerDsp::setTransport(float bpm, bool playing, double beatPos, int n) {
+    bpm_ = bpm;
+    beatInc_ = bpm / 60.0 / fs_;
+    if (playing) freeBeat_ = beatPos;    // gra: zegar z sekwencera
+    beat0_ = freeBeat_;
+    freeBeat_ += n * beatInc_;            // stoi: zegar biegnie dalej (jak metronom OP-1)
+}
+
 void MixerDsp::init(float fs) {
     fs_ = fs;
     for (int i = 0; i < MAX_TRACKS; i++) gain_[i] = gainT_[i] = 0.f;
@@ -310,7 +337,21 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
             continue;
         }
         for (int i = 0; i < n; i++) { l_[i] = in[i * 2]; r_[i] = in[i * 2 + 1]; }
-        for (int k = 0; k < MIX_INSERTS; k++) ins_[c][k].process(l_, r_, n, insW_[c][k]);
+        for (int k = 0; k < MIX_INSERTS; k++) {
+            if (!ins_[c][k].active()) continue;
+            const float* sc = nullptr;
+            const int src = ins_[c][k].scSource(insW_[c][k]);  // ENTE: T1..T4 = sciezki 1..4, TAPE = suma sciezek
+            if (src >= 1 && src <= 5) {
+                for (int i = 0; i < n; i++) {
+                    float v = 0.f;
+                    if (src <= 4) { if (src - 1 < nTracks) v = .5f * (tracks[src - 1][i * 2] + tracks[src - 1][i * 2 + 1]); }
+                    else for (int t = 0; t < nTracks && t < MAX_TRACKS; t++) v += .5f * (tracks[t][i * 2] + tracks[t][i * 2 + 1]);
+                    scBuf_[i] = v;
+                }
+                sc = scBuf_;
+            }
+            ins_[c][k].process(l_, r_, n, insW_[c][k], sc, beat0_, beatInc_, bpm_);
+        }
         eq_[c].process(l_, r_, n);
         comp_[c].process(l_, r_, n);
         const float th = (pan_[c] + 1.f) * .78539816f, gl = cosf(th) * 1.41421356f, gr = sinf(th) * 1.41421356f;
@@ -338,7 +379,7 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
         if (!auxUsed[a] && (!auxFx_[a].active() || auxTail_[a] <= 0)) { hold(aux[a].peak, 0.f); continue; }  // brak wysylek: AUX pomijany
         float* al = auxBuf_[a][0];
         float* ar = auxBuf_[a][1];
-        auxFx_[a].process(al, ar, n, auxW_[a]);
+        auxFx_[a].process(al, ar, n, auxW_[a], nullptr, beat0_, beatInc_, bpm_);
         auxEq_[a].process(al, ar, n);
         float pk = 0;
         for (int i = 0; i < n; i++) {

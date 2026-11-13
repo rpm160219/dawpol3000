@@ -63,6 +63,12 @@ void App::openStore(const char* root) {
         if (!store_.exists(demo.name)) store_.save(demo);
         store_.setMarker("_demo_synthwave_mix_v1");
     }
+    if (!store_.hasMarker("_demo_synthwave_fx_v1")) {  // ten sam utwor z efektami op1r 68 (AUX i inserty) — raz
+        static Project demo;
+        buildDemoSynthwave(demo, true, true);
+        if (!store_.exists(demo.name)) store_.save(demo);
+        store_.setMarker("_demo_synthwave_fx_v1");
+    }
     static Project tmp;
     if (store_.loadLast(tmp)) {
         prj_ = tmp;
@@ -396,8 +402,8 @@ void App::loadDemoEtude() {
     resetHistory();
 }
 
-void App::loadDemoSynthwave(bool mix) {
-    buildDemoSynthwave(prj_, mix);
+void App::loadDemoSynthwave(bool mix, bool fxTour) {
+    buildDemoSynthwave(prj_, mix, fxTour);
     lastPattern_ = -1;
     savedAs_[0] = 0;
     dirty_ = true;
