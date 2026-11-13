@@ -86,6 +86,7 @@ public:
     void togglePlaySong();
 
     void loadDemo();  // przykladowy projekt (headless, pierwsze uruchomienie)
+    void loadDemoEtude();       // utwor "REVOLUTIONARY" (headless: render WAV)
     void loadDemoSynthwave();   // utwor "SYNTHWAVE" (headless: render WAV)
     void loadDemoAllEngines();  // utwor "ALL ENGINES" (headless: render WAV)
 

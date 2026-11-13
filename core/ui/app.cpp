@@ -44,6 +44,12 @@ void App::openStore(const char* root) {
         if (!store_.exists(demo.name) ? !hadV1 : hadV1) store_.save(demo);
         store_.setMarker("_demo_all_engines_v10");
     }
+    if (!store_.hasMarker("_demo_etude_v1")) {  // Chopin "Rewolucyjna" na GRAND — raz (usuniety nie wraca)
+        static Project demo;
+        buildDemoEtude(demo);
+        if (!store_.exists(demo.name)) store_.save(demo);
+        store_.setMarker("_demo_etude_v1");
+    }
     if (!store_.hasMarker("_demo_synthwave_v1")) {  // utwor SYNTHWAVE — raz (usuniety nie wraca)
         static Project demo;
         buildDemoSynthwave(demo);
@@ -362,6 +368,16 @@ void App::render(Canvas& c) {
         c.strokeRoundRect(x, y, w, 30, 15, 1.2f, pal::dim);
         drawText(c, 320, y + 9, toast_, 12, 1.5f, pal::white, ALIGN_CENTER);
     }
+}
+
+void App::loadDemoEtude() {
+    buildDemoEtude(prj_);
+    lastPattern_ = -1;
+    savedAs_[0] = 0;
+    dirty_ = true;
+    publish();
+    modified_ = false;
+    resetHistory();
 }
 
 void App::loadDemoSynthwave() {

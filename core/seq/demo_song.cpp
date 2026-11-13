@@ -1,4 +1,5 @@
 #include "seq/demo_song.h"
+#include "seq/demo_etude_data.h"
 #include <stdio.h>
 
 namespace dp {
@@ -245,6 +246,35 @@ void buildDemoSynthwave(Project& p) {
     p.addClip(lead, pl, 8);
     p.addClip(lead, pl, 12);
     p.addClip(brass, pbr, 12);
+}
+
+// REVOLUTIONARY: Chopin, Etiuda c-moll op. 10 nr 12 (domena publiczna; nuty z MIDI Mutopia Project nr 743),
+// takty 1-37 (pierwsze 3 strony), 160 BPM, dwie sciezki GRAND (prawa i lewa reka — po 6 glosow), wzorce po 4 takty.
+void buildDemoEtude(Project& p) {
+    p = Project();
+    snprintf(p.name, sizeof p.name, "REVOLUTIONARY");
+    p.bpm = 160.f;
+    const int BARS = 37;
+    p.loopOn = true;
+    p.loopIn = 0;
+    p.loopOut = BARS;
+    const int rh = track(p, "RIGHT HAND", "grand", "CONCERT GRAND", 3, .55f);
+    const int lh = track(p, "LEFT HAND", "grand", "CONCERT GRAND", 0, .55f);
+    struct Part { int t; const EtudeNote* n; int cnt; const char* nm; } parts[2] = {
+        {rh, kEtudeRH, (int)(sizeof kEtudeRH / sizeof kEtudeRH[0]), "RH"}, {lh, kEtudeLH, (int)(sizeof kEtudeLH / sizeof kEtudeLH[0]), "LH"}};
+    for (const Part& pt : parts)
+        for (int b0 = 0; b0 < BARS; b0 += 4) {
+            const int nb = BARS - b0 < 4 ? BARS - b0 : 4;
+            char name[16];
+            snprintf(name, sizeof name, "%s %d-%d", pt.nm, b0 + 1, b0 + nb);
+            const int pi = p.addPattern(name, nb);
+            if (pi < 0) continue;
+            const int t0 = b0 * TICKS_PER_BAR, t1 = (b0 + nb) * TICKS_PER_BAR;
+            for (int k = 0; k < pt.cnt; k++)
+                if (pt.n[k].tick >= t0 && pt.n[k].tick < t1)
+                    p.patterns[pi].add({(uint16_t)(pt.n[k].tick - t0), (uint16_t)(pt.n[k].len16 * 2), pt.n[k].pitch, pt.n[k].vel});
+            p.addClip(pt.t, pi, b0);
+        }
 }
 
 }  // namespace dp
