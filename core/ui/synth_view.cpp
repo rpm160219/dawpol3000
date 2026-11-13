@@ -51,6 +51,7 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind blk[4] = {K_SOUND, K_VOICE, K_AMP, K_PRESETS};  // BLOT: slide = MODE + GLIDE
     static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
+    if (pm == 12) return p == 6 ? K_PRESETS : K_SOUND;  // VELOUR: 6 stron galek, PRESETS
     if (pm == 11) return p == 10 ? K_PRESETS : K_SOUND;  // GIN: SOUND, 8 stron edytora, ABOUT, PRESETS
     return pm == 1 ? extk[p] : (pm == 2 ? pewk[p] : (pm == 3 ? elgk[p] : (pm == 4 ? evak[p] : (pm == 5 ? sidk[p] : (pm == 6 ? monk[p] : (pm == 7 ? ssk[p] : (pm == 8 ? mxk[p] : (pm == 9 ? blk[p] : (pm == 10 ? aek[p] : orig[p])))))))));
 }
@@ -98,6 +99,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         return;
     }
     if (t.engine == ENG_GIN) { updateGin(b, in, dt, t); return; }
+    if (t.engine == ENG_VELOUR) { updateVelour(b, in, dt, t); return; }
     if (b.pressed(B_L3)) {
         if (k == K_LFO1 || k == K_LFO2) { Lfo& L = t.lfo[k - K_LFO1]; L.sync = !L.sync; app_->markDirty(); }
         else if (k == K_VOICE) { t.glideSync = !t.glideSync; app_->markDirty(); }
@@ -471,6 +473,7 @@ void SynthView::render(Canvas& c) {
     char b[64];
 
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
+    if (k != K_PRESETS && t.engine == ENG_VELOUR) { renderVelour(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
     } else if (t.engine == ENG_GRAND) {

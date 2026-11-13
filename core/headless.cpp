@@ -442,6 +442,29 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
+    } else if (!strncmp(screen, "velour", 6)) {  // velour, velourphaser, velourbrass, velourengine
+        if (!strcmp(screen, "velourengine")) {
+            app.arrange.setCursor(1, 2);
+            tap(app, B_SELECT);
+            tap(app, B_R2);
+            for (int i = 0; i < 31; i++) tap(app, B_UP);
+            for (int i = 0; i < 28; i++) tap(app, B_DOWN);  // VELOUR (alfabetycznie przed WAVETABLE)
+        } else {
+            Track& tr = app.project().tracks[1];
+            tr.engine = ENG_VELOUR;
+            tr.velourSet = false;
+            velourEnsure(tr);
+            if (!strcmp(screen, "velourphaser")) { tr.velour[VL_PHASER] = 32767; tr.velour[VL_CONTRABASS] = 14000; }
+            app.openPresets("out/presets_demo");
+            app.markDirty();
+            app.openSynth(1);
+            idle(app);
+            if (!strcmp(screen, "velourbrass")) tap(app, B_SELECT);
+            InputState in;
+            in.btn[B_A] = true; in.btn[B_X] = true; in.btn[B_LEFT] = true;
+            app.update(in, 0.016f);
+            for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+        }
     } else if (!strcmp(screen, "grand") || !strcmp(screen, "grandsoft") || !strcmp(screen, "grandengine")) {
         if (!strcmp(screen, "grandengine")) {
             app.arrange.setCursor(1, 2);
@@ -831,6 +854,13 @@ int headlessWav(const char* path, float seconds, const char* song) {
     else if (song && !strcmp(song, "synthwave")) app.loadDemoSynthwave();
     else if (song && !strcmp(song, "synthwavemix")) app.loadDemoSynthwave(true);
     else if (song && !strcmp(song, "synthwavefx")) app.loadDemoSynthwave(true, true);
+    else if (song && (!strcmp(song, "velourtest") || !strcmp(song, "velourpad") || !strcmp(song, "junipad"))) {  // SYNTHWAVE: pad na VELOUR (test glosnosci i CPU); *pad = solo padu
+        app.loadDemoSynthwave();
+        Track& t = app.project().tracks[3];
+        if (strcmp(song, "junipad")) { t.engine = ENG_VELOUR; t.velourSet = false; velourEnsure(t); }
+        if (strcmp(song, "velourtest")) t.solo = true;
+        app.markDirty(); app.update(InputState(), 0.016f);
+    }
     else if (song && !strcmp(song, "etude")) app.loadDemoEtude();
     else app.loadDemo();
     eng.send(EC_PLAY_SONG);

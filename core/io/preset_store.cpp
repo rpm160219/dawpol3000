@@ -36,6 +36,7 @@ void PresetStore::initInstrument(Track& t) {
     }
     t.movDiv = d.movDiv;
     if (t.engine == ENG_GIN) ginLoadKit(t, 0);  // GIN: INIT = pierwszy zestaw
+    if (t.engine == ENG_VELOUR) { t.velourSet = false; velourEnsure(t); }  // VELOUR: INIT = FULL STRINGS
     t.mono = d.mono;
     t.glide = d.glide;
     t.unison = d.unison;
@@ -102,11 +103,11 @@ bool PresetStore::load(int i, Track& t) const {
     FILE* f = fopen(path, "r");
     if (!f) return false;
     static char line[2048];
-    char* tok[128];
+    char* tok[192];
     bool ok = false;
     static Track tmp;
     while (fgets(line, sizeof line, f)) {
-        int n = tokenize(line, tok, 128);
+        int n = tokenize(line, tok, 192);
         if (n >= 1 && !strcmp(tok[0], "inst")) {
             tmp = t;
             initInstrument(tmp);  // brakujace pola = INIT
@@ -187,7 +188,7 @@ void PresetStore::writeFactory() {
     }
     if (had >= top) return;
     static char line[2048];
-    char* tok[128];
+    char* tok[192];
     for (int i = 0; i < n; i++) {
         const FactoryPreset& p = list[i];
         if (p.ver <= had || (find(p.name) >= 0 && had == 0)) continue;  // nowsza wersja istniejacego presetu fabrycznego go zastepuje
@@ -196,7 +197,7 @@ void PresetStore::writeFactory() {
         t.alt = !strcmp(eng_, "wavetableplus") || !strcmp(eng_, "oxbowplus");  // tryb rozszerzony przed INIT
         initInstrument(t);
         snprintf(line, sizeof line, "%s", p.inst);
-        int nt = tokenize(line, tok, 128);
+        int nt = tokenize(line, tok, 192);
         parseInstrument(t, tok, nt, 0);
         save(t, p.name, p.cat);
     }

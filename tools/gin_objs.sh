@@ -10,3 +10,7 @@ gcc -std=gnu11 -O3 -ffast-math -Icore -c core/synth/parallax_dsp.c -o "$T/gin_pa
 gcc -std=gnu11 -O3 -ffast-math -Icore -c core/synth/lounge_dsp.c -o "$T/gin_lounge.o"
 gcc -std=gnu11 -O3 -ffast-math -Icore -c core/synth/felt_dsp.c -o "$T/gin_felt.o"
 gcc -std=gnu11 -O3 -ffast-math -Icore -c core/synth/grand_dsp.c -o "$T/gin_grand.o"
+# VELOUR (oryginal PicoFaceSM, tryb hosta) — wavetable_synth.cpp i project.cpp go wolaja
+for s in core/synth/velour_dsp.cpp third_party/pico_solina/src/*.cpp; do
+    g++ -std=c++17 -O2 -w -DSOLINA_HOST_BUILD -Icore -Ithird_party/pico_solina/include -c "$s" -o "$T/gin_vl_$(basename "$s" .cpp).o"
+done

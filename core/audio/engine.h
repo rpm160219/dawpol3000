@@ -60,6 +60,7 @@ public:
     const ::GrandCore* grandCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].grand() : nullptr; }
     const ::FeltCore* feltCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].felt() : nullptr; }
     const ::LoungeCore* loungeCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].lounge() : nullptr; }
+    const ::VelourCore* velourCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].velour() : nullptr; }
     const ::GinCore* ginCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].gin() : nullptr; }
     const ::OutatimeCore* outatimeCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].outatime() : nullptr; }
     const ::JuniCore* juniCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].juni() : nullptr; }

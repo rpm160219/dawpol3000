@@ -35,6 +35,7 @@ const char* engineName(int e) {
     case ENG_LOUNGE: return "LOUNGE";
     case ENG_FELT: return "FELT";
     case ENG_GRAND: return "GRAND";
+    case ENG_VELOUR: return "VELOUR";
     default: return "?";
     }
 }
@@ -265,6 +266,7 @@ void ginLoadKit(Track& t, int kit) {
     for (int i = 0; i < GIN_KIT_SOUNDS; i++) ginFactorySound(kit, i, &t.gin[i]);
 }
 void ginEnsure(Track& t) { if (t.ginKit < 0) ginLoadKit(t, 0); }
+void velourEnsure(Track& t) { if (!t.velourSet) { velourProgramWords(2, t.velour); t.velourSet = true; } }  // FULL STRINGS
 bool ginSoundEdited(const Track& t, int s) {
     GinSound f;
     ginFactorySound(t.ginKit < 0 ? 0 : t.ginKit, s, &f);

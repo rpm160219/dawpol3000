@@ -149,6 +149,7 @@ void WavetableSynth::init(float outRate) {
     if (!lng_) lng_ = loungeCreate();
     if (!flt_) flt_ = feltCreate();
     if (!grd_) grd_ = grandCreate();
+    if (!vel_) vel_ = velourCreate(outRate);  // VELOUR: natywnie w czestotliwosci wyjscia
     // FIR z harness/audio_harness.c (op1r): okno Blackmana, sinc polpasmowy
     for (int n = 0; n < TAPS; n++) {
         double x = n - (TAPS - 1) / 2.0;
@@ -243,6 +244,7 @@ void WavetableSynth::setFilterEnv(float a, float d, float s, float r, float amou
 void WavetableSynth::setKind(int k) {
     if (k == kind_) return;
     if (kind_ == 23) ginAllOff(gin_);  // GIN: zmiana silnika wycisza bebny
+    if (kind_ == 28) velourAllOff(vel_);
     allOff();
     kind_ = k;
     if (k == 1 && tfBase_ < 0) tfBase_ = taffyAllocVoices(VOICES);
@@ -409,6 +411,7 @@ void WavetableSynth::setEnvelope(float a, float d, float s, float r, float amoun
 
 void WavetableSynth::noteOn(int pitch, float vel) {
     if (kind_ == 23) { ginNoteOn(gin_, pitch, (int)lrintf(vel * 127.f)); return; }  // GIN: C2..B3 = 24 dzwieki zestawu
+    if (kind_ == 28) { velourNoteOn(vel_, pitch + octSemi_); return; }  // VELOUR: kazdy klawisz (bez dynamiki, jak oryginal)
     if (mono_) { monoOn(pitch, vel); return; }
     int slot = -1;
     for (int i = 0; i < VOICES; i++)
@@ -509,6 +512,7 @@ void WavetableSynth::startVoice(int slot, int pitch, float vel, float det, float
 
 void WavetableSynth::noteOff(int pitch) {
     if (kind_ == 23) return;  // GIN: uderzenia wybrzmiewaja same
+    if (kind_ == 28) { velourNoteOff(vel_, pitch + octSemi_); return; }
     if (mono_) { monoOff(pitch); return; }
     for (auto& v : v_) {
         if (v.stage == FADE && v.pendPitch == pitch) { v.pendPitch = -1; continue; }  // puszczona przed startem
@@ -522,6 +526,7 @@ void WavetableSynth::noteOff(int pitch) {
 
 void WavetableSynth::allOff() {
     if (kind_ == 23) return;  // GIN: stop nie ucina wybrzmienia
+    if (kind_ == 28) { velourAllOff(vel_); return; }  // VELOUR: puszczenie klawiszy (SUSTAIN wybrzmiewa)
     for (auto& v : v_) {
         v.pendPitch = -1;
         if (v.stage != OFF) { v.stage = RELEASE; v.fstage = RELEASE; v.mstage = RELEASE; if (rel_k_ >= 1.f) { v.env = 0; v.stage = OFF; } }
@@ -873,8 +878,28 @@ void WavetableSynth::renderGin(float* out, int n) {
     active_.store(voices, std::memory_order_relaxed);
 }
 
+// VELOUR: wlasna sciezka (oryginal PicoFaceSM natywnie w 48 kHz, stereo z ensemble), bez obwiedni gospodarza.
+void WavetableSynth::renderVelour(float* out, int n) {
+    float l[256], r[256];
+    for (int pos = 0; pos < n; pos += 256) {
+        const int m = n - pos < 256 ? n - pos : 256;
+        velourRender(vel_, l, r, m);
+        for (int i = 0; i < m; i++) {
+            vol_ += (volT_ - vol_) * volK_;
+            const float a = l[i] * 5.f * vol_, b = r[i] * 5.f * vol_;  // +14 dB: oryginal skaluje wyjscie 0,115 pod limiter Pico
+            const float ax = a < 0 ? -a : a, bx = b < 0 ? -b : b;
+            if (ax > peak_) peak_ = ax;
+            if (bx > peak_) peak_ = bx;
+            out[(pos + i) * 2] += a;
+            out[(pos + i) * 2 + 1] += b;
+        }
+    }
+    active_.store(velourActiveKeys(vel_), std::memory_order_relaxed);
+}
+
 void WavetableSynth::render(float* out, int n) {
     if (kind_ == 23) { renderGin(out, n); return; }
+    if (kind_ == 28) { renderVelour(out, n); return; }
     advanceLfo(n);
     bool any = false;
     for (auto& v : v_) if (v.stage != OFF) { any = true; break; }
