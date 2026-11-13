@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 08:10 — FET: prasa — ATTACK i RELEASE widoczne, kable wpięte
+- **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — ATTACK = biały zawór z kółkiem na cylindrze (obraca się z gałką, olej płynie rurką, gdy tłok schodzi); RELEASE = czerwona sprężyna-spirala wokół tłoczyska (szybszy release = więcej zwojów, ściska się z płytą); kable w stylu z oplotem i płynącym sygnałem, wpięte wtykami w podstawę prasy i w bok głośnika (grubość wejściowego = RATIO, ALL = czerwony); napisy: INPUT obok RATIO, RELEASE obok OUTPUT, ATTACK w lewym dole — tytuły i wartości tej samej wielkości.
+- **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 07:30 — FET: prasa — tor sygnału interfejs → prasa → głośnik
 - **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — bez podłogi i obciążników, prasa na całą wysokość; po lewej interfejs audio (gałka INPUT kręci się w stronę oporu, diody poziomu) połączony kablem z prasą — grubość kabla = RATIO, przy ALL gruby i czerwony; po prawej głośnik na wyjściu (rośnie z OUTPUT, membrana drga), połączony kablem; manometr GR na koronie; usunięte kreski przy poduszce; wartości INPUT i OUTPUT tą samą czcionką, RATIO jako napis pod INPUT.
 - **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.

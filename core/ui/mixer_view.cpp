@@ -762,24 +762,34 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     gaugeA += (g - gaugeA) * (1.f - expf(-dt / .08f));
     char b[24];
 
-    // ---- kable (pod spodem): interfejs -> prasa (RATIO), prasa -> glosnik ----
-    const float cw = ri == 4 ? 5.f : 1.f + ri * .9f;
-    const Color cc = !on ? dimf : (ri == 4 ? pal::red : rgb(150, 150, 160));
-    float cb[2 * 33];
-    for (int i = 0; i <= 32; i++) {
-        const float t = i / 32.f;
-        cb[2 * i] = bez(66, 84, 86, 96, t);
-        cb[2 * i + 1] = bez(112, 112, 128, 128, t);
-    }
-    S.poly(cb, 33, cw, cc);
+    // ---- kable (pod spodem): interfejs -> wtyk w podstawie prasy (grubosc = RATIO), wtyk -> glosnik ----
+    static float flowS = 0.f;
+    flowS += dt * (.25f + .9f * lvl_);
+    auto cable = [&](const float P[4][2], float w, Color outer, Color sig) {
+        float pts[2 * 41];
+        for (int i = 0; i <= 40; i++) { const float t = i / 40.f; pts[2 * i] = bez(P[0][0], P[1][0], P[2][0], P[3][0], t); pts[2 * i + 1] = bez(P[0][1], P[1][1], P[2][1], P[3][1], t); }
+        S.poly(pts, 41, w + 1.4f, outer);
+        S.poly(pts, 41, w * .55f, rgb(12, 12, 14));
+        for (int k = 0; k < 8; k++) {  // sygnal plynie od wejscia do wyjscia
+            float t = fmodf(k / 8.f + flowS, 1.f);
+            const float t2 = fminf(t + .035f, 1.f);
+            S.ln(bez(P[0][0], P[1][0], P[2][0], P[3][0], t), bez(P[0][1], P[1][1], P[2][1], P[3][1], t), bez(P[0][0], P[1][0], P[2][0], P[3][0], t2),
+                 bez(P[0][1], P[1][1], P[2][1], P[3][1], t2), fmaxf(.6f, w * .35f), sig);
+        }
+    };
+    const float cw = ri == 4 ? 3.6f : .8f + ri * .6f;
+    const Color cOut = !on ? dimf : (ri == 4 ? pal::red : rgb(150, 110, 66));
+    const Color cSig = !on ? dimf : (ri == 4 ? pal::yellow : pal::blue);
+    const float CIN[4][2] = {{62, 112}, {78, 112}, {74, 136.5f}, {88, 136.5f}};
+    cable(CIN, cw, cOut, cSig);
     const float spk = .7f + .6f * q[1];  // glosnik rosnie z OUTPUT
-    const float sx = 268.f, sw = 34.f * spk, sh = 46.f * spk, sy = 130.f - sh;
-    for (int i = 0; i <= 32; i++) {
-        const float t = i / 32.f;
-        cb[2 * i] = bez(224, 236, 240, sx - sw * .5f, t);
-        cb[2 * i + 1] = bez(128, 128, sy + sh * .75f, sy + sh * .75f, t);
-    }
-    S.poly(cb, 33, 1.4f, on ? rgb(150, 150, 160) : dimf);
+    const float sx = 272.f, sw = 34.f * spk, sh = 46.f * spk, sy = 130.f - sh;
+    const float COUT[4][2] = {{232, 136.5f}, {246, 136.5f}, {sx - sw * .5f - 14, sy + sh * .72f}, {sx - sw * .5f - 2, sy + sh * .72f}};
+    cable(COUT, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::green : dimf);
+    // wtyki w podstawie prasy
+    S.frr(87, 134.5f, 7, 4, 1, rgb(20, 20, 24)); S.rr(87, 134.5f, 7, 4, 1, .8f, frame);
+    S.frr(226, 134.5f, 7, 4, 1, rgb(20, 20, 24)); S.rr(226, 134.5f, 7, 4, 1, .8f, frame);
+    S.rr(sx - sw * .5f - 3, sy + sh * .72f - 2, 3, 4, .8f, .8f, frame);
 
     // ---- interfejs audio (wejscie) ----
     S.frr(14, 96, 52, 34, 4, rgb(10, 10, 12));
@@ -794,7 +804,7 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
         const bool lit = on && lvl_ > (k + .5f) / 5.f;
         S.fci(48 + (k % 3) * 0.f, 126 - k * 5.f, 1.4f, lit ? (k >= 4 ? pal::red : (k >= 3 ? pal::yellow : pal::green)) : rgb(40, 40, 46));
     }
-    S.ci(59, 112, 2.6f, .8f, frame);  // gniazdo kabla
+    S.ci(60, 112, 2.6f, .8f, frame);  // gniazdo kabla
     S.ln(14, 130, 14, 132, 1.f, frame); S.ln(66, 130, 66, 132, 1.f, frame);
 
     // ---- prasa: podstawa, kolumny z gwintem, korona z manometrem ----
@@ -833,6 +843,33 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.rr(142, 34, 36, 22, 2, 1.f, steelc);
     for (int k = 1; k < 5; k++) S.ln(143, 34 + k * 4.4f, 177, 34 + k * 4.4f, .5f, rgb(50, 66, 100));
     const float headTop = press_ - 7.f;
+    // ATTACK: zawor z kolkiem na cylindrze (kolko obraca sie z galka; olej plynie rurka, gdy tlok schodzi)
+    {
+        const float vx = 128, vy = 40, va = q[2] * 3.14159265f * 1.5f;
+        S.ln(vx + 6, 44, 142, 44, 2.2f, rgb(60, 60, 68));
+        S.ln(vx + 6, 44, 142, 44, 1.f, rgb(14, 14, 16));
+        static float oil = 0.f;
+        oil += dt * clampf(pressV_ * .03f, 0.f, 3.f);
+        if (on && pressV_ > 2.f)
+            for (int k = 0; k < 2; k++) { const float u = fmodf(oil + k * .5f, 1.f); S.ln(vx + 6 + u * 6, 44, vx + 7.5f + u * 6, 44, .9f, pal::yellow); }
+        S.ln(vx, vy + 6, vx, 44, 1.f, frame);
+        S.ci(vx, vy, 6, 1.f, pal::white);
+        for (int k = 0; k < 4; k++) { const float a = va + k * 1.5707963f; S.ln(vx, vy, vx + 6 * cosf(a), vy + 6 * sinf(a), .7f, pal::white); }
+        S.fci(vx, vy, 1.3f, pal::white);
+    }
+    // RELEASE: sprezyna wokol tloczyska (szybszy release = sztywniejsza, wiecej zwojow); sciska sie z plyta
+    {
+        const int n = 4 + (int)lrintf(q[3] * 6.f);
+        const float y0 = 57.f, y1 = headTop - .5f, step = (y1 - y0) / (2 * n);
+        const Color fr = on ? pal::red : dimc(pal::red, .5f), bk = dimc(fr, .4f);
+        for (int k = 0; k < 2 * n; k++) {  // spirala: przod (jasny) z lewej w prawo, tyl (ciemny) z powrotem
+            const bool front = !(k & 1);
+            const float xa = front ? 149.f : 171.f, xb = front ? 171.f : 149.f;
+            S.ln(xa, y0 + k * step, xb, y0 + (k + 1) * step, front ? 1.f : .6f, front ? fr : bk);
+        }
+        S.ln(147, y0, 151, y0, 1.f, fr);
+        S.ln(147, y1, 151, y1, 1.f, fr);
+    }
     S.ln(155, 56, 155, headTop, 1.f, steelc);
     S.ln(165, 56, 165, headTop, 1.f, steelc);
     S.ln(158, 58, 158, headTop, .5f, rgb(70, 90, 130));
@@ -878,22 +915,22 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.ln(sx - sw * .5f + 3, 130, sx - sw * .5f + 3, 132, 1.f, frame); S.ln(sx + sw * .5f - 3, 130, sx + sw * .5f - 3, 132, 1.f, frame);
     S.tx(sx + sw * .5f - 3, sy + 2, "OUT", 6, 1.f, pal::green, ALIGN_RIGHT);
 
-    // ---- narozniki ----
+    // ---- narozniki: INPUT | RATIO (lewo), RELEASE | OUTPUT (prawo), ATTACK (lewy dol) — tytuly i wartosci jednej wielkosci ----
+    static const char* RN[5] = {"4:1", "8:1", "12:1", "20:1", "ALL"};
     S.tx(14, 8, "INPUT", 9, 1.2f, pal::blue);
     snprintf(b, sizeof b, "%+.0f DB", -10.f + 40.f * q[0]);
     S.tx(14, 18, b, 9, 1.2f, pal::white);
+    S.tx(66, 8, "RATIO", 9, 1.2f, pal::dim);
+    S.tx(66, 18, RN[ri], 9, 1.2f, ri == 4 && on ? pal::red : pal::white);
     S.tx(306, 8, "OUTPUT", 9, 1.2f, pal::green, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%+.0f DB", -30.f + 40.f * q[1]);
     S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
-    static const char* RN[5] = {"4:1", "8:1", "12:1", "20:1", "ALL"};
-    S.tx(14, 30, "RATIO", 7, 1.f, pal::dim);
-    S.tx(14, 39, RN[ri], 9, 1.2f, ri == 4 && on ? pal::red : pal::white);
+    S.tx(262, 8, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "%.0f MS", (1.1f * (1.f - q[3]) + .05f * q[3]) * 1000.f);
+    S.tx(262, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
     S.tx(14, 140, "ATTACK", 9, 1.2f, pal::white);
     snprintf(b, sizeof b, "%.0f US", (.0008f * (1.f - q[2]) + .00002f * q[2]) * 1e6f);
-    S.tx(14, 150, b, 7, 1.f, pal::dim);
-    S.tx(306, 140, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
-    snprintf(b, sizeof b, "%.0f MS", (1.1f * (1.f - q[3]) + .05f * q[3]) * 1000.f);
-    S.tx(306, 150, b, 7, 1.f, pal::dim, ALIGN_RIGHT);
+    S.tx(14, 150, b, 9, 1.2f, pal::white);
     if (!on) {
         c.fillRect(0, 52, 640, 320, rgb(0, 0, 0, 160));
         c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
