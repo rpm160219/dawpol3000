@@ -53,12 +53,15 @@ public:
     ~FxHost();
     void setType(int fx);
     int type() const { return type_; }
+    void setBypass(bool b) { bypass_ = b; }
+    bool active() const { return type_ != FX_NONE && !bypass_; }  // efekt pracuje (nie NONE i nie BYPASS)
     void process(float* l, float* r, int n, const int16_t* w);
     // telemetria ekranu efektu (kopia po kazdym bloku; czytana w watku UI — wylacznie do rysowania)
     const uint8_t* telemetry() const { return tel_; }
 private:
     alignas(32) uint8_t tel_[64] = {};
     int type_ = FX_NONE;
+    bool bypass_ = false;
     void* inst_ = nullptr;
     // wejscie 48 kHz -> 44,1 kHz
     float inL_[4] = {}, inR_[4] = {};  // ostatnie 4 probki (interpolacja Hermite'a)

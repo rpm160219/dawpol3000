@@ -103,7 +103,7 @@ struct MixComp {
     uint8_t type = COMP_OPTO;
     float p[COMP_TYPES][5] = {{.35f, .4f, 0.f, 1.f, 0.f}, {.6f, .3f, .5f, 1.f, 0.f}, {.4f, .5f, .5f, .5f, 0.f}};
 };
-struct FxSlot { uint8_t fx = FX_NONE; int16_t w[8] = {}; };  // efekt + slowa galek (0..3 strona 1, 5..7 strona 2, jak OP-1)
+struct FxSlot { uint8_t fx = FX_NONE; bool bypass = false; int16_t w[8] = {}; };  // bypass: efekt omijany (stan zostaje)  // efekt + slowa galek (0..3 strona 1, 5..7 strona 2, jak OP-1)
 struct AuxBus { FxSlot fx; MixEq eq; float level = .8f; };
 // Kompresor szyny master (w stylu SSL G): prog, ratio 2/4/10, atak 0,1..30 ms, release 0,1..1,2 s / AUTO, makeup
 struct BusComp { bool on = false; float thresh = .6f; uint8_t ratio = 1, attack = 3, release = 4; float makeup = 0.f; };

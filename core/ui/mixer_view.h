@@ -20,7 +20,9 @@ public:
 private:
     int strip_ = 0, row_ = R_VOL;  // strip_: 0.. kanaly + AUX, -1 = master
     int win_ = W_NONE, slot_ = 0, eqLayer_ = 0, fxSel_ = 0, fxPage_ = 0, sendSel_ = 0;
-    bool fxList_ = false, fxReset_ = true;  // okno efektu: lista wyboru / edycja (ekran efektu)
+    bool fxList_ = false, fxReset_ = true;
+    bool fetAdv_ = false;                 // FET: widok zaawansowany (L3); domyslnie prasa
+    float press_ = 0, pressV_ = 0, wob_ = 0, lvl_ = 0;  // animacja prasy FET  // okno efektu: lista wyboru / edycja (ekran efektu)
     float vu_[64], vuM_ = -40.f;
     bool vuInit_ = false;
     RelEncoder stepEnc_[4];
@@ -38,6 +40,7 @@ private:
     void renderBus(Canvas& c);
     void renderFx(Canvas& c);
     void renderFxList(Canvas& c);
+    void renderFetPress(Canvas& c, const float* q, float gr, float level, bool on, Color col);
     float dt_ = .016f;
     int lastPage_ = 0;
 };

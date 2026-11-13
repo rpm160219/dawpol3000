@@ -16,6 +16,7 @@ const FxInfo& fxInfo(int fx) { return kFx[fx >= 0 && fx < FX_COUNT ? fx : 0]; }
 
 void fxDefaults(FxSlot& s, int fx) {
     s.fx = (uint8_t)(fx >= 0 && fx < FX_COUNT ? fx : FX_NONE);
+    s.bypass = false;
     for (int i = 0; i < 8; i++) s.w[i] = kFx[s.fx].def[i];
 }
 

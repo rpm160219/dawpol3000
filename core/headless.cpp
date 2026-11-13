@@ -720,17 +720,22 @@ int headlessPng(const char* path, const char* screen) {
         app.openMixer(1);
         idle(app);
         tap(app, B_START);
-        for (int i = 0; i < 1500; i++) { eng.process(buf, 256); if (i % 8 == 0) idle(app); }
+        for (int i = 0; i < 3600; i++) { eng.process(buf, 256); if (i % 8 == 0) idle(app); }
         if (!strcmp(screen, "mixereq")) { app.mixer.setCursor(2, MixerView::R_EQ); app.mixer.openWindow(MixerView::W_EQ); }
         if (!strcmp(screen, "mixeropto")) { app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
         if (!strcmp(screen, "mixervca")) { p.tracks[3].comp.type = COMP_VCA; app.markDirty(); app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
-        if (!strcmp(screen, "mixerfet")) { app.mixer.setCursor(1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
+        if (!strcmp(screen, "mixerfet") || !strcmp(screen, "mixerfetadv")) {
+            p.tracks[0].comp.p[COMP_FET][0] = .75f; p.tracks[0].comp.p[COMP_FET][4] = 1.f; app.markDirty();  // DRUMS mocno: ratio ALL
+            app.mixer.setCursor(0, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP);
+            if (!strcmp(screen, "mixerfetadv")) tap(app, B_L3);
+        }
+        if (!strcmp(screen, "mixerbypass")) { p.tracks[2].ins[0].bypass = true; app.markDirty(); app.mixer.setCursor(2, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixerbus")) { app.mixer.setCursor(-1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_BUS); }
         if (!strcmp(screen, "mixerfx")) { app.mixer.setCursor(1, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixerchorus")) { app.mixer.setCursor(2, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixersister")) { app.mixer.setCursor(p.nTracks, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixeraux")) app.mixer.setCursor(p.nTracks, MixerView::R_VOL);
-        for (int i = 0; i < 60; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); }
+        for (int i = 0; i < 60; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); if (getenv("DPDBG")) fprintf(stderr, "gr %.2f pk %.3f\n", eng.chGr(0), eng.chPeak(0)); }
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK

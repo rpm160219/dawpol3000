@@ -217,7 +217,7 @@ static inline float herm(float y0, float y1, float y2, float y3, float t) {
 static inline int16_t toS16(float x) { x *= 32767.f; return (int16_t)(x > 32767.f ? 32767 : (x < -32767.f ? -32767 : x)); }
 
 void FxHost::process(float* l, float* r, int n, const int16_t* w) {
-    if (!inst_ || type_ == FX_NONE) return;
+    if (!inst_ || type_ == FX_NONE || bypass_) return;
     const double stepIn = 48000.0 / 44100.0, stepOut = 44100.0 / 48000.0;
     for (int i = 0; i < n; i++) {
         // wejscie: nowa probka 48 kHz, wyjscia 44,1 kHz miedzy inL_[1] a inL_[2]
@@ -269,6 +269,7 @@ void MixerDsp::apply(const Project& p) {
         comp_[i].set(t.comp, fs_);
         for (int k = 0; k < MIX_INSERTS; k++) {
             ins_[i][k].setType(t.ins[k].fx);
+            ins_[i][k].setBypass(t.ins[k].bypass);
             memcpy(insW_[i][k], t.ins[k].w, sizeof insW_[i][k]);
         }
         pan_[i] = t.pan;
@@ -276,6 +277,7 @@ void MixerDsp::apply(const Project& p) {
     }
     for (int a = 0; a < MIX_AUX; a++) {
         auxFx_[a].setType(p.aux[a].fx.fx);
+        auxFx_[a].setBypass(p.aux[a].fx.bypass);
         memcpy(auxW_[a], p.aux[a].fx.w, sizeof auxW_[a]);
         auxEq_[a].set(p.aux[a].eq, fs_);
         auxLevel_[a] = p.aux[a].level;
@@ -297,7 +299,8 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
         const float* in = tracks[c];
         float pk = 0;
         for (int i = 0; i < n * 2; i++) { const float a = fabsf(in[i]); if (a > pk) pk = a; }
-        const bool hasIns = ins_[c][0].type() != FX_NONE || ins_[c][1].type() != FX_NONE;
+        bool hasIns = false;
+        for (int k = 0; k < MIX_INSERTS; k++) hasIns |= ins_[c][k].active();
         if (pk > 0.f || active[c]) tail_[c] = (int)(fs_ * 12.f);  // ogon insertow (poglos) po ciszy
         else if (tail_[c] > 0) tail_[c] -= n;
         if (pk == 0.f && (!hasIns || tail_[c] <= 0)) {  // cisza: kanal pomijany
@@ -332,7 +335,7 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
     for (int a = 0; a < MIX_AUX; a++) {
         if (auxUsed[a]) auxTail_[a] = (int)(fs_ * 12.f);
         else if (auxTail_[a] > 0) auxTail_[a] -= n;
-        if (!auxUsed[a] && (auxFx_[a].type() == FX_NONE || auxTail_[a] <= 0)) { hold(aux[a].peak, 0.f); continue; }  // brak wysylek: AUX pomijany
+        if (!auxUsed[a] && (!auxFx_[a].active() || auxTail_[a] <= 0)) { hold(aux[a].peak, 0.f); continue; }  // brak wysylek: AUX pomijany
         float* al = auxBuf_[a][0];
         float* ar = auxBuf_[a][1];
         auxFx_[a].process(al, ar, n, auxW_[a]);

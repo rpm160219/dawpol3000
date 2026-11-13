@@ -19,7 +19,7 @@ const int PER_PAGE = 5;
 const float VU_REF = 12.f;  // 0 VU = -12 dBFS (czerwona strefa = ostatnie 3 dB przed przesterowaniem)
 
 const float SW = 100.f, SX0 = 8.f, MX = 516.f, MW = 116.f;
-const Color PLATE_CH = rgb(48, 48, 54), PLATE_AUX = rgb(140, 140, 146), PLATE_MASTER = rgb(228, 228, 222);
+const Color PLATE_CH = rgb(0, 0, 0), PLATE_AUX = rgb(140, 140, 146), PLATE_MASTER = rgb(228, 228, 222);
 const float INS_Y = 246.f, INS_H = 12.f, INS_STEP = 15.f;
 inline Color dimc(Color c, float a) { return rgb((uint8_t)(c.r * a), (uint8_t)(c.g * a), (uint8_t)(c.b * a)); }
 Color auxColor(int a) { static const Color C[MIX_AUX] = {pal::cyan, pal::purple, pal::yellow, pal::pink, pal::tan, pal::silver}; return C[a % MIX_AUX]; }
@@ -31,9 +31,11 @@ const char* compName(int t) { static const char* N[COMP_TYPES] = {"OPTO", "VCA",
 
 // luk VU na plytce: dB -20..+3, czerwona strefa powyzej 0. plate = kolor tla (ciemny / szary / bialy) — na jasnym
 // tle podzialka i wskazowka ciemne.
-void drawVu(Canvas& c, float x, float y, float w, float h, float db, Color plate, Color pivot) {
+void drawVu(Canvas& c, float x, float y, float w, float h, float db, Color plate) {
     c.fillRoundRect(x, y, w, h, 6, plate);
     const bool light = plate.r > 110;
+    if (plate.r < 20) c.strokeRoundRect(x, y, w, h, 6, 1.f, rgb(54, 54, 60));
+    const Color pivot = light ? rgb(20, 20, 20) : rgb(200, 200, 200);
     const Color sc = light ? rgb(40, 40, 44) : rgb(170, 170, 178), lab = light ? rgb(70, 70, 74) : rgb(130, 130, 136);
     const Color rz = light ? rgb(215, 40, 30) : pal::red, needle = light ? rgb(20, 20, 20) : rgb(255, 120, 110);
     const float cx = x + w * .5f, cy = y + h - 7, r = h - 21;
@@ -205,6 +207,10 @@ void MixerView::updateMain(const Buttons& b, const InputState& in, float dt) {
         else if (row_ >= R_INS0 && row_ < R_INS0 + MIX_INSERTS) openWindow(W_FX, row_ - R_INS0);
         else if (row_ == R_PAN && isTrack) { p.tracks[strip_].pan = 0.f; app_->markDirty(); }
     }
+    if (b.pressed(B_B) && strip_ >= 0 && row_ >= R_INS0 && row_ < R_INS0 + MIX_INSERTS) {  // B = BYPASS insertu / efektu AUX
+        FxSlot* fs = isTrack ? &p.tracks[strip_].ins[row_ - R_INS0] : (row_ == R_INS0 ? &p.aux[strip_ - p.nTracks].fx : nullptr);
+        if (fs && fs->fx) { fs->bypass = !fs->bypass; app_->markDirty(); }
+    }
     if (isTrack && b.pressed(B_Y)) { p.tracks[strip_].mute = !p.tracks[strip_].mute; app_->markDirty(); }
     if (isTrack && b.pressed(B_X)) { p.tracks[strip_].solo = !p.tracks[strip_].solo; app_->markDirty(); }
     // galki: niebieska = glosnosc kanalu, zielona = panorama, biala = wysylka, czerwona = master
@@ -259,6 +265,7 @@ void MixerView::updateComp(const Buttons& b, const InputState& in, float dt) {
     if (b.pressed(B_L1)) { c.type = (uint8_t)((c.type + COMP_TYPES - 1) % COMP_TYPES); ch = true; }
     if (b.pressed(B_R1)) { c.type = (uint8_t)((c.type + 1) % COMP_TYPES); ch = true; }
     if (b.pressed(B_A)) { c.on = !c.on; ch = true; }
+    if (b.pressed(B_L3) && c.type == COMP_FET) fetAdv_ = !fetAdv_;
     float* q = c.p[c.type];
     if (b.pressed(B_Y)) {
         if (c.type == COMP_OPTO) q[2] = q[2] >= .5f ? 0.f : 1.f;
@@ -323,6 +330,7 @@ void MixerView::updateFx(const Buttons& b, const InputState& in, float dt) {
     if (b.pressed(B_B)) { win_ = W_NONE; return; }
     if (b.pressed(B_X)) { fxList_ = true; fxSel_ = s->fx; return; }
     if (b.pressed(B_Y)) { fxDefaults(*s, FX_NONE); app_->markDirty(); win_ = W_NONE; return; }
+    if (b.pressed(B_A)) { s->bypass = !s->bypass; app_->markDirty(); }
     const FxInfo& fi = fxInfo(s->fx);
     const bool hasP2 = fi.page2[0][0] || fi.page2[1][0] || fi.page2[2][0];
     if (b.pressed(B_L3) && hasP2) fxPage_ ^= 1;
@@ -355,7 +363,7 @@ void MixerView::renderStrip(Canvas& c, int strip, float x, float w, float dt) {
     float& v = vu_[strip & 63];
     v = db > v ? db : v - 24.f * dt;
     if (v < -40.f) v = -40.f;
-    drawVu(c, x + 6, 52, w - 12, 60, v, isTrack ? PLATE_CH : PLATE_AUX, col);
+    drawVu(c, x + 6, 52, w - 12, 60, v, isTrack ? PLATE_CH : PLATE_AUX);
     auto hl = [&](int row, float y, float h) {
         if (sel && row_ == row && win_ == W_NONE) c.strokeRoundRect(x + 3, y - 2, w - 6, h + 4, 5, 1.4f, pal::white);
     };
@@ -370,9 +378,11 @@ void MixerView::renderStrip(Canvas& c, int strip, float x, float w, float dt) {
     for (int k = 0; k < nIns; k++) {
         const float y = INS_Y + k * INS_STEP;
         const FxSlot& s = isTrack ? t->ins[k] : p.aux[a].fx;
-        if (s.fx) c.fillRoundRect(x + 7, y, w - 14, INS_H, 6, rgb(40, 34, 26));
-        c.strokeRoundRect(x + 7, y, w - 14, INS_H, 6, 1.f, s.fx ? pal::tan : pal::faint);
-        drawText(c, cx, y + 3, s.fx ? fxInfo(s.fx).shortName : (isTrack ? "INSERT" : "EFFECT"), 6, 1.f, s.fx ? pal::tan : pal::dim, ALIGN_CENTER);
+        const bool act = s.fx && !s.bypass;
+        if (act) c.fillRoundRect(x + 7, y, w - 14, INS_H, 6, rgb(40, 34, 26));
+        c.strokeRoundRect(x + 7, y, w - 14, INS_H, 6, 1.f, act ? pal::tan : (s.fx ? rgb(90, 70, 50) : pal::faint));
+        drawText(c, cx, y + 3, s.fx ? fxInfo(s.fx).shortName : (isTrack ? "INSERT" : "EFFECT"), 6, 1.f, act ? pal::tan : pal::dim, ALIGN_CENTER);
+        if (s.fx && s.bypass) c.fillCircle(x + 14, y + INS_H * .5f, 2.2f, pal::red);  // BYPASS
         hl(R_INS0 + k, y, INS_H);
     }
     if (isTrack) {
@@ -436,17 +446,17 @@ void MixerView::renderMaster(Canvas& c, float x, float w) {
     const float db = 20.f * log10f(pk > 1e-5f ? pk : 1e-5f) + VU_REF;
     vuM_ = db > vuM_ ? db : vuM_ - 24.f * dt_;
     if (vuM_ < -40.f) vuM_ = -40.f;
-    drawVu(c, x + 6, 52, w - 12, 60, vuM_, PLATE_MASTER, rgb(20, 20, 20));
+    drawVu(c, x + 6, 52, w - 12, 60, vuM_, PLATE_MASTER);
     // BUS COMP
     c.strokeRoundRect(x + 8, 120, w - 16, 40, 5, 1.f, pal::faint);
-    drawText(c, cx, 125, "BUS COMP", 7, 1.1f, p.bus.on ? pal::white : pal::dim, ALIGN_CENTER);
+    drawText(c, cx, 128, "BUS COMP", 7, 1.1f, p.bus.on ? pal::white : pal::dim, ALIGN_CENTER);
     if (p.bus.on) {
         static const char* R[3] = {"2:1", "4:1", "10:1"};
-        drawText(c, x + 14, 141, R[p.bus.ratio % 3], 7, 1.f, pal::dim);
+        drawText(c, x + 14, 142, R[p.bus.ratio % 3], 7, 1.f, pal::dim);
         const float gr = e ? e->masterGr() : 0.f, bw = (w - 64) * clampf(gr / 12.f, 0.f, 1.f);
-        c.line(x + 48, 145, x + w - 14, 145, 3.f, pal::faint);
-        if (bw > .5f) c.line(x + w - 14 - bw, 145, x + w - 14, 145, 3.f, pal::red);
-    } else drawText(c, cx, 141, "OFF", 7, 1.f, pal::dim, ALIGN_CENTER);
+        c.line(x + 48, 145.5f, x + w - 14, 145.5f, 3.f, pal::faint);
+        if (bw > .5f) c.line(x + w - 14 - bw, 145.5f, x + w - 14, 145.5f, 3.f, pal::red);
+    } else drawText(c, cx, 142, "OFF", 7, 1.f, pal::dim, ALIGN_CENTER);
     if (sel && row_ == R_COMP) c.strokeRoundRect(x + 4, 117, w - 8, 46, 6, 1.4f, pal::white);
     char b[8];
     snprintf(b, sizeof b, "%02d", (int)lrintf(p.masterVol * 99.f));
@@ -481,7 +491,8 @@ void MixerView::render(Canvas& c) {
     c.line(MX - 4, 52, MX - 4, 376, 1.f, rgb(60, 60, 66));
     renderMaster(c, MX, MW);
     // podpowiedz i pasek galek
-    drawText(c, 320, 392, "A = OPEN   Y = MUTE   X = SOLO   L1/R1 = PAGE   D-PAD = MOVE", 7, 1.f, rgb(80, 80, 80), ALIGN_CENTER);
+    const bool onIns = row_ >= R_INS0 && row_ < R_INS0 + MIX_INSERTS;
+    drawText(c, 320, 392, onIns ? "A = EDIT   B = BYPASS   Y = MUTE   X = SOLO   L1/R1 = PAGE" : "A = OPEN   Y = MUTE   X = SOLO   L1/R1 = PAGE   D-PAD = MOVE", 7, 1.f, rgb(80, 80, 80), ALIGN_CENTER);
     const bool isTrack = strip_ >= 0 && strip_ < p.nTracks;
     char v[4][16];
     const float vol = strip_ < 0 ? p.masterVol : (isTrack ? p.tracks[strip_].volume : p.aux[strip_ - p.nTracks].level);
@@ -602,8 +613,8 @@ void MixerView::renderEq(Canvas& c) {
 namespace {
 const float PX = 20, PY = 56, PW = 600, PH = 330, MBX = 44, MBY = 112, MBW = 252, MBH = 250;
 const float KX[2] = {400, 540}, KY[2] = {168, 292}, KR = 30, KR2 = 26;
-void compPanel(Canvas& c, const char* name, const char* style, Color bg, Color edge, Color meterBg, bool on) {
-    c.fillRoundRect(PX, PY, PW, PH, 12, bg);
+void compPanel(Canvas& c, const char* name, const char* style, Color edge, bool on) {
+    c.fillRoundRect(PX, PY, PW, PH, 12, pal::bg);
     c.strokeRoundRect(PX, PY, PW, PH, 12, 1.4f, edge);
     for (int k = 0; k < 2; k++)  // sruby w rogach
         for (int j = 0; j < 2; j++) c.circle(PX + 12 + j * (PW - 24), PY + 12 + k * (PH - 24), 3.f, 1.f, pal::dim);
@@ -612,9 +623,9 @@ void compPanel(Canvas& c, const char* name, const char* style, Color bg, Color e
     if (!on) { c.fillRoundRect(PX + PW - 148, PY + 14, 120, 24, 12, rgb(60, 20, 20)); drawText(c, PX + PW - 88, PY + 20, "BYPASS", 11, 1.4f, pal::red, ALIGN_CENTER); }
     else { c.fillCircle(PX + PW - 40, PY + 26, 5.f, pal::red); drawText(c, PX + PW - 52, PY + 22, "ON", 8, 1.1f, pal::white, ALIGN_RIGHT); }
     c.strokeRoundRect(MBX, MBY, MBW, MBH, 8, 1.2f, rgb(90, 90, 96));
-    c.fillRoundRect(MBX + 2, MBY + 2, MBW - 4, 150, 7, meterBg);
+    c.strokeRoundRect(MBX + 10, MBY + 10, MBW - 20, 160, 6, 1.f, rgb(60, 60, 66));  // okienko miernika (z podpisem)
 }
-void compMeter(Canvas& c, float gr, const char* title, bool on) { grMeter(c, MBX + MBW * .5f, MBY + 130, 86, gr, title, on); }
+void compMeter(Canvas& c, float gr, const char* title, bool on) { grMeter(c, MBX + MBW * .5f, MBY + 132, 84, gr, title, on); }
 }  // namespace
 
 void MixerView::renderComp(Canvas& c) {
@@ -631,10 +642,10 @@ void MixerView::renderComp(Canvas& c) {
     const bool on = cp.on;
     const float gr = e ? e->chGr(strip_) : 0.f;
     const float* q = cp.p[cp.type];
-    const float mcx = MBX + MBW * .5f, by = MBY + 176;  // srodek okna miernika, rzad pod miernikiem
+    const float mcx = MBX + MBW * .5f, by = MBY + 186;  // srodek okna miernika, rzad pod miernikiem
     char b[4][24];
     if (cp.type == COMP_OPTO) {
-        compPanel(c, "OPTO-2", "LA-2A STYLE", rgb(26, 26, 30), rgb(150, 150, 160), rgb(44, 38, 24), on);
+        compPanel(c, "OPTO-2", "LA-2A STYLE", rgb(150, 150, 160), on);
         compMeter(c, gr, "GAIN REDUCTION", on);
         static const char* ML[2] = {"COMPRESS", "LIMIT"};
         segButtons(c, MBX + 26, by, MBW - 52, 28, ML, 2, q[2] >= .5f ? 1 : 0, on);
@@ -646,7 +657,7 @@ void MixerView::renderComp(Canvas& c) {
         snprintf(b[2], 24, "%d%%", (int)lrintf(q[3] * 100));
         bigKnob(c, (KX[0] + KX[1]) * .5f, KY[1], KR2, q[3], pal::white, "MIX", b[2], on);
     } else if (cp.type == COMP_VCA) {
-        compPanel(c, "VCA-160", "DBX 160 STYLE", rgb(16, 16, 18), rgb(110, 110, 118), rgb(36, 32, 22), on);
+        compPanel(c, "VCA-160", "DBX 160 STYLE", rgb(110, 110, 118), on);
         compMeter(c, gr, "GAIN REDUCTION", on);
         const bool above = gr > .5f, oe = q[3] >= .5f;
         c.fillCircle(MBX + 26, by + 14, 6, on && !above ? pal::green : rgb(30, 50, 30));
@@ -663,8 +674,10 @@ void MixerView::renderComp(Canvas& c) {
         bigKnob(c, KX[1], KY[0], KR, q[1], pal::green, "COMPRESSION", b[1], on);
         snprintf(b[2], 24, "%+.0f DB", -20.f + 40.f * q[2]);
         bigKnob(c, (KX[0] + KX[1]) * .5f, KY[1], KR2, q[2], pal::white, "OUTPUT GAIN", b[2], on);
+    } else if (!fetAdv_) {
+        renderFetPress(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
     } else {
-        compPanel(c, "FET-76", "1176 STYLE", rgb(10, 10, 10), rgb(90, 90, 96), rgb(42, 36, 24), on);
+        compPanel(c, "FET-76", "1176 STYLE", rgb(90, 90, 96), on);
         compMeter(c, gr, "GAIN REDUCTION", on);
         static const char* RN[5] = {"4", "8", "12", "20", "ALL"};
         segButtons(c, MBX + 14, by, MBW - 28, 28, RN, 5, (int)(q[4] * 4.999f), on);
@@ -679,7 +692,8 @@ void MixerView::renderComp(Canvas& c) {
         bigKnob(c, KX[1], KY[1], KR2, q[3], pal::red, "RELEASE", b[3], on);
     }
     drawText(c, 20, 394, "L1/R1 = MODEL", 8, 1.1f, pal::white);
-    drawText(c, 620, 394, "A = ON/OFF   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
+    if (cp.type == COMP_FET) drawText(c, 150, 396, fetAdv_ ? "L3 = PRESS VIEW" : "L3 = ADVANCED", 7, 1.f, pal::dim);
+    drawText(c, 620, 394, cp.type == COMP_FET ? "Y = RATIO   A = ON/OFF   B = BACK" : "A = ON/OFF   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
     char v[4][16];
     const char* L[4] = {"", "", "", ""};
     float pos[4] = {0, 0, 0, 0};
@@ -704,17 +718,128 @@ void MixerView::renderComp(Canvas& c) {
     encoderBar(c, L, vals, pos);
 }
 
+// FET — widok prasy: plyta prasy hydraulicznej schodzi o tyle, ile kompresor sciszna (GAIN REDUCTION) i zgniata
+// kule dzwieku (kolor sciezki; jej wielkosc i drganie = poziom sygnalu, objetosc zachowana — splaszczona rozlewa sie
+// na boki). Szybkie zejscie plyty (krotki ATTACK) zostawia smugi ruchu; ratio ALL — iskry i pekniecia z boku kuli.
+// Na belce: ratio; po bokach dwa zegary: wejscie (INPUT) i sciszanie (GR), pod nimi ATTACK i RELEASE.
+void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level, bool on, Color col) {
+    const float dt = dt_ > 0.f && dt_ < .1f ? dt_ : .016f;
+    static const char* RN[5] = {"4:1", "8:1", "12:1", "20:1", "ALL"};
+    const int ri = (int)(q[4] * 4.999f);
+    const float BASE = 356.f, REST = 164.f, LOW = 296.f;  // dol plyty: spoczynek / maks. zgniecenie
+    // ruch plyty (wygladzony), predkosc do smug
+    const float g = on ? clampf(gr / 20.f, 0.f, 1.f) : 0.f;
+    const float target = REST + (LOW - REST) * powf(g, .7f);
+    const float prev = press_ < REST ? REST : press_;
+    press_ = prev + (target - prev) * (1.f - expf(-dt / .03f));
+    pressV_ = (press_ - prev) / dt;
+    const float ldb = 20.f * log10f(level > 1e-5f ? level : 1e-5f);
+    const float ln = clampf((ldb + 40.f) / 40.f, 0.f, 1.f);
+    lvl_ += (ln - lvl_) * (1.f - expf(-dt / .06f));
+    wob_ += dt * (5.f + 8.f * lvl_);
+    const Color frame = rgb(120, 120, 128), steel = rgb(90, 110, 140);
+    // podstawa i nogi
+    c.strokeRoundRect(150, BASE, 340, 16, 3, 1.4f, frame);
+    c.line(160, BASE + 16, 160, BASE + 24, 2.f, frame);
+    c.line(480, BASE + 16, 480, BASE + 24, 2.f, frame);
+    for (int i = 0; i < 15; i++) c.fillCircle(170 + i * 21.4f, BASE + 8, 1.f, pal::faint);
+    // kolumny
+    c.strokeRoundRect(169, 100, 14, BASE - 100, 2, 1.4f, frame);
+    c.strokeRoundRect(457, 100, 14, BASE - 100, 2, 1.4f, frame);
+    // belka z napisami
+    c.fillRoundRect(150, 70, 340, 30, 4, pal::bg);
+    c.strokeRoundRect(150, 70, 340, 30, 4, 1.6f, frame);
+    drawText(c, 164, 79, "FET-76", 11, 1.4f, pal::white);
+    drawText(c, 476, 79, on ? RN[ri] : "BYPASS", 11, 1.4f, on ? pal::white : pal::red, ALIGN_RIGHT);
+    // cylinder i tlok
+    c.strokeRoundRect(290, 100, 60, 38, 3, 1.4f, steel);
+    c.line(290, 112, 350, 112, 1.f, steel);
+    c.fillRect(314, 138, 12, press_ - 14 - 138, rgb(40, 44, 52));
+    c.line(314, 138, 314, press_ - 14, 1.2f, steel);
+    c.line(326, 138, 326, press_ - 14, 1.2f, steel);
+    // plyta
+    c.fillRoundRect(200, press_ - 14, 240, 14, 3, rgb(34, 34, 40));
+    c.strokeRoundRect(200, press_ - 14, 240, 14, 3, 1.6f, pal::white);
+    for (int i = 0; i < 9; i++) c.line(214 + i * 26.5f, press_ - 10, 222 + i * 26.5f, press_ - 4, 1.f, rgb(90, 90, 96));
+    if (pressV_ > 60.f) {  // smugi ruchu nad plyta
+        const float len = clampf(pressV_ * .08f, 6.f, 30.f);
+        for (int i = 0; i < 4; i++) {
+            const float x = 222 + i * 65.f;
+            c.line(x, press_ - 20 - len, x, press_ - 20, 1.2f, rgb(110, 110, 120));
+        }
+    }
+    // kula dzwieku: objetosc zachowana
+    const float R = 42.f + 26.f * lvl_ * (on ? 1.f : .6f);
+    const float gap = BASE - press_;
+    const float H = fminf(2.f * R, gap - 1.f);
+    const float W = fminf(4.f * R * R / H, 270.f);
+    const float bcx = 320.f, bcy = BASE - H * .5f;
+    const float amp = 1.5f + 5.f * lvl_ + (H < 2.f * R ? 3.f * (1.f - H / (2.f * R)) : 0.f);
+    float pts[2 * 73];
+    for (int ring = 0; ring < 3; ring++) {
+        const float sc = 1.f - ring * .28f;
+        for (int i = 0; i <= 72; i++) {
+            const float th = i * 6.2831853f / 72.f;
+            const float ct = cosf(th), st = sinf(th);
+            // zaokraglony kwadrat (superelipsa n = 3) — splaszczona kula przylega do plyty i podstawy
+            const float ex = .6667f;
+            float rx = copysignf(powf(fabsf(ct), ex), ct), ry = copysignf(powf(fabsf(st), ex), st);
+            const float wob = 1.f + amp / R * sinf(4.f * th + wob_ + ring) * (ring ? .6f : 1.f);
+            pts[2 * i] = bcx + rx * W * .5f * sc * wob;
+            pts[2 * i + 1] = bcy + ry * H * .5f * sc * (ring ? wob : 1.f);
+            if (ring == 0) pts[2 * i + 1] = clampf(pts[2 * i + 1], press_, BASE);
+        }
+        c.polyline(pts, 73, ring ? 1.f : 2.f, ring ? dimc(col, .5f - ring * .12f) : (on ? col : dimc(col, .5f)), true);
+    }
+    // ratio ALL: iskry i pekniecia z bokow kuli
+    if (on && ri == 4 && g > .05f) {
+        for (int k = 0; k < 6; k++) {
+            const float side = k & 1 ? 1.f : -1.f;
+            const float yy = bcy + (k / 2 - 1) * H * .25f;
+            const float a = .5f * sinf(wob_ * 3.1f + k * 1.7f);
+            const float x0 = bcx + side * (W * .5f + 4), l = 8.f + 18.f * g;
+            c.line(x0, yy, x0 + side * l * cosf(a), yy + l * sinf(a), 1.4f, k % 3 ? pal::yellow : pal::red);
+        }
+    }
+    // zegary: wejscie (lewy) i sciszanie (prawy)
+    auto dial = [&](float cx, float cy, float v, Color nc, const char* title, const char* val) {
+        c.circle(cx, cy, 34, 1.4f, frame);
+        for (int k = 0; k <= 10; k++) {
+            const float a = 3.14159265f * (.75f + 1.5f * k / 10.f);
+            c.line(cx + 28 * cosf(a), cy + 28 * sinf(a), cx + 32 * cosf(a), cy + 32 * sinf(a), 1.f, k >= 8 && nc.r > 200 && nc.g < 100 ? pal::red : pal::dim);
+        }
+        const float a = 3.14159265f * (.75f + 1.5f * clampf(v, 0.f, 1.f));
+        c.line(cx, cy, cx + 27 * cosf(a), cy + 27 * sinf(a), 2.f, nc);
+        c.fillCircle(cx, cy, 3.f, pal::white);
+        drawText(c, cx, cy + 44, title, 8, 1.1f, pal::dim, ALIGN_CENTER);
+        drawText(c, cx, cy + 58, val, 9, 1.3f, pal::white, ALIGN_CENTER);
+    };
+    char b[4][24];
+    snprintf(b[0], 24, "%+.0f DB", -10.f + 40.f * q[0]);
+    snprintf(b[1], 24, "-%.1f DB", on ? gr : 0.f);
+    dial(84, 170, lvl_, pal::blue, "INPUT", b[0]);
+    dial(556, 170, g, pal::red, "GAIN RED", b[1]);
+    snprintf(b[2], 24, "%.0f US", (.0008f * (1.f - q[2]) + .00002f * q[2]) * 1e6f);
+    snprintf(b[3], 24, "%.0f MS", (1.1f * (1.f - q[3]) + .05f * q[3]) * 1000.f);
+    drawText(c, 84, 296, "ATTACK", 8, 1.1f, pal::dim, ALIGN_CENTER);
+    drawText(c, 84, 310, b[2], 9, 1.3f, pal::white, ALIGN_CENTER);
+    drawText(c, 556, 296, "RELEASE", 8, 1.1f, pal::dim, ALIGN_CENTER);
+    drawText(c, 556, 310, b[3], 9, 1.3f, pal::white, ALIGN_CENTER);
+    snprintf(b[0], 24, "OUT %+.0f DB", -30.f + 40.f * q[1]);
+    drawText(c, 320, 60, b[0], 8, 1.1f, pal::green, ALIGN_CENTER);
+}
+
 void MixerView::renderBus(Canvas& c) {
     Project& p = app_->project();
     AudioEngine* e = app_->engine();
     const BusComp& s = p.bus;
     windowHeader(c, "BUS COMPRESSOR", "MASTER", pal::white);
-    compPanel(c, "G-BUS", "SSL G BUS COMPRESSOR STYLE", rgb(30, 32, 36), rgb(120, 124, 132), rgb(44, 38, 26), s.on);
+    compPanel(c, "G-BUS", "SSL G BUS COMPRESSOR STYLE", rgb(120, 124, 132), s.on);
     compMeter(c, e ? e->masterGr() : 0.f, "COMPRESSION", s.on);
     static const char* RA[3] = {"2", "4", "10"};
     static const char* AT[6] = {".1", ".3", "1", "3", "10", "30"};
     static const char* RE[5] = {".1", ".3", ".6", "1.2", "AUTO"};
-    const float by = MBY + 176;
+    const float by = MBY + 186;
     segButtons(c, MBX + 36, by, MBW - 72, 28, RA, 3, s.ratio % 3, s.on);
     drawText(c, MBX + MBW * .5f, by + 40, "Y = RATIO", 7, 1.f, pal::dim, ALIGN_CENTER);
     char b[4][24];
@@ -775,9 +900,14 @@ void MixerView::renderFx(Canvas& c) {
     const uint8_t* tel = e ? e->fxTelemetry(strip_ < p.nTracks ? strip_ : -1 - (strip_ - p.nTracks), slot_) : nullptr;
     drawFxScreen(c, s->fx, s->w, fxPage_ != 0, tel, fxReset_, 0, 52, 2.f);
     fxReset_ = false;
+    if (s->bypass) {  // jak na OP-1: przyciemnienie i napis na srodku
+        c.fillRect(0, 52, 640, 320, rgb(0, 0, 0, 160));
+        c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
+        drawText(c, 320, 205, "BYPASS", 13, 1.6f, pal::red, ALIGN_CENTER);
+    }
     const bool hasP2 = cur.page2[0][0] || cur.page2[1][0] || cur.page2[2][0];
     drawText(c, 20, 394, hasP2 ? (fxPage_ ? "L3 = PAGE 1" : "L3 = PAGE 2") : "", 8, 1.1f, pal::white);
-    drawText(c, 620, 394, "X = CHANGE   Y = REMOVE   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
+    drawText(c, 620, 394, s->bypass ? "A = ON   X = CHANGE   Y = REMOVE   B = BACK" : "A = BYPASS   X = CHANGE   Y = REMOVE   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
     char v[4][16];
     const char* L[4];
     float pos[4];

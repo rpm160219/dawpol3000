@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 23:30 — MIKSER: widok prasy FET, BYPASS efektów, czarne tła
+- **Co zmienione:** `core/ui/mixer_view.*` — VU kanału na czarnym tle (z obrysem), kulki wskazówek neutralne (nie w kolorze kanału), „BUS COMP / OFF” wyśrodkowane w ramce; kompresory na czarnym tle, podpis „GAIN REDUCTION” w okienku miernika; FET ma nowy domyślny widok **prasy hydraulicznej** (płyta schodzi o ściszanie i zgniata kulę dźwięku w kolorze ścieżki, kula pulsuje z poziomem, smugi przy szybkim ataku, iskry przy ratio ALL, zegary INPUT i GAIN RED), stary panel pod L3; BYPASS efektów: w oknie efektu A (przyciemnienie + napis jak na OP-1), w mikserze B na insercie, czerwona kropka na pigułce. `core/seq/project.h`, `core/io/project_file.cpp` (bypass zapisywany: „1b”), `core/audio/mixer.*` (bypass omija efekt; poprawka: ogon insertów sprawdzał tylko 2 pierwsze sloty), `core/fx/fx_registry.cpp`, makiety `mixerfetadv`, `mixerbypass`.
+- Testy bit w bit OK.
+- **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-13 22:00 — MIKSER: 4 inserty, edycja efektów z ich oryginalnymi ekranami, nowe panele kompresorów
 - **Co zmienione:** `core/seq/project.h` (4 inserty na kanał; stare projekty z 2 wczytują się dobrze — `core/io/project_file.cpp`), `core/ui/mixer_view.*` (wysyłki: litera + gałeczka poziomu + miernik sygnału wysyłki jak w ARRANGE; VU na płytkach: kanał ciemnoszary, powrót AUX szary, master biały; kompresory OPTO / VCA / FET i BUS w jednym symetrycznym układzie: miernik z przyciskami po lewej, siatka gałek po prawej, napisy nie wchodzą na ramki; okno efektu: oryginalny ekran efektu + gałki, X = zmiana efektu z listy, Y = usuń), `core/ui/fx_screen*` (nowe: ekrany op1r JUNI CHORUS i SISTER uruchamiane bez zmian, grafika z ich SVG `third_party/op1r_fx/*/*_art.h`), `core/fx/*` + `core/audio/mixer.*` (telemetria każdego egzemplarza efektu dla ekranu — ekran pokazuje właśnie ten insert).
 - Testy bit w bit OK; SYNTHWAVE MIX na konsoli nadal ~30% rdzenia.

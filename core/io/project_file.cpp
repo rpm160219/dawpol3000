@@ -83,7 +83,7 @@ static void writeEq(FILE* f, const MixEq& e) {
             e.freq[1], e.freq[2], e.q[0], e.q[1], e.q[2], e.out);
 }
 static void writeFx(FILE* f, const FxSlot& s) {
-    fprintf(f, " %d", s.fx);
+    fprintf(f, s.bypass ? " %db" : " %d", s.fx);  // "b" = bypass
     for (int i = 0; i < 8; i++) fprintf(f, " %d", s.w[i]);
 }
 void writeMix(FILE* f, const Track& t) {
@@ -120,6 +120,7 @@ static int parseFx(FxSlot& s, char** tok, int n, int i) {  // tok[i] = numer efe
     if (i + 8 >= n) return n;
     const int fx = atoi(tok[i]);
     s.fx = (uint8_t)(fx >= 0 && fx < FX_COUNT ? fx : FX_NONE);
+    s.bypass = strchr(tok[i], 'b') != nullptr;
     for (int k = 0; k < 8; k++) s.w[k] = (int16_t)atoi(tok[i + 1 + k]);
     return i + 9;
 }
