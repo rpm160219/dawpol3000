@@ -1,6 +1,7 @@
 // Ekran MIXER i jego okna (zob. mixer_view.h).
 #include "ui/mixer_view.h"
 #include <math.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "audio/engine.h"
@@ -265,7 +266,7 @@ void MixerView::updateComp(const Buttons& b, const InputState& in, float dt) {
     if (b.pressed(B_L1)) { c.type = (uint8_t)((c.type + COMP_TYPES - 1) % COMP_TYPES); ch = true; }
     if (b.pressed(B_R1)) { c.type = (uint8_t)((c.type + 1) % COMP_TYPES); ch = true; }
     if (b.pressed(B_A)) { c.on = !c.on; ch = true; }
-    if (b.pressed(B_L3) && c.type == COMP_FET) fetAdv_ = !fetAdv_;
+    if (b.pressed(B_L3)) compAdv_ = !compAdv_;
     float* q = c.p[c.type];
     if (b.pressed(B_Y)) {
         if (c.type == COMP_OPTO) q[2] = q[2] >= .5f ? 0.f : 1.f;
@@ -644,7 +645,11 @@ void MixerView::renderComp(Canvas& c) {
     const float* q = cp.p[cp.type];
     const float mcx = MBX + MBW * .5f, by = MBY + 186;  // srodek okna miernika, rzad pod miernikiem
     char b[4][24];
-    if (cp.type == COMP_OPTO) {
+    if (cp.type == COMP_OPTO && !compAdv_) {
+        renderOptoHand(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
+    } else if (cp.type == COMP_VCA && !compAdv_) {
+        renderVcaDam(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
+    } else if (cp.type == COMP_OPTO) {
         compPanel(c, "OPTO-2", "LA-2A STYLE", rgb(150, 150, 160), on);
         compMeter(c, gr, "GAIN REDUCTION", on);
         static const char* ML[2] = {"COMPRESS", "LIMIT"};
@@ -674,7 +679,7 @@ void MixerView::renderComp(Canvas& c) {
         bigKnob(c, KX[1], KY[0], KR, q[1], pal::green, "COMPRESSION", b[1], on);
         snprintf(b[2], 24, "%+.0f DB", -20.f + 40.f * q[2]);
         bigKnob(c, (KX[0] + KX[1]) * .5f, KY[1], KR2, q[2], pal::white, "OUTPUT GAIN", b[2], on);
-    } else if (!fetAdv_) {
+    } else if (!compAdv_) {
         renderFetPress(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
     } else {
         compPanel(c, "FET-76", "1176 STYLE", rgb(90, 90, 96), on);
@@ -692,8 +697,9 @@ void MixerView::renderComp(Canvas& c) {
         bigKnob(c, KX[1], KY[1], KR2, q[3], pal::red, "RELEASE", b[3], on);
     }
     drawText(c, 20, 394, "L1/R1 = MODEL", 8, 1.1f, pal::white);
-    if (cp.type == COMP_FET) drawText(c, 150, 396, fetAdv_ ? "L3 = PRESS VIEW" : "L3 = ADVANCED", 7, 1.f, pal::dim);
-    drawText(c, 620, 394, cp.type == COMP_FET ? "Y = RATIO   A = ON/OFF   B = BACK" : "A = ON/OFF   B = BACK", 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
+    drawText(c, 150, 396, compAdv_ ? "L3 = SCENE" : "L3 = ADVANCED", 7, 1.f, pal::dim);
+    static const char* YH[COMP_TYPES] = {"Y = MODE   A = ON/OFF   B = BACK", "Y = OVEREASY   A = ON/OFF   B = BACK", "Y = RATIO   A = ON/OFF   B = BACK"};
+    drawText(c, 620, 394, YH[cp.type], 7, 1.f, rgb(90, 90, 90), ALIGN_RIGHT);
     char v[4][16];
     const char* L[4] = {"", "", "", ""};
     float pos[4] = {0, 0, 0, 0};
@@ -937,6 +943,371 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
         c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
         drawText(c, 320, 205, "BYPASS", 13, 1.6f, pal::red, ALIGN_CENTER);
     }
+}
+
+// Wspolny interfejs audio z lewej strony scen kompresorow: galka (wartosc 0..1 w kolorze), diody poziomu, gniazdo.
+static void sceneInterface(const Scn& S, float knob, Color kc, float lvl, bool on) {
+    const Color frame = rgb(196, 200, 212);
+    S.frr(14, 96, 52, 34, 4, rgb(10, 10, 12));
+    S.rr(14, 96, 52, 34, 4, 1.f, frame);
+    const float kx = 30, ky = 113, ka = 3.14159265f * (.75f + 1.5f * clampf(knob, 0.f, 1.f));
+    S.ar(kx, ky, 10, 3.14159265f * .75f, 3.14159265f * 2.25f, .6f, rgb(70, 74, 86));
+    S.ar(kx, ky, 10, 3.14159265f * .75f, ka, 1.2f, kc);
+    S.ci(kx, ky, 7, 1.f, frame);
+    S.ln(kx + 2.f * cosf(ka), ky + 2.f * sinf(ka), kx + 6.f * cosf(ka), ky + 6.f * sinf(ka), 1.2f, pal::white);
+    for (int k = 0; k < 5; k++) {
+        const bool lit = on && lvl > (k + .5f) / 5.f;
+        S.fci(48.5f, 123 - k * 5.f, 1.4f, lit ? (k >= 4 ? pal::red : (k >= 3 ? pal::yellow : pal::green)) : rgb(40, 40, 46));
+    }
+    S.ci(60, 112, 2.6f, .8f, frame);
+    S.ln(14, 130, 14, 132, 1.f, frame); S.ln(66, 130, 66, 132, 1.f, frame);
+}
+// kabel z oplotem i plynacym sygnalem (krzywa Beziera)
+static void sceneCable(const Scn& S, const float P[4][2], float w, Color outer, Color sig, float flow) {
+    float pts[2 * 41];
+    for (int i = 0; i <= 40; i++) { const float t = i / 40.f; pts[2 * i] = bez(P[0][0], P[1][0], P[2][0], P[3][0], t); pts[2 * i + 1] = bez(P[0][1], P[1][1], P[2][1], P[3][1], t); }
+    S.poly(pts, 41, w + 1.4f, outer);
+    S.poly(pts, 41, w * .55f, rgb(12, 12, 14));
+    for (int k = 0; k < 8; k++) {
+        const float t = fmodf(k / 8.f + flow, 1.f), t2 = fminf(t + .035f, 1.f);
+        S.ln(bez(P[0][0], P[1][0], P[2][0], P[3][0], t), bez(P[0][1], P[1][1], P[2][1], P[3][1], t), bez(P[0][0], P[1][0], P[2][0], P[3][0], t2),
+             bez(P[0][1], P[1][1], P[2][1], P[3][1], t2), fmaxf(.6f, w * .35f), sig);
+    }
+}
+static void sceneBypass(Canvas& c) {
+    c.fillRect(0, 52, 640, 320, rgb(0, 0, 0, 160));
+    c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
+    drawText(c, 320, 205, "BYPASS", 13, 1.6f, pal::red, ALIGN_CENTER);
+}
+
+// VCA — tama (scena 320x160, skala 2). Interfejs (galka = THRESHOLD) -> rura wlewa wode do zbiornika (poziom = sygnal
+// wejscia) -> TAMA: wysokosc korony = THRESHOLD, nad koroną zasuwa — im wyzsze COMPRESSION (ratio), tym nizej zjezdza
+// (INF:1 = sciana, nic nie przechodzi ponad prog); OVEREASY = zaokraglona korona (woda splywa lagodnie) zamiast ostrej
+// krawedzi; swiatla BELOW / ABOVE na slupkach zasuwy; lata wodowskazowa z czerwonym odcinkiem = GR -> woda za tama
+// kreci kolem wodnym (szybkosc = przeplyw x OUTPUT) -> kabel -> glosnik rosnacy z OUTPUT.
+void MixerView::renderVcaDam(Canvas& c, const float* q, float gr, float level, bool on, Color col) {
+    const float dt = dt_ > 0.f && dt_ < .1f ? dt_ : .016f;
+    const Scn S{c, 0.f, 52.f, 2.f};
+    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86);
+    const Color water = rgb(64, 150, 255), waterD = rgb(30, 70, 130), stone = rgb(150, 150, 160);
+    const float ratio = q[1] > .97f ? 1e9f : 1.f + 40.f * q[1] * q[1];
+    const bool oe = q[3] >= .5f;
+    const float BED = 132.f;
+    // poziomy: wejscie (przed kompresja = wyjscie kanalu + GR) i wyjscie
+    const float outDb = 20.f * log10f(level > 1e-5f ? level : 1e-5f);
+    const float inDb = outDb + (on ? gr : 0.f);
+    static float uIn = 0, uOut = 0, wav = 0, wheel = 0, fall = 0, flowC = 0, gateY = -1;
+    uIn += (clampf((inDb + 50.f) / 50.f, 0.f, 1.f) - uIn) * (1.f - expf(-dt / .05f));
+    uOut += (clampf((outDb + 50.f) / 50.f, 0.f, 1.f) - uOut) * (1.f - expf(-dt / .05f));
+    wav += dt * (1.5f + 3.f * uIn);
+    const float yC = BED - 8.f - 76.f * q[0];          // korona tamy = THRESHOLD
+    static float grS = 0;
+    grS += ((on ? gr : 0.f) - grS) * (1.f - expf(-dt / .05f));
+    float yW = BED - 4.f - 80.f * uIn;                  // lustro wody przed tama
+    if (grS > .3f) yW = fminf(yW, yC - 1.f - fminf(grS * .8f, 16.f));  // kompresja = woda ponad prog
+    const float over = on ? fmaxf(0.f, yC - yW) : 0.f;  // ile ponad prog
+    const float GATE_H = 22.f, open = GATE_H / (ratio > 1e8f ? 1e9f : ratio);
+    const float gTarget = yC - GATE_H + (GATE_H - open) * 1.f;  // dol zasuwy (wyzej = szerzej otwarta)
+    gateY = gateY < 0 ? gTarget : gateY + (gTarget - gateY) * (1.f - expf(-dt / .12f));
+    const float opening = fmaxf(0.f, yC - (gateY + 0.f)) - (GATE_H - (yC - gateY) > 0 ? 0 : 0);
+    const float passed = fminf(over, yC - gateY);       // przelew przez otwor zasuwy
+    const float yD = BED - 5.f - 16.f * uOut;           // woda za tama
+    fall += dt * 1.6f;
+    flowC += dt * (.2f + 1.2f * uIn);
+    wheel += dt * (on ? (.4f + 3.f * fminf(passed / 10.f + uOut * .5f, 1.f)) * (.3f + 1.4f * q[2]) : .2f);
+    (void)opening;
+
+    // ---- interfejs i kabel do rury ----
+    sceneInterface(S, q[0], pal::blue, uIn, on);
+    const float CIN[4][2] = {{62, 112}, {74, 112}, {70, 70}, {80, 70}};
+    sceneCable(S, CIN, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::blue : dimf, flowC);
+    // rura i strumien do zbiornika
+    S.rr(80, 66, 14, 8, 2, 1.f, frame);
+    S.ln(94, 68, 98, 68, 1.f, frame); S.ln(94, 72, 98, 72, 1.f, frame);
+    const float sw = .6f + 2.2f * uIn;
+    for (int k = 0; k < 6; k++) {
+        const float t = fmodf(fall * 1.5f + k / 6.f, 1.f);
+        const float y0 = 72 + t * (yW - 72), y1 = fminf(y0 + 5, yW);
+        S.ln(99 + t * 2.f, y0, 99 + t * 2.f + 1.f, y1, sw, on ? water : waterD);
+    }
+    // ---- dno i brzegi ----
+    S.ln(84, BED, 290, BED, 1.f, stone);
+    S.ln(84, BED, 82, 80, 1.f, stone);
+    for (int k = 0; k < 18; k++) S.fci(90 + k * 11.f, BED + 3, .6f, dimf);
+    // ---- woda przed tama: lustro z falami + linie glebi ----
+    for (int r = 0; r < 4; r++) {
+        float wp[2 * 33];
+        const float yy = yW + r * 7.f;
+        if (yy > BED - 1) break;
+        for (int i = 0; i <= 32; i++) {
+            const float x = 84 + (150 - 84) * i / 32.f;
+            wp[2 * i] = x;
+            wp[2 * i + 1] = yy + (r ? .6f : 1.f + 2.2f * uIn) * sinf(x * .25f - wav * (r ? 2.f : 4.f) + r);
+        }
+        S.poly(wp, 33, r ? .6f : 1.f, r ? waterD : (on ? water : waterD));
+    }
+    // ---- tama: przekroj (OVEREASY = zaokraglona korona) ----
+    float dm[2 * 24];
+    int m = 0;
+    auto P = [&](float x, float y) { if (m < 24) { dm[2 * m] = x; dm[2 * m + 1] = y; m++; } };
+    P(150, BED); P(150, yC);
+    if (oe) {
+        for (int i = 0; i <= 10; i++) { const float a = -1.5707963f + i * .15707963f; P(158 + 10.f * cosf(a), yC + 10.f + 10.f * sinf(a)); }
+        P(172, yC + 22); P(184, BED);
+    } else { P(164, yC); P(166, yC + 2); P(172, BED - 6); P(184, BED); }
+    S.poly(dm, m, 1.2f, frame);
+    for (int k = 0; k < 4; k++) S.ln(150, yC + 8 + k * ((BED - yC - 8) / 4.f), 160 + k * 4.f, yC + 8 + k * ((BED - yC - 8) / 4.f), .5f, dimf);  // spoiny
+    // lata wodowskazowa na scianie od strony wody: czerwony odcinek = GR
+    S.ln(147, BED, 147, 40, .8f, dimf);
+    for (float yy = BED; yy > 42; yy -= 6) S.ln(144.5f, yy, 147, yy, .6f, dimf);
+    if (on && gr > .2f) { const float l = fminf(gr * 2.2f, 60.f); S.ln(147, yW, 147, yW + l, 1.6f, pal::red); }
+    // zasuwa: slupki, plyta, swiatla BELOW / ABOVE
+    S.ln(150, yC, 150, yC - GATE_H - 6, 1.f, frame);
+    S.ln(164, yC, 164, yC - GATE_H - 6, 1.f, frame);
+    S.ln(148, yC - GATE_H - 6, 166, yC - GATE_H - 6, 1.f, frame);
+    S.frr(151, yC - GATE_H - 4, 12, gateY - (yC - GATE_H - 4), 1, rgb(20, 22, 30));
+    S.rr(151, yC - GATE_H - 4, 12, gateY - (yC - GATE_H - 4), 1, .9f, rgb(110, 140, 196));
+    for (float yy = yC - GATE_H; yy < gateY - 2; yy += 4) S.ln(152, yy, 162, yy, .4f, dimf);
+    const bool above = on && gr > .5f;
+    S.fci(150, yC - GATE_H - 9, 1.8f, on && !above ? pal::green : rgb(30, 50, 30));
+    S.fci(164, yC - GATE_H - 9, 1.8f, above ? pal::red : rgb(60, 26, 26));
+    // przelew: woda przez otwor zasuwy, po koronie i w dol
+    if (passed > .3f) {
+        const int ns = 1 + (int)fminf(passed * .6f, 4.f);
+        for (int s2 = 0; s2 < ns; s2++) {
+            const float off = s2 * 1.3f;
+            float fp[2 * 24];
+            int n = 0;
+            if (oe) {
+                for (int i = 0; i <= 10 && n < 24; i++, n++) { const float a = -1.5707963f + i * .15707963f; fp[2 * n] = 158 + (10.f + off + .8f) * cosf(a); fp[2 * n + 1] = yC + 10.f + (10.f + off + .8f) * sinf(a) - 1.f; }
+                fp[2 * n] = 174 + off; fp[2 * n + 1] = yC + 22; n++;
+                fp[2 * n] = 186 + off * 2; fp[2 * n + 1] = yD; n++;
+            } else {
+                fp[0] = 150; fp[1] = yC - 1 - off; fp[2] = 166 + off * .5f; fp[3] = yC - 1 - off;
+                for (int i = 1; i <= 8; i++, n++) { const float t = i / 8.f; fp[2 * (n + 2)] = 166 + off * .5f + t * (8 + off); fp[2 * (n + 2) + 1] = yC - 1 - off + t * t * (yD - yC + off); }
+                n += 2;
+            }
+            S.poly(fp, n, .9f, water);
+        }
+        for (int k = 0; k < 5; k++) {  // krople spadajace
+            const float t = fmodf(fall * 2.f + k * .2f, 1.f);
+            const float x = (oe ? 178.f : 170.f) + t * 10.f, y = yC + (yD - yC) * t;
+            S.ln(x, y, x + .5f, y + 2.5f, .8f, water);
+        }
+    }
+    // ---- woda za tama i kolo wodne (OUTPUT) ----
+    for (int r = 0; r < 3; r++) {
+        float wp[2 * 17];
+        const float yy = yD + r * 4.f;
+        if (yy > BED - 1) break;
+        for (int i = 0; i <= 16; i++) { const float x = 184 + (250 - 184) * i / 16.f; wp[2 * i] = x; wp[2 * i + 1] = yy + .7f * sinf(x * .3f - wav * 3.f + r); }
+        S.poly(wp, 17, r ? .6f : .9f, r ? waterD : water);
+    }
+    const float wx = 222, wy = BED - 18, wr = 15;
+    S.ci(wx, wy, wr, 1.f, frame);
+    S.ci(wx, wy, 3, 1.f, frame);
+    for (int k = 0; k < 8; k++) {
+        const float a = wheel + k * .78539816f;
+        S.ln(wx + 3 * cosf(a), wy + 3 * sinf(a), wx + wr * cosf(a), wy + wr * sinf(a), .7f, frame);
+        const float px = wx + wr * cosf(a), py = wy + wr * sinf(a);
+        S.ln(px, py, px + 4 * cosf(a + 1.5707963f), py + 4 * sinf(a + 1.5707963f), 1.2f, frame);
+    }
+    S.ln(wx - 6, BED, wx, wy, .8f, dimf); S.ln(wx + 6, BED, wx, wy, .8f, dimf);  // kozly
+    // ---- kabel z osi kola do glosnika (rosnie z OUTPUT) ----
+    const float spk = .7f + .6f * q[2];
+    const float sx = 276.f, sw2 = 30.f * spk, sh = 42.f * spk, sy = 130.f - sh;
+    const float COUT[4][2] = {{wx, wy}, {wx + 20, wy - 22}, {sx - sw2 * .5f - 14, sy + sh * .72f}, {sx - sw2 * .5f - 2, sy + sh * .72f}};
+    sceneCable(S, COUT, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::white : dimf, flowC);
+    S.frr(sx - sw2 * .5f, sy, sw2, sh, 3, rgb(10, 10, 12));
+    S.rr(sx - sw2 * .5f, sy, sw2, sh, 3, 1.f, frame);
+    const float pulse = 1.f + (on ? .08f * uOut * sinf(wav * 9.f) : 0.f);
+    S.ci(sx, sy + sh * .33f, sw2 * .3f * pulse, 1.f, frame);
+    S.ci(sx, sy + sh * .33f, sw2 * .12f, 1.f, frame);
+    S.ci(sx, sy + sh * .76f, sw2 * .14f, 1.f, dimf);
+    S.rr(sx - sw2 * .5f - 3, sy + sh * .72f - 2, 3, 4, .8f, .8f, frame);
+    (void)col;
+    // ---- napisy ----
+    char b[24];
+    S.tx(14, 8, "THRESHOLD", 9, 1.2f, pal::blue);
+    snprintf(b, sizeof b, "%.0f DB", -50.f + 50.f * q[0]);
+    S.tx(14, 18, b, 9, 1.2f, pal::white);
+    S.tx(14, 31, "COMPRESSION", 9, 1.2f, pal::green);
+    if (ratio > 1e8f) snprintf(b, sizeof b, "INF:1"); else snprintf(b, sizeof b, "%.1f:1", ratio);
+    S.tx(14, 41, b, 9, 1.2f, pal::white);
+    S.tx(306, 8, "OUTPUT", 9, 1.2f, pal::white, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "%+.0f DB", -20.f + 40.f * q[2]);
+    S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
+    S.tx(306, 31, "OVEREASY", 9, 1.2f, oe ? pal::tan : pal::dim, ALIGN_RIGHT);
+    S.tx(306, 41, oe ? "ON" : "OFF", 9, 1.2f, oe ? pal::white : pal::dim, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
+    S.tx(167, 140, b, 7, 1.f, pal::red, ALIGN_CENTER);
+    if (!on) sceneBypass(c);
+}
+
+// OPTO — mlotek i reka (scena 320x160, skala 2). Interfejs (galka = PEAK REDUCTION) -> kabel do statywu mlotka. Kazdy
+// glosniejszy fragment (transjent) = zamach mlotka; rozmiar mlotka = PEAK REDUCTION. Reka odsuwa sie o tyle, ile
+// kompresor sciszna (GR) i wraca powoli (jak fotoopornik OPTO), wiec kolejne uderzenia trafiaja slabiej. Krew po
+// trafieniu = GAIN. COMPRESS = otwarta dlon, LIMIT = zacisnieta piesc (odskakuje dalej). MIX = polprzezroczysta reka-
+// duch, ktora sie nie odsuwa (sygnal bez kompresji) — tym wyrazniejsza, im mniejszy MIX. Gwiazdki nad reka = GR.
+void MixerView::renderOptoHand(Canvas& c, const float* q, float gr, float level, bool on, Color col) {
+    const float dt = dt_ > 0.f && dt_ < .1f ? dt_ : .016f;
+    const Scn S{c, 0.f, 52.f, 2.f};
+    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86), skin = rgb(226, 186, 150), blood = rgb(220, 30, 40);
+    const bool lim = q[2] >= .5f;
+    const float TABLE = 124.f;
+    // ---- stan animacji ----
+    static float fast = 0, slow = 0, swing = 0, swingV = 0, retr = 0, starA = 0, flowC = 0, hitCool = 0;
+    static float px[48], py[48], vx[48], vy[48], life[48], spl[12][3];  // krople krwi; plamy: x, rozmiar, zycie
+    static int nSpl = 0;
+    const float ldb = 20.f * log10f(level > 1e-5f ? level : 1e-5f) + (on ? gr : 0.f);
+    const float ln = clampf((ldb + 45.f) / 45.f, 0.f, 1.f);
+    fast += (ln - fast) * (1.f - expf(-dt / .015f));
+    slow += (ln - slow) * (1.f - expf(-dt / .25f));
+    hitCool -= dt;
+    if (on && swing <= 0.f && swingV <= 0.f && hitCool <= 0.f && fast - slow > .07f && fast > .25f) swingV = 1.f;  // transjent -> zamach
+    if (swingV > 0.f) { swing += dt / .07f; if (swing >= 1.f) { swing = 1.f; swingV = -1.f; } }
+    else if (swingV < 0.f) { swing -= dt / .3f; if (swing <= 0.f) { swing = 0.f; swingV = 0.f; hitCool = .06f; } }
+    // reka: odsuniecie = GR (wraca wolno)
+    const float tR = on ? clampf(gr / (lim ? 10.f : 14.f), 0.f, 1.f) : 0.f;
+    retr += (tR - retr) * (1.f - expf(-dt / (tR > retr ? .04f : (.35f + .5f * retr))));
+    starA += dt * 3.f;
+    flowC += dt * (.2f + 1.f * fast);
+    const float handX = 150.f + retr * 46.f;  // koniuszki palcow (reka lezy palcami w lewo)
+    const float HIT_X = 166.f;
+    // ---- interfejs, kabel do statywu ----
+    sceneInterface(S, q[0], pal::blue, fast, on);
+    const float CIN[4][2] = {{62, 112}, {74, 112}, {80, 126}, {92, 126}};
+    sceneCable(S, CIN, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::blue : dimf, flowC);
+    // ---- stol ----
+    S.ln(88, TABLE + 8, 300, TABLE + 8, 1.2f, frame);
+    S.ln(96, TABLE + 8, 96, 150, 1.f, frame); S.ln(292, TABLE + 8, 292, 150, 1.f, frame);
+    // plamy krwi na stole
+    for (int i = 0; i < nSpl; i++) {
+        if (spl[i][2] <= 0) continue;
+        spl[i][2] -= dt * .15f;
+        const float a = clampf(spl[i][2], 0.f, 1.f);
+        S.ln(spl[i][0] - spl[i][1], TABLE + 7.2f, spl[i][0] + spl[i][1], TABLE + 7.2f, 1.2f, dimc(blood, .3f + .5f * a));
+    }
+    // ---- reka (i duch dla MIX) ----
+    auto hand = [&](float x0, Color cl, float lw, bool fill) {  // x0 = koniuszki palcow; reka lezy palcami w lewo
+        const float cy = TABLE - 1.f;
+        const Color bg = rgb(0, 0, 0);
+        auto thick = [&](float ax, float ay, float bx, float by, float w) {  // kciuk: gruba kreska z obrysem
+            if (!fill) { const float nx2 = -(by - ay), ny2 = bx - ax, nl = sqrtf(nx2 * nx2 + ny2 * ny2) + 1e-6f, o = w * .5f / nl;
+                         S.ln(ax + nx2 * o, ay + ny2 * o, bx + nx2 * o, by + ny2 * o, lw, cl); S.ln(ax - nx2 * o, ay - ny2 * o, bx - nx2 * o, by - ny2 * o, lw, cl); return; }
+            S.ln(ax, ay, bx, by, w + lw * 1.6f, cl);
+            S.ln(ax, ay, bx, by, w - lw * .4f, bg);
+        };
+        // przedramie z mankietem
+        if (fill) S.frr(x0 + 70, cy - 11, 320 - x0 - 70, 19, 2, bg);
+        S.ln(x0 + 70, cy - 10, 320, cy - 12, lw, cl);
+        S.ln(x0 + 70, cy + 7, 320, cy + 8, lw, cl);
+        S.rr(x0 + 96, cy - 12.5f, 8, 21.5f, 1.5f, lw, dimc(cl, .75f));
+        if (!lim) {
+            static const float FL[4] = {28, 34, 31, 24};
+            for (int f = 0; f < 4; f++) {
+                const float y = cy - 9.5f + f * 5.f, xa = x0 + 40.f - FL[f] - 2.f;
+                if (fill) S.frr(xa, y - 2.3f, FL[f] + 6, 4.6f, 2.3f, bg);
+                S.rr(xa, y - 2.3f, FL[f] + 6, 4.6f, 2.3f, lw, cl);
+                S.ln(xa + 9, y - 1.f, xa + 9, y + 1.f, .5f * lw, dimc(cl, .5f));        // zgiecie
+                S.ar(xa + 2.6f, y, 1.2f, 1.5707963f, 4.712389f, .5f * lw, dimc(cl, .6f));  // paznokiec
+            }
+            if (fill) S.frr(x0 + 38, cy - 12, 36, 22, 7, bg);
+            S.rr(x0 + 38, cy - 12, 36, 22, 7, lw, cl);
+            thick(x0 + 52, cy + 7, x0 + 36, cy + 15, 4.6f);
+            S.ar(x0 + 50, cy - 2, 6, 1.9f, 2.9f, .5f * lw, dimc(cl, .5f));  // linia dloni
+        } else {
+            if (fill) S.frr(x0 + 22, cy - 12, 52, 22, 9, bg);
+            S.rr(x0 + 22, cy - 12, 52, 22, 9, lw, cl);
+            for (int k = 0; k < 4; k++) {
+                const float y = cy - 9.f + k * 5.f;
+                S.ar(x0 + 25.5f, y, 2.4f, 1.5707963f, 4.712389f, lw * .8f, cl);   // klykcie
+                if (k) S.ln(x0 + 24, y - 2.5f, x0 + 36, y - 2.5f, .5f * lw, dimc(cl, .6f));  // zgiete palce
+            }
+            thick(x0 + 50, cy + 7, x0 + 32, cy + 4, 4.6f);
+        }
+    };
+    const float ghostA = (1.f - q[3]) * .55f;
+    if (ghostA > .03f) hand(150.f, dimc(skin, ghostA), .7f, false);
+    hand(handX, on ? skin : dimc(skin, .5f), 1.f, true);
+    // ---- statyw i mlotek (rozmiar = PEAK REDUCTION) ----
+    const float pvx = 100, pvy = 58;
+    const float L = hypotf(HIT_X - pvx, TABLE - 16.f - pvy);
+    S.ln(pvx, pvy, pvx, TABLE + 8, 1.2f, frame);
+    S.ln(pvx - 3, pvy + 6, pvx - 3, TABLE + 8, .6f, dimf);
+    S.ln(pvx - 8, TABLE + 8, pvx + 8, TABLE + 8, 1.6f, frame);
+    S.rr(90, 122, 6, 8, 1, .8f, frame);  // gniazdo kabla na statywie
+    const float aRest = -.75f, aHit = atan2f(TABLE - 16.f - pvy, HIT_X - pvx);
+    const float ang = aRest + (aHit - aRest) * (swing * swing);
+    const float hx = pvx + L * cosf(ang), hy = pvy + L * sinf(ang);
+    S.ln(pvx, pvy, hx, hy, 1.4f, rgb(150, 110, 66));
+    S.ci(pvx, pvy, 2.5f, 1.f, frame);
+    const float hs = .55f + .9f * q[0];  // rozmiar glowicy
+    const float hw = 11.f * hs, hh = 8.f * hs;
+    const float nx = cosf(ang), ny = sinf(ang), tx2 = -ny, ty2 = nx;  // osie glowicy: wzdluz trzonka i w poprzek
+    float hd[10] = {hx + tx2 * hw - nx * hh * .5f, hy + ty2 * hw - ny * hh * .5f, hx + tx2 * hw + nx * hh * .5f, hy + ty2 * hw + ny * hh * .5f,
+                    hx - tx2 * hw + nx * hh * .5f, hy - ty2 * hw + ny * hh * .5f, hx - tx2 * hw - nx * hh * .5f, hy - ty2 * hw - ny * hh * .5f, 0, 0};
+    hd[8] = hd[0]; hd[9] = hd[1];
+    {
+        float f2[8];
+        for (int k = 0; k < 8; k++) f2[k] = (k & 1) ? S.oy + hd[k] * S.s : S.ox + hd[k] * S.s;
+        c.fillPolygon(f2, 4, rgb(30, 30, 36));
+    }
+    S.poly(hd, 5, 1.2f, frame);
+    S.ln(hx - tx2 * hw * .55f - nx * hh * .2f, hy - ty2 * hw * .55f - ny * hh * .2f, hx - tx2 * hw * .55f + nx * hh * .2f, hy - ty2 * hw * .55f + ny * hh * .2f, .6f, dimf);
+    // trafienie: krew (ilosc = GAIN), slabsza, gdy reka odsunieta
+    static bool hitDone = false;
+    if (swingV > 0.f) hitDone = false;
+    if (swing >= 1.f && !hitDone) {
+        hitDone = true;
+        const bool onHand = handX < HIT_X + 8.f;
+        const float power = (onHand ? 1.f : 0.f) * (1.f - retr * .6f);
+        const int n = (int)(power * (2 + 26 * q[1]));
+        for (int k = 0, slot = 0; k < n && slot < 48; slot++) {
+            if (life[slot] > 0) continue;
+            const float r = (float)((slot * 7919 + (int)(starA * 1000)) % 1000) / 1000.f, r2 = (float)((slot * 104729 + k * 31) % 1000) / 1000.f;
+            px[slot] = HIT_X; py[slot] = TABLE - 6;
+            const float sp = (20.f + 50.f * q[1]) * (.4f + .6f * r);
+            const float a = -3.14159265f * (.15f + .7f * r2);
+            vx[slot] = sp * cosf(a); vy[slot] = sp * sinf(a);
+            life[slot] = 1.f;
+            k++;
+        }
+        if (n > 0) { const int i = nSpl < 12 ? nSpl++ : (int)(starA * 10) % 12; spl[i][0] = HIT_X + 4; spl[i][1] = 2.f + 8.f * q[1]; spl[i][2] = 1.f; }
+    }
+    for (int i = 0; i < 48; i++) {
+        if (life[i] <= 0) continue;
+        vy[i] += 120.f * dt;
+        const float ox = px[i], oy = py[i];
+        px[i] += vx[i] * dt; py[i] += vy[i] * dt;
+        if (py[i] > TABLE + 7) { life[i] = 0; continue; }
+        life[i] -= dt * .8f;
+        S.ln(ox, oy, px[i], py[i], 1.1f, blood);
+    }
+    // gwiazdki nad reka = GR
+    const int ns = on ? (int)fminf(gr / 3.f, 6.f) : 0;
+    for (int k = 0; k < ns; k++) {
+        const float a = starA + k * 6.2831853f / (ns ? ns : 1);
+        const float sx = handX + 30 + 16 * cosf(a), sy = TABLE - 34 + 5 * sinf(a);
+        for (int j = 0; j < 3; j++) { const float b2 = j * 1.0471976f + starA; S.ln(sx - 2.5f * cosf(b2), sy - 2.5f * sinf(b2), sx + 2.5f * cosf(b2), sy + 2.5f * sinf(b2), .8f, pal::yellow); }
+    }
+    (void)col;
+    // ---- napisy ----
+    char b[24];
+    S.tx(14, 8, "PEAK REDUCTION", 9, 1.2f, pal::blue);
+    snprintf(b, sizeof b, "%d", (int)lrintf(q[0] * 100));
+    S.tx(14, 18, b, 9, 1.2f, pal::white);
+    S.tx(14, 31, "MODE", 9, 1.2f, pal::dim);
+    S.tx(14, 41, lim ? "LIMIT" : "COMPRESS", 9, 1.2f, lim ? pal::red : pal::white);
+    S.tx(306, 8, "GAIN", 9, 1.2f, pal::green, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "%+.0f DB", -10.f + 35.f * q[1]);
+    S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
+    S.tx(306, 31, "MIX", 9, 1.2f, pal::white, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "%d%%", (int)lrintf(q[3] * 100));
+    S.tx(306, 41, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
+    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
+    S.tx(306, 140, b, 7, 1.f, pal::red, ALIGN_RIGHT);
+    if (!on) sceneBypass(c);
 }
 
 void MixerView::renderBus(Canvas& c) {

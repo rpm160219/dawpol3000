@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 10:00 — Kompresory: scena TAMA (VCA) i MŁOTEK Z RĘKĄ (OPTO)
+- **Co zmienione:** `core/ui/mixer_view.*` — VCA: tama (interfejs z gałką THRESHOLD → rura wlewa wodę = sygnał; wysokość korony = THRESHOLD; zasuwa zjeżdża z ratio, INF:1 = ściana; OVEREASY = zaokrąglona korona; światła BELOW/ABOVE; łata wodowskazowa z czerwonym GR; koło wodne kręci się z przepływem i OUTPUT; kabel do głośnika rosnącego z OUTPUT). OPTO: młotek i ręka (interfejs z gałką PEAK REDUCTION; zamach przy każdym uderzeniu w sygnale; rozmiar młotka = PEAK REDUCTION; ręka odsuwa się o GR i wraca powoli jak fotoopornik; krew = GAIN; COMPRESS = otwarta dłoń, LIMIT = pięść; MIX = ręka-duch; gwiazdki = GR; bez głośnika — decyzja Patryka). L3 = panel zaawansowany dla wszystkich trzech kompresorów. Wspólne: `sceneInterface`, `sceneCable`, `sceneBypass`. Makiety `mixervca`, `mixervcaoe`, `mixeropto`, `mixeroptoadv`.
+- Testy bit w bit OK.
+- **Następny krok:** Patryk ocenia obie sceny na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 08:40 — FET: prasa — napisy pod sobą, zawór kręci się wg ATTACK
 - **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — INPUT nad RATIO, OUTPUT nad RELEASE; z interfejsu usunięty napis IN, diody wyśrodkowane; z głośnika usunięty napis OUT; zawór ATTACK kręci się stale — szybko przy krótkim ataku, coraz wolniej przy dłuższym (pomysł Patryka).
 - **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.

@@ -722,8 +722,16 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_START);
         for (int i = 0; i < 3600; i++) { eng.process(buf, 256); if (i % 8 == 0) idle(app); }
         if (!strcmp(screen, "mixereq")) { app.mixer.setCursor(2, MixerView::R_EQ); app.mixer.openWindow(MixerView::W_EQ); }
-        if (!strcmp(screen, "mixeropto")) { app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
-        if (!strcmp(screen, "mixervca")) { p.tracks[3].comp.type = COMP_VCA; app.markDirty(); app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
+        if (!strncmp(screen, "mixeropto", 9) || !strncmp(screen, "mixervca", 8)) {  // sceny OPTO / VCA na perkusji
+            const bool opto = !strncmp(screen, "mixeropto", 9);
+            MixComp& cp = p.tracks[0].comp;
+            cp.on = true; cp.type = opto ? COMP_OPTO : COMP_VCA;
+            if (opto) { cp.p[COMP_OPTO][0] = .7f; cp.p[COMP_OPTO][1] = .6f; cp.p[COMP_OPTO][3] = .7f; }
+            else { cp.p[COMP_VCA][0] = .55f; cp.p[COMP_VCA][3] = !strcmp(screen, "mixervcaoe") ? 1.f : 0.f; }
+            app.markDirty();
+            app.mixer.setCursor(0, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP);
+            if (strstr(screen, "adv")) tap(app, B_L3);
+        }
         if (!strcmp(screen, "mixerfet") || !strcmp(screen, "mixerfetadv") || !strcmp(screen, "mixerfet8")) {
             const bool soft = !strcmp(screen, "mixerfet8");  // 8:1, umiarkowanie
             p.tracks[0].comp.p[COMP_FET][0] = soft ? .55f : .75f; p.tracks[0].comp.p[COMP_FET][4] = soft ? .25f : 1.f; app.markDirty();  // DRUMS: ratio ALL / 8
@@ -736,7 +744,7 @@ int headlessPng(const char* path, const char* screen) {
         if (!strcmp(screen, "mixerchorus")) { app.mixer.setCursor(2, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixersister")) { app.mixer.setCursor(p.nTracks, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixeraux")) app.mixer.setCursor(p.nTracks, MixerView::R_VOL);
-        for (int i = 0; i < 60; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); if (getenv("DPDBG")) fprintf(stderr, "gr %.2f pk %.3f\n", eng.chGr(0), eng.chPeak(0)); }
+        for (int i = 0; i < 60; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); }
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK

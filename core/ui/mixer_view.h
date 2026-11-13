@@ -21,7 +21,7 @@ private:
     int strip_ = 0, row_ = R_VOL;  // strip_: 0.. kanaly + AUX, -1 = master
     int win_ = W_NONE, slot_ = 0, eqLayer_ = 0, fxSel_ = 0, fxPage_ = 0, sendSel_ = 0;
     bool fxList_ = false, fxReset_ = true;
-    bool fetAdv_ = false;                 // FET: widok zaawansowany (L3); domyslnie prasa
+    bool compAdv_ = false;                // kompresory: panel zaawansowany (L3); domyslnie animowana scena
     float press_ = 0, pressV_ = 0, wob_ = 0, lvl_ = 0;  // animacja prasy FET  // okno efektu: lista wyboru / edycja (ekran efektu)
     float vu_[64], vuM_ = -40.f;
     bool vuInit_ = false;
@@ -41,6 +41,8 @@ private:
     void renderFx(Canvas& c);
     void renderFxList(Canvas& c);
     void renderFetPress(Canvas& c, const float* q, float gr, float level, bool on, Color col);
+    void renderVcaDam(Canvas& c, const float* q, float gr, float level, bool on, Color col);
+    void renderOptoHand(Canvas& c, const float* q, float gr, float level, bool on, Color col);
     float dt_ = .016f;
     int lastPage_ = 0;
 };
