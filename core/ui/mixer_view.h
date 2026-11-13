@@ -42,7 +42,7 @@ private:
     void renderFxList(Canvas& c);
     void renderFetPress(Canvas& c, const float* q, float gr, float level, bool on, Color col);
     void renderVcaDam(Canvas& c, const float* q, float gr, float level, bool on, Color col);
-    void renderOptoHand(Canvas& c, const float* q, float gr, float level, bool on, Color col);
+    void renderOptoLight(Canvas& c, const float* q, float gr, float level, bool on, Color col);
     float dt_ = .016f;
     int lastPage_ = 0;
 };

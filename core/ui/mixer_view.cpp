@@ -646,7 +646,7 @@ void MixerView::renderComp(Canvas& c) {
     const float mcx = MBX + MBW * .5f, by = MBY + 186;  // srodek okna miernika, rzad pod miernikiem
     char b[4][24];
     if (cp.type == COMP_OPTO && !compAdv_) {
-        renderOptoHand(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
+        renderOptoLight(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
     } else if (cp.type == COMP_VCA && !compAdv_) {
         renderVcaDam(c, q, gr, e ? e->chPeak(strip_) : 0.f, on, col);
     } else if (cp.type == COMP_OPTO) {
@@ -1146,169 +1146,154 @@ void MixerView::renderVcaDam(Canvas& c, const float* q, float gr, float level, b
     if (!on) sceneBypass(c);
 }
 
-// OPTO — mlotek i reka (scena 320x160, skala 2). Interfejs (galka = PEAK REDUCTION) -> kabel do statywu mlotka. Kazdy
-// glosniejszy fragment (transjent) = zamach mlotka; rozmiar mlotka = PEAK REDUCTION. Reka odsuwa sie o tyle, ile
-// kompresor sciszna (GR) i wraca powoli (jak fotoopornik OPTO), wiec kolejne uderzenia trafiaja slabiej. Krew po
-// trafieniu = GAIN. COMPRESS = otwarta dlon, LIMIT = zacisnieta piesc (odskakuje dalej). MIX = polprzezroczysta reka-
-// duch, ktora sie nie odsuwa (sygnal bez kompresji) — tym wyrazniejsza, im mniejszy MIX. Gwiazdki nad reka = GR.
-void MixerView::renderOptoHand(Canvas& c, const float* q, float gr, float level, bool on, Color col) {
+// OPTO — lampka i przesłona aparatu (scena 320x160, skala 2), tak jak dziala ten kompresor: sygnal zapala lampke,
+// swiatlo zamyka przeslone. Interfejs (galka = PEAK REDUCTION) -> kabel -> LAMPKA (jasnosc = sygnal x PEAK REDUCTION,
+// powolna poswiata jak w fotokomorce) -> COMPRESS: matowa szybka, cieple rozproszone swiatlo / LIMIT: soczewka, chlodna
+// skupiona wiazka (zamiana wsuwana ~0,3 s) -> PRYZMAT: czesc swiatla omija przeslone luk nad nia (MIX: im mniej MIX,
+// tym jasniejszy luk = sygnal bez kompresji) -> PRZESLONA: domyka sie o GR (odczyt jak w aparacie: f/...) ->
+// FOTOKOMORKA -> kabel -> glosnik rosnacy z GAIN.
+void MixerView::renderOptoLight(Canvas& c, const float* q, float gr, float level, bool on, Color col) {
     const float dt = dt_ > 0.f && dt_ < .1f ? dt_ : .016f;
     const Scn S{c, 0.f, 52.f, 2.f};
-    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86), skin = rgb(226, 186, 150), blood = rgb(220, 30, 40);
+    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86);
     const bool lim = q[2] >= .5f;
-    const float TABLE = 124.f;
-    // ---- stan animacji ----
-    static float fast = 0, slow = 0, swing = 0, swingV = 0, retr = 0, starA = 0, flowC = 0, hitCool = 0;
-    static float px[48], py[48], vx[48], vy[48], life[48], spl[12][3];  // krople krwi; plamy: x, rozmiar, zycie
-    static int nSpl = 0;
+    static float glow = 0, apert = 1, slide = 0, flowC = 0, spin = 0;
+    // ---- stan ----
     const float ldb = 20.f * log10f(level > 1e-5f ? level : 1e-5f) + (on ? gr : 0.f);
     const float ln = clampf((ldb + 45.f) / 45.f, 0.f, 1.f);
-    fast += (ln - fast) * (1.f - expf(-dt / .015f));
-    slow += (ln - slow) * (1.f - expf(-dt / .25f));
-    hitCool -= dt;
-    if (on && swing <= 0.f && swingV <= 0.f && hitCool <= 0.f && fast - slow > .07f && fast > .25f) swingV = 1.f;  // transjent -> zamach
-    if (swingV > 0.f) { swing += dt / .07f; if (swing >= 1.f) { swing = 1.f; swingV = -1.f; } }
-    else if (swingV < 0.f) { swing -= dt / .3f; if (swing <= 0.f) { swing = 0.f; swingV = 0.f; hitCool = .06f; } }
-    // reka: odsuniecie = GR (wraca wolno)
-    const float tR = on ? clampf(gr / (lim ? 10.f : 14.f), 0.f, 1.f) : 0.f;
-    retr += (tR - retr) * (1.f - expf(-dt / (tR > retr ? .04f : (.35f + .5f * retr))));
-    starA += dt * 3.f;
-    flowC += dt * (.2f + 1.f * fast);
-    const float handX = 150.f + retr * 46.f;  // koniuszki palcow (reka lezy palcami w lewo)
-    const float HIT_X = 166.f;
-    // ---- interfejs, kabel do statywu ----
-    sceneInterface(S, q[0], pal::blue, fast, on);
-    const float CIN[4][2] = {{62, 112}, {74, 112}, {80, 126}, {92, 126}};
+    const float drive = on ? ln * (.25f + .75f * q[0]) : 0.f;
+    glow += (drive - glow) * (1.f - expf(-dt / (drive > glow ? .01f : .6f)));  // zapala sie szybko, gasnie wolno
+    const float tA = on ? 1.f - clampf(gr / 20.f, 0.f, .88f) : 1.f;
+    apert += (tA - apert) * (1.f - expf(-dt / (tA < apert ? .03f : .5f)));
+    slide += ((lim ? 1.f : 0.f) - slide) * (1.f - expf(-dt / .08f));
+    flowC += dt * (.2f + 1.f * ln);
+    spin += dt * .2f;
+    const Color warm = rgb(255, 176, 84), cool = rgb(214, 232, 255);
+    auto mixc = [](Color a, Color b, float t) { return rgb((uint8_t)(a.r + (b.r - a.r) * t), (uint8_t)(a.g + (b.g - a.g) * t), (uint8_t)(a.b + (b.b - a.b) * t)); };
+    const Color light = mixc(warm, cool, slide);
+    auto lit = [&](float a) { return dimc(light, clampf(a, 0.f, 1.f)); };
+    const float LY = 88.f;  // os optyczna
+    const float LX = 104.f, OX = 140.f, PX = 160.f, IX = 206.f, CX = 254.f, IR = 25.f;
+    const float apR = 2.5f + (IR - 6.f) * apert;  // promien otworu przeslony
+
+    // ---- interfejs i kabel do lampki ----
+    sceneInterface(S, q[0], pal::blue, ln, on);
+    const float CIN[4][2] = {{62, 112}, {78, 112}, {90, 118}, {98, 112}};
     sceneCable(S, CIN, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::blue : dimf, flowC);
-    // ---- stol ----
-    S.ln(88, TABLE + 8, 300, TABLE + 8, 1.2f, frame);
-    S.ln(96, TABLE + 8, 96, 150, 1.f, frame); S.ln(292, TABLE + 8, 292, 150, 1.f, frame);
-    // plamy krwi na stole
-    for (int i = 0; i < nSpl; i++) {
-        if (spl[i][2] <= 0) continue;
-        spl[i][2] -= dt * .15f;
-        const float a = clampf(spl[i][2], 0.f, 1.f);
-        S.ln(spl[i][0] - spl[i][1], TABLE + 7.2f, spl[i][0] + spl[i][1], TABLE + 7.2f, 1.2f, dimc(blood, .3f + .5f * a));
+
+    // ---- promienie: lampka -> optyka -> przeslona ----
+    const float g = glow;
+    for (int k = -3; k <= 3; k++) S.ln(LX + 9, LY + k * 2.f, OX - 2, LY + k * 5.f, .6f, lit(g * .6f));
+    for (int k = -4; k <= 4; k++) {
+        const float y0 = LY + k * 3.5f;
+        const float yS = LY + k * 5.5f + 2.f * sinf(spin * 7.f + k);  // rozproszone
+        const float yL = LY + k * .6f;                                   // skupione
+        const float y1 = yS + (yL - yS) * slide;
+        S.ln(OX + 3, y0, IX - 3, y1, (.5f + .5f * slide) * (k == 0 ? 1.2f : .7f), lit(g * (.35f + .5f * slide) * (1.f - fabsf((float)k) * .08f)));
     }
-    // ---- reka (i duch dla MIX) ----
-    auto hand = [&](float x0, Color cl, float lw, bool fill) {  // x0 = koniuszki palcow; reka lezy palcami w lewo
-        const float cy = TABLE - 1.f;
-        const Color bg = rgb(0, 0, 0);
-        auto thick = [&](float ax, float ay, float bx, float by, float w) {  // kciuk: gruba kreska z obrysem
-            if (!fill) { const float nx2 = -(by - ay), ny2 = bx - ax, nl = sqrtf(nx2 * nx2 + ny2 * ny2) + 1e-6f, o = w * .5f / nl;
-                         S.ln(ax + nx2 * o, ay + ny2 * o, bx + nx2 * o, by + ny2 * o, lw, cl); S.ln(ax - nx2 * o, ay - ny2 * o, bx - nx2 * o, by - ny2 * o, lw, cl); return; }
-            S.ln(ax, ay, bx, by, w + lw * 1.6f, cl);
-            S.ln(ax, ay, bx, by, w - lw * .4f, bg);
-        };
-        // przedramie z mankietem
-        if (fill) S.frr(x0 + 70, cy - 11, 320 - x0 - 70, 19, 2, bg);
-        S.ln(x0 + 70, cy - 10, 320, cy - 12, lw, cl);
-        S.ln(x0 + 70, cy + 7, 320, cy + 8, lw, cl);
-        S.rr(x0 + 96, cy - 12.5f, 8, 21.5f, 1.5f, lw, dimc(cl, .75f));
-        if (!lim) {
-            static const float FL[4] = {28, 34, 31, 24};
-            for (int f = 0; f < 4; f++) {
-                const float y = cy - 9.5f + f * 5.f, xa = x0 + 40.f - FL[f] - 2.f;
-                if (fill) S.frr(xa, y - 2.3f, FL[f] + 6, 4.6f, 2.3f, bg);
-                S.rr(xa, y - 2.3f, FL[f] + 6, 4.6f, 2.3f, lw, cl);
-                S.ln(xa + 9, y - 1.f, xa + 9, y + 1.f, .5f * lw, dimc(cl, .5f));        // zgiecie
-                S.ar(xa + 2.6f, y, 1.2f, 1.5707963f, 4.712389f, .5f * lw, dimc(cl, .6f));  // paznokiec
-            }
-            if (fill) S.frr(x0 + 38, cy - 12, 36, 22, 7, bg);
-            S.rr(x0 + 38, cy - 12, 36, 22, 7, lw, cl);
-            thick(x0 + 52, cy + 7, x0 + 36, cy + 15, 4.6f);
-            S.ar(x0 + 50, cy - 2, 6, 1.9f, 2.9f, .5f * lw, dimc(cl, .5f));  // linia dloni
-        } else {
-            if (fill) S.frr(x0 + 22, cy - 12, 52, 22, 9, bg);
-            S.rr(x0 + 22, cy - 12, 52, 22, 9, lw, cl);
-            for (int k = 0; k < 4; k++) {
-                const float y = cy - 9.f + k * 5.f;
-                S.ar(x0 + 25.5f, y, 2.4f, 1.5707963f, 4.712389f, lw * .8f, cl);   // klykcie
-                if (k) S.ln(x0 + 24, y - 2.5f, x0 + 36, y - 2.5f, .5f * lw, dimc(cl, .6f));  // zgiete palce
-            }
-            thick(x0 + 50, cy + 7, x0 + 32, cy + 4, 4.6f);
-        }
-    };
-    const float ghostA = (1.f - q[3]) * .55f;
-    if (ghostA > .03f) hand(150.f, dimc(skin, ghostA), .7f, false);
-    hand(handX, on ? skin : dimc(skin, .5f), 1.f, true);
-    // ---- statyw i mlotek (rozmiar = PEAK REDUCTION) ----
-    const float pvx = 100, pvy = 58;
-    const float L = hypotf(HIT_X - pvx, TABLE - 16.f - pvy);
-    S.ln(pvx, pvy, pvx, TABLE + 8, 1.2f, frame);
-    S.ln(pvx - 3, pvy + 6, pvx - 3, TABLE + 8, .6f, dimf);
-    S.ln(pvx - 8, TABLE + 8, pvx + 8, TABLE + 8, 1.6f, frame);
-    S.rr(90, 122, 6, 8, 1, .8f, frame);  // gniazdo kabla na statywie
-    const float aRest = -.75f, aHit = atan2f(TABLE - 16.f - pvy, HIT_X - pvx);
-    const float ang = aRest + (aHit - aRest) * (swing * swing);
-    const float hx = pvx + L * cosf(ang), hy = pvy + L * sinf(ang);
-    S.ln(pvx, pvy, hx, hy, 1.4f, rgb(150, 110, 66));
-    S.ci(pvx, pvy, 2.5f, 1.f, frame);
-    const float hs = .55f + .9f * q[0];  // rozmiar glowicy
-    const float hw = 11.f * hs, hh = 8.f * hs;
-    const float nx = cosf(ang), ny = sinf(ang), tx2 = -ny, ty2 = nx;  // osie glowicy: wzdluz trzonka i w poprzek
-    float hd[10] = {hx + tx2 * hw - nx * hh * .5f, hy + ty2 * hw - ny * hh * .5f, hx + tx2 * hw + nx * hh * .5f, hy + ty2 * hw + ny * hh * .5f,
-                    hx - tx2 * hw + nx * hh * .5f, hy - ty2 * hw + ny * hh * .5f, hx - tx2 * hw - nx * hh * .5f, hy - ty2 * hw - ny * hh * .5f, 0, 0};
-    hd[8] = hd[0]; hd[9] = hd[1];
+    // ---- lampka z poswiata ----
+    for (int r = 0; r < 5; r++) S.ci(LX, LY, 11.f + r * 4.f, .6f, lit(g * (.5f - r * .09f)));
+    S.fci(LX, LY, 9, rgb(8, 8, 10));
+    S.fci(LX, LY, 8.f, lit(.15f + .85f * g));
+    S.ci(LX, LY, 9, 1.f, frame);
+    float fil[2 * 9];
+    for (int i2 = 0; i2 <= 8; i2++) { fil[2 * i2] = LX - 4 + i2; fil[2 * i2 + 1] = LY + 1.5f * ((i2 & 1) ? -1.f : 1.f); }
+    S.poly(fil, 9, .6f, g > .4f ? rgb(255, 250, 230) : frame);
+    S.rr(LX - 5, LY + 9, 10, 8, 1.5f, 1.f, frame);  // trzonek
+    S.ln(LX - 5, LY + 12, LX + 5, LY + 12, .5f, dimf); S.ln(LX - 5, LY + 14.5f, LX + 5, LY + 14.5f, .5f, dimf);
+    S.ln(LX, LY + 17, LX, 132, 1.f, frame);  // statyw
+    S.ln(LX - 8, 132, LX + 8, 132, 1.4f, frame);
+    // ---- COMPRESS: matowa szybka / LIMIT: soczewka (wsuwane w pionie) ----
     {
-        float f2[8];
-        for (int k = 0; k < 8; k++) f2[k] = (k & 1) ? S.oy + hd[k] * S.s : S.ox + hd[k] * S.s;
-        c.fillPolygon(f2, 4, rgb(30, 30, 36));
+        const float dy = slide * 46.f;  // szybka wyjezdza w gore, soczewka wjezdza z dolu
+        S.rr(OX - 2.5f, LY - 17 - dy, 5, 34, 1, 1.f, frame);
+        for (int k = 0; k < 9; k++) S.fci(OX + ((k & 1) ? 1.f : -1.f), LY - 14 + k * 3.5f - dy, .45f, dimf);
+        const float ly2 = LY + 46.f - dy;
+        float ln2[2 * 25];
+        for (int i2 = 0; i2 <= 24; i2++) { const float a = i2 * 6.2831853f / 24.f; ln2[2 * i2] = OX + 4.f * cosf(a); ln2[2 * i2 + 1] = ly2 + 17.f * sinf(a); }
+        S.poly(ln2, 25, 1.f, rgb(140, 190, 255), true);
+        S.ln(OX - 1, ly2 - 12, OX - 1, ly2 + 12, .5f, rgb(80, 110, 160));
+        S.ln(OX, 132, OX, LY + 20, .8f, dimf);  // prowadnica
+        S.ln(OX - 6, 132, OX + 6, 132, 1.2f, frame);
     }
-    S.poly(hd, 5, 1.2f, frame);
-    S.ln(hx - tx2 * hw * .55f - nx * hh * .2f, hy - ty2 * hw * .55f - ny * hh * .2f, hx - tx2 * hw * .55f + nx * hh * .2f, hy - ty2 * hw * .55f + ny * hh * .2f, .6f, dimf);
-    // trafienie: krew (ilosc = GAIN), slabsza, gdy reka odsunieta
-    static bool hitDone = false;
-    if (swingV > 0.f) hitDone = false;
-    if (swing >= 1.f && !hitDone) {
-        hitDone = true;
-        const bool onHand = handX < HIT_X + 8.f;
-        const float power = (onHand ? 1.f : 0.f) * (1.f - retr * .6f);
-        const int n = (int)(power * (2 + 26 * q[1]));
-        for (int k = 0, slot = 0; k < n && slot < 48; slot++) {
-            if (life[slot] > 0) continue;
-            const float r = (float)((slot * 7919 + (int)(starA * 1000)) % 1000) / 1000.f, r2 = (float)((slot * 104729 + k * 31) % 1000) / 1000.f;
-            px[slot] = HIT_X; py[slot] = TABLE - 6;
-            const float sp = (20.f + 50.f * q[1]) * (.4f + .6f * r);
-            const float a = -3.14159265f * (.15f + .7f * r2);
-            vx[slot] = sp * cosf(a); vy[slot] = sp * sinf(a);
-            life[slot] = 1.f;
-            k++;
+    // ---- pryzmat (MIX): luk swiatla nad przeslona = sygnal bez kompresji ----
+    const float dry = 1.f - q[3];
+    {
+        float pr[6] = {PX - 5, LY + 5, PX + 5, LY + 5, PX, LY - 5};
+        S.poly(pr, 3, 1.f, frame, true);
+        float arcp[2 * 33];
+        for (int i2 = 0; i2 <= 32; i2++) {
+            const float t = i2 / 32.f;
+            arcp[2 * i2] = bez(PX, PX + 20, CX - 30, CX - 3, t);
+            arcp[2 * i2 + 1] = bez(LY - 4, LY - 52, LY - 52, LY - 6, t);
         }
-        if (n > 0) { const int i = nSpl < 12 ? nSpl++ : (int)(starA * 10) % 12; spl[i][0] = HIT_X + 4; spl[i][1] = 2.f + 8.f * q[1]; spl[i][2] = 1.f; }
+        S.poly(arcp, 33, .5f + 1.5f * dry, lit(g * dry * 1.1f));
+        if (dry > .05f) S.poly(arcp, 33, .5f, lit(.15f + .2f * dry));
     }
-    for (int i = 0; i < 48; i++) {
-        if (life[i] <= 0) continue;
-        vy[i] += 120.f * dt;
-        const float ox = px[i], oy = py[i];
-        px[i] += vx[i] * dt; py[i] += vy[i] * dt;
-        if (py[i] > TABLE + 7) { life[i] = 0; continue; }
-        life[i] -= dt * .8f;
-        S.ln(ox, oy, px[i], py[i], 1.1f, blood);
+    // ---- przeslona aparatu ----
+    S.fci(IX, LY, IR + 5, rgb(12, 12, 16));
+    S.ci(IX, LY, IR + 5, 1.2f, frame);
+    S.ci(IX, LY, IR + 1.5f, .6f, dimf);
+    for (int k = 0; k < 36; k++) {  // radelkowanie pierscienia
+        const float a = k * .17453293f;
+        S.ln(IX + (IR + 5) * cosf(a), LY + (IR + 5) * sinf(a), IX + (IR + 7) * cosf(a), LY + (IR + 7) * sinf(a), .5f, dimf);
     }
-    // gwiazdki nad reka = GR
-    const int ns = on ? (int)fminf(gr / 3.f, 6.f) : 0;
-    for (int k = 0; k < ns; k++) {
-        const float a = starA + k * 6.2831853f / (ns ? ns : 1);
-        const float sx = handX + 30 + 16 * cosf(a), sy = TABLE - 34 + 5 * sinf(a);
-        for (int j = 0; j < 3; j++) { const float b2 = j * 1.0471976f + starA; S.ln(sx - 2.5f * cosf(b2), sy - 2.5f * sinf(b2), sx + 2.5f * cosf(b2), sy + 2.5f * sinf(b2), .8f, pal::yellow); }
+    // swiatlo wpadajace przez otwor
+    S.fci(IX, LY, apR, lit(.1f + .7f * g));
+    const int NB = 7;  // listki: od wierzcholkow otworu stycznie do pierscienia
+    const float rot = (1.f - apert) * 1.2f;
+    for (int k = 0; k < NB; k++) {
+        const float a0 = rot + k * 6.2831853f / NB, a1 = rot + (k + 1) * 6.2831853f / NB;
+        const float x0 = IX + apR * cosf(a0), y0 = LY + apR * sinf(a0), x1 = IX + apR * cosf(a1), y1 = LY + apR * sinf(a1);
+        S.ln(x0, y0, x1, y1, 1.f, frame);  // krawedz otworu
+        const float ae = a0 + 1.9f;        // listek biegnie lukiem do pierscienia
+        float bl[2 * 9];
+        for (int i2 = 0; i2 <= 8; i2++) {
+            const float t = i2 / 8.f, rr = apR + (IR - apR) * t, aa = a0 + (ae - a0) * t * t * .6f;
+            bl[2 * i2] = IX + rr * cosf(aa); bl[2 * i2 + 1] = LY + rr * sinf(aa);
+        }
+        S.poly(bl, 9, .7f, rgb(120, 124, 136));
     }
+    char b[24];
+    const float fnum = 1.4f * powf(2.f, (1.f - apert) * 3.5f);  // odczyt jak w obiektywie
+    snprintf(b, sizeof b, "F/%.1f", fnum);
+    S.tx(IX, LY + IR + 10, b, 7, 1.f, pal::white, ALIGN_CENTER);
+    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
+    S.tx(IX, LY + IR + 19, b, 7, 1.f, pal::red, ALIGN_CENTER);
+    // ---- wiazka przez otwor -> fotokomorka ----
+    S.ln(IX + IR + 7, LY, CX - 6, LY, .5f + apR * .25f, lit(g * apert * q[3]));
+    S.fci(CX, LY, 6, rgb(10, 10, 12));
+    S.ci(CX, LY, 6, 1.f, frame);
+    float sq[2 * 11];
+    for (int i2 = 0; i2 <= 10; i2++) { sq[2 * i2] = CX - 3.5f + i2 * .7f; sq[2 * i2 + 1] = LY + 2.5f * ((i2 & 1) ? -1.f : 1.f); }
+    S.poly(sq, 11, .6f, lit(.25f + .75f * g * fmaxf(apert * q[3], dry)));
+    S.ln(CX, LY + 6, CX, 132, 1.f, frame);
+    S.ln(CX - 6, 132, CX + 6, 132, 1.2f, frame);
+    // ---- kabel do glosnika (rosnie z GAIN) ----
+    const float spk = .7f + .6f * q[1];
+    const float sx = 290.f, sw2 = 26.f * spk, sh = 38.f * spk, sy = 130.f - sh;
+    const float COUT[4][2] = {{CX + 4, LY + 4}, {CX + 14, LY + 18}, {sx - sw2 * .5f - 10, sy + sh * .72f}, {sx - sw2 * .5f - 2, sy + sh * .72f}};
+    sceneCable(S, COUT, 1.2f, on ? rgb(150, 110, 66) : dimf, on ? pal::green : dimf, flowC);
+    S.frr(sx - sw2 * .5f, sy, sw2, sh, 3, rgb(10, 10, 12));
+    S.rr(sx - sw2 * .5f, sy, sw2, sh, 3, 1.f, frame);
+    const float pulse = 1.f + (on ? .08f * ln * sinf(flowC * 40.f) : 0.f);
+    S.ci(sx, sy + sh * .33f, sw2 * .3f * pulse, 1.f, frame);
+    S.ci(sx, sy + sh * .33f, sw2 * .12f, 1.f, frame);
+    S.ci(sx, sy + sh * .76f, sw2 * .14f, 1.f, dimf);
+    S.rr(sx - sw2 * .5f - 3, sy + sh * .72f - 2, 3, 4, .8f, .8f, frame);
     (void)col;
     // ---- napisy ----
-    char b[24];
     S.tx(14, 8, "PEAK REDUCTION", 9, 1.2f, pal::blue);
     snprintf(b, sizeof b, "%d", (int)lrintf(q[0] * 100));
     S.tx(14, 18, b, 9, 1.2f, pal::white);
     S.tx(14, 31, "MODE", 9, 1.2f, pal::dim);
-    S.tx(14, 41, lim ? "LIMIT" : "COMPRESS", 9, 1.2f, lim ? pal::red : pal::white);
+    S.tx(14, 41, lim ? "LIMIT" : "COMPRESS", 9, 1.2f, lim ? cool : warm);
     S.tx(306, 8, "GAIN", 9, 1.2f, pal::green, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%+.0f DB", -10.f + 35.f * q[1]);
     S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
     S.tx(306, 31, "MIX", 9, 1.2f, pal::white, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%d%%", (int)lrintf(q[3] * 100));
     S.tx(306, 41, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
-    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
-    S.tx(306, 140, b, 7, 1.f, pal::red, ALIGN_RIGHT);
     if (!on) sceneBypass(c);
 }
 

@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 11:30 — OPTO: lampka i przesłona aparatu zamiast ręki
+- **Co zmienione:** `core/ui/mixer_view.*` (`renderOptoLight`, zamiast młotka z ręką — decyzja Patryka) — interfejs z gałką PEAK REDUCTION → lampka (jasność = sygnał × PEAK REDUCTION, zapala się szybko, gaśnie powoli jak fotokomórka) → COMPRESS: matowa szybka, ciepłe rozproszone światło / LIMIT: soczewka, chłodna skupiona wiązka (wsuwane ~0,3 s) → pryzmat: łuk światła nad przesłoną = MIX (im mniej MIX, tym jaśniej) → przesłona aparatu z 7 listkami, domyka się o GR (odczyt F/… i GR) → fotokomórka → kabel do głośnika rosnącego z GAIN. Odpowiedź na pytanie Patryka: wskaźnik VCA jest OK (przy 1:1 DSP daje 0 dB; „GR -1” na makiecie to opadające ściszanie po poprzednim FET). Makieta `mixeroptolim`.
+- Testy bit w bit OK.
+- **Następny krok:** Patryk ocenia OPTO. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 10:40 — VCA (tama): strumień zgodny z ratio
 - **Co zmienione:** `core/ui/mixer_view.cpp` (`renderVcaDam`) — woda ponad koroną = o ile sygnał przekracza THRESHOLD (ta sama skala dB co korona), poziom nie przekracza belki zasuwy; grubość strumienia = nadwyżka / ratio, rysowana płynnie (1:1 gruby strumień, 4:1 ćwierć, INF:1 nic) — wcześniej grubość szybko dochodziła do maksimum i 1:1 wyglądało jak 2.6:1 (zgłosił Patryk); otwór zasuwy = ratio; poziom wody opada wolno jak wskazówka VU. Makiety `mixervca1`, `mixervcainf`.
 - **Następny krok:** Patryk sprawdza tamę. **Od Patryka:** „git / nie git”.
