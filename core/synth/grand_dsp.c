@@ -12,6 +12,21 @@
 #define NLEN 1024
 #define BLEN 2048
 #define NAP 8
+#ifndef CLICK_K
+#define CLICK_K 55.f
+#endif
+#ifndef CLICK_Z
+#define CLICK_Z .3f
+#endif
+#ifndef KNEE
+#define KNEE .8f
+#endif
+#ifndef SHELF_F
+#define SHELF_F 260.f
+#endif
+#ifndef SHELF_B
+#define SHELF_B .4f
+#endif
 
 typedef struct {
     float nut[NLEN], br[BLEN];
@@ -24,7 +39,8 @@ typedef struct {
     int ns, note, strike, held, damped;
     float xh, vh, ys, m, K, pw, tcont, Z; int contact;
     float apC; int apN, apNote;   /* sztywnosc: wspolczynnik filtrow wszechprzepustowych dobrany do nuty */
-    float knock, kLp, shLp;       /* pukniecie mlotka w plyte, polka niskich (plyta slabo oddaje podstawe basu) */
+    float knock, kLp, shLp;
+    float click[64]; int clickPos;   /* ostre klikniecie powierzchni filcu (szerokopasmowe pobudzenie strun) */       /* pukniecie mlotka w plyte, polka niskich (plyta slabo oddaje podstawe basu) */
     float fdn[4][2048]; int fw; float fdlp[4], fdHp;
     float grHp, grX, lidLp, dcx, dcy, level, last, squash;
 } GVoice;
@@ -91,7 +107,23 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
         v->vh = .3f + 5.2f * powf(vv, 1.6f);                           /* predkosc mlotka (m/s) */
         v->xh = v->ys;
         v->contact = 1; v->tcont = 0;
-        v->knock = (.15f + .5f * vv) * vv * (1.2f - .6f * key);  /* drewniane pukniecie w plyte (mocniejsze w basie) */
+        v->knock = (.15f + .5f * vv) * vv * (1.2f - .6f * key);
+        {  /* klik: impuls przez filtr dolnoprzepustowy (miekki filc ciemniej), bez skladowej stalej */
+            const float A = CLICK_K * v->vh * (.3f + .7f * vv) * (.35f + .9f * hard);
+            const float fc = (1500.f + 4000.f * hard) * (.6f + .4f * vv);
+            const float k1 = 1.f - expf(-6.2831853f * fc / fs);
+            /* krotki szelest filcu (~1,3 ms): ta sama barwa co impuls, ale niski wspolczynnik szczytu */
+            uint32_t r = 0x9e3779b9u * (uint32_t)(nt + 7);
+            float lp = 0, sum = 0;
+            for (int i = 0; i < 64; i++) {
+                r = r * 1664525u + 1013904223u;
+                lp += ((float)(int32_t)r * (1.f / 2147483648.f) - lp) * k1;
+                v->click[i] = lp * expf(-(float)i / 18.f);
+                sum += v->click[i];
+            }
+            for (int i = 0; i < 64; i++) v->click[i] = (v->click[i] - sum / 64.f) * A;
+            v->clickPos = 0;
+        }  /* drewniane pukniecie w plyte (mocniejsze w basie) */
         v->squash = 0;
         p->lastNs = v->ns;
     }
@@ -159,21 +191,21 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
     const float cb = v->ns > 1 ? .5f * (1.f - powf(.001f, 1.f / (Tp * f0))) : 0.f;
     const float lidK = 1.f - expf(-6.2831853f * (1800.f + 16000.f * lid * lid) / fs);
     const float grK = 1.f - expf(-6.2831853f * 60.f / fs);
-    const float shK = 1.f - expf(-6.2831853f * 90.f / fs);
+    const float shK = 1.f - expf(-6.2831853f * (SHELF_F * (1.f - key) + 90.f * key) / fs);  /* plyta slabo oddaje dol: w basie polka wyzej */
     const float grAmt = growl * .8f * (1.f - key) * (1.f - key);
     /* plyta: zanik linii FDN */
     const float Tb = .04f + .16f * board;
     float fg[4];
     for (int k = 0; k < 4; k++) fg[k] = powf(.001f, (float)FDL[k] / (Tb * fs));
     /* wyrownanie poziomu po klawiaturze (zmierzone szczyty przy vel 100, cel ~0,3 skali) */
-    static const float CT[8] = {3.882f, 1.665f, 1.050f, 0.880f, 1.032f, 1.397f, 1.799f, 1.552f};
+    static const float CT[8] = {2.531f, 0.931f, 0.245f, 0.223f, 0.207f, 0.216f, 0.748f, 0.551f};
     float comp;
     {
         float q = (nt - 21) / 12.f;
         if (q < 0) q = 0;
         if (q > 7) q = 7;
         const int qi = q >= 7 ? 6 : (int)q;
-        comp = (CT[qi] + (CT[qi + 1] - CT[qi]) * (q - qi)) * (2300.f / 32767.f);
+        comp = (CT[qi] + (CT[qi + 1] - CT[qi]) * (q - qi)) * (2300.f / 32767.f) * powf(2.2f, 1.f - 2.f * hard)  /* HAMMER: twardy jasniejszy, ale tylko troche glosniejszy */;
     }
     float y[BLOCK / 2], lvl = 0;
     for (int i = 0; i < n; i++) {
@@ -216,6 +248,7 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
                 if (c > cmax) cmax = c;
             }
             fi = Fsum * .25f / (2.f * v->Z * (float)v->ns);
+
             if (cmax * 2000.f > v->squash) v->squash = cmax * 2000.f > 1.f ? 1.f : cmax * 2000.f;
             v->tcont += dt;
             if ((v->xh < v->ys && v->vh < 0.f && v->tcont > .0003f) || v->tcont > .03f) {
@@ -230,6 +263,7 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
             v->ys += vs / (float)v->ns * dt;
             v->ys *= .9995f;
         }
+        if (v->clickPos < 64) fi += v->click[v->clickPos++] * CLICK_Z;  /* niezaleznie od impedancji: jasny atak takze w basie */
         for (int s = 0; s < v->ns; s++) {
             GStr* st = &v->s[s];
             st->nut[st->nw & (NLEN - 1)] = r2[s] + fi; st->nw++;
@@ -264,14 +298,14 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
         v->fw = (v->fw + 1) & 2047;
         float out1 = bridge * .75f + (o[0] - o[1] + o[2] - o[3]) * (.1f + .35f * board);
         v->shLp += (out1 - v->shLp) * shK;                   /* plyta slabo oddaje podstawe basu: polka -7 dB ponizej ~90 Hz */
-        out1 -= .55f * v->shLp;
+        out1 -= (.55f + SHELF_B * (1.f - key)) * v->shLp;
         v->lidLp += (out1 - v->lidLp) * lidK;                /* pokrywa: barwa */
         out1 = v->lidLp * (.6f + .4f * lid);
         const float yd = out1 - v->dcx + .999f * v->dcy;     /* filtr DC */
         v->dcx = out1; v->dcy = yd;
         float yy = yd * comp;  /* skala: 1 = pelna skala */
         const float ay0 = yy < 0 ? -yy : yy;
-        if (ay0 > .8f) { const float e = ay0 - .8f, kk = .8f + e / (1.f + e / .18f); yy = yy < 0 ? -kk : kk; }  /* kolano < 0,98 */
+        if (ay0 > KNEE) { const float e = ay0 - KNEE, kk = KNEE + e / (1.f + e / (.98f - KNEE)); yy = yy < 0 ? -kk : kk; }  /* kolano < 0,98 */
         y[i] = yy;
         if (ay0 > lvl) lvl = ay0;
     }
