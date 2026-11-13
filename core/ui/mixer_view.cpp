@@ -794,7 +794,6 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     // ---- interfejs audio (wejscie) ----
     S.frr(14, 96, 52, 34, 4, rgb(10, 10, 12));
     S.rr(14, 96, 52, 34, 4, 1.f, frame);
-    S.tx(19, 99, "IN", 6, 1.f, pal::blue);
     const float kx = 30, ky = 117, ka = 3.14159265f * (.75f + 1.5f * q[0]);  // galka INPUT: w prawo do oporu
     S.ar(kx, ky, 10, 3.14159265f * .75f, 3.14159265f * 2.25f, .6f, dimf);
     S.ar(kx, ky, 10, 3.14159265f * .75f, ka, 1.2f, pal::blue);
@@ -802,7 +801,7 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.ln(kx + 2.f * cosf(ka), ky + 2.f * sinf(ka), kx + 6.f * cosf(ka), ky + 6.f * sinf(ka), 1.2f, pal::white);
     for (int k = 0; k < 5; k++) {  // diody poziomu
         const bool lit = on && lvl_ > (k + .5f) / 5.f;
-        S.fci(48 + (k % 3) * 0.f, 126 - k * 5.f, 1.4f, lit ? (k >= 4 ? pal::red : (k >= 3 ? pal::yellow : pal::green)) : rgb(40, 40, 46));
+        S.fci(48.5f, 123 - k * 5.f, 1.4f, lit ? (k >= 4 ? pal::red : (k >= 3 ? pal::yellow : pal::green)) : rgb(40, 40, 46));
     }
     S.ci(60, 112, 2.6f, .8f, frame);  // gniazdo kabla
     S.ln(14, 130, 14, 132, 1.f, frame); S.ln(66, 130, 66, 132, 1.f, frame);
@@ -843,9 +842,12 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.rr(142, 34, 36, 22, 2, 1.f, steelc);
     for (int k = 1; k < 5; k++) S.ln(143, 34 + k * 4.4f, 177, 34 + k * 4.4f, .5f, rgb(50, 66, 100));
     const float headTop = press_ - 7.f;
-    // ATTACK: zawor z kolkiem na cylindrze (kolko obraca sie z galka; olej plynie rurka, gdy tlok schodzi)
+    // ATTACK: zawor z kolkiem na cylindrze (kreci sie stale — tym wolniej, im dluzszy atak; olej plynie rurka, gdy tlok schodzi)
     {
-        const float vx = 128, vy = 40, va = q[2] * 3.14159265f * 1.5f;
+        static float vrot = 0.f;  // obroty: krotki atak (20 us) ~3 obr/s, dlugi (800 us) ~0,3 obr/s
+        const float atkUs = (.0008f * (1.f - q[2]) + .00002f * q[2]) * 1e6f;
+        if (on) vrot += dt * 6.2831853f * (.3f + 2.7f * (800.f - atkUs) / 780.f);
+        const float vx = 128, vy = 40, va = vrot;
         S.ln(vx + 6, 44, 142, 44, 2.2f, rgb(60, 60, 68));
         S.ln(vx + 6, 44, 142, 44, 1.f, rgb(14, 14, 16));
         static float oil = 0.f;
@@ -913,21 +915,20 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.ci(sx, sy + sh * .33f, sw * .12f, 1.f, frame);
     S.ci(sx, sy + sh * .76f, sw * .14f, 1.f, dimf);
     S.ln(sx - sw * .5f + 3, 130, sx - sw * .5f + 3, 132, 1.f, frame); S.ln(sx + sw * .5f - 3, 130, sx + sw * .5f - 3, 132, 1.f, frame);
-    S.tx(sx + sw * .5f - 3, sy + 2, "OUT", 6, 1.f, pal::green, ALIGN_RIGHT);
 
-    // ---- narozniki: INPUT | RATIO (lewo), RELEASE | OUTPUT (prawo), ATTACK (lewy dol) — tytuly i wartosci jednej wielkosci ----
+    // ---- narozniki: INPUT nad RATIO (lewo), OUTPUT nad RELEASE (prawo), ATTACK (lewy dol) — tytuly i wartosci jednej wielkosci ----
     static const char* RN[5] = {"4:1", "8:1", "12:1", "20:1", "ALL"};
     S.tx(14, 8, "INPUT", 9, 1.2f, pal::blue);
     snprintf(b, sizeof b, "%+.0f DB", -10.f + 40.f * q[0]);
     S.tx(14, 18, b, 9, 1.2f, pal::white);
-    S.tx(66, 8, "RATIO", 9, 1.2f, pal::dim);
-    S.tx(66, 18, RN[ri], 9, 1.2f, ri == 4 && on ? pal::red : pal::white);
+    S.tx(14, 31, "RATIO", 9, 1.2f, pal::dim);
+    S.tx(14, 41, RN[ri], 9, 1.2f, ri == 4 && on ? pal::red : pal::white);
     S.tx(306, 8, "OUTPUT", 9, 1.2f, pal::green, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%+.0f DB", -30.f + 40.f * q[1]);
     S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
-    S.tx(262, 8, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
+    S.tx(306, 31, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%.0f MS", (1.1f * (1.f - q[3]) + .05f * q[3]) * 1000.f);
-    S.tx(262, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
+    S.tx(306, 41, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
     S.tx(14, 140, "ATTACK", 9, 1.2f, pal::white);
     snprintf(b, sizeof b, "%.0f US", (.0008f * (1.f - q[2]) + .00002f * q[2]) * 1e6f);
     S.tx(14, 150, b, 9, 1.2f, pal::white);

@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 08:40 — FET: prasa — napisy pod sobą, zawór kręci się wg ATTACK
+- **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — INPUT nad RATIO, OUTPUT nad RELEASE; z interfejsu usunięty napis IN, diody wyśrodkowane; z głośnika usunięty napis OUT; zawór ATTACK kręci się stale — szybko przy krótkim ataku, coraz wolniej przy dłuższym (pomysł Patryka).
+- **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 08:10 — FET: prasa — ATTACK i RELEASE widoczne, kable wpięte
 - **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — ATTACK = biały zawór z kółkiem na cylindrze (obraca się z gałką, olej płynie rurką, gdy tłok schodzi); RELEASE = czerwona sprężyna-spirala wokół tłoczyska (szybszy release = więcej zwojów, ściska się z płytą); kable w stylu z oplotem i płynącym sygnałem, wpięte wtykami w podstawę prasy i w bok głośnika (grubość wejściowego = RATIO, ALL = czerwony); napisy: INPUT obok RATIO, RELEASE obok OUTPUT, ATTACK w lewym dole — tytuły i wartości tej samej wielkości.
 - **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.
