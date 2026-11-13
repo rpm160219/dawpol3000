@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-15 12:00 — Paczka do przekazania projektu
+- **Co zmienione:** `docs/PRZEKAZANIE.md` (podsumowanie całości: zasady, budowanie, testy, wgrywanie, zrobione rzeczy, otwarte sprawy), `GEMINI.md` (wskazówka startowa dla Gemini), paczka `dist/dawpol3000_przekazanie_2026-11-15.zip` (kod z gita, bez ROM-ów, banków i hasła).
+- **Następny krok:** Patryk może przekazać paczkę innemu asystentowi. **Od Patryka:** nic.
+
 ## 2026-11-15 11:30 — LINEA: oryginalny bank fabryczny D-50 (Fantasia)
 - **Co zmienione (tylko pliki na konsoli i lokalnie, poza repo):** pobrany oficjalny „D-50 Factory Patches” ze strony wsparcia Rolanda (licencję zaakceptował Patryk), SysEx wyciągnięty z D50_ORIG.MID (136 komunikatów, 64 patche, 1-1 Fantasia, sumy OK); na konsoli jako bank FACTORY (`presets/linea/banks`) i kopia `sysex/D-50 Factory.syx`. Dotychczasowy „FACTORY” (bank użytkownika z D-Anapad) przemianowany na ANAPAD.
 - **Następny krok:** Patryk uruchamia program ponownie (banki czytane przy starcie) i gra Fantasię. **Od Patryka:** „git / nie git”.
