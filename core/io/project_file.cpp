@@ -56,7 +56,10 @@ void writeInstrument(FILE* f, const Track& t) {
 // LINEA: linia "lnea slot cut res bank hex(448 bajtow)" — patch sciezki razem z edycjami
 void writeLinea(FILE* f, const Track& t) {
     if (t.engine != ENG_LINEA || !t.lineaSet) return;
-    fprintf(f, "lnea %d %d %d %s ", t.lineaSlot, t.lineaCut, t.lineaRes, t.lineaBank[0] ? t.lineaBank : "-");
+    char bank[24];  // nazwa banku bez spacji (jeden token): spacja -> '_'
+    snprintf(bank, sizeof bank, "%s", t.lineaBank[0] ? t.lineaBank : "-");
+    for (char* q = bank; *q; q++) if (*q == ' ') *q = '_';
+    fprintf(f, "lnea %d %d %d %s ", t.lineaSlot, t.lineaCut, t.lineaRes, bank);
     for (int i = 0; i < LINEA_PATCH_BYTES; i++) fprintf(f, "%02x", t.linea[i]);
     fputc('\n', f);
 }
@@ -66,6 +69,7 @@ bool parseLinea(Track& t, char** tok, int n) {
     t.lineaCut = (int8_t)atoi(tok[2]);
     t.lineaRes = (int8_t)atoi(tok[3]);
     snprintf(t.lineaBank, sizeof t.lineaBank, "%s", strcmp(tok[4], "-") ? tok[4] : "");
+    for (char* q = t.lineaBank; *q; q++) if (*q == '_') *q = ' ';
     for (int i = 0; i < LINEA_PATCH_BYTES; i++) {
         unsigned v = 0;
         sscanf(tok[5] + 2 * i, "%2x", &v);

@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-15 11:00 — Banki SysEx na konsoli, poprawka nazw banków
+- **Co zmienione:** `core/io/project_file.cpp` — nazwa banku LINEA ze spacjami zapisywana jako jeden token (spacja -> `_`), wcześniej rozjechałaby linię `lnea`; nowa wersja na konsoli. Na kartę konsoli (`/userdata/dawpol3000/sysex/`) wysłane 4 banki Patryka (sprawdzone: po 64 patche, sumy OK): DESCENT INTO MADNESS, VOLTAGE DRIFT, D50 INTERNAL, DIGITAL DREAMS (pliki tylko na konsoli, poza repo).
+- **Następny krok:** Patryk importuje banki: SYNTH → LINEA → BANKS → + IMPORT SYSEX → A. **Od Patryka:** import i ocena.
+
 ## 2026-11-15 10:30 — LINEA wgrana na konsolę
 - **Co zmienione:** nowa wersja programu na konsoli; ROM-y D-50 i FactoryPatches.syx skopiowane tylko na kartę konsoli (`/userdata/dawpol3000/roms/linea`), bez pomiaru CPU (decyzja Patryka).
 - **Następny krok:** Patryk gra na LINEA (Track → ENGINE → LINEA). **Od Patryka:** „git / nie git”.
