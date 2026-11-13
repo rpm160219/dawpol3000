@@ -9,7 +9,7 @@ namespace dp {
 // Uklad: 1-4 intro (dron, chor, kalimba), 5-8 groove (+ bas, stopa, organy), 9-12 calosc (+ melodia, pluck, dete),
 // 13-16 wyciszenie (dron, chor, kalimba, melodia, akcenty).
 void buildDemoAllEngines(Project& p);
-void buildDemoSynthwave(Project& p);
+void buildDemoSynthwave(Project& p, bool mix = false);  // mix = wersja z mikserem ("SYNTHWAVE MIX")
 void buildDemoEtude(Project& p);      // REVOLUTIONARY: Chopin op. 10 nr 12, takty 1-37 (GRAND)  // SYNTHWAVE: 16 taktow (GIN, PARALLAX, JUNI, OXBOW)
 
 bool factoryInstrument(const char* engineDir, const char* name, Track& t);  // io/factory_presets.cpp

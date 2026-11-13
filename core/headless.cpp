@@ -703,6 +703,30 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_Y);
         app.roll.setCursor(11, 70);
         tap(app, B_Y);
+    } else if (!strncmp(screen, "mixer", 5)) {
+        // MIXER na utworze SYNTHWAVE w trakcie grania; przykladowe ustawienia EQ / kompresora / wysylek
+        app.loadDemoSynthwave();
+        Project& p = app.project();
+        p.tracks[1].eq.gain[0] = 4.f; p.tracks[1].eq.gain[2] = -3.f;
+        p.tracks[2].eq.gain[1] = 5.f; p.tracks[2].eq.freq[1] = 2500.f; p.tracks[2].eq.q[1] = 2.f;
+        p.tracks[1].comp.on = true; p.tracks[1].comp.type = COMP_FET;
+        p.tracks[3].comp.on = true; p.tracks[3].comp.type = COMP_OPTO;
+        p.tracks[2].send[0] = .4f; p.tracks[3].send[0] = .6f; p.tracks[3].send[1] = .3f;
+        p.tracks[2].pan = -.4f; p.tracks[4].pan = .5f;
+        p.bus.on = true;
+        app.markDirty();
+        app.openMixer(1);
+        idle(app);
+        tap(app, B_START);
+        for (int i = 0; i < 1500; i++) { eng.process(buf, 256); if (i % 8 == 0) idle(app); }
+        if (!strcmp(screen, "mixereq")) { app.mixer.setCursor(2, MixerView::R_EQ); app.mixer.openWindow(MixerView::W_EQ); }
+        if (!strcmp(screen, "mixeropto")) { app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
+        if (!strcmp(screen, "mixervca")) { p.tracks[3].comp.type = COMP_VCA; app.markDirty(); app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
+        if (!strcmp(screen, "mixerfet")) { app.mixer.setCursor(1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
+        if (!strcmp(screen, "mixerbus")) { app.mixer.setCursor(-1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_BUS); }
+        if (!strcmp(screen, "mixerfx")) { app.mixer.setCursor(1, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
+        if (!strcmp(screen, "mixeraux")) app.mixer.setCursor(p.nTracks, MixerView::R_VOL);
+        for (int i = 0; i < 20; i++) { eng.process(buf, 256); idle(app); }
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK
@@ -740,6 +764,7 @@ int headlessWav(const char* path, float seconds, const char* song) {
     app.init(&eng);
     if (song && !strcmp(song, "allengines")) app.loadDemoAllEngines();
     else if (song && !strcmp(song, "synthwave")) app.loadDemoSynthwave();
+    else if (song && !strcmp(song, "synthwavemix")) app.loadDemoSynthwave(true);
     else if (song && !strcmp(song, "etude")) app.loadDemoEtude();
     else app.loadDemo();
     eng.send(EC_PLAY_SONG);

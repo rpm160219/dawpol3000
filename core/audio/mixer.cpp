@@ -67,6 +67,27 @@ void Eq3::process(float* l, float* r, int n) {
         }
 }
 
+float eqResponseDb(const MixEq& e, float hz, float fs) {
+    if (!e.on) return 0.f;
+    Eq3 tmp;
+    tmp.set(e, fs);
+    return tmp.responseDb(hz) + e.out;
+}
+
+float Eq3::responseDb(float hz) const {
+    const float w = 6.2831853f * hz / fs_;
+    const float c1 = cosf(w), s1 = sinf(w), c2 = cosf(2 * w), s2 = sinf(2 * w);
+    float db = 0;
+    for (int k = 0; k < 3; k++) {
+        if (cur_.gain[k] == 0.f) continue;
+        const Bq& q = b_[k];
+        const float nr = q.b0 + q.b1 * c1 + q.b2 * c2, ni = -(q.b1 * s1 + q.b2 * s2);
+        const float dr = 1 + q.a1 * c1 + q.a2 * c2, di = -(q.a1 * s1 + q.a2 * s2);
+        db += 10.f * log10f((nr * nr + ni * ni) / (dr * dr + di * di) + 1e-12f);
+    }
+    return db;
+}
+
 // ---------------- kompresor kanalu ----------------
 void Compressor::set(const MixComp& c, float fs) { c_ = c; fs_ = fs; }
 
@@ -269,6 +290,8 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
     bool auxUsed[MIX_AUX] = {};
     for (int a = 0; a < MIX_AUX; a++) { memset(auxBuf_[a][0], 0, sizeof(float) * n); memset(auxBuf_[a][1], 0, sizeof(float) * n); }
     const float gk = 1.f - expf(-1.f / (.01f * fs_));  // wygladzanie tlumika ~10 ms
+    const float pd = expf(-(float)n / (.08f * fs_));  // miernik: szczyt z opadaniem ~80 ms (UI czyta rzadziej niz bloki)
+    auto hold = [pd](std::atomic<float>& m, float v) { const float o = m.load(std::memory_order_relaxed) * pd; m.store(v > o ? v : o, std::memory_order_relaxed); };
     for (int c = 0; c < nTracks && c < MAX_TRACKS; c++) {
         const float* in = tracks[c];
         float pk = 0;
@@ -278,7 +301,7 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
         else if (tail_[c] > 0) tail_[c] -= n;
         if (pk == 0.f && (!hasIns || tail_[c] <= 0)) {  // cisza: kanal pomijany
             gain_[c] = gainT_[c];
-            ch[c].peak.store(0.f, std::memory_order_relaxed);
+            hold(ch[c].peak, 0.f);
             ch[c].gr.store(comp_[c].gr(), std::memory_order_relaxed);
             continue;
         }
@@ -302,11 +325,13 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
             auxUsed[a] = true;
             for (int i = 0; i < n; i++) { auxBuf_[a][0][i] += l_[i] * s; auxBuf_[a][1][i] += r_[i] * s; }
         }
-        ch[c].peak.store(opk, std::memory_order_relaxed);
+        hold(ch[c].peak, opk);
         ch[c].gr.store(comp_[c].gr(), std::memory_order_relaxed);
     }
     for (int a = 0; a < MIX_AUX; a++) {
-        if (!auxUsed[a] && auxFx_[a].type() == FX_NONE) { aux[a].peak.store(0.f, std::memory_order_relaxed); continue; }
+        if (auxUsed[a]) auxTail_[a] = (int)(fs_ * 12.f);
+        else if (auxTail_[a] > 0) auxTail_[a] -= n;
+        if (!auxUsed[a] && (auxFx_[a].type() == FX_NONE || auxTail_[a] <= 0)) { hold(aux[a].peak, 0.f); continue; }  // brak wysylek: AUX pomijany
         float* al = auxBuf_[a][0];
         float* ar = auxBuf_[a][1];
         auxFx_[a].process(al, ar, n, auxW_[a]);
@@ -318,7 +343,7 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
             const float m = fabsf(yl) > fabsf(yr) ? fabsf(yl) : fabsf(yr);
             if (m > pk) pk = m;
         }
-        aux[a].peak.store(pk, std::memory_order_relaxed);
+        hold(aux[a].peak, pk);
     }
     bus_.process(ml, mr, n);
     float pk = 0;
@@ -332,7 +357,7 @@ void MixerDsp::process(float* const* tracks, const bool* active, int nTracks, fl
             if (fabsf(x) > pk) pk = fabsf(x);
         }
     }
-    master.peak.store(pk, std::memory_order_relaxed);
+    hold(master.peak, pk);
     master.gr.store(bus_.gr(), std::memory_order_relaxed);
 }
 

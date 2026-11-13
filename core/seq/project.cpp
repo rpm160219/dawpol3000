@@ -1,4 +1,5 @@
 #include "seq/project.h"
+#include "fx/fx_registry.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -174,6 +175,8 @@ int Project::addTrack(int type, const char* nm) {
     snprintf(t.name, sizeof t.name, "%s", nm);
     return nTracks++;
 }
+
+Project::Project() { fxDefaults(aux[0].fx, FX_SISTER); }
 
 void Project::removeTrack(int t) {
     if (t < 0 || t >= nTracks) return;

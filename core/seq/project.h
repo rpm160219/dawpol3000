@@ -161,6 +161,7 @@ struct Clip {
 };
 
 struct Project {
+    Project();  // domyslny mikser: AUX A = SISTER (poglos), wysylki 0
     char name[16] = "PROJECT 01";
     float bpm = 120.f;
     float masterVol = 0.8f;

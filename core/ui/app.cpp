@@ -15,6 +15,7 @@ void App::init(AudioEngine* e) {
     trackDlg.attach(this);
     patDlg.attach(this);
     synth.attach(this);
+    mixer.attach(this);
     cur_ = &arrange;
     publish();
 }
@@ -55,6 +56,12 @@ void App::openStore(const char* root) {
         buildDemoSynthwave(demo);
         if (!store_.exists(demo.name)) store_.save(demo);
         store_.setMarker("_demo_synthwave_v1");
+    }
+    if (!store_.hasMarker("_demo_synthwave_mix_v1")) {  // ten sam utwor z mikserem (efekty, kompresory) — raz
+        static Project demo;
+        buildDemoSynthwave(demo, true);
+        if (!store_.exists(demo.name)) store_.save(demo);
+        store_.setMarker("_demo_synthwave_mix_v1");
     }
     static Project tmp;
     if (store_.loadLast(tmp)) {
@@ -289,6 +296,11 @@ void App::openNewPattern(int track, int bar) {
     next_ = &patDlg;
 }
 
+void App::openMixer(int track) {
+    if (track >= 0 && track < prj_.nTracks) mixer.setCursor(track, MixerView::R_VOL);
+    next_ = &mixer;
+}
+
 void App::togglePlaySong() {
     if (!eng_) return;
     if (eng_->isPlaying()) eng_->send(EC_STOP);
@@ -318,9 +330,12 @@ void App::update(const InputState& in, float dt) {
     bool hasRoll = lastPattern_ >= 0 && lastPattern_ < prj_.nPatterns;
     // W menu zaznaczania (R3) i w pasku narzedzi (L3) L2/R2 przelaczaja warstwy paska, nie zakladki
     if (cur_ == &roll && roll.inSelectMode()) dialog = true;
+    if (cur_ == &mixer && mixer.modal()) dialog = true;  // okna miksera: L2/R2 nie zmieniaja zakladek
 
     if (!dialog && btn_.pressed(B_L2)) {
-        if (cur_ == &synth) {
+        if (cur_ == &mixer) {
+            if (synth.track() < prj_.nTracks) openSynth(synth.track()); else showArrange();
+        } else if (cur_ == &synth) {
             if (hasRoll && lastTrack_ == synth.track()) openPattern(lastPattern_, lastTrack_);
             else { int lp = prj_.tracks[synth.track()].lastPattern; if (lp >= 0) openPattern(lp, synth.track()); else showArrange(); }
         } else if (cur_ == &roll) showArrange();
@@ -328,6 +343,7 @@ void App::update(const InputState& in, float dt) {
     } else if (!dialog && btn_.pressed(B_R2)) {
         if (cur_ == &projectView) showArrange();
         else if (cur_ == &roll) openSynth(roll.trackIndex());
+        else if (cur_ == &synth) openMixer(synth.track());
         else if (cur_ == &arrange) {
             int t = 0, pt = arrange.highlightedPattern(&t);  // pattern pod kursorem
             if (pt >= 0) openPattern(pt, t);
@@ -353,10 +369,10 @@ void App::render(Canvas& c) {
     if (splashT_ >= 0.f) { drawSplash(c, splashT_); return; }
     cur_->render(c);
     // Wskaznik zakladek (4 kropki pod naglowkiem): PROJECT, ARRANGE, PIANO ROLL, SYNTH
-    int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : (cur_ == &synth ? 3 : -1)));
+    int tab = cur_ == &projectView ? 0 : (cur_ == &arrange ? 1 : (cur_ == &roll ? 2 : (cur_ == &synth ? 3 : (cur_ == &mixer && !mixer.modal() ? 4 : -1))));
     if (tab >= 0) {
-        for (int i = 0; i < 4; i++) {
-            float x = 302 + i * 12, y = tab == 0 ? 60 : 38;
+        for (int i = 0; i < 5; i++) {
+            float x = 296 + i * 12, y = tab == 0 ? 60 : 38;
             if (i == tab) c.fillCircle(x, y, 2.6f, pal::white);
             else c.circle(x, y, 2.2f, 1.f, rgb(90, 90, 90));
         }
@@ -380,8 +396,8 @@ void App::loadDemoEtude() {
     resetHistory();
 }
 
-void App::loadDemoSynthwave() {
-    buildDemoSynthwave(prj_);
+void App::loadDemoSynthwave(bool mix) {
+    buildDemoSynthwave(prj_, mix);
     lastPattern_ = -1;
     savedAs_[0] = 0;
     dirty_ = true;

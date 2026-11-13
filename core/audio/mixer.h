@@ -9,11 +9,14 @@
 
 namespace dp {
 
+float eqResponseDb(const MixEq& e, float hz, float fs);  // odpowiedz EQ (dB) — podglad i okno EQ (watek UI)
+
 class Eq3 {
 public:
     void set(const MixEq& e, float fs);
     void process(float* l, float* r, int n);
     void reset();
+    float responseDb(float hz) const;  // bez stopnia wyjscia
 private:
     struct Bq { float b0 = 1, b1 = 0, b2 = 0, a1 = 0, a2 = 0; float z[2][2] = {{0, 0}, {0, 0}}; };
     Bq b_[3];
@@ -86,7 +89,8 @@ private:
     float pan_[MAX_TRACKS] = {}, send_[MAX_TRACKS][MIX_AUX] = {}, auxLevel_[MIX_AUX] = {};
     float gainT_[MAX_TRACKS] = {}, gain_[MAX_TRACKS] = {};
     float masterVol_ = .8f;
-    int tail_[MAX_TRACKS] = {};  // ramki ogona po ciszy (inserty z poglosem)
+    int tail_[MAX_TRACKS] = {};
+    int auxTail_[MIX_AUX] = {};  // ramki ogona efektu AUX po ostatniej wysylce  // ramki ogona po ciszy (inserty z poglosem)
     float auxBuf_[MIX_AUX][2][256];
     float l_[256], r_[256];
 };

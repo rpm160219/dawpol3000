@@ -1,4 +1,5 @@
 #include "seq/demo_song.h"
+#include "fx/fx_registry.h"
 #include "seq/demo_etude_data.h"
 #include <stdio.h>
 
@@ -178,7 +179,7 @@ void buildDemoAllEngines(Project& p) {
 
 // SYNTHWAVE: 16 taktow, 104 BPM, a-moll (Am F C G po takcie). Wstep (1-4): pad + arpeggio; 5-8: + bebny i bas;
 // 9-12: + melodia; 13-16: kulminacja z akordami brass i crashem.
-void buildDemoSynthwave(Project& p) {
+void buildDemoSynthwave(Project& p, bool mix) {
     p = Project();
     snprintf(p.name, sizeof p.name, "SYNTHWAVE");
     p.bpm = 104.f;
@@ -191,6 +192,21 @@ void buildDemoSynthwave(Project& p) {
     const int pad = track(p, "PAD", "juni", "ENSEMBLE", 4, 0.4f);                // JUNI
     const int lead = track(p, "LEAD", "parallax", "UNISON LEAD", 7, 0.42f);      // PARALLAX
     const int brass = track(p, "BRASS", "oxbow", "POLY BRASS", 3, 0.3f);         // OXBOW
+    if (mix) {  // wersja "SYNTHWAVE MIX": mikser — chorus na ARP, poglos SISTER (AUX A), kompresory, BUS COMP
+        snprintf(p.name, sizeof p.name, "SYNTHWAVE MIX");
+        fxDefaults(p.tracks[arp].ins[0], FX_JUNI_CHORUS);
+        p.tracks[arp].send[0] = .35f;
+        p.tracks[lead].send[0] = .3f;
+        p.tracks[pad].send[0] = .2f;
+        p.tracks[brass].send[0] = .25f;
+        p.tracks[arp].pan = -.35f;
+        p.tracks[brass].pan = .3f;
+        p.tracks[drums].comp.on = true; p.tracks[drums].comp.type = COMP_FET;
+        p.tracks[bass].comp.on = true; p.tracks[bass].comp.type = COMP_OPTO;
+        p.tracks[bass].eq.gain[0] = 2.f; p.tracks[bass].eq.freq[0] = 80.f;
+        p.tracks[lead].eq.gain[2] = 2.5f;
+        p.bus.on = true; p.bus.thresh = .75f; p.bus.makeup = 3.f;
+    }
     static const int SC[4][3] = {{57, 60, 64}, {53, 57, 60}, {55, 60, 64}, {55, 59, 62}};  // Am F C G
     static const int SR[4] = {33, 29, 36, 31};
     // bebny GIN (klawisze od C2): 36 KICK, 38 SNARE, 41 CLAP, 44 CLOSED HAT, 46 OPEN HAT, 51 CRASH

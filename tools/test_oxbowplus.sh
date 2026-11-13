@@ -32,6 +32,6 @@ gcc -std=gnu11 -O2 -Icore -c core/synth/juni_dsp.c -o "$T/jnw.o"
 gcc -std=gnu11 -O2 -Icore -c core/synth/outatime_dsp.c -o "$T/otw.o"
 . tools/gin_objs.sh
 g++ -std=c++17 -O2 -Icore tests/oxbowplus_match.cpp core/synth/wavetable_synth.cpp core/synth/taffy_dsp.cpp core/synth/pew_dsp.cpp \
-    core/synth/elg_dsp.cpp "$T/eva.o" "$T/mbira.o" "$T/reactor.o" "$T/oxbow.o" "$T/oxbow_plus.o" "$T/sidw.o" "$T/sidd.o" "$T/mono.o" "$T/vapw.o" "$T/vapd.o" "$T/ssw.o" "$T/mxw.o" "$T/brw.o" "$T/hsw.o" "$T/bmw.o" "$T/blw.o" "$T/aew.o" "$T/arw.o" "$T/ddw.o" "$T/ddc.o" "$T/jnw.o" "$T/otw.o" "$T"/gin_*.o core/seq/project.cpp core/seq/pattern.cpp -o "$T/match" -lm
+    core/synth/elg_dsp.cpp "$T/eva.o" "$T/mbira.o" "$T/reactor.o" "$T/oxbow.o" "$T/oxbow_plus.o" "$T/sidw.o" "$T/sidd.o" "$T/mono.o" "$T/vapw.o" "$T/vapd.o" "$T/ssw.o" "$T/mxw.o" "$T/brw.o" "$T/hsw.o" "$T/bmw.o" "$T/blw.o" "$T/aew.o" "$T/arw.o" "$T/ddw.o" "$T/ddc.o" "$T/jnw.o" "$T/otw.o" "$T"/gin_*.o core/seq/project.cpp core/fx/fx_registry.cpp core/seq/pattern.cpp -o "$T/match" -lm
 "$T/match" "$T/ref.raw"
 rm -rf "$T"
