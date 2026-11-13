@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-15 11:30 — LINEA: oryginalny bank fabryczny D-50 (Fantasia)
+- **Co zmienione (tylko pliki na konsoli i lokalnie, poza repo):** pobrany oficjalny „D-50 Factory Patches” ze strony wsparcia Rolanda (licencję zaakceptował Patryk), SysEx wyciągnięty z D50_ORIG.MID (136 komunikatów, 64 patche, 1-1 Fantasia, sumy OK); na konsoli jako bank FACTORY (`presets/linea/banks`) i kopia `sysex/D-50 Factory.syx`. Dotychczasowy „FACTORY” (bank użytkownika z D-Anapad) przemianowany na ANAPAD.
+- **Następny krok:** Patryk uruchamia program ponownie (banki czytane przy starcie) i gra Fantasię. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-15 11:00 — Banki SysEx na konsoli, poprawka nazw banków
 - **Co zmienione:** `core/io/project_file.cpp` — nazwa banku LINEA ze spacjami zapisywana jako jeden token (spacja -> `_`), wcześniej rozjechałaby linię `lnea`; nowa wersja na konsoli. Na kartę konsoli (`/userdata/dawpol3000/sysex/`) wysłane 4 banki Patryka (sprawdzone: po 64 patche, sumy OK): DESCENT INTO MADNESS, VOLTAGE DRIFT, D50 INTERNAL, DIGITAL DREAMS (pliki tylko na konsoli, poza repo).
 - **Następny krok:** Patryk importuje banki: SYNTH → LINEA → BANKS → + IMPORT SYSEX → A. **Od Patryka:** import i ocena.
