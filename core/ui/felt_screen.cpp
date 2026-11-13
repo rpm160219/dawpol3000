@@ -69,9 +69,14 @@ void drawAll(const Tr& t, const int16_t* kn, float motion, float swing, float da
     }
     // obudowa z podniesiona pokrywa i podporka
     t.ln(30, 110, 570, 110, 2.f, kLine);
-    t.ln(150, 108, 470, 34, 2.f, kLine);       // pokrywa
-    t.ln(150, 112, 470, 38, .8f, kBody);
-    t.ln(390, 110, 390, 53, 1.6f, kWood);      // podporka
+    {  // pokrywa: DECAY ja podnosi (krotko = prawie zamknieta, dlugo = otwarta na podporce)
+        const float ang = (1.5f + 21.f * dec) * 3.14159f / 180.f, L = 328.f;
+        const float ex = 150 + L * cosf(ang), ey = 108 - L * sinf(ang);
+        t.ln(150, 108, ex, ey, 2.f, kLine);
+        t.ln(150, 112, ex, ey + 4, .8f, kBody);
+        const float sy = 108 - (390 - 150) * tanf(ang);  // podporka siega pokrywy
+        if (110 - sy > 4) t.ln(390, 110, 390, sy + 3, 1.6f, kWood);
+    }
     // swieca na obudowie
     {
         const float cx = 530;

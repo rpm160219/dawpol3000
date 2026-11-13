@@ -637,6 +637,14 @@ void WavetableSynth::renderBlock() {
                 vk[i] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
             }
         }
+        if (kind_ == 26) {  // FELT: modulacja strony 2 — DETUNE, WORN, BODY (LFO i MOD ENV)
+            static const int dst[3] = {DEST_W1, DEST_W2, DEST_P1};
+            for (int j = 0; j < 3; j++)
+                if (vm[dst[j]] != 0.f) {
+                    int x = knobs_[5 + j] + (int)lrintf(vm[dst[j]] * 32767.f);
+                    vk[5 + j] = (int16_t)(x < 0 ? 0 : (x > 32767 ? 32767 : x));
+                }
+        }
         if (kind_ == 19) {  // ARC: modulacja strony 2 — RATIO (0 = 8192 = 1:1), COUPLING (0 = wyl.), BRIGHTNESS (0 = 8192)
             static const int dst[3] = {DEST_W1, DEST_W2, DEST_P1};
             for (int j = 0; j < 3; j++)

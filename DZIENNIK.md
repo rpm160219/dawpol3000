@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 10:20 — FELT: DECAY otwiera pokrywę, LFO / MOD ENV na DETUNE, WORN, BODY
+- **Co zmienione:** `core/ui/felt_screen.cpp` — kąt pokrywy zależy od DECAY (krótko = prawie zamknięta, długo = otwarta na podpórce; LFO na DECAY ją porusza); `core/synth/wavetable_synth.cpp`, `core/ui/synth_view.cpp`, `core/seq/project.cpp` — cele modulacji DTUN / WORN / BODY (LFO 1, LFO 2, MOD ENV) dla strony 2 FELT. Po co: prośba Patryka.
+- **Następny krok:** Patryk testuje. **Od Patryka:** ocena.
+
 ## 2026-11-13 03:50 — FELT: rozstrojenie strun, rozstrojone pianino, więcej fortepianu
 - **Co zmienione:** `core/synth/felt_dsp.*` — strona 2 (L3): DETUNE (rozstrojenie strun nuty 0,1–14 c, oddzielone od CORDA), WORN (każdy klawisz na stałe inaczej rozstrojony: większość lekko, kilka wyraźnie, struny nuty też się rozjeżdżają), BODY (płyta rezonansowa + puknięcie w ataku); brzmienie bardziej fortepianowe: twardszy i jaśniejszy młotek przy forte, szersza dynamika, mniej tłumienia wysokich alikwotów, 6 rezonansów płyty. `core/ui/felt_screen.*` — stroik (wskazówka = odchylenie ostatniego klawisza, czerwona gdy fałszuje; cienkie = rozstrojenie strun), struny rozchodzą się wachlarzem i drgają z różną prędkością (dudnienie), przy WORN chwiejne kołki i czerwone załamania. `synth_view` (L3 DETUNE / WORN / BODY), zapis `push`, domyślne, presety (HONKY TONK v2 + OLD UPRIGHT, SALOON, FORGOTTEN ROOM). Po co: prośba Patryka.
 - Strój bez WORN dokładny; bez przesterów; CPU ~11% rdzenia. Testy bez zmian. Wgrane na konsolę.

@@ -439,7 +439,7 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
-    } else if (!strcmp(screen, "felt") || !strcmp(screen, "feltuna") || !strcmp(screen, "feltworn") || !strcmp(screen, "feltengine")) {
+    } else if (!strcmp(screen, "felt") || !strcmp(screen, "feltuna") || !strcmp(screen, "feltworn") || !strcmp(screen, "feltshut") || !strcmp(screen, "feltengine")) {
         if (!strcmp(screen, "feltengine")) {
             app.arrange.setCursor(1, 2);
             tap(app, B_SELECT);
@@ -451,6 +451,7 @@ int headlessPng(const char* path, const char* screen) {
             tr.engine = ENG_FELT;
             engineDefaultKnobs(ENG_FELT, tr.knob);
             if (!strcmp(screen, "feltuna")) { tr.knob[1] = 2000; tr.knob[0] = 32000; tr.knob[3] = 30000; }
+            else if (!strcmp(screen, "feltshut")) { tr.knob[2] = 1000; }
             else if (!strcmp(screen, "feltworn")) { tr.knob[1] = 30000; tr.push[0] = 22000; tr.push[1] = 32767; app.synth.setAlt(true); }
             else tr.knob[1] = 30000;
             app.openPresets("out/presets_demo");

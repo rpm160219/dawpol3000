@@ -378,7 +378,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
             if (alt_ && i == 2) {
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepMDest_.steps(ax, dt, 4.f);
                 if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
                 break;
@@ -427,7 +427,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
                 // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepDest_[l].steps(ax, dt, 4.f);
                 if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
