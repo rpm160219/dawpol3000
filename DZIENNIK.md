@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-15 10:30 — LINEA wgrana na konsolę
+- **Co zmienione:** nowa wersja programu na konsoli; ROM-y D-50 i FactoryPatches.syx skopiowane tylko na kartę konsoli (`/userdata/dawpol3000/roms/linea`), bez pomiaru CPU (decyzja Patryka).
+- **Następny krok:** Patryk gra na LINEA (Track → ENGINE → LINEA). **Od Patryka:** „git / nie git”.
+
 ## 2026-11-15 10:00 — Nowy silnik LINEA (synteza LA, ROM-y D-50 Patryka)
 - **Co zmienione:** `third_party/pico_d50/` (silnik PicoFaceD5 Michi71, nagłówki C++, bez zmian; tabela próbek wygenerowana z publicznego JSON — bez audio), `core/synth/linea_dsp.*` (ROM-y z karty `roms/linea`: rozpoznanie po CRC32, składanie zdublowanych zrzutów, dekodowanie PCM w C++; silnik 32 kHz → 48 kHz FIR 2:3; limit głosów jak D-50; CUTOFF/RES jako przesunięcie), `core/io/linea_banks.*` (banki SysEx D-50: import z `roms/linea` i `sysex/`, banki w `presets/linea/banks`, zapis USER jako DT1), `core/ui/linea_screen.*` (generatywna konstelacja PLAY, LCD w stylu D-50, ilustracja), `core/ui/synth_linea.cpp` (strony PLAY / COMMON / WG / TVF / TVA / P-ENV+LFO / EFFECTS / BANKS), projekt / zapis (linia `lnea` z patchem), silnik audio (rodzaj 29), okno TRACK, test `tools/test_linea.sh`.
 - Dekoder PCM i parser SysEx zgodne bit w bit ze skryptami autora (262 144 próbek, 64 patche); zapis/odczyt banku zgodny.
