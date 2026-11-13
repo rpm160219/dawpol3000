@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "io/project_file.h"
 #include "gfx/canvas.h"
 #include <stdio.h>
@@ -135,7 +136,8 @@ void parseMix(Track& t, char** tok, int n) {
             i += 3 + COMP_TYPES * 5;
         } else if (!strcmp(tok[i], "ins")) {
             i++;
-            for (int k = 0; k < MIX_INSERTS && i < n; k++) i = parseFx(t.ins[k], tok, n, i);
+            // stare pliki maja 2 inserty: konczymy na pierwszym slowie, ktore nie jest liczba (np. "snd")
+            for (int k = 0; k < MIX_INSERTS && i < n && (isdigit((unsigned char)tok[i][0]) || tok[i][0] == '-'); k++) i = parseFx(t.ins[k], tok, n, i);
         } else if (!strcmp(tok[i], "snd") && i + MIX_AUX < n) {
             for (int k = 0; k < MIX_AUX; k++) t.send[k] = (float)atof(tok[i + 1 + k]);
             i += 1 + MIX_AUX;

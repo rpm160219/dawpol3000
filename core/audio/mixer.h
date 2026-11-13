@@ -1,4 +1,4 @@
-// Mikser DAW-POL (watek audio): kazdy kanal = inserty (2) -> EQ 3-pasmowy -> kompresor (OPTO / VCA / FET) -> tlumik +
+// Mikser DAW-POL (watek audio): kazdy kanal = inserty (4) -> EQ 3-pasmowy -> kompresor (OPTO / VCA / FET) -> tlumik +
 // panorama -> szyna master, wysylki A..F po tlumiku na 6 szyn AUX (efekt -> EQ -> poziom -> master), master: kompresor
 // szyny (w stylu SSL G) -> glosnosc -> lagodny ogranicznik. Wszystko float, bez alokacji w process (efekty tworzone
 // przy zmianie typu w apply — wywolywane z watku audio przy publikacji projektu, alokacja jednorazowa).
@@ -54,7 +54,10 @@ public:
     void setType(int fx);
     int type() const { return type_; }
     void process(float* l, float* r, int n, const int16_t* w);
+    // telemetria ekranu efektu (kopia po kazdym bloku; czytana w watku UI — wylacznie do rysowania)
+    const uint8_t* telemetry() const { return tel_; }
 private:
+    alignas(32) uint8_t tel_[64] = {};
     int type_ = FX_NONE;
     void* inst_ = nullptr;
     // wejscie 48 kHz -> 44,1 kHz
@@ -78,6 +81,8 @@ public:
     // tracks: bufory przeplatane L R (n ramek) kazdej sciezki; out: przeplatane L R (nadpisywane)
     void process(float* const* tracks, const bool* active, int nTracks, float* out, int n);
     ChannelMeter ch[MAX_TRACKS], aux[MIX_AUX], master;
+    const FxHost& insert(int c, int k) const { return ins_[c][k]; }
+    const FxHost& auxFx(int a) const { return auxFx_[a]; }
 private:
     float fs_ = 48000.f;
     int nTracks_ = 0;
@@ -90,7 +95,7 @@ private:
     float gainT_[MAX_TRACKS] = {}, gain_[MAX_TRACKS] = {};
     float masterVol_ = .8f;
     int tail_[MAX_TRACKS] = {};
-    int auxTail_[MIX_AUX] = {};  // ramki ogona efektu AUX po ostatniej wysylce  // ramki ogona po ciszy (inserty z poglosem)
+    int auxTail_[MIX_AUX] = {};  // ramki ogona efektu AUX po ostatniej wysylce
     float auxBuf_[MIX_AUX][2][256];
     float l_[256], r_[256];
 };

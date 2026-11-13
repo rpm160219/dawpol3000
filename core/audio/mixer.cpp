@@ -207,6 +207,7 @@ void FxHost::setType(int fx) {
     midN_ = 96;  // wyprzedzenie kolejki wyjscia (~2 ms)
     memset(midL_, 0, sizeof midL_); memset(midR_, 0, sizeof midR_);
     posOut_ = 1.0;
+    memset(tel_, 0, sizeof tel_);
 }
 
 static inline float herm(float y0, float y1, float y2, float y3, float t) {
@@ -227,8 +228,8 @@ void FxHost::process(float* l, float* r, int n, const int16_t* w) {
             blkL_[blkN_] = toS16(herm(inL_[0], inL_[1], inL_[2], inL_[3], t));
             blkR_[blkN_] = toS16(herm(inR_[0], inR_[1], inR_[2], inR_[3], t));
             if (++blkN_ == 64) {
-                if (type_ == FX_JUNI_CHORUS) fxJuniChorusProcess(inst_, blkL_, blkR_, w);
-                else fxSisterProcess(inst_, blkL_, blkR_, w);
+                if (type_ == FX_JUNI_CHORUS) { fxJuniChorusProcess(inst_, blkL_, blkR_, w); fxJuniChorusTelemetry(tel_); }
+                else { fxSisterProcess(inst_, blkL_, blkR_, w); fxSisterTelemetry(inst_, tel_); }
                 if (midN_ + 64 <= 512)
                     for (int k = 0; k < 64; k++) { midL_[midN_ + k] = blkL_[k] * (1.f / 32768.f); midR_[midN_ + k] = blkR_[k] * (1.f / 32768.f); }
                 midN_ += midN_ + 64 <= 512 ? 64 : 0;

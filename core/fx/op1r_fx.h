@@ -10,6 +10,10 @@ void* fxJuniChorusCreate(void);
 void fxJuniChorusProcess(void* inst, int16_t* l, int16_t* r, const int16_t* w);
 void* fxSisterCreate(void);
 void fxSisterProcess(void* inst, int16_t* l, int16_t* r, const int16_t* w);
+// Telemetria dla ekranow efektow (wywolywane w watku audio po bloku; kopia trafia do FxHost, nie do egzemplarza).
+#define FX_TELEMETRY_BYTES 64
+void fxJuniChorusTelemetry(void* out);           // 5 x uint32: blocks, ph, inc, depth, level
+void fxSisterTelemetry(void* inst, void* out);   // si_pos_t (32 bajty)
 #ifdef __cplusplus
 }
 #endif

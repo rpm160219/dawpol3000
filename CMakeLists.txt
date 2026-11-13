@@ -29,6 +29,9 @@ target_include_directories(dpcore PUBLIC core)
 set(FX_V ${CMAKE_SOURCE_DIR}/third_party/op1r_fx)
 set(FX_SOURCES core/fx/fx_juni_chorus.c core/fx/fx_sister.c ${FX_V}/sister/sister_dsp.c ${FX_V}/sister/sister_kern.c)
 target_sources(dpcore PRIVATE ${FX_SOURCES})
+set(FXSCR_SOURCES core/ui/fx_screen_host.c core/ui/fx_screen_jc.c core/ui/fx_screen_si.c)
+target_sources(dpcore PRIVATE ${FXSCR_SOURCES} core/ui/fx_screen.cpp)
+set_source_files_properties(${FXSCR_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR}/core;-I${CMAKE_SOURCE_DIR}/core/ui/fx_shim;-I${FX_V};-I${FX_V}/juni_chorus;-I${FX_V}/sister;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
 set_source_files_properties(${FX_SOURCES} PROPERTIES COMPILE_OPTIONS "-DOP1_HOST;-I${CMAKE_SOURCE_DIR};-I${FX_V};-I${FX_V}/sister;-Wno-unused-function;-Wno-unused-variable;-Wno-unused-parameter")
 
 # GIN (Hundekraft 3.1.4 / SquareWave Studio, libpo32): oryginalne pliki jako osobne jednostki, flagi jak plugin.json.

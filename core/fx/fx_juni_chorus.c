@@ -23,3 +23,9 @@ void fxJuniChorusProcess(void* inst, int16_t* l, int16_t* r, const int16_t* w) {
     stereo(0, l, r, w);
     x->st = st[0];
 }
+/* telemetria ekranu (juni_chorus_screen.c): blocks, ph, inc, depth, level pozycji 0 po ostatnim bloku */
+void fxJuniChorusTelemetry(void* out) {
+    uint32_t* o = (uint32_t*)out;
+    o[0] = juni_chorus_blocks[0]; o[1] = juni_chorus_ph[0]; o[2] = juni_chorus_inc[0];
+    o[3] = (uint32_t)juni_chorus_depth[0]; o[4] = (uint32_t)(int32_t)juni_chorus_level[0];
+}

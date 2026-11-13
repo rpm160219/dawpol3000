@@ -80,6 +80,8 @@ public:
     float chGr(int t) const { return t >= 0 && t < MAX_TRACKS ? mixer_.ch[t].gr.load(std::memory_order_relaxed) : 0.f; }
     float auxPeak(int a) const { return a >= 0 && a < MIX_AUX ? mixer_.aux[a].peak.load(std::memory_order_relaxed) : 0.f; }
     float masterPeak() const { return mixer_.master.peak.load(std::memory_order_relaxed); }
+    // telemetria efektu: kanal + insert, albo AUX (ch = -1 - a)
+    const uint8_t* fxTelemetry(int ch, int k) const { return ch >= 0 ? mixer_.insert(ch < MAX_TRACKS ? ch : 0, k).telemetry() : mixer_.auxFx((-1 - ch) % MIX_AUX).telemetry(); }
     float masterGr() const { return mixer_.master.gr.load(std::memory_order_relaxed); }
     float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione

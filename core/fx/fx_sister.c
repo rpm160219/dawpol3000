@@ -31,3 +31,5 @@ void fxSisterProcess(void* inst, int16_t* l, int16_t* r, const int16_t* w) {
     stereo(0, l, r, w);
     x->pos = sister_pos[0];
 }
+/* telemetria ekranu (sister_screen.c): linia sister_pos egzemplarza po ostatnim bloku */
+void fxSisterTelemetry(void* inst, void* out) { memcpy(out, &((SiInst*)inst)->pos, sizeof(si_pos_t)); }

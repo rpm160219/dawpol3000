@@ -1,4 +1,5 @@
 #include "headless.h"
+#include "fx/fx_registry.h"
 #include "audio/engine.h"
 #include "gfx/canvas.h"
 #include "io/image_io.h"
@@ -705,8 +706,9 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_Y);
     } else if (!strncmp(screen, "mixer", 5)) {
         // MIXER na utworze SYNTHWAVE w trakcie grania; przykladowe ustawienia EQ / kompresora / wysylek
-        app.loadDemoSynthwave();
+        app.loadDemoSynthwave(true);
         Project& p = app.project();
+        fxDefaults(p.tracks[3].ins[1], FX_SISTER);
         p.tracks[1].eq.gain[0] = 4.f; p.tracks[1].eq.gain[2] = -3.f;
         p.tracks[2].eq.gain[1] = 5.f; p.tracks[2].eq.freq[1] = 2500.f; p.tracks[2].eq.q[1] = 2.f;
         p.tracks[1].comp.on = true; p.tracks[1].comp.type = COMP_FET;
@@ -725,8 +727,10 @@ int headlessPng(const char* path, const char* screen) {
         if (!strcmp(screen, "mixerfet")) { app.mixer.setCursor(1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
         if (!strcmp(screen, "mixerbus")) { app.mixer.setCursor(-1, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_BUS); }
         if (!strcmp(screen, "mixerfx")) { app.mixer.setCursor(1, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
+        if (!strcmp(screen, "mixerchorus")) { app.mixer.setCursor(2, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
+        if (!strcmp(screen, "mixersister")) { app.mixer.setCursor(p.nTracks, MixerView::R_INS0); app.mixer.openWindow(MixerView::W_FX, 0); }
         if (!strcmp(screen, "mixeraux")) app.mixer.setCursor(p.nTracks, MixerView::R_VOL);
-        for (int i = 0; i < 20; i++) { eng.process(buf, 256); idle(app); }
+        for (int i = 0; i < 60; i++) { eng.process(buf, 256); idle(app); Canvas tmp; app.render(tmp); }
     } else if (!strcmp(screen, "track")) {
         app.arrange.setCursor(4, 0);
         tap(app, B_A);  // ADD TRACK
