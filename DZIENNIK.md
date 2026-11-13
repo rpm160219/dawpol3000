@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 10:40 — VCA (tama): strumień zgodny z ratio
+- **Co zmienione:** `core/ui/mixer_view.cpp` (`renderVcaDam`) — woda ponad koroną = o ile sygnał przekracza THRESHOLD (ta sama skala dB co korona), poziom nie przekracza belki zasuwy; grubość strumienia = nadwyżka / ratio, rysowana płynnie (1:1 gruby strumień, 4:1 ćwierć, INF:1 nic) — wcześniej grubość szybko dochodziła do maksimum i 1:1 wyglądało jak 2.6:1 (zgłosił Patryk); otwór zasuwy = ratio; poziom wody opada wolno jak wskazówka VU. Makiety `mixervca1`, `mixervcainf`.
+- **Następny krok:** Patryk sprawdza tamę. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 10:00 — Kompresory: scena TAMA (VCA) i MŁOTEK Z RĘKĄ (OPTO)
 - **Co zmienione:** `core/ui/mixer_view.*` — VCA: tama (interfejs z gałką THRESHOLD → rura wlewa wodę = sygnał; wysokość korony = THRESHOLD; zasuwa zjeżdża z ratio, INF:1 = ściana; OVEREASY = zaokrąglona korona; światła BELOW/ABOVE; łata wodowskazowa z czerwonym GR; koło wodne kręci się z przepływem i OUTPUT; kabel do głośnika rosnącego z OUTPUT). OPTO: młotek i ręka (interfejs z gałką PEAK REDUCTION; zamach przy każdym uderzeniu w sygnale; rozmiar młotka = PEAK REDUCTION; ręka odsuwa się o GR i wraca powoli jak fotoopornik; krew = GAIN; COMPRESS = otwarta dłoń, LIMIT = pięść; MIX = ręka-duch; gwiazdki = GR; bez głośnika — decyzja Patryka). L3 = panel zaawansowany dla wszystkich trzech kompresorów. Wspólne: `sceneInterface`, `sceneCable`, `sceneBypass`. Makiety `mixervca`, `mixervcaoe`, `mixeropto`, `mixeroptoadv`.
 - Testy bit w bit OK.

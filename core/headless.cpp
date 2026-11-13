@@ -727,7 +727,11 @@ int headlessPng(const char* path, const char* screen) {
             MixComp& cp = p.tracks[0].comp;
             cp.on = true; cp.type = opto ? COMP_OPTO : COMP_VCA;
             if (opto) { cp.p[COMP_OPTO][0] = .7f; cp.p[COMP_OPTO][1] = .6f; cp.p[COMP_OPTO][3] = .7f; }
-            else { cp.p[COMP_VCA][0] = .55f; cp.p[COMP_VCA][3] = !strcmp(screen, "mixervcaoe") ? 1.f : 0.f; }
+            else {
+                cp.p[COMP_VCA][0] = .35f; cp.p[COMP_VCA][3] = !strcmp(screen, "mixervcaoe") ? 1.f : 0.f;
+                if (!strcmp(screen, "mixervca1")) cp.p[COMP_VCA][1] = 0.f;     // 1:1
+                if (!strcmp(screen, "mixervcainf")) cp.p[COMP_VCA][1] = 1.f;   // INF:1
+            }
             app.markDirty();
             app.mixer.setCursor(0, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP);
             if (strstr(screen, "adv")) tap(app, B_L3);

@@ -997,25 +997,29 @@ void MixerView::renderVcaDam(Canvas& c, const float* q, float gr, float level, b
     const float outDb = 20.f * log10f(level > 1e-5f ? level : 1e-5f);
     const float inDb = outDb + (on ? gr : 0.f);
     static float uIn = 0, uOut = 0, wav = 0, wheel = 0, fall = 0, flowC = 0, gateY = -1;
-    uIn += (clampf((inDb + 50.f) / 50.f, 0.f, 1.f) - uIn) * (1.f - expf(-dt / .05f));
+    {  // poziom wody: szybko w gore, wolno w dol (jak wskazowka VU)
+        const float t = clampf((inDb + 50.f) / 50.f, 0.f, 1.f);
+        uIn += (t - uIn) * (1.f - expf(-dt / (t > uIn ? .02f : .3f)));
+    }
     uOut += (clampf((outDb + 50.f) / 50.f, 0.f, 1.f) - uOut) * (1.f - expf(-dt / .05f));
     wav += dt * (1.5f + 3.f * uIn);
     const float yC = BED - 8.f - 76.f * q[0];          // korona tamy = THRESHOLD
-    static float grS = 0;
-    grS += ((on ? gr : 0.f) - grS) * (1.f - expf(-dt / .05f));
-    float yW = BED - 4.f - 80.f * uIn;                  // lustro wody przed tama
-    if (grS > .3f) yW = fminf(yW, yC - 1.f - fminf(grS * .8f, 16.f));  // kompresja = woda ponad prog
-    const float over = on ? fmaxf(0.f, yC - yW) : 0.f;  // ile ponad prog
-    const float GATE_H = 22.f, open = GATE_H / (ratio > 1e8f ? 1e9f : ratio);
-    const float gTarget = yC - GATE_H + (GATE_H - open) * 1.f;  // dol zasuwy (wyzej = szerzej otwarta)
+    // poziom wody na tej samej skali co korona (dB -50..0 -> wysokosc); nadwyzka ponad koroną = sygnal ponad THRESHOLD
+    const float GATE_H = 22.f;
+    float yW = BED - 8.f - 76.f * uIn;                  // lustro wody przed tama
+    if (yW < yC - GATE_H - 3.f) yW = yC - GATE_H - 3.f; // nigdy ponad belke zasuwy
+    const float over = on ? fmaxf(0.f, yC - yW) : 0.f;  // nadwyzka (jednostki sceny)
+    const float inv = ratio > 1e8f ? 0.f : 1.f / ratio;
+    const float open = GATE_H * inv;                    // otwor zasuwy pokazuje ratio
+    const float gTarget = yC - open;
     gateY = gateY < 0 ? gTarget : gateY + (gTarget - gateY) * (1.f - expf(-dt / .12f));
-    const float opening = fmaxf(0.f, yC - (gateY + 0.f)) - (GATE_H - (yC - gateY) > 0 ? 0 : 0);
-    const float passed = fminf(over, yC - gateY);       // przelew przez otwor zasuwy
+    static float passS = 0;
+    passS += (over * inv - passS) * (1.f - expf(-dt / .05f));
+    const float passed = passS;                          // grubosc strumienia = nadwyzka / ratio
     const float yD = BED - 5.f - 16.f * uOut;           // woda za tama
     fall += dt * 1.6f;
     flowC += dt * (.2f + 1.2f * uIn);
     wheel += dt * (on ? (.4f + 3.f * fminf(passed / 10.f + uOut * .5f, 1.f)) * (.3f + 1.4f * q[2]) : .2f);
-    (void)opening;
 
     // ---- interfejs i kabel do rury ----
     sceneInterface(S, q[0], pal::blue, uIn, on);
@@ -1072,27 +1076,25 @@ void MixerView::renderVcaDam(Canvas& c, const float* q, float gr, float level, b
     S.fci(150, yC - GATE_H - 9, 1.8f, on && !above ? pal::green : rgb(30, 50, 30));
     S.fci(164, yC - GATE_H - 9, 1.8f, above ? pal::red : rgb(60, 26, 26));
     // przelew: woda przez otwor zasuwy, po koronie i w dol
-    if (passed > .3f) {
-        const int ns = 1 + (int)fminf(passed * .6f, 4.f);
-        for (int s2 = 0; s2 < ns; s2++) {
-            const float off = s2 * 1.3f;
-            float fp[2 * 24];
-            int n = 0;
-            if (oe) {
-                for (int i = 0; i <= 10 && n < 24; i++, n++) { const float a = -1.5707963f + i * .15707963f; fp[2 * n] = 158 + (10.f + off + .8f) * cosf(a); fp[2 * n + 1] = yC + 10.f + (10.f + off + .8f) * sinf(a) - 1.f; }
-                fp[2 * n] = 174 + off; fp[2 * n + 1] = yC + 22; n++;
-                fp[2 * n] = 186 + off * 2; fp[2 * n + 1] = yD; n++;
-            } else {
-                fp[0] = 150; fp[1] = yC - 1 - off; fp[2] = 166 + off * .5f; fp[3] = yC - 1 - off;
-                for (int i = 1; i <= 8; i++, n++) { const float t = i / 8.f; fp[2 * (n + 2)] = 166 + off * .5f + t * (8 + off); fp[2 * (n + 2) + 1] = yC - 1 - off + t * t * (yD - yC + off); }
-                n += 2;
-            }
-            S.poly(fp, n, .9f, water);
+    if (passed > .15f) {
+        const float w = .5f + passed * .9f;  // grubosc strumienia
+        float fp[2 * 24];
+        int n = 0;
+        auto A = [&](float x, float y) { if (n < 24) { fp[2 * n] = x; fp[2 * n + 1] = y; n++; } };
+        if (oe) {  // splywa po zaokraglonej koronie i po skarpie
+            for (int i2 = 0; i2 <= 10; i2++) { const float a = -1.5707963f + i2 * .15707963f; A(158 + (10.f + w * .5f) * cosf(a), yC + 10.f + (10.f + w * .5f) * sinf(a) - w * .5f); }
+            A(172 + w * .5f, yC + 22); A(184 + w * .5f, yD);
+        } else {  // przelewa sie przez ostra krawedz i spada lukiem
+            A(158, yC - w * .5f); A(166, yC - w * .5f);
+            for (int i2 = 1; i2 <= 10; i2++) { const float t = i2 / 10.f; A(166 + t * (6 + w * 1.5f), yC - w * .5f + t * t * (yD - yC + w * .5f)); }
         }
-        for (int k = 0; k < 5; k++) {  // krople spadajace
-            const float t = fmodf(fall * 2.f + k * .2f, 1.f);
-            const float x = (oe ? 178.f : 170.f) + t * 10.f, y = yC + (yD - yC) * t;
-            S.ln(x, y, x + .5f, y + 2.5f, .8f, water);
+        S.poly(fp, n, w, waterD);
+        S.poly(fp, n, fmaxf(.5f, w * .35f), water);
+        const int nd = 2 + (int)fminf(passed * .5f, 6.f);
+        for (int k = 0; k < nd; k++) {  // krople i piana u podnoza
+            const float t = fmodf(fall * 2.f + k / (float)nd, 1.f);
+            const float x = (oe ? 184.f : 172.f + w) + t * (6 + w) - 3, y = yD - 3.f * sinf(t * 3.14159265f);
+            S.ln(x, y, x + .6f, y - .8f, .8f, water);
         }
     }
     // ---- woda za tama i kolo wodne (OUTPUT) ----
