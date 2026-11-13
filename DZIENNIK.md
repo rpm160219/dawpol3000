@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 14:10 — GRAND: realistyczny bas
+- **Co zmienione:** `core/synth/grand_dsp.c` — niealikwotowość jak w fortepianie (B duże w skrajnym basie i w górze, najmniejsze przy C3–C4; filtry wszechprzepustowe dobierane do nuty bisekcją, aż 12. alikwot trafia w K·f0·√(1+BK²); bas do 8 filtrów), półka −7 dB poniżej ~90 Hz (płyta słabo oddaje podstawę basu), drewniane puknięcie młotka w płytę (mocniejsze w basie), pojedyncze struny basu bez dodatkowego szybkiego etapu wybrzmienia, nowe wyrównanie poziomu po klawiaturze. Po co: uwaga Patryka, że dolne dźwięki brzmią mało realistycznie.
+- Pomiar: A0 alikwot 12 +3,2 % (cel +4,3 %), A1 +3,1 % (cel +3,0 %), C2 +2,1 % (cel +2,0 %), C3 +1,5 % (cel +1,5 %) — wcześniej prawie 0. Poziom równy (±1 dB), bez przesterów i narastania, etiuda bez przesterów. CPU ~15 % rdzenia (6 głosów). Wgrane na konsolę.
+- **Następny krok:** Patryk słucha basu (REVOLUTIONARY, BASS GROWL). **Od Patryka:** ocena.
+
 ## 2026-11-13 13:20 — utwór demo REVOLUTIONARY (Chopin op. 10 nr 12 na GRAND)
 - **Co zmienione:** `third_party/mutopia_chopin_op10_12/` (MIDI i źródło LilyPond z Mutopia nr 743 — ten sam skład co PDF od Patryka, domena publiczna), `tools/gen/midi_to_demo.py` (MIDI → `core/seq/demo_etude_data.h`, siatka PPQ 96), `core/seq/demo_song.*` (`buildDemoEtude`: takty 1–37, 160 BPM, prawa i lewa ręka na osobnych ścieżkach GRAND, wzorce po 4 takty), `core/ui/app.*` (dodawany raz do listy PROJECT, znacznik `_demo_etude_v1`), `core/headless.cpp` (`--render-wav plik 56 etude`), LICENSES.
 - 938 nut (prawa 311, lewa 627), 55,5 s; szczyt miksu 0,97 bez przesterów; na konsoli ~22% rdzenia. Wgrane na konsolę.

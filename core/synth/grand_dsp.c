@@ -8,7 +8,7 @@
 #define BLOCK 128
 #define NLEN 1024
 #define BLEN 2048
-#define NAP 4
+#define NAP 8
 
 typedef struct {
     float nut[NLEN], br[BLEN];
@@ -20,6 +20,8 @@ typedef struct {
     GStr s[3];
     int ns, note, strike, held, damped;
     float xh, vh, ys, m, K, pw, tcont; int contact;
+    float apC; int apN, apNote;   /* sztywnosc: wspolczynnik filtrow wszechprzepustowych dobrany do nuty */
+    float knock, kLp, shLp;       /* pukniecie mlotka w plyte, polka niskich (plyta slabo oddaje podstawe basu) */
     float fdn[4][320]; int fw; float fdlp[4];
     float grHp, grX, lidLp, dcx, dcy, level, last, squash;
 } GVoice;
@@ -82,6 +84,7 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
         v->vh = .3f + 5.2f * powf(vv, 1.6f);                           /* predkosc mlotka (m/s) */
         v->xh = v->ys;
         v->contact = 1; v->tcont = 0;
+        v->knock = (.15f + .5f * vv) * vv * (1.2f - .6f * key);  /* drewniane pukniecie w plyte (mocniejsze w basie) */
         v->squash = 0;
         p->lastNs = v->ns;
     }
@@ -90,10 +93,29 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
     if (T > 40.f) T = 40.f;
     if (v->damped && nt < 89) T = .12f + .25f * (1.f - key);           /* tlumik (od E6 w gore go nie ma) */
     const float b = .32f * (f0 > 300.f ? powf(300.f / f0, .55f) : 1.f);  /* strata wysokich alikwotow */
-    const float Bc = 7e-5f * powf(2.f, (nt - 48) / 9.f);                /* niealikwotowosc rosnie w gore */
-    float ap = -sqrtf(Bc) * 9.f;
-    if (ap < -.75f) ap = -.75f;
-    const int nap = nt < 45 ? 4 : 2;
+    /* niealikwotowosc B jak w fortepianie: duza w skrajnym basie (krotkie, grube struny owijane) i w gorze, najmniejsza
+     * w okolicy C3-C4; filtry wszechprzepustowe dobrane tak, by alikwot K mial czestotliwosc K f0 sqrt(1 + B K^2) */
+    if (v->apNote != nt + 1) {
+        const float B = 2e-4f * powf(2.f, (nt - 60) / 9.f) + 3e-4f * powf(2.f, (33 - nt) / 12.f);
+        const int M = nt < 40 ? 8 : (nt < 60 ? 4 : 2);
+        int K = (int)(fs * .2f / f0);
+        if (K > (nt < 72 ? 12 : 20)) K = nt < 72 ? 12 : 20;
+        float a = 0.f;
+        if (K >= 2) {
+            const float P = fs / f0, w0 = 6.2831853f * f0 / fs, wk = w0 * K;
+            const float need = P * (1.f - 1.f / sqrtf(1.f + B * K * K));  /* roznica opoznien potrzebna miedzy f0 a K f0 */
+            float lo = -.95f, hi = 0.f;
+            for (int it = 0; it < 24; it++) {
+                const float mid = .5f * (lo + hi);
+                const float got = (float)M * (apDelay(mid, w0) - apDelay(mid, wk));
+                if (got > need) lo = mid; else hi = mid;
+            }
+            a = .5f * (lo + hi);
+        }
+        v->apC = a; v->apN = M; v->apNote = nt + 1;
+    }
+    const float ap = v->apC;
+    const int nap = v->apN;
     const float beta = grandStrikeRatio(knobs[1]);
     const float cents = (.15f + 4.f * unison * unison);
     static const float sdet[3] = {0.f, 1.f, -.85f};
@@ -113,16 +135,18 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
     /* mostek: drganie wspolne strun (w fazie) oddaje energie do plyty szybciej — wybrzmienie dwuetapowe: wspolne ~0,4 T,
      * rozstrojone (UNISON) zostaje dluzej */
     const float Tp = (v->damped && nt < 89 ? T : T * .4f);
-    const float cb = .5f * (1.f - powf(.001f, 1.f / (Tp * f0)));
+    /* pojedyncza struna (skrajny bas): bez dodatkowego szybkiego etapu — dlugie wybrzmienie */
+    const float cb = v->ns > 1 ? .5f * (1.f - powf(.001f, 1.f / (Tp * f0))) : 0.f;
     const float lidK = 1.f - expf(-6.2831853f * (1800.f + 16000.f * lid * lid) / fs);
     const float grK = 1.f - expf(-6.2831853f * 60.f / fs);
+    const float shK = 1.f - expf(-6.2831853f * 90.f / fs);
     const float grAmt = growl * .8f * (1.f - key) * (1.f - key);
     /* plyta: zanik linii FDN */
     const float Tb = .05f + .35f * board;
     float fg[4];
     for (int k = 0; k < 4; k++) fg[k] = powf(.001f, (float)FDL[k] / (Tb * fs));
     /* wyrownanie poziomu po klawiaturze (zmierzone szczyty przy vel 100, cel ~0,3 skali) */
-    static const float CT[8] = {1.65f, .68f, .44f, .57f, 1.31f, 2.23f, 2.73f, 3.27f};
+    static const float CT[8] = {2.51f, .96f, .467f, .553f, 1.24f, 1.91f, 2.33f, 2.25f};
     float comp;
     {
         float q = (nt - 21) / 12.f;
@@ -193,6 +217,15 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
             v->grX += (sq - v->grX) * grK;
             bridge += (sq - v->grX) * grAmt;
         }
+        float kin = 0;
+        if (v->knock > 1e-5f) {
+            static uint32_t rs = 22222u;
+            rs = rs * 1664525u + 1013904223u;
+            v->kLp += ((float)(int32_t)rs * (1.f / 2147483648.f) - v->kLp) * .12f;
+            kin = v->kLp * v->knock;
+            v->knock *= .9975f;
+        }
+        bridge += kin;
         float o[4], hs;
         for (int k = 0; k < 4; k++) o[k] = v->fdn[k][(v->fw - FDL[k] + 320) % 320];
         hs = (o[0] + o[1] + o[2] + o[3]) * .5f;
@@ -203,6 +236,8 @@ void grandRender(struct GrandCore* p, int voice, int16_t* out, const int16_t* kn
         }
         v->fw = (v->fw + 1) % 320;
         float out1 = bridge * .7f + (o[0] - o[1] + o[2] - o[3]) * (.15f + .6f * board);
+        v->shLp += (out1 - v->shLp) * shK;                   /* plyta slabo oddaje podstawe basu: polka -7 dB ponizej ~90 Hz */
+        out1 -= .55f * v->shLp;
         v->lidLp += (out1 - v->lidLp) * lidK;                /* pokrywa: barwa */
         out1 = v->lidLp * (.6f + .4f * lid);
         const float yd = out1 - v->dcx + .999f * v->dcy;     /* filtr DC */
