@@ -775,9 +775,29 @@ static const FactoryPreset kFelt[] = {
     {"DUSTY KEYS", CAT_KEYS, 1, "k 25000 20000 15000 26000 env 0.001 1 1 0.5 lfo1 4 0.4 0.01 4 0 0"},
 };
 
+// GRAND: wlasne presety. k HAMMER STRIKE DECAY LID; push UNISON GROWL BOARD; dlugie AMP ENV (wybrzmienie prowadza struny).
+static const FactoryPreset kGrand[] = {
+    {"INIT", CAT_OTHER, 1, ""},
+    {"CONCERT GRAND", CAT_KEYS, 1, "k 16384 14000 16384 26000 env 0.001 1 1 0.35 push 7000 10000 16384"},
+    {"BRIGHT POP", CAT_KEYS, 1, "k 28000 9000 14000 32767 env 0.001 1 1 0.3 push 5000 6000 16000"},
+    {"JAZZ BALLAD", CAT_KEYS, 1, "k 9000 15000 20000 20000 env 0.001 1 1 0.45 push 8000 6000 22000"},
+    {"WARM CHAMBER", CAT_KEYS, 1, "k 6000 18000 22000 12000 env 0.001 1 1 0.5 push 7000 8000 26000"},
+    {"CLOSED LID", CAT_KEYS, 1, "k 14000 14000 16000 0 env 0.001 1 1 0.35 push 7000 8000 16000"},
+    {"CATHEDRAL", CAT_KEYS, 1, "k 12000 14000 32767 26000 env 0.001 1 1 1.2 push 7000 6000 32767"},
+    {"BASS GROWL", CAT_BASS, 1, "k 22000 12000 18000 26000 env 0.001 1 1 0.3 push 6000 22000 16000"},
+    {"HONKY GRAND", CAT_KEYS, 1, "k 20000 12000 16000 26000 env 0.001 1 1 0.3 push 30000 10000 18000"},
+    {"FELT HAMMERS", CAT_KEYS, 1, "k 0 20000 18000 14000 env 0.001 1 1 0.4 push 6000 4000 22000"},
+    {"STACCATO", CAT_PLUCK, 1, "k 20000 10000 6000 26000 env 0.001 0.6 0 0.1 push 7000 10000 14000"},
+    {"TREMOLO GRAND", CAT_KEYS, 1, "k 16384 14000 16384 26000 env 0.001 1 1 0.35 push 7000 10000 16384 lfo1 0 5 0.25 5 0 0"},
+    {"DRIFTING GRAND", CAT_KEYS, 1, "k 14000 15000 20000 22000 env 0.001 1 1 0.5 push 9000 8000 20000 lfo1 0 0.2 0.25 6 0 0"},
+    {"HARD STRIKE", CAT_KEYS, 1, "k 32767 6000 15000 32767 env 0.001 1 1 0.3 push 6000 14000 14000"},
+    {"MUSIC BOX GRAND", CAT_BELL, 1, "k 30000 26000 24000 30000 env 0.001 1 1 0.8 push 3000 0 20000 oct 2"},
+};
+
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
+    if (!__builtin_strcmp(eng, "grand")) { *n = sizeof kGrand / sizeof kGrand[0]; *engine = ENG_GRAND; return kGrand; }
     if (!__builtin_strcmp(eng, "felt")) { *n = sizeof kFelt / sizeof kFelt[0]; *engine = ENG_FELT; return kFelt; }
     if (!__builtin_strcmp(eng, "lounge")) { *n = sizeof kLounge / sizeof kLounge[0]; *engine = ENG_LOUNGE; return kLounge; }
     if (!__builtin_strcmp(eng, "parallax")) { *n = sizeof kParallax / sizeof kParallax[0]; *engine = ENG_PARALLAX; return kParallax; }

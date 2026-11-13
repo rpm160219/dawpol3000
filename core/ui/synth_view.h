@@ -55,6 +55,7 @@
 #include "ui/parallax_screen.h"
 #include "ui/lounge_screen.h"
 #include "ui/felt_screen.h"
+#include "ui/grand_screen.h"
 #include "ui/wavetable_screen.h"
 #include "ui/widgets.h"
 
@@ -77,7 +78,7 @@ private:
     RelEncoder stepShape_[2], stepDest_[2], stepDiv_[2], stepInt_[2], stepMode_;
     // tryb stron: 0 oryginal (WAVETABLE, TAFFY), 1 WAVETABLE+, 2 PEW (dodatkowa strona BARS)
     // 3 = ELG: sam silnik 1:1 (SOUND, AMP ENV, PRESETS); 4 = EVA, MBIRA, REACTOR, OXBOW: + MOD ENV i 2 LFO; 5 = SID: + FILTER ENV; 6 = MONOLIT: + VOICE (tylko MODE i GLIDE) + FILTER ENV
-    static int pageMode(const Track& t) { return t.engine == ENG_GIN ? 11 : (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG || t.engine == ENG_BRASS || t.engine == ENG_HOLLOW || t.engine == ENG_BLOOD || t.engine == ENG_DDDD || t.engine == ENG_JUNI ? 3 : t.engine == ENG_MIXTUR || t.engine == ENG_ARC ? 8 : t.engine == ENG_BLOT || t.engine == ENG_OUTATIME ? 9 : t.engine == ENG_AETHER ? 10 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_LOUNGE || t.engine == ENG_FELT ? 4 : (t.engine == ENG_SID || t.engine == ENG_VAPORA || t.engine == ENG_PARALLAX ? 5 : (t.engine == ENG_MONOLIT ? 6 : (t.engine == ENG_SUPERSAW ? 7 : 0)))))); }
+    static int pageMode(const Track& t) { return t.engine == ENG_GIN ? 11 : (t.engine == ENG_WAVETABLE || t.engine == ENG_OXBOW) && t.alt ? 1 : (t.engine == ENG_PEW ? 2 : (t.engine == ENG_ELG || t.engine == ENG_BRASS || t.engine == ENG_HOLLOW || t.engine == ENG_BLOOD || t.engine == ENG_DDDD || t.engine == ENG_JUNI ? 3 : t.engine == ENG_MIXTUR || t.engine == ENG_ARC ? 8 : t.engine == ENG_BLOT || t.engine == ENG_OUTATIME ? 9 : t.engine == ENG_AETHER ? 10 : (t.engine == ENG_EVA || t.engine == ENG_MBIRA || t.engine == ENG_REACTOR || t.engine == ENG_OXBOW || t.engine == ENG_LOUNGE || t.engine == ENG_FELT || t.engine == ENG_GRAND ? 4 : (t.engine == ENG_SID || t.engine == ENG_VAPORA || t.engine == ENG_PARALLAX ? 5 : (t.engine == ENG_MONOLIT ? 6 : (t.engine == ENG_SUPERSAW ? 7 : 0)))))); }
     int pageCount(int pm) const { return pm == 11 ? 11 : pm == 1 ? 10 : pm == 3 ? 3 : pm == 4 ? 6 : pm == 5 ? 7 : pm == 7 ? 9 : pm == 8 ? 5 : pm == 9 ? 4 : 8; }
     RelEncoder stepMx_[4];  // MIXTUR: undertony A..D krokowo (OFF, 1..24)
     RelEncoder stepVp_[3];  // VAPORA + L3: CHARACTER, INTERVAL, SUN krokowo
@@ -122,6 +123,7 @@ private:
     ParallaxScreen px_;
     LoungeScreen lg_;
     FeltScreen ft_;
+    GrandScreen gs_;
     RelEncoder stepGin_[4];      // GIN: zabki enkoderow oryginalu
     int ginSel_ = 0;              // GIN: wybrany dzwiek zestawu
     uint32_t ginHitsSeen_ = 0;

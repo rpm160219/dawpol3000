@@ -25,6 +25,7 @@
 #include "ui/parallax_screen.h"
 #include "ui/lounge_screen.h"
 #include "ui/felt_screen.h"
+#include "ui/grand_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +46,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 29;
+static const int NENG = 30;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -131,6 +132,9 @@ static const EngineInfo kEngines[NENG] = {
     {"FELT", "FELT PIANO",
      {"OUR OWN MODELLED PIANO, NO SAMPLES:", "UP TO 3 STIFF STRINGS PER NOTE, A", "FELT HAMMER, SOUNDBOARD AND THE", "QUIET NOISES OF THE ACTION. FELT =",
       "SOFTER, DARKER HAMMER. CORDA = UNA", "CORDA TO TRE CORDE. DECAY, NOISE.", "AMP ENV, MOD ENV AND TWO LFOS."}},
+    {"GRAND", "CONCERT PIANO",
+     {"OUR OWN LEAN PHYSICAL GRAND: A FELT", "HAMMER COLLIDING WITH 1-3 STIFF", "STRINGS SPLIT AT THE STRIKE POINT,", "A SHARED BRIDGE (TWO-STAGE DECAY),",
+      "BASS GROWL AND A SOUNDBOARD. HAMMER,", "STRIKE, DECAY, LID. L3: UNISON,", "GROWL, BOARD. ENVELOPES, 2 LFO."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
 };
@@ -161,11 +165,11 @@ static int engStep(int idx, int d) {
 }
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 28 : t.engine == ENG_FELT ? 27 : t.engine == ENG_LOUNGE ? 26 : t.engine == ENG_PARALLAX ? 25 : t.engine == ENG_GIN ? 24 : t.engine == ENG_OUTATIME ? 23 : t.engine == ENG_JUNI ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine == ENG_SAW ? 29 : t.engine == ENG_GRAND ? 28 : t.engine == ENG_FELT ? 27 : t.engine == ENG_LOUNGE ? 26 : t.engine == ENG_PARALLAX ? 25 : t.engine == ENG_GIN ? 24 : t.engine == ENG_OUTATIME ? 23 : t.engine == ENG_JUNI ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 28 ? ENG_SAW : idx == 27 ? ENG_FELT : idx == 26 ? ENG_LOUNGE : idx == 25 ? ENG_PARALLAX : idx == 24 ? ENG_GIN : idx == 23 ? ENG_OUTATIME : idx == 22 ? ENG_JUNI : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx == 29 ? ENG_SAW : idx == 28 ? ENG_GRAND : idx == 27 ? ENG_FELT : idx == 26 ? ENG_LOUNGE : idx == 25 ? ENG_PARALLAX : idx == 24 ? ENG_GIN : idx == 23 ? ENG_OUTATIME : idx == 22 ? ENG_JUNI : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) {  // nowy silnik: domyslne galki i strona 2 (np. SUPERSAW: filtr otwarty)
         engineDefaultKnobs(e, t.knob);
         engineDefaultPush(e, t.push);
@@ -361,6 +365,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 25) drawParallaxIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 26) drawLoungeIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 27) drawFeltIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 28) drawGrandIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)
         if (kEngines[engSel_].lines[l][0])
@@ -375,6 +380,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 20) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP, MOD ENV, LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 15 || engSel_ == 16 || engSel_ == 17 || engSel_ == 21 || engSel_ == 22) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  AMP ENV ONLY", 7, 1.f, pal::dim);
     else if (engSel_ == 19) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  TILT, MOD ENV, 2 LFO", 7, 1.f, pal::dim);
+    else if (engSel_ == 28) drawText(c, 280, 408, "PHYSICAL MODEL, NO SAMPLES  -  ENVELOPES, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 27) drawText(c, 280, 408, "PHYSICAL MODEL, NO SAMPLES  -  ENVELOPES, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 26) drawText(c, 280, 408, "PHYSICAL MODELS, NO SAMPLES  -  ENVELOPES, 2 LFO", 7, 1.f, pal::dim);
     else if (engSel_ == 25) drawText(c, 280, 408, "6 VOICES  -  2X OVERSAMPLED  -  ADSR, FILTER ENV, MOD ENV, 2 LFO", 7, 1.f, pal::dim);

@@ -8,6 +8,7 @@
 #include "synth/parallax_dsp.h"
 #include "synth/lounge_dsp.h"
 #include "synth/felt_dsp.h"
+#include "synth/grand_dsp.h"
 #include "gfx/font.h"
 #include "gfx/icons.h"
 #include "ui/app.h"
@@ -146,6 +147,8 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                     if (pos > 0) t.movDiv = (uint8_t)(pos - 1);
                     changed = true;
                 }
+            } else if (t.engine == ENG_GRAND && alt_) {  // GRAND + L3: UNISON, GROWL, BOARD
+                if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_FELT && alt_) {  // FELT + L3: DETUNE, WORN, BODY
                 if (i < 3) knob(t.push[i]);
             } else if (t.engine == ENG_OUTATIME && alt_) {  // OUTATIME + L3: SPREAD, TONE, FLUX
@@ -378,7 +381,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         }
         case K_MENV: {  // A D S R (L3: S -> DEST, R -> AMOUNT)
             if (alt_ && i == 2) {
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT || t.engine == ENG_GRAND ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepMDest_.steps(ax, dt, 4.f);
                 if (st) { t.menvDest = (uint8_t)(((t.menvDest % nd) + st % nd + nd) % nd); changed = true; }
                 break;
@@ -427,7 +430,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
                 if (st) { L.shape = (uint8_t)((L.shape + st % LFO_SHAPES + LFO_SHAPES) % LFO_SHAPES); changed = true; }
             } else if (i == 3) {
                 // w trybie oryginalnym tylko cele oryginalu (WAVE..VOL); w rozszerzonym wszystkie
-                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
+                int nd = ext ? LFO_DESTS : (t.engine == ENG_SUPERSAW ? DEST_W2 + 1 : (t.engine == ENG_MIXTUR || t.engine == ENG_AETHER || t.engine == ENG_ARC || t.engine == ENG_FELT || t.engine == ENG_GRAND ? DEST_P1 + 1 : DEST_W1));  // MIXTUR: + F1, F2, RES  // SUPERSAW: + CUT, RES
                 int st = stepDest_[l].steps(ax, dt, 4.f);
                 if (st) { L.dest = (uint8_t)(((L.dest % nd) + st % nd + nd) % nd); changed = true; }
             }
@@ -470,6 +473,12 @@ void SynthView::render(Canvas& c) {
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k == K_PRESETS) {
         renderPresets(c);
+    } else if (t.engine == ENG_GRAND) {
+        int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
+        if (e && e->wtActive(track_) > 0)
+            for (int i = 0; i < 4; i++) shown[i] = e->wtModKnob(track_, i);
+        const int16_t words[8] = {shown[0], shown[1], shown[2], shown[3], 0, t.push[0], t.push[1], t.push[2]};
+        gs_.draw(c, words, e ? e->grandCore(track_) : nullptr, dt_);
     } else if (t.engine == ENG_FELT) {
         int16_t shown[4] = {t.knob[0], t.knob[1], t.knob[2], t.knob[3]};
         if (e && e->wtActive(track_) > 0)
@@ -655,6 +664,7 @@ void SynthView::render(Canvas& c) {
         hint = sy ? "SYNC TO BPM   L3 = FREE" : "FREE   L3 = SYNC TO BPM";
         if (sy) hc = pal::blue;
     }
+    if (k == K_SOUND && t.engine == ENG_GRAND) { hint = alt_ ? "L3 = HAMMER / STRIKE / DECAY / LID" : "L3 = UNISON / GROWL / BOARD"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_FELT) { hint = alt_ ? "L3 = FELT / CORDA / DECAY / NOISE" : "L3 = DETUNE / WORN / BODY"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_OUTATIME) { hint = alt_ ? "L3 = YEAR / SPEED / POWER / TRAIL" : "L3 = SPREAD / TONE / FLUX"; if (alt_) hc = pal::blue; }
     if (k == K_SOUND && t.engine == ENG_JUNI) { hint = alt_ ? "L3 = TONE / SHAPE / SWEEP / CHORUS" : "L3 = RESONANCE / HPF / PWM RATE"; if (alt_) hc = pal::blue; }
@@ -799,7 +809,18 @@ void SynthView::render(Canvas& c) {
         if (hz >= 1000) snprintf(out, 16, "%.1fK", hz / 1000.f);
         else snprintf(out, 16, "%.0f", hz);
     };
-    if (k == K_SOUND && t.engine == ENG_FELT) {  // FELT: filc, struny, wybrzmienie, mechanika
+    if (k == K_SOUND && t.engine == ENG_GRAND) {  // GRAND: mlotek, miejsce uderzenia, wybrzmienie, pokrywa
+        static const char* L[4] = {"HAMMER", "STRIKE", "DECAY", "LID"};
+        for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }
+        snprintf(v[1], 16, "1/%.1f", 1.f / grandStrikeRatio(t.knob[1]));
+        snprintf(v[2], 16, "%.1fS", grandDecaySeconds(t.knob[2]));
+        if (alt_) {
+            labels[0] = "UNISON"; snprintf(v[0], 16, "%.1fC", .15f + 4.f * (t.push[0] / 32767.f) * (t.push[0] / 32767.f)); pos[0] = t.push[0] / 32767.f;
+            labels[1] = "GROWL"; snprintf(v[1], 16, "%d", (t.push[1] * 100 + 16383) / 32767); pos[1] = t.push[1] / 32767.f;
+            labels[2] = "BOARD"; snprintf(v[2], 16, "%d", (t.push[2] * 100 + 16383) / 32767); pos[2] = t.push[2] / 32767.f;
+            labels[3] = ""; v[3][0] = 0; pos[3] = 0;
+        }
+    } else if (k == K_SOUND && t.engine == ENG_FELT) {  // FELT: filc, struny, wybrzmienie, mechanika
         static const char* L[4] = {"FELT", "CORDA", "DECAY", "NOISE"};
         static const char* C[3] = {"UNA", "DUE", "TRE"};
         for (int i = 0; i < 4; i++) { labels[i] = L[i]; pos[i] = t.knob[i] / 32767.f; snprintf(v[i], 16, "%d", (t.knob[i] * 100 + 16383) / 32767); }

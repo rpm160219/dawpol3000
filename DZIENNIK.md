@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 12:30 — silnik GRAND (własny model fortepianu koncertowego, wzorowany na FigBug/Piano)
+- **Co zmienione:** nowy silnik GRAND — `core/synth/grand_dsp.*` (falowody strun rozcięte w miejscu uderzenia, nieliniowy młotek z filcem w podkrokach, mostek sprzęgający struny, pomruk basu, płyta FDN, tłumiki, wyrównanie po klawiaturze), `core/ui/grand_screen.*` (przekrój fortepianu: pokrywa wg LID, pulpit, struny z falami z miejsca uderzenia, młotek z filcem wg HAMMER w miejscu STRIKE, kręgi płyty, tłumik, mostek), wpięcie (rodzaj 27), projekt, zapis (push), widok SYNTH (L3 UNISON / GROWL / BOARD, cele modulacji), karta ENGINE, 15 presetów, CMake, podglądy, testy. FigBug/Piano zmierzony na konsoli (38% rdzenia na nutę, 6 nut 160%) — dlatego własna, lżejsza wersja jego architektury.
+- Strój ±1 c do C6, dynamika ~20 dB (pp naprawdę cicho), poziom wyrównany po klawiaturze, bez przesterów i narastania. CPU na konsoli: 12,7% rdzenia (6 głosów × 3 struny). Testy bez zmian. Wgrane na konsolę.
+- **Następny krok:** Patryk testuje GRAND. **Od Patryka:** ocena brzmienia i ekranu.
+
 ## 2026-11-13 11:00 — FELT: koniec z narastaniem („samooscylacją”)
 - **Co zmienione:** `core/synth/felt_dsp.c` — przyczyna: impuls młotka miał składową stałą, która krążyła w pętli struny i rosła z kolejnymi uderzeniami (DC do 1/3 skali, sygnał po 19 s głośniejszy niż po 1 s), a rezonatory płyty miały w basie wzmocnienie ~40×. Poprawki: impuls bez składowej stałej, filtr DC na wyjściu, rezonatory pasmowe o stałym wzmocnieniu, ponowne uderzenie trzymanej nuty pochłania 40% drgań (młotek), uderzenie po puszczeniu klawisza zaczyna od wyciszonej struny (tłumik), łagodne kolano nigdy nie przekracza pełnej skali, poziom wyjścia dopasowany. Po co: zgłoszenie Patryka.
 - Testy: trzymane nuty 20 s w całym zakresie i skrajnych ustawieniach — brak DC, wzrost ograniczony do ~1,7× tylko przy ciągłym uderzaniu tej samej trzymanej nuty (jak w fortepianie); granie z puszczaniem + szybka modulacja DECAY / DETUNE / CORDA — bez narastania; bez przesterów; strój bez zmian. Wgrane na konsolę (razem z pokrywą na DECAY i modulacją DTUN / WORN / BODY).
