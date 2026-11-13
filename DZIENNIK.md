@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 11:00 — FELT: koniec z narastaniem („samooscylacją”)
+- **Co zmienione:** `core/synth/felt_dsp.c` — przyczyna: impuls młotka miał składową stałą, która krążyła w pętli struny i rosła z kolejnymi uderzeniami (DC do 1/3 skali, sygnał po 19 s głośniejszy niż po 1 s), a rezonatory płyty miały w basie wzmocnienie ~40×. Poprawki: impuls bez składowej stałej, filtr DC na wyjściu, rezonatory pasmowe o stałym wzmocnieniu, ponowne uderzenie trzymanej nuty pochłania 40% drgań (młotek), uderzenie po puszczeniu klawisza zaczyna od wyciszonej struny (tłumik), łagodne kolano nigdy nie przekracza pełnej skali, poziom wyjścia dopasowany. Po co: zgłoszenie Patryka.
+- Testy: trzymane nuty 20 s w całym zakresie i skrajnych ustawieniach — brak DC, wzrost ograniczony do ~1,7× tylko przy ciągłym uderzaniu tej samej trzymanej nuty (jak w fortepianie); granie z puszczaniem + szybka modulacja DECAY / DETUNE / CORDA — bez narastania; bez przesterów; strój bez zmian. Wgrane na konsolę (razem z pokrywą na DECAY i modulacją DTUN / WORN / BODY).
+- **Następny krok:** Patryk sprawdza FELT na konsoli. **Od Patryka:** czy problem zniknął.
+
 ## 2026-11-13 10:20 — FELT: DECAY otwiera pokrywę, LFO / MOD ENV na DETUNE, WORN, BODY
 - **Co zmienione:** `core/ui/felt_screen.cpp` — kąt pokrywy zależy od DECAY (krótko = prawie zamknięta, długo = otwarta na podpórce; LFO na DECAY ją porusza); `core/synth/wavetable_synth.cpp`, `core/ui/synth_view.cpp`, `core/seq/project.cpp` — cele modulacji DTUN / WORN / BODY (LFO 1, LFO 2, MOD ENV) dla strony 2 FELT. Po co: prośba Patryka.
 - **Następny krok:** Patryk testuje. **Od Patryka:** ocena.

@@ -10,7 +10,7 @@
 #define ELEN 1024
 
 typedef struct { float buf[SLEN]; int w; float lp, a1x, a1y, a2x, a2y; } Str;
-typedef struct { float b0, a1, a2, y1, y2; } Res;
+typedef struct { float b0, a1, a2, x1, x2, y1, y2; } Res;  /* pasmowy RBJ: stale 0 dB w szczycie */
 
 typedef struct {
     Str s[3];
@@ -21,7 +21,7 @@ typedef struct {
     int note;
     int strike, held, released;
     int damped;               /* tlumik na strunach (klawisz puszczony) */
-    float level, last, out1;
+    float level, last, out1, dcx, dcy;  /* filtr DC na wyjsciu */
     uint32_t rng;
 } FtVoice;
 
@@ -63,9 +63,9 @@ static float apDelay(float a, float w) {  /* H = (a + z^-1) / (1 + a z^-1) */
     return d;
 }
 
-static void resSet(Res* r, float f, float q, float fs) {  /* rezonator 2-biegunowy (wzmocnienie ~1 w szczycie) */
-    const float w = 6.2831853f * f / fs, rr = expf(-w / (2.f * q));
-    r->a1 = 2.f * rr * cosf(w); r->a2 = -rr * rr; r->b0 = (1.f - rr * rr) * .5f;
+static void resSet(Res* r, float f, float q, float fs) {  /* pasmowy (RBJ, 0 dB w szczycie) — bez dudnienia w basie */
+    const float w = 6.2831853f * f / fs, al = sinf(w) / (2.f * q), n = 1.f / (1.f + al);
+    r->b0 = al * n; r->a1 = 2.f * cosf(w) * n; r->a2 = -(1.f - al) * n;
 }
 
 void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knobs, uint32_t inc, float rate, int vel) {
@@ -95,6 +95,14 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
     const float ap = -.12f - .25f * (f0 > 400.f ? 1.f : f0 / 400.f);  /* sztywnosc: wieksza niealikwotowosc w gorze */
     if (v->strike) {  /* uderzenie mlotka: impuls kontaktu + grzebien miejsca uderzenia + mechanika */
         v->strike = 0;
+        {  /* ponowne uderzenie: mlotek pochlania czesc drgan (trzymana nuta), po puszczeniu tlumik juz je wygasil */
+            const float keep = v->damped ? 0.f : .6f;
+            for (int k = 0; k < 3; k++) {
+                Str* st = &v->s[k];
+                if (keep == 0.f) { memset(st->buf, 0, sizeof st->buf); st->lp = st->a1x = st->a1y = st->a2x = st->a2y = 0; }
+                else for (int i = 0; i < SLEN; i++) st->buf[i] *= keep;
+            }
+        }
         const float tc = (.0004f + .003f * felt) * (1.4f - .75f * vv) * fs;  /* czas kontaktu (probki) */
         const float tmax = .45f * fs / f0 * (1.f + felt);  /* w gorze mlotek dotyka krocej (ulamek okresu) */
         const float tcl = tc < tmax ? tc : tmax;
@@ -112,6 +120,12 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
             lp += (x * x - lp) * k; lp2 += (lp - lp2) * k;
             v->exc[i] += lp2 * A;
             if (i + beta < ELEN) v->exc[i + beta] -= lp2 * A * .8f;
+        }
+        {  /* bez skladowej stalej: inaczej DC krazy w petli struny i narasta z kolejnymi uderzeniami */
+            float sum = 0;
+            for (int i = 0; i < len; i++) sum += v->exc[i];
+            const float m = sum / (float)len;
+            for (int i = 0; i < len; i++) v->exc[i] -= m;
         }
         v->ePos = 0; v->eLen = len;
         v->thump = noise * (.15f + .25f * vv);       /* stuk klawisza */
@@ -132,7 +146,7 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
         v->swish = noise * (.05f + .08f * felt) * vv;  /* szelest filcu */
         v->thPh = 0;
         v->damped = 0;
-        for (int bb = 0; bb < 6; bb++) { v->body[bb].y1 = v->body[bb].y2 = 0; }
+
     }
     if (v->released) { v->released = 0; v->damp = noise * .12f; v->damped = 1; }
     static const float bf[6] = {92.f, 185.f, 330.f, 610.f, 1150.f, 2400.f}, bq[6] = {3.5f, 4.f, 5.f, 5.f, 4.f, 3.f};
@@ -179,11 +193,13 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
         float body = 0;
         for (int bb = 0; bb < 6; bb++) {
             Res* r = &v->body[bb];
-            const float o = r->b0 * (bridge + kin * 3.f) + r->a1 * r->y1 + r->a2 * r->y2;
+            const float xin = bridge + kin * 3.f;
+            const float o = r->b0 * (xin - r->x2) + r->a1 * r->y1 + r->a2 * r->y2;
+            r->x2 = r->x1; r->x1 = xin;
             r->y2 = r->y1; r->y1 = o;
             body += o;
         }
-        float o = bridge * .85f + body * (.15f + .45f * bodyK) + kin * .3f;
+        float o = bridge * .85f + body * (.6f + 1.6f * bodyK) + kin * .3f;
         /* mechanika */
         if (v->thump > 1e-5f) {
             v->thLp += (rnd(&v->rng) - v->thLp) * thK;
@@ -202,9 +218,13 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
             o += v->dampLp * v->damp;
             v->damp *= .998f;
         }
-        {  /* lagodne kolano powyzej 1,5 (ok. -5 dB pod pelna skala): kolejne uderzenia w brzmiace struny */
+        {  /* filtr DC (~8 Hz) */
+            const float yd = o - v->dcx + .999f * v->dcy;
+            v->dcx = o; v->dcy = yd; o = yd;
+        }
+        {  /* lagodne kolano od 1,15, asymptota 1,6 (= pelna skala po * 20000): najglosniejsze uderzenia nie przesterowuja */
             const float ao = o < 0 ? -o : o;
-            if (ao > 1.5f) { const float e = ao - 1.5f, k = 1.5f + e / (1.f + e); o = o < 0 ? -k : k; }
+            if (ao > 1.15f) { const float e = ao - 1.15f, k = 1.15f + e / (1.f + e / .45f); o = o < 0 ? -k : k; }
         }
         v->out1 = o;
         y[i] = o;
@@ -213,7 +233,7 @@ void feltRender(struct FeltCore* p, int voice, int16_t* out, const int16_t* knob
     }
     float prev = v->last;
     for (int i = 0; i < n; i++) {
-        const float a = (prev + y[i]) * .5f * 11500.f, bq2 = y[i] * 11500.f;
+        const float a = (prev + y[i]) * .5f * 20000.f, bq2 = y[i] * 20000.f;
         out[2 * i] = (int16_t)(a > 32767.f ? 32767 : (a < -32767.f ? -32767 : a));
         out[2 * i + 1] = (int16_t)(bq2 > 32767.f ? 32767 : (bq2 < -32767.f ? -32767 : bq2));
         prev = y[i];
