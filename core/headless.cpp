@@ -6,6 +6,7 @@
 #include "gfx/canvas.h"
 #include "io/image_io.h"
 #include "ui/app.h"
+#include "ui/linea_screen.h"
 #include "ui/test_screen.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -442,6 +443,31 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
+    } else if (!strncmp(screen, "linea", 5)) {  // linea, lineatvf, lineacommon, lineabanks, lineaimport, lineaengine
+        if (!strcmp(screen, "lineaengine")) {
+            app.arrange.setCursor(1, 2);
+            tap(app, B_SELECT);
+            tap(app, B_R2);
+            for (int i = 0; i < 32; i++) tap(app, B_UP);
+            for (int i = 0; i < 9; i++) tap(app, B_DOWN);  // LINEA (alfabetycznie)
+        } else {
+            app.openPresets("out/presets_demo");
+            Track& tr = app.project().tracks[1];
+            tr.engine = ENG_LINEA;
+            tr.lineaSet = false;
+            lineaEnsure(tr);
+            if (getenv("LINEA_SLOT")) lineaLoadPatch(tr, 0, atoi(getenv("LINEA_SLOT")));
+            app.markDirty();
+            app.openSynth(1);
+            idle(app);
+            const int pg = !strcmp(screen, "lineacommon") ? 1 : !strcmp(screen, "lineatvf") ? 3 : (!strcmp(screen, "lineabanks") || !strcmp(screen, "lineaimport")) ? 7 : 0;
+            for (int i = 0; i < pg; i++) tap(app, B_SELECT);
+            if (!strcmp(screen, "lineaimport")) { tap(app, B_LEFT); for (int i = 0; i < 30; i++) tap(app, B_DOWN); tap(app, B_RIGHT); }
+            InputState in;
+            if (pg == 0) { in.btn[B_A] = true; in.btn[B_X] = true; }
+            app.update(in, 0.016f);
+            for (int i = 0; i < 40; i++) { for (int k = 0; k < 4; k++) eng.process(buf, 256); app.update(in, 0.016f); }
+        }
     } else if (!strncmp(screen, "velour", 6)) {  // velour, velourphaser, velourbrass, velourengine
         if (!strcmp(screen, "velourengine")) {
             app.arrange.setCursor(1, 2);
@@ -854,6 +880,14 @@ int headlessWav(const char* path, float seconds, const char* song) {
     else if (song && !strcmp(song, "synthwave")) app.loadDemoSynthwave();
     else if (song && !strcmp(song, "synthwavemix")) app.loadDemoSynthwave(true);
     else if (song && !strcmp(song, "synthwavefx")) app.loadDemoSynthwave(true, true);
+    else if (song && (!strcmp(song, "lineatest") || !strcmp(song, "lineapad"))) {  // SYNTHWAVE: pad na LINEA
+        app.loadDemoSynthwave();
+        Track& t = app.project().tracks[3];
+        t.engine = ENG_LINEA; t.lineaSet = false; lineaEnsure(t);
+        if (getenv("LINEA_SLOT")) lineaLoadPatch(t, 0, atoi(getenv("LINEA_SLOT")));
+        if (!strcmp(song, "lineapad")) t.solo = true;
+        app.markDirty(); app.update(InputState(), 0.016f);
+    }
     else if (song && (!strcmp(song, "velourtest") || !strcmp(song, "velourpad") || !strcmp(song, "junipad"))) {  // SYNTHWAVE: pad na VELOUR (test glosnosci i CPU); *pad = solo padu
         app.loadDemoSynthwave();
         Track& t = app.project().tracks[3];

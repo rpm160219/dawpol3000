@@ -35,7 +35,8 @@ void AudioEngine::applyProject() {
             eng_[i] = e;
             sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
         }
-        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : e == ENG_JUNI ? 21 : e == ENG_OUTATIME ? 22 : e == ENG_GIN ? 23 : e == ENG_PARALLAX ? 24 : e == ENG_LOUNGE ? 25 : e == ENG_FELT ? 26 : e == ENG_GRAND ? 27 : e == ENG_VELOUR ? 28 : 0);
+        wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : e == ENG_JUNI ? 21 : e == ENG_OUTATIME ? 22 : e == ENG_GIN ? 23 : e == ENG_PARALLAX ? 24 : e == ENG_LOUNGE ? 25 : e == ENG_FELT ? 26 : e == ENG_GRAND ? 27 : e == ENG_VELOUR ? 28 : e == ENG_LINEA ? 29 : 0);
+        if (e == ENG_LINEA && t.lineaSet) wt_[i].setLinea(t.linea, t.lineaId, t.lineaCut, t.lineaRes);  // LINEA: patch D-50 sciezki
         if (e == ENG_VELOUR) {  // VELOUR: 26 parametrow (program FULL STRINGS, gdy nieustawione)
             int16_t d[VELOUR_PARAMS];
             if (!t.velourSet) velourProgramWords(2, d);

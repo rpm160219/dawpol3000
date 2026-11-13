@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-15 10:00 — Nowy silnik LINEA (synteza LA, ROM-y D-50 Patryka)
+- **Co zmienione:** `third_party/pico_d50/` (silnik PicoFaceD5 Michi71, nagłówki C++, bez zmian; tabela próbek wygenerowana z publicznego JSON — bez audio), `core/synth/linea_dsp.*` (ROM-y z karty `roms/linea`: rozpoznanie po CRC32, składanie zdublowanych zrzutów, dekodowanie PCM w C++; silnik 32 kHz → 48 kHz FIR 2:3; limit głosów jak D-50; CUTOFF/RES jako przesunięcie), `core/io/linea_banks.*` (banki SysEx D-50: import z `roms/linea` i `sysex/`, banki w `presets/linea/banks`, zapis USER jako DT1), `core/ui/linea_screen.*` (generatywna konstelacja PLAY, LCD w stylu D-50, ilustracja), `core/ui/synth_linea.cpp` (strony PLAY / COMMON / WG / TVF / TVA / P-ENV+LFO / EFFECTS / BANKS), projekt / zapis (linia `lnea` z patchem), silnik audio (rodzaj 29), okno TRACK, test `tools/test_linea.sh`.
+- Dekoder PCM i parser SysEx zgodne bit w bit ze skryptami autora (262 144 próbek, 64 patche); zapis/odczyt banku zgodny.
+- ROM-y i FactoryPatches.syx tylko lokalnie (`roms/linea`, poza gitem). Konsola niedostępna przy wgrywaniu (timeout SSH).
+- **Następny krok:** wgrać na konsolę (program + ROM-y do `/userdata/dawpol3000/roms/linea`) i zmierzyć CPU. **Od Patryka:** włączyć konsolę i Wi-Fi.
+
 ## 2026-11-14 18:00 — Nowy silnik VELOUR (string ensemble)
 - **Co zmienione:** `third_party/pico_solina/` (oryginał PicoFaceSM Michi71 — emulacja ARP Solina ze schematów; DSP ze string-machine), poprawki DAW-POL: poziom każdego rejestru i odczyt klawiatury; `core/synth/velour_dsp.*` (opakowanie, 48 kHz natywnie), `core/synth/wavetable_synth.*` (rodzaj 28: cała klawiatura naraz, stereo z ensemble, +14 dB za oryginałem), `core/audio/engine.*`, `core/seq/project.*` (ENG_VELOUR, 26 parametrów `velr`), `core/io/*` (zapis/odczyt, presety: 8 programów oryginału + 16 własnych, limit słów w linii 192), `core/ui/dialogs.cpp` (karta ENGINE), `core/ui/velour_screen.*` (scena orkiestry), `core/ui/synth_velour.cpp` (strony STRINGS / BRASS / SWELL / ENSEMBLE / PHASER / VOICING / PRESETS), test `tools/test_velour.sh`.
 - Zgodność bit w bit z oryginałem (8 programów, 0 różnic). Konsola: SYNTHWAVE z VELOUR zamiast JUNI ~26% rdzenia.

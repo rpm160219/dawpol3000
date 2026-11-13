@@ -36,6 +36,7 @@ const char* engineName(int e) {
     case ENG_FELT: return "FELT";
     case ENG_GRAND: return "GRAND";
     case ENG_VELOUR: return "VELOUR";
+    case ENG_LINEA: return "LINEA";
     default: return "?";
     }
 }

@@ -12,6 +12,7 @@
 #pragma once
 #include "synth/gin_dsp.h"
 #include "synth/velour_dsp.h"
+#include "synth/linea_dsp.h"
 #include <atomic>
 #include <stdint.h>
 #include "synth/note_sink.h"
@@ -67,6 +68,8 @@ public:
     const ::FeltCore* felt() const { return flt_; }
     const ::GrandCore* grand() const { return grd_; }
     const ::VelourCore* velour() const { return vel_; }
+    const ::LineaCore* linea() const { return lin_; }
+    void setLinea(const uint8_t* p, uint32_t id, int cut, int res) { LineaPerf f; f.cut = cut; f.res = res; lineaSetPatch(lin_, p, id, f); }  // watek audio
     void setVelour(const int16_t* p) { velourSetParams(vel_, p); }  // VELOUR: 26 parametrow (watek audio)
     void setGin(int kit, const GinSound* s);  // GIN: zestaw sciezki (przygotowuje zmienione dzwieki)
     void setTilt(float p, float v, float s) { tilt_[0] = p; tilt_[1] = v; tilt_[2] = s; }  // AETHER: wirtualny czujnik
@@ -157,6 +160,8 @@ private:
     void renderGin(float* out, int n);
     ::VelourCore* vel_ = nullptr;  // VELOUR: cala klawiatura tej sciezki (oryginal PicoFaceSM)
     void renderVelour(float* out, int n);
+    ::LineaCore* lin_ = nullptr;  // LINEA: silnik LA tej sciezki (oryginal PicoFaceD5)
+    void renderLinea(float* out, int n);
     ::OutatimeCore* ota_ = nullptr;  // OUTATIME: glosy tej sciezki (C)
     ::JuniCore* jun_ = nullptr;  // JUNI: stan silnika tej sciezki (C)
     ::DdddCore* ddd_ = nullptr;  // DDDD: cala sciana tej sciezki (C)

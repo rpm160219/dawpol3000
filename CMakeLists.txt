@@ -21,7 +21,7 @@ add_library(dpcore STATIC
   core/seq/pattern.cpp core/seq/project.cpp core/seq/demo_song.cpp core/seq/sequencer.cpp
   core/audio/engine.cpp core/audio/mixer.cpp core/fx/fx_registry.cpp
   core/ui/test_screen.cpp core/ui/piano_roll.cpp core/ui/arrange.cpp core/ui/dialogs.cpp
-  core/ui/widgets.cpp core/ui/app.cpp core/ui/project_view.cpp core/ui/synth_view.cpp core/ui/wavetable_screen.cpp core/ui/taffy_screen.cpp core/ui/pew_screen.cpp core/ui/elg_screen.cpp core/ui/eva_screen.cpp core/ui/mbira_screen.cpp core/ui/reactor_screen.cpp core/ui/oxbow_screen.cpp core/ui/sid_screen.cpp core/ui/monolit_screen.cpp core/ui/vapora_screen.cpp core/ui/vapora_screen_c.c core/ui/supersaw_screen.cpp core/ui/mixtur_screen.cpp core/ui/brass_screen.cpp core/ui/hollowsaint_screen.cpp core/ui/bloodmoon_screen.cpp core/ui/blot_screen.cpp core/ui/aether_screen.cpp core/ui/aether_screen_c.c core/ui/arc_screen.cpp core/ui/arc_screen_c.c core/ui/dddd_screen.cpp core/ui/dddd_screen_c.c core/ui/juni_screen.cpp core/ui/juni_screen_c.c core/ui/outatime_screen.cpp core/ui/parallax_screen.cpp core/ui/lounge_screen.cpp core/ui/felt_screen.cpp core/ui/grand_screen.cpp core/ui/velour_screen.cpp core/ui/synth_velour.cpp core/ui/mixer_view.cpp core/ui/outatime_screen_c.c core/ui/splash.cpp
+  core/ui/widgets.cpp core/ui/app.cpp core/ui/project_view.cpp core/ui/synth_view.cpp core/ui/wavetable_screen.cpp core/ui/taffy_screen.cpp core/ui/pew_screen.cpp core/ui/elg_screen.cpp core/ui/eva_screen.cpp core/ui/mbira_screen.cpp core/ui/reactor_screen.cpp core/ui/oxbow_screen.cpp core/ui/sid_screen.cpp core/ui/monolit_screen.cpp core/ui/vapora_screen.cpp core/ui/vapora_screen_c.c core/ui/supersaw_screen.cpp core/ui/mixtur_screen.cpp core/ui/brass_screen.cpp core/ui/hollowsaint_screen.cpp core/ui/bloodmoon_screen.cpp core/ui/blot_screen.cpp core/ui/aether_screen.cpp core/ui/aether_screen_c.c core/ui/arc_screen.cpp core/ui/arc_screen_c.c core/ui/dddd_screen.cpp core/ui/dddd_screen_c.c core/ui/juni_screen.cpp core/ui/juni_screen_c.c core/ui/outatime_screen.cpp core/ui/parallax_screen.cpp core/ui/lounge_screen.cpp core/ui/felt_screen.cpp core/ui/grand_screen.cpp core/ui/velour_screen.cpp core/ui/synth_velour.cpp core/ui/linea_screen.cpp core/ui/synth_linea.cpp core/ui/mixer_view.cpp core/ui/outatime_screen_c.c core/ui/splash.cpp
   core/headless.cpp)
 target_include_directories(dpcore PUBLIC core)
 
@@ -60,7 +60,11 @@ set(SOLINA_V ${CMAKE_SOURCE_DIR}/third_party/pico_solina)
 set(VELOUR_SOURCES core/synth/velour_dsp.cpp ${SOLINA_V}/src/solina.cpp ${SOLINA_V}/src/solina_ensemble.cpp ${SOLINA_V}/src/solina_keyboard.cpp
   ${SOLINA_V}/src/solina_phaser.cpp ${SOLINA_V}/src/solina_registers.cpp)
 target_sources(dpcore PRIVATE ${VELOUR_SOURCES})
-set_source_files_properties(${VELOUR_SOURCES} PROPERTIES COMPILE_OPTIONS "-DSOLINA_HOST_BUILD;-I${SOLINA_V}/include")  # wlasny DSP: szybka matematyka
+set_source_files_properties(${VELOUR_SOURCES} PROPERTIES COMPILE_OPTIONS "-DSOLINA_HOST_BUILD;-I${SOLINA_V}/include")
+# LINEA: silnik PicoFaceD5 (Michi71, GPL-3.0-or-later; naglowki C++), ROM-y wczytywane z karty
+set(D50_V ${CMAKE_SOURCE_DIR}/third_party/pico_d50)
+target_sources(dpcore PRIVATE core/synth/linea_dsp.cpp core/io/linea_banks.cpp)
+set_source_files_properties(core/synth/linea_dsp.cpp PROPERTIES COMPILE_OPTIONS "-I${D50_V}/include;-O2")  # wlasny DSP: szybka matematyka
 set_source_files_properties(third_party/op1r_sid/sid_dsp.c PROPERTIES COMPILE_OPTIONS "-Wno-misleading-indentation")  # oryginal 1:1
 
 add_executable(dawpol3000 platform/main_sdl.cpp)

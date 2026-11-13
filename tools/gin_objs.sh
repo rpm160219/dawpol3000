@@ -14,3 +14,5 @@ gcc -std=gnu11 -O3 -ffast-math -Icore -c core/synth/grand_dsp.c -o "$T/gin_grand
 for s in core/synth/velour_dsp.cpp third_party/pico_solina/src/*.cpp; do
     g++ -std=c++17 -O2 -w -DSOLINA_HOST_BUILD -Icore -Ithird_party/pico_solina/include -c "$s" -o "$T/gin_vl_$(basename "$s" .cpp).o"
 done
+# LINEA (silnik PicoFaceD5, naglowki) — wavetable_synth.cpp go wola; ROM-y niepotrzebne do linkowania
+g++ -std=c++17 -O2 -w -Icore -Ithird_party/pico_d50/include -c core/synth/linea_dsp.cpp -o "$T/gin_linea.o"

@@ -8,6 +8,7 @@
 namespace dp {
 
 void App::init(AudioEngine* e) {
+    lineaRomLoad("roms/linea");  // LINEA: ROM-y D-50 z karty (dekodowane raz; brak = komunikat na ekranie silnika)
     eng_ = e;
     projectView.attach(this);
     arrange.attach(this);

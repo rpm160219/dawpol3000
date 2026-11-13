@@ -3,6 +3,7 @@
 #pragma once
 #include "synth/gin_dsp.h"
 #include "synth/velour_dsp.h"
+#include "synth/linea_dsp.h"
 #include <stdint.h>
 #include "seq/pattern.h"
 
@@ -14,7 +15,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_GIN, ENG_PARALLAX, ENG_LOUNGE, ENG_FELT, ENG_GRAND, ENG_VELOUR, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_GIN, ENG_PARALLAX, ENG_LOUNGE, ENG_FELT, ENG_GRAND, ENG_VELOUR, ENG_LINEA, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -148,6 +149,13 @@ struct Track {
     GinSound gin[GIN_KIT_SOUNDS];  // GIN: biezace dzwieki zestawu (konce A/B, MORPH, strona edycji)
     bool velourSet = false;  // VELOUR: parametry ustawione (inaczej program fabryczny FULL STRINGS)
     int16_t velour[VELOUR_PARAMS] = {};  // VELOUR: 26 parametrow oryginalu (slowa 0..32767; rejestry = poziomy)
+    // LINEA: biezacy patch D-50 (448 bajtow, z edycjami i wektorem), skad pochodzi (bank / slot), przesuniecia CUTOFF / RES
+    bool lineaSet = false;
+    uint8_t linea[LINEA_PATCH_BYTES] = {};
+    char lineaBank[24] = "";
+    int16_t lineaSlot = -1;
+    int8_t lineaCut = 0, lineaRes = 0;
+    uint32_t lineaId = 0;  // zmienia sie przy wczytaniu patcha (silnik: pelna konfiguracja); nie zapisywany
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
     // mikser kanalu: panorama -1..1, EQ, kompresor, 2 inserty, 6 wysylek AUX (po tlumiku)

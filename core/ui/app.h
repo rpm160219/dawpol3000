@@ -3,6 +3,7 @@
 #pragma once
 #include "audio/engine.h"
 #include "io/preset_store.h"
+#include "io/linea_banks.h"
 #include "io/project_store.h"
 #include "seq/project.h"
 #include "seq/undo_stack.h"
@@ -69,6 +70,7 @@ public:
         presetsFt_.init(root, "felt");
         presetsGd_.init(root, "grand");
         presetsVl_.init(root, "velour");
+        lineaBanks().init(root, "roms/linea", "sysex");  // LINEA: banki SysEx (presets/linea/banks)
     }
     bool isModified() const { return modified_; }
     bool isOwnSave(const char* name) const;  // czy ta nazwa to plik biezacego projektu
