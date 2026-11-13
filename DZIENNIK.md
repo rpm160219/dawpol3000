@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 15:30 — GRAND: bas bez „pierdzenia”
+- **Co zmienione:** `core/synth/grand_dsp.c` — przyczyny znalezione analizą widma dźwięków poniżej C4: (1) płyta rezonansowa z krótkimi liniami miała co ~60 Hz silne rezonanse dokładnie w zakresie 170–430 Hz (buczenie, nierówna podstawa od nuty do nuty) → długie linie 557–1307 próbek, krótszy zanik, filtr górnoprzepustowy na wejściu płyty, mniejszy udział; (2) jednakowa impedancja strun → ciężki młotek długo dociskał lekką strunę basową (6 ms, ciemne „pfff”) → impedancja wg rejestru (bas ~8, góra ~0,8), kontakt 2,5–4 ms; (3) stały biegun filtra strat gasił wysokie alikwoty w średnicy w ułamku sekundy → biegun dobierany do nuty (10. alikwot gaśnie ~3,5× szybciej niż podstawa); HAMMER zmienia teraz masę młotka (twardy = lżejszy, jaśniejszy), młotki lżejsze w górze; domyślny GROWL niższy; nowe wyrównanie poziomu. Po co: Patryk — „dźwięki poniżej C4 brzmią jak pierd”.
+- Pomiar: w basie alikwoty 2–6 na poziomie podstawy albo mocniejsze (jak w fortepianie), gładko od nuty do nuty; bez przesterów i narastania; etiuda czysto. CPU ~16,5 % rdzenia (6 głosów). Wgrane na konsolę.
+- **Następny krok:** Patryk słucha basu. Do dopracowania osobno: góra od C5 nadal ciemnawa.
+
 ## 2026-11-13 14:10 — GRAND: realistyczny bas
 - **Co zmienione:** `core/synth/grand_dsp.c` — niealikwotowość jak w fortepianie (B duże w skrajnym basie i w górze, najmniejsze przy C3–C4; filtry wszechprzepustowe dobierane do nuty bisekcją, aż 12. alikwot trafia w K·f0·√(1+BK²); bas do 8 filtrów), półka −7 dB poniżej ~90 Hz (płyta słabo oddaje podstawę basu), drewniane puknięcie młotka w płytę (mocniejsze w basie), pojedyncze struny basu bez dodatkowego szybkiego etapu wybrzmienia, nowe wyrównanie poziomu po klawiaturze. Po co: uwaga Patryka, że dolne dźwięki brzmią mało realistycznie.
 - Pomiar: A0 alikwot 12 +3,2 % (cel +4,3 %), A1 +3,1 % (cel +3,0 %), C2 +2,1 % (cel +2,0 %), C3 +1,5 % (cel +1,5 %) — wcześniej prawie 0. Poziom równy (±1 dB), bez przesterów i narastania, etiuda bez przesterów. CPU ~15 % rdzenia (6 głosów). Wgrane na konsolę.

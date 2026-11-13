@@ -146,7 +146,7 @@ void engineDefaultPush(int engine, int16_t p[3]) {
     p[0] = p[1] = p[2] = 0;
     if (engine == ENG_HOLLOW) { p[1] = 8192; p[2] = 21064; }
     if (engine == ENG_FELT) { p[0] = 6000; p[1] = 0; p[2] = 16384; }
-    if (engine == ENG_GRAND) { p[0] = 7000; p[1] = 10000; p[2] = 16384; }  // GRAND: UNISON, GROWL, BOARD  // FELT: DETUNE ~0,5 c, WORN 0, BODY 50 %  // plugin.json page2_defaults: FOLLOW, wiek 25 %, 1/8
+    if (engine == ENG_GRAND) { p[0] = 7000; p[1] = 6000; p[2] = 16384; }  // GRAND: UNISON, GROWL, BOARD  // FELT: DETUNE ~0,5 c, WORN 0, BODY 50 %  // plugin.json page2_defaults: FOLLOW, wiek 25 %, 1/8
 }
 
 float glideSeconds(const Track& t, float bpm) {
