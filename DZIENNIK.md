@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 07:30 — FET: prasa — tor sygnału interfejs → prasa → głośnik
+- **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — bez podłogi i obciążników, prasa na całą wysokość; po lewej interfejs audio (gałka INPUT kręci się w stronę oporu, diody poziomu) połączony kablem z prasą — grubość kabla = RATIO, przy ALL gruby i czerwony; po prawej głośnik na wyjściu (rośnie z OUTPUT, membrana drga), połączony kablem; manometr GR na koronie; usunięte kreski przy poduszce; wartości INPUT i OUTPUT tą samą czcionką, RATIO jako napis pod INPUT.
+- **Następny krok:** Patryk ocenia na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-14 06:50 — FET: prasa narysowana od nowa
 - **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — scena 320×160 w stylu ekranów op1r: warsztat z podłogą w perspektywie, głośnik z falami (poziom wejścia), prasa z koroną, nitami, gwintowanymi kolumnami i cylindrem; tłok zgniata poduszkę z falą w kolorze ścieżki — szczyty fali ścinają się o płytę (kompresja); RATIO = obciążniki na koronie (4 / 8 / 12 / 20, nieaktywne jako cienie; ALL = wszystkie na czerwono + pasy ostrzegawcze); wąż z płynącym olejem (kierunek = atak / zwalnianie), pompa, manometr GR; narożniki INPUT / OUTPUT / ATTACK / RELEASE jak w ekranach op1r. `core/headless.cpp` — makieta `mixerfet8`.
 - **Następny krok:** Patryk ocenia prasę na konsoli. **Od Patryka:** „git / nie git”.

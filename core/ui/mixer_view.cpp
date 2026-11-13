@@ -718,12 +718,11 @@ void MixerView::renderComp(Canvas& c) {
     encoderBar(c, L, vals, pos);
 }
 
-// FET — widok prasy (scena 320x160 jak ekrany op1r, skala 2): warsztat z podloga w perspektywie. Z lewej glosnik
-// wysyla fale dzwieku (wielkosc = poziom wejscia), na srodku prasa hydrauliczna: tlok schodzi o tyle, ile kompresor
-// sciszna, i zgniata poduszke z przebiegiem fali w kolorze sciezki — szczyty fali scinaja sie o plyte (to jest
-// kompresja). RATIO = obciazniki na koronie prasy (4 / 8 / 12 / 20 — kolejne krazki; ALL = wszystkie na czerwono i pasy
-// ostrzegawcze). Z prawej pompa: olej plynie waz w strone cylindra przy ataku i z powrotem przy zwalnianiu, manometr = GR.
-// Narozniki jak w ekranach op1r: INPUT (niebieski, duza liczba), OUTPUT (zielony), ATTACK (bialy), RELEASE (czerwony).
+// FET — widok prasy (scena 320x160 jak ekrany op1r, skala 2). Tor sygnalu od lewej: interfejs audio (galka = INPUT,
+// kreci sie w strone oporu, diody = poziom) -> kabel do prasy (grubosc = RATIO 4 / 8 / 12 / 20; ALL = gruby i czerwony)
+// -> prasa hydrauliczna na cala wysokosc: tlok schodzi o tyle, ile kompresor sciszna, i zgniata poduszke z fala w
+// kolorze sciezki (szczyty fali scinaja sie o plyte = kompresja), manometr na koronie = GR -> kabel -> glosnik na
+// wyjsciu (wielkosc = OUTPUT, membrana drga z poziomem). Narozniki: INPUT, OUTPUT, ATTACK, RELEASE.
 namespace {
 struct Scn {
     Canvas& c; float ox, oy, s;
@@ -747,98 +746,104 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     const float dt = dt_ > 0.f && dt_ < .1f ? dt_ : .016f;
     const Scn S{c, 0.f, 52.f, 2.f};
     const int ri = (int)(q[4] * 4.999f);
-    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86), floorc = rgb(22, 52, 78), steelc = rgb(110, 140, 196);
-    const Color oil = pal::yellow, hose = rgb(150, 110, 66);
+    const Color frame = rgb(196, 200, 212), dimf = rgb(70, 74, 86), steelc = rgb(110, 140, 196);
     // ---- ruch ----
-    const float BASE = 120.f, REST = 70.f, LOW = 104.f;  // dol glowicy tloka: spoczynek / maks. zgniecenie (do gornej krawedzi podstawy)
+    const float BASE = 134.f, REST = 62.f, LOW = 118.f;  // dol glowicy tloka: spoczynek / maks. zgniecenie
     const float g = on ? clampf(gr / 20.f, 0.f, 1.f) : 0.f;
     const float target = REST + (LOW - REST) * powf(g, .7f);
     const float prev = press_ < REST ? REST : press_;
     press_ = prev + (target - prev) * (1.f - expf(-dt / .03f));
-    pressV_ = (press_ - prev) / dt;  // jednostki sceny / s (+ = w dol)
+    pressV_ = (press_ - prev) / dt;
     const float ldb = 20.f * log10f(level > 1e-5f ? level : 1e-5f);
     const float ln = clampf((ldb + 40.f) / 40.f, 0.f, 1.f);
     lvl_ += (ln - lvl_) * (1.f - expf(-dt / .06f));
     wob_ += dt * (1.2f + 2.5f * lvl_);
-    static float flow = 0.f, gaugeA = 0.f;
-    flow += dt * (.15f + clampf(pressV_ * .02f, -1.5f, 1.5f));
+    static float gaugeA = 0.f;
     gaugeA += (g - gaugeA) * (1.f - expf(-dt / .08f));
+    char b[24];
 
-    // ---- podloga w perspektywie (kropki i linie zbiegajace sie) ----
-    for (int k = -4; k <= 4; k++) S.ln(160 + k * 6.f, 124, 160 + k * 26.f, 160, .6f, floorc);
-    static const float FY[5] = {124, 128, 134, 142, 153};
-    for (float y : FY) { const float hw = 24.f + 80.f * (y - 124.f) / 36.f + (y == 124.f ? 70.f : 0.f); S.ln(160 - hw, y, 160 + hw, y, y == 124.f ? 1.f : .6f, y == 124.f ? rgb(40, 80, 110) : floorc); }
-
-    // ---- glosnik z falami (wejscie) ----
-    S.rr(36, 84, 30, 38, 3, 1.f, frame);
-    S.ci(51, 96, 8, 1.f, frame);
-    S.ci(51, 96, 3.5f, 1.f, frame);
-    S.ci(51, 113, 4, 1.f, dimf);
-    S.ln(40, 122, 40, 124, 1.f, frame); S.ln(62, 122, 62, 124, 1.f, frame);
-    for (int k = 0; k < 4; k++) {
-        float ph = fmodf(wob_ * .9f + k * .25f, 1.f);
-        const float r = 10.f + ph * 34.f, a = (1.f - ph) * (.25f + .75f * lvl_) * (on ? 1.f : .5f);
-        const Color wc = rgb((uint8_t)(64 * a), (uint8_t)(128 * a), (uint8_t)(255 * a));
-        S.ar(68, 96, r, -.45f, .45f, 1.f, wc);
-    }
-
-    // ---- prasa: podstawa, kolumny z nakretkami, korona ----
-    S.frr(104, BASE, 112, 4, 1, rgb(10, 10, 12));
-    S.rr(104, BASE, 112, 4, 1, 1.f, frame);
-    S.ln(108, 124, 108, 127, 1.2f, frame); S.ln(212, 124, 212, 127, 1.2f, frame);
-    for (int k = 0; k < 2; k++) {
-        const float x = k ? 196.f : 118.f;
-        S.ln(x, 42, x, BASE, 1.f, frame);
-        S.ln(x + 6, 42, x + 6, BASE, 1.f, frame);
-        for (float yy = 50; yy < BASE - 4; yy += 6) S.ln(x + 1.5f, yy, x + 4.5f, yy + 2.5f, .5f, dimf);  // gwint
-        S.rr(x - 2, BASE - 5, 10, 5, 1, 1.f, frame);  // nakretki
-        S.rr(x - 2, 40, 10, 5, 1, 1.f, frame);
-    }
-    // korona (luk) z nitami
-    float cr[2 * 33];
+    // ---- kable (pod spodem): interfejs -> prasa (RATIO), prasa -> glosnik ----
+    const float cw = ri == 4 ? 5.f : 1.f + ri * .9f;
+    const Color cc = !on ? dimf : (ri == 4 ? pal::red : rgb(150, 150, 160));
+    float cb[2 * 33];
     for (int i = 0; i <= 32; i++) {
-        const float u = i / 32.f, x = 106 + 108 * u;
-        cr[2 * i] = x; cr[2 * i + 1] = 30 - 6.f * sinf(u * 3.14159265f);
+        const float t = i / 32.f;
+        cb[2 * i] = bez(66, 84, 86, 96, t);
+        cb[2 * i + 1] = bez(112, 112, 128, 128, t);
     }
-    S.poly(cr, 33, 1.f, frame);
-    S.ln(106, 30, 106, 40, 1.f, frame); S.ln(214, 30, 214, 40, 1.f, frame);
-    S.ln(106, 40, 214, 40, 1.f, frame);
-    for (int k = 0; k < 7; k++) S.fci(114 + k * 15.3f, 35, .9f, frame);
-    if (on && ri == 4)  // ALL: pasy ostrzegawcze na koronie
-        for (int k = 0; k < 9; k++) S.ln(118 + k * 10.f, 39, 124 + k * 10.f, 31.5f - 4.f * sinf((121 + k * 10.f - 106) / 108.f * 3.14159265f) + 2, 1.f, pal::red);
+    S.poly(cb, 33, cw, cc);
+    const float spk = .7f + .6f * q[1];  // glosnik rosnie z OUTPUT
+    const float sx = 268.f, sw = 34.f * spk, sh = 46.f * spk, sy = 130.f - sh;
+    for (int i = 0; i <= 32; i++) {
+        const float t = i / 32.f;
+        cb[2 * i] = bez(224, 236, 240, sx - sw * .5f, t);
+        cb[2 * i + 1] = bez(128, 128, sy + sh * .75f, sy + sh * .75f, t);
+    }
+    S.poly(cb, 33, 1.4f, on ? rgb(150, 150, 160) : dimf);
 
-    // ---- obciazniki = RATIO ----
-    static const char* RL[4] = {"4", "8", "12", "20"};
-    for (int k = 0; k < 4; k++) {
-        const float w = 56.f - k * 9.f, y = 18.f - k * 5.5f;
-        const bool act = k <= ri;
-        const Color pc = !act ? rgb(44, 46, 54) : (ri == 4 ? pal::red : pal::white);
-        if (act) S.frr(160 - w / 2, y, w, 4.5f, 2.2f, rgb(16, 16, 20));
-        S.rr(160 - w / 2, y, w, 4.5f, 2.2f, act ? 1.f : .7f, pc);
-        S.tx(160 + w / 2 + 3, y - .2f, RL[k], 6, 1.f, act ? pc : rgb(60, 62, 70));
+    // ---- interfejs audio (wejscie) ----
+    S.frr(14, 96, 52, 34, 4, rgb(10, 10, 12));
+    S.rr(14, 96, 52, 34, 4, 1.f, frame);
+    S.tx(19, 99, "IN", 6, 1.f, pal::blue);
+    const float kx = 30, ky = 117, ka = 3.14159265f * (.75f + 1.5f * q[0]);  // galka INPUT: w prawo do oporu
+    S.ar(kx, ky, 10, 3.14159265f * .75f, 3.14159265f * 2.25f, .6f, dimf);
+    S.ar(kx, ky, 10, 3.14159265f * .75f, ka, 1.2f, pal::blue);
+    S.ci(kx, ky, 7, 1.f, frame);
+    S.ln(kx + 2.f * cosf(ka), ky + 2.f * sinf(ka), kx + 6.f * cosf(ka), ky + 6.f * sinf(ka), 1.2f, pal::white);
+    for (int k = 0; k < 5; k++) {  // diody poziomu
+        const bool lit = on && lvl_ > (k + .5f) / 5.f;
+        S.fci(48 + (k % 3) * 0.f, 126 - k * 5.f, 1.4f, lit ? (k >= 4 ? pal::red : (k >= 3 ? pal::yellow : pal::green)) : rgb(40, 40, 46));
     }
-    S.tx(160 - 34, 4, ri == 4 ? "ALL" : "RATIO", 6, 1.f, ri == 4 && on ? pal::red : pal::dim, ALIGN_RIGHT);
+    S.ci(59, 112, 2.6f, .8f, frame);  // gniazdo kabla
+    S.ln(14, 130, 14, 132, 1.f, frame); S.ln(66, 130, 66, 132, 1.f, frame);
+
+    // ---- prasa: podstawa, kolumny z gwintem, korona z manometrem ----
+    S.frr(94, BASE, 132, 5, 1.5f, rgb(10, 10, 12));
+    S.rr(94, BASE, 132, 5, 1.5f, 1.f, frame);
+    S.ln(98, 139, 98, 143, 1.2f, frame); S.ln(222, 139, 222, 143, 1.2f, frame);
+    for (int k = 0; k < 2; k++) {
+        const float x = k ? 206.f : 107.f;
+        S.ln(x, 34, x, BASE, 1.f, frame);
+        S.ln(x + 7, 34, x + 7, BASE, 1.f, frame);
+        for (float yy = 42; yy < BASE - 6; yy += 6) S.ln(x + 1.5f, yy, x + 5.5f, yy + 2.5f, .5f, dimf);
+        S.rr(x - 2, BASE - 6, 11, 6, 1, 1.f, frame);
+        S.rr(x - 2, 32, 11, 6, 1, 1.f, frame);
+    }
+    float cr[2 * 33];
+    for (int i = 0; i <= 32; i++) { const float u = i / 32.f; cr[2 * i] = 94 + 132 * u; cr[2 * i + 1] = 18 - 9.f * sinf(u * 3.14159265f); }
+    S.poly(cr, 33, 1.f, frame);
+    S.ln(94, 18, 94, 32, 1.f, frame); S.ln(226, 18, 226, 32, 1.f, frame);
+    S.ln(94, 32, 226, 32, 1.f, frame);
+    for (int k = 0; k < 2; k++) { S.fci(102 + k * 9.f, 26, .9f, frame); S.fci(218 - k * 9.f, 26, .9f, frame); }
+    const float gx = 160, gy = 19, gr2 = 9;  // manometr GR
+    S.frr(gx - gr2, gy - gr2, gr2 * 2, gr2 * 2, gr2, rgb(8, 8, 10));
+    S.ci(gx, gy, gr2, 1.f, frame);
+    for (int k = 0; k <= 10; k++) {
+        const float a = 3.14159265f * (.75f + 1.5f * k / 10.f);
+        S.ln(gx + (gr2 - 2.5f) * cosf(a), gy + (gr2 - 2.5f) * sinf(a), gx + (gr2 - 1) * cosf(a), gy + (gr2 - 1) * sinf(a), .5f, k >= 8 ? pal::red : frame);
+    }
+    const float na = 3.14159265f * (.75f + 1.5f * gaugeA);
+    S.ln(gx, gy, gx + (gr2 - 2.f) * cosf(na), gy + (gr2 - 2.f) * sinf(na), .9f, pal::red);
+    S.fci(gx, gy, 1.f, frame);
+    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
+    S.tx(173, 21, b, 6, 1.f, pal::red);
 
     // ---- cylinder, tloczysko, glowica ----
-    S.frr(146, 40, 28, 20, 2, rgb(10, 12, 18));
-    S.rr(146, 40, 28, 20, 2, 1.f, steelc);
-    for (int k = 1; k < 5; k++) S.ln(147, 40 + k * 4.f, 173, 40 + k * 4.f, .5f, rgb(50, 66, 100));
-    const float headTop = press_ - 6.f;
-    S.ln(156, 60, 156, headTop, 1.f, steelc);
-    S.ln(164, 60, 164, headTop, 1.f, steelc);
-    S.ln(158.5f, 62, 158.5f, headTop, .5f, rgb(70, 90, 130));  // odblask
-    S.frr(126, headTop, 68, 6, 1.5f, rgb(20, 20, 26));
-    S.rr(126, headTop, 68, 6, 1.5f, 1.f, frame);
-    for (int k = 0; k < 8; k++) S.ln(131 + k * 8.f, headTop + 6, 135 + k * 8.f, headTop + 6, .7f, dimf);
-    if (pressV_ > 25.f) {  // smugi przy szybkim zejsciu (krotki ATTACK)
-        const float l = clampf(pressV_ * .05f, 3.f, 12.f);
-        for (int k = 0; k < 4; k++) S.ln(134 + k * 17.f, headTop - 3 - l, 134 + k * 17.f, headTop - 3, .7f, rgb(120, 120, 130));
-    }
+    S.frr(142, 34, 36, 22, 2, rgb(10, 12, 18));
+    S.rr(142, 34, 36, 22, 2, 1.f, steelc);
+    for (int k = 1; k < 5; k++) S.ln(143, 34 + k * 4.4f, 177, 34 + k * 4.4f, .5f, rgb(50, 66, 100));
+    const float headTop = press_ - 7.f;
+    S.ln(155, 56, 155, headTop, 1.f, steelc);
+    S.ln(165, 56, 165, headTop, 1.f, steelc);
+    S.ln(158, 58, 158, headTop, .5f, rgb(70, 90, 130));
+    S.frr(118, headTop, 84, 7, 1.5f, rgb(20, 20, 26));
+    S.rr(118, headTop, 84, 7, 1.5f, 1.f, frame);
+    for (int k = 0; k < 10; k++) S.ln(123 + k * 8.f, headTop + 7, 127 + k * 8.f, headTop + 7, .7f, dimf);
 
     // ---- poduszka z fala: objetosc zachowana, szczyty fali scinane o plyte ----
-    const float nat = 30.f + 10.f * lvl_ * (on ? 1.f : .6f);  // naturalna wysokosc (= szerokosc 1.6x)
+    const float nat = 38.f + 12.f * lvl_ * (on ? 1.f : .6f);
     const float gap = BASE - press_;
-    const float H = fminf(nat, gap - .5f), W = fminf(nat * nat * 1.6f / H, 74.f);
+    const float H = fminf(nat, gap - .5f), W = fminf(nat * nat * 1.5f / H, 90.f);
     const float bcx = 160.f, bcy = BASE - H * .5f;
     float pp[2 * 65];
     for (int i = 0; i <= 64; i++) {
@@ -851,7 +856,7 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
     S.poly(pp, 65, 1.2f, on ? col : dimc(col, .5f), true);
     const float lim = H * .5f - 2.5f;
     for (int k = 0; k < 3; k++) {
-        const float A = (5.f + 16.f * lvl_) * (1.f - k * .28f);
+        const float A = (6.f + 18.f * lvl_) * (1.f - k * .28f);
         const float x0 = bcx - W * .5f + 4, x1 = bcx + W * .5f - 4;
         float wv[2 * 49];
         for (int i = 0; i <= 48; i++) {
@@ -862,62 +867,33 @@ void MixerView::renderFetPress(Canvas& c, const float* q, float gr, float level,
         }
         S.poly(wv, 49, k ? .7f : 1.f, k ? dimc(col, .6f - .18f * k) : col);
     }
-    if (on && g > .02f) {  // przy sciskaniu: kreski parcia po bokach poduszki
-        for (int sd = -1; sd <= 1; sd += 2)
-            for (int k = 0; k < 3; k++) {
-                const float x = bcx + sd * (W * .5f + 3 + k * 2.5f), yy = bcy + (k - 1) * H * .25f;
-                S.ln(x, yy - 1.5f, x + sd * (2.f + 5.f * g), yy - 1.5f, .7f, ri == 4 ? (k == 1 ? pal::yellow : pal::red) : rgb(140, 140, 150));
-            }
-    }
 
-    // ---- waz z olejem, pompa, manometr (GR) ----
-    float hz[2 * 41];
-    const float P[4][2] = {{214, 35}, {240, 32}, {252, 62}, {246, 104}};
-    for (int i = 0; i <= 40; i++) { const float t = i / 40.f; hz[2 * i] = bez(P[0][0], P[1][0], P[2][0], P[3][0], t); hz[2 * i + 1] = bez(P[0][1], P[1][1], P[2][1], P[3][1], t); }
-    S.poly(hz, 41, 3.2f, hose);
-    S.poly(hz, 41, 1.6f, rgb(14, 12, 10));
-    for (int k = 0; k < 10; k++) {  // olej: kreski plyna w strone cylindra (atak) albo z powrotem
-        float t = fmodf(k / 10.f - flow, 1.f);
-        if (t < 0) t += 1.f;
-        t = 1.f - t;
-        const float t2 = fminf(t + .03f, 1.f);
-        S.ln(bez(P[0][0], P[1][0], P[2][0], P[3][0], t), bez(P[0][1], P[1][1], P[2][1], P[3][1], t), bez(P[0][0], P[1][0], P[2][0], P[3][0], t2),
-             bez(P[0][1], P[1][1], P[2][1], P[3][1], t2), .9f, on ? oil : dimf);
-    }
-    S.rr(234, 104, 26, 18, 2, 1.f, frame);  // pompa z silnikiem
-    S.ci(247, 113, 5, 1.f, frame);
-    const float ma = wob_ * 3.f;
-    S.ln(247, 113, 247 + 4.f * cosf(ma), 113 + 4.f * sinf(ma), .8f, frame);
-    S.ln(238, 122, 238, 124, 1.f, frame); S.ln(256, 122, 256, 124, 1.f, frame);
-    // manometr na odgalezieniu weza
-    S.ln(249.5f, 70, 266, 70, 1.f, hose);
-    const float gx = 278, gy = 70, gr2 = 12;
-    S.frr(gx - gr2, gy - gr2, gr2 * 2, gr2 * 2, gr2, rgb(8, 8, 10));
-    S.ci(gx, gy, gr2, 1.f, frame);
-    for (int k = 0; k <= 10; k++) {
-        const float a = 3.14159265f * (.75f + 1.5f * k / 10.f);
-        S.ln(gx + (gr2 - 3) * cosf(a), gy + (gr2 - 3) * sinf(a), gx + (gr2 - 1) * cosf(a), gy + (gr2 - 1) * sinf(a), .6f, k >= 8 ? pal::red : frame);
-    }
-    const float na = 3.14159265f * (.75f + 1.5f * gaugeA);
-    S.ln(gx, gy, gx + (gr2 - 2.5f) * cosf(na), gy + (gr2 - 2.5f) * sinf(na), 1.f, pal::red);
-    S.fci(gx, gy, 1.2f, frame);
-    char b[24];
-    snprintf(b, sizeof b, "GR -%.0f", on ? gr : 0.f);
-    S.tx(gx, gy + gr2 + 3, b, 6, 1.f, pal::red, ALIGN_CENTER);
+    // ---- glosnik (wyjscie): wielkosc = OUTPUT, membrana drga z poziomem ----
+    S.frr(sx - sw * .5f, sy, sw, sh, 3, rgb(10, 10, 12));
+    S.rr(sx - sw * .5f, sy, sw, sh, 3, 1.f, frame);
+    const float pulse = 1.f + (on ? .08f * lvl_ * sinf(wob_ * 9.f) : 0.f);
+    S.ci(sx, sy + sh * .33f, sw * .3f * pulse, 1.f, frame);
+    S.ci(sx, sy + sh * .33f, sw * .12f, 1.f, frame);
+    S.ci(sx, sy + sh * .76f, sw * .14f, 1.f, dimf);
+    S.ln(sx - sw * .5f + 3, 130, sx - sw * .5f + 3, 132, 1.f, frame); S.ln(sx + sw * .5f - 3, 130, sx + sw * .5f - 3, 132, 1.f, frame);
+    S.tx(sx + sw * .5f - 3, sy + 2, "OUT", 6, 1.f, pal::green, ALIGN_RIGHT);
 
-    // ---- narozniki (jak ekrany op1r) ----
+    // ---- narozniki ----
     S.tx(14, 8, "INPUT", 9, 1.2f, pal::blue);
-    snprintf(b, sizeof b, "%+.0f", -10.f + 40.f * q[0]);
-    S.tx(14, 18, b, 24, 1.6f, pal::white);
+    snprintf(b, sizeof b, "%+.0f DB", -10.f + 40.f * q[0]);
+    S.tx(14, 18, b, 9, 1.2f, pal::white);
     S.tx(306, 8, "OUTPUT", 9, 1.2f, pal::green, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%+.0f DB", -30.f + 40.f * q[1]);
     S.tx(306, 18, b, 9, 1.2f, pal::white, ALIGN_RIGHT);
-    S.tx(14, 136, "ATTACK", 9, 1.2f, pal::white);
+    static const char* RN[5] = {"4:1", "8:1", "12:1", "20:1", "ALL"};
+    S.tx(14, 30, "RATIO", 7, 1.f, pal::dim);
+    S.tx(14, 39, RN[ri], 9, 1.2f, ri == 4 && on ? pal::red : pal::white);
+    S.tx(14, 140, "ATTACK", 9, 1.2f, pal::white);
     snprintf(b, sizeof b, "%.0f US", (.0008f * (1.f - q[2]) + .00002f * q[2]) * 1e6f);
-    S.tx(14, 145, b, 7, 1.f, pal::dim);
-    S.tx(306, 136, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
+    S.tx(14, 150, b, 7, 1.f, pal::dim);
+    S.tx(306, 140, "RELEASE", 9, 1.2f, pal::red, ALIGN_RIGHT);
     snprintf(b, sizeof b, "%.0f MS", (1.1f * (1.f - q[3]) + .05f * q[3]) * 1000.f);
-    S.tx(306, 145, b, 7, 1.f, pal::dim, ALIGN_RIGHT);
+    S.tx(306, 150, b, 7, 1.f, pal::dim, ALIGN_RIGHT);
     if (!on) {
         c.fillRect(0, 52, 640, 320, rgb(0, 0, 0, 160));
         c.fillRoundRect(250, 196, 140, 32, 16, rgb(60, 20, 20));
