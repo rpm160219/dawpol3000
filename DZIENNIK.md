@@ -1,5 +1,9 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 06:50 — FET: prasa narysowana od nowa
+- **Co zmienione:** `core/ui/mixer_view.cpp` (`renderFetPress`) — scena 320×160 w stylu ekranów op1r: warsztat z podłogą w perspektywie, głośnik z falami (poziom wejścia), prasa z koroną, nitami, gwintowanymi kolumnami i cylindrem; tłok zgniata poduszkę z falą w kolorze ścieżki — szczyty fali ścinają się o płytę (kompresja); RATIO = obciążniki na koronie (4 / 8 / 12 / 20, nieaktywne jako cienie; ALL = wszystkie na czerwono + pasy ostrzegawcze); wąż z płynącym olejem (kierunek = atak / zwalnianie), pompa, manometr GR; narożniki INPUT / OUTPUT / ATTACK / RELEASE jak w ekranach op1r. `core/headless.cpp` — makieta `mixerfet8`.
+- **Następny krok:** Patryk ocenia prasę na konsoli. **Od Patryka:** „git / nie git”.
+
 ## 2026-11-13 23:30 — MIKSER: widok prasy FET, BYPASS efektów, czarne tła
 - **Co zmienione:** `core/ui/mixer_view.*` — VU kanału na czarnym tle (z obrysem), kulki wskazówek neutralne (nie w kolorze kanału), „BUS COMP / OFF” wyśrodkowane w ramce; kompresory na czarnym tle, podpis „GAIN REDUCTION” w okienku miernika; FET ma nowy domyślny widok **prasy hydraulicznej** (płyta schodzi o ściszanie i zgniata kulę dźwięku w kolorze ścieżki, kula pulsuje z poziomem, smugi przy szybkim ataku, iskry przy ratio ALL, zegary INPUT i GAIN RED), stary panel pod L3; BYPASS efektów: w oknie efektu A (przyciemnienie + napis jak na OP-1), w mikserze B na insercie, czerwona kropka na pigułce. `core/seq/project.h`, `core/io/project_file.cpp` (bypass zapisywany: „1b”), `core/audio/mixer.*` (bypass omija efekt; poprawka: ogon insertów sprawdzał tylko 2 pierwsze sloty), `core/fx/fx_registry.cpp`, makiety `mixerfetadv`, `mixerbypass`.
 - Testy bit w bit OK.

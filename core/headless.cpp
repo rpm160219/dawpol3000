@@ -724,8 +724,9 @@ int headlessPng(const char* path, const char* screen) {
         if (!strcmp(screen, "mixereq")) { app.mixer.setCursor(2, MixerView::R_EQ); app.mixer.openWindow(MixerView::W_EQ); }
         if (!strcmp(screen, "mixeropto")) { app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
         if (!strcmp(screen, "mixervca")) { p.tracks[3].comp.type = COMP_VCA; app.markDirty(); app.mixer.setCursor(3, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP); }
-        if (!strcmp(screen, "mixerfet") || !strcmp(screen, "mixerfetadv")) {
-            p.tracks[0].comp.p[COMP_FET][0] = .75f; p.tracks[0].comp.p[COMP_FET][4] = 1.f; app.markDirty();  // DRUMS mocno: ratio ALL
+        if (!strcmp(screen, "mixerfet") || !strcmp(screen, "mixerfetadv") || !strcmp(screen, "mixerfet8")) {
+            const bool soft = !strcmp(screen, "mixerfet8");  // 8:1, umiarkowanie
+            p.tracks[0].comp.p[COMP_FET][0] = soft ? .55f : .75f; p.tracks[0].comp.p[COMP_FET][4] = soft ? .25f : 1.f; app.markDirty();  // DRUMS: ratio ALL / 8
             app.mixer.setCursor(0, MixerView::R_COMP); app.mixer.openWindow(MixerView::W_COMP);
             if (!strcmp(screen, "mixerfetadv")) tap(app, B_L3);
         }
