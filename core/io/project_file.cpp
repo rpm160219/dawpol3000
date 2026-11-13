@@ -76,6 +76,73 @@ bool parseGinSound(Track& t, char** tok, int n) {
     return true;
 }
 
+// ---- mikser: linie "mix" (po linii sciezki), "aux i ...", "bus ..." ----
+static void writeEq(FILE* f, const MixEq& e) {
+    fprintf(f, " eq %d %d %.2f %.2f %.2f %.1f %.1f %.1f %.3f %.3f %.3f %.2f", e.on, e.max, e.gain[0], e.gain[1], e.gain[2], e.freq[0],
+            e.freq[1], e.freq[2], e.q[0], e.q[1], e.q[2], e.out);
+}
+static void writeFx(FILE* f, const FxSlot& s) {
+    fprintf(f, " %d", s.fx);
+    for (int i = 0; i < 8; i++) fprintf(f, " %d", s.w[i]);
+}
+void writeMix(FILE* f, const Track& t) {
+    fprintf(f, "mix pan %.3f", t.pan);
+    writeEq(f, t.eq);
+    fprintf(f, " cmp %d %d", t.comp.on, t.comp.type);
+    for (int m = 0; m < COMP_TYPES; m++)
+        for (int i = 0; i < 5; i++) fprintf(f, " %.3f", t.comp.p[m][i]);
+    fprintf(f, " ins");
+    for (int k = 0; k < MIX_INSERTS; k++) writeFx(f, t.ins[k]);
+    fprintf(f, " snd");
+    for (int k = 0; k < MIX_AUX; k++) fprintf(f, " %.3f", t.send[k]);
+    fputc('\n', f);
+}
+static void writeMixGlobal(FILE* f, const Project& p) {
+    for (int a = 0; a < MIX_AUX; a++) {
+        fprintf(f, "aux %d %.3f fx", a, p.aux[a].level);
+        writeFx(f, p.aux[a].fx);
+        writeEq(f, p.aux[a].eq);
+        fputc('\n', f);
+    }
+    fprintf(f, "bus %d %.3f %d %d %d %.2f\n", p.bus.on, p.bus.thresh, p.bus.ratio, p.bus.attack, p.bus.release, p.bus.makeup);
+}
+static int parseEq(MixEq& e, char** tok, int n, int i) {  // tok[i] == "eq"
+    if (i + 12 >= n) return n;
+    e.on = atoi(tok[i + 1]) != 0; e.max = atoi(tok[i + 2]) != 0;
+    for (int k = 0; k < 3; k++) e.gain[k] = (float)atof(tok[i + 3 + k]);
+    for (int k = 0; k < 3; k++) e.freq[k] = (float)atof(tok[i + 6 + k]);
+    for (int k = 0; k < 3; k++) e.q[k] = (float)atof(tok[i + 9 + k]);
+    e.out = (float)atof(tok[i + 12]);
+    return i + 13;
+}
+static int parseFx(FxSlot& s, char** tok, int n, int i) {  // tok[i] = numer efektu
+    if (i + 8 >= n) return n;
+    const int fx = atoi(tok[i]);
+    s.fx = (uint8_t)(fx >= 0 && fx < FX_COUNT ? fx : FX_NONE);
+    for (int k = 0; k < 8; k++) s.w[k] = (int16_t)atoi(tok[i + 1 + k]);
+    return i + 9;
+}
+void parseMix(Track& t, char** tok, int n) {
+    for (int i = 1; i < n;) {
+        if (!strcmp(tok[i], "pan") && i + 1 < n) { t.pan = (float)atof(tok[i + 1]); i += 2; }
+        else if (!strcmp(tok[i], "eq")) i = parseEq(t.eq, tok, n, i);
+        else if (!strcmp(tok[i], "cmp") && i + 2 + COMP_TYPES * 5 < n) {
+            t.comp.on = atoi(tok[i + 1]) != 0;
+            const int ty = atoi(tok[i + 2]);
+            t.comp.type = (uint8_t)(ty >= 0 && ty < COMP_TYPES ? ty : 0);
+            for (int m = 0; m < COMP_TYPES; m++)
+                for (int k = 0; k < 5; k++) t.comp.p[m][k] = (float)atof(tok[i + 3 + m * 5 + k]);
+            i += 3 + COMP_TYPES * 5;
+        } else if (!strcmp(tok[i], "ins")) {
+            i++;
+            for (int k = 0; k < MIX_INSERTS && i < n; k++) i = parseFx(t.ins[k], tok, n, i);
+        } else if (!strcmp(tok[i], "snd") && i + MIX_AUX < n) {
+            for (int k = 0; k < MIX_AUX; k++) t.send[k] = (float)atof(tok[i + 1 + k]);
+            i += 1 + MIX_AUX;
+        } else i++;
+    }
+}
+
 bool saveProjectFile(const Project& p, const char* path) {
     char tmp[512];
     snprintf(tmp, sizeof tmp, "%s.tmp", path);
@@ -92,7 +159,9 @@ bool saveProjectFile(const Project& p, const char* path) {
         if (t.type == TRACK_MIDI) writeInstrument(f, t);
         fputc('\n', f);
         if (t.type == TRACK_MIDI) writeGinSounds(f, t);
+        writeMix(f, t);
     }
+    writeMixGlobal(f, p);
     fputc('\n', f);
     for (int i = 0; i < p.nPatterns; i++) {
         const Pattern& pt = p.patterns[i];
@@ -257,6 +326,20 @@ bool loadProjectFile(Project& out, const char* path, char* err, int errLen) {
             if ((v = kv(tok, n, 3, "solo"))) t.solo = atoi(v) != 0;
             if ((v = kv(tok, n, 3, "last"))) t.lastPattern = atoi(v);
             parseInstrument(t, tok, n, 3);
+        } else if (!strcmp(k, "mix") && p.nTracks > 0) {
+            parseMix(p.tracks[p.nTracks - 1], tok, n);
+        } else if (!strcmp(k, "aux") && n > 3) {
+            const int a = atoi(tok[1]);
+            if (a >= 0 && a < MIX_AUX) {
+                p.aux[a].level = (float)atof(tok[2]);
+                int i = 3;
+                if (i < n && !strcmp(tok[i], "fx")) i = parseFx(p.aux[a].fx, tok, n, i + 1);
+                if (i < n && !strcmp(tok[i], "eq")) parseEq(p.aux[a].eq, tok, n, i);
+            }
+        } else if (!strcmp(k, "bus") && n > 6) {
+            p.bus.on = atoi(tok[1]) != 0; p.bus.thresh = (float)atof(tok[2]);
+            p.bus.ratio = (uint8_t)(atoi(tok[3]) % 3); p.bus.attack = (uint8_t)(atoi(tok[4]) % 6); p.bus.release = (uint8_t)(atoi(tok[5]) % 5);
+            p.bus.makeup = (float)atof(tok[6]);
         } else if (!strcmp(k, "gins") && p.nTracks > 0) {
             parseGinSound(p.tracks[p.nTracks - 1], tok, n);
         } else if (!strcmp(k, "pattern") && n > 1 && p.nPatterns < MAX_PATTERNS) {

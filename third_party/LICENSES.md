@@ -28,3 +28,4 @@
 | `op1r_wavetable/` | https://github.com/pcppcp/op1r-src (`synth_sdk/plugins/wavetable`) | Hundekraft (kennel), op1r: pcppcp | GPL-3.0-or-later + dodatkowe pozwolenie dot. firmware OP-1 (`op1r_wavetable/LICENSE`, `NOTICE`) | Silnik WAVETABLE (DSP 1:1, ekran przeniesiony wg `wavetable_screen.c` / `gen_svg.py`) |
 
 Atrybucja ma się też pojawić na ekranie „about” (do zrobienia).
+| `op1r_fx/` | https://github.com/pcppcp/op1r-src (`synth_sdk/plugins/juni_chorus`, `synth_sdk/plugins/sister`, `op1_plugin.h`, `op1_l1.h`, `harness/op1_host.h`; op1r 68) | Hundekraft; op1r: pcppcp | GPL-3.0-or-later + pozwolenie OP-1 (`op1r_fx/LICENSE`, `NOTICE`) | Efekty miksera: JUNI CHORUS (insert), SISTER (AUX) — oryginalny kod w trybie OP1_HOST, wiele egzemplarzy |

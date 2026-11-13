@@ -8,6 +8,7 @@ void AudioEngine::init(float sr) {
     sr_ = sr;
     for (int i = 0; i < MAX_TRACKS; i++) { level_[i] = 0; levelOut_[i].store(0.f); }
     seq_.init(sr);
+    mixer_.init(sr);
     for (int i = 0; i < MAX_TRACKS; i++) {
         synth_[i].init(sr);
         wt_[i].init(sr);
@@ -22,9 +23,10 @@ void AudioEngine::applyProject() {
     seq_.setProject(&p);
     seq_.setTempo(p.bpm);
     for (int i = 0; i < MAX_TRACKS; i++) {
-        float v = i < p.nTracks ? p.tracks[i].volume : 0.f;
-        synth_[i].setVolume(v);
-        wt_[i].setVolume(v);
+        // glosnosc: tlumik miksera (syntezatory graja na 1.0)
+        synth_[i].setVolume(1.f);
+        wt_[i].setVolume(1.f);
+        mixer_.setGain(i, i < p.nTracks ? p.tracks[i].volume : 0.f);
         if (i >= p.nTracks) continue;
         const Track& t = p.tracks[i];
         uint8_t e = t.engine < ENG_COUNT ? t.engine : (uint8_t)ENG_WAVETABLE;
@@ -83,6 +85,8 @@ void AudioEngine::applyProject() {
                           t.lfo[l].dest, t.lfo[l].sync,
                           lfoDivBeats(t.lfo[l].div));
     }
+    nTracks_ = p.nTracks < MAX_TRACKS ? p.nTracks : MAX_TRACKS;
+    mixer_.apply(p);
     applyMutes();
     master_ = p.masterVol;
 }
@@ -93,8 +97,7 @@ void AudioEngine::applyMutes() {
     bool song = seq_.mode() == Sequencer::SONG;
     for (int i = 0; i < p.nTracks && i < MAX_TRACKS; i++) {
         float v = !song || p.audible(i) ? p.tracks[i].volume : 0.f;
-        synth_[i].setVolume(v);
-        wt_[i].setVolume(v);
+        mixer_.setGain(i, v);
     }
 }
 
@@ -111,31 +114,35 @@ void AudioEngine::process(float* out, int frames) {
         case EC_STOP: seq_.stop(sinks_); break;
         }
     }
-    int pos = 0;
-    while (pos < frames) {
-        int n = seq_.samplesToNextTick();
-        if (n > frames - pos) n = frames - pos;
-        const bool pl = seq_.playing();
-        const double bp = seq_.beatPos();
-        for (int i = 0; i < MAX_TRACKS; i++) {
-            synth_[i].render(out + pos * 2, n);
-            wt_[i].setTransport(pl, bp, seq_.tempo());
-            wt_[i].render(out + pos * 2, n);
+    // sciezki do wlasnych buforow (bloki do 256 ramek), potem mikser: kanaly -> AUX -> master
+    for (int done = 0; done < frames;) {
+        const int m = frames - done < 256 ? frames - done : 256;
+        float* trk[MAX_TRACKS];
+        bool act[MAX_TRACKS];
+        for (int i = 0; i < MAX_TRACKS; i++) { trk[i] = trkBuf_[i]; memset(trkBuf_[i], 0, sizeof(float) * 2 * m); }
+        int pos = 0;
+        while (pos < m) {
+            int n = seq_.samplesToNextTick();
+            if (n > m - pos) n = m - pos;
+            const bool pl = seq_.playing();
+            const double bp = seq_.beatPos();
+            for (int i = 0; i < MAX_TRACKS; i++) {
+                synth_[i].render(trk[i] + pos * 2, n);
+                wt_[i].setTransport(pl, bp, seq_.tempo());
+                wt_[i].render(trk[i] + pos * 2, n);
+            }
+            seq_.advance(n, sinks_);
+            pos += n;
         }
-        seq_.advance(n, sinks_);
-        pos += n;
-    }
-    // Master + lagodny ogranicznik (powyzej 0.8 miekko dobija do 1.0, zamiast trzeszczec)
-    for (int i = 0; i < frames * 2; i++) {
-        float x = out[i] * master_, a = fabsf(x);
-        if (a > 0.8f) x = copysignf(0.8f + 0.2f * tanhf((a - 0.8f) * 5.f), x);
-        out[i] = x;
+        for (int i = 0; i < MAX_TRACKS; i++) act[i] = wt_[i].activeVoices() > 0;
+        mixer_.process(trk, act, nTracks_, out + done * 2, m);
+        done += m;
     }
     // VU: szczyt bloku, opadanie ~24 dB/s
     float fall = powf(10.f, -24.f / 20.f * frames / sr_);
     for (int i = 0; i < MAX_TRACKS; i++) {
-        float pk = synth_[i].takePeak(), pw = wt_[i].takePeak();
-        if (pw > pk) pk = pw;
+        synth_[i].takePeak(); wt_[i].takePeak();
+        const float pk = mixer_.ch[i].peak.load(std::memory_order_relaxed);  // VU ARRANGE: kanal po tlumiku
         level_[i] = pk > level_[i] * fall ? pk : level_[i] * fall;
         levelOut_[i].store(level_[i], std::memory_order_relaxed);
     }

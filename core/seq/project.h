@@ -81,6 +81,33 @@ struct Lfo {
 enum PresetCat : uint8_t { CAT_BASS, CAT_LEAD, CAT_PAD, CAT_KEYS, CAT_PLUCK, CAT_BELL, CAT_FX, CAT_DRUMS, CAT_OTHER, PRESET_CATS };
 const char* presetCatName(int c);
 
+// ---- MIKSER ----
+static const int MIX_AUX = 6;      // szyny AUX (wysylki A..F)
+static const int MIX_INSERTS = 2;  // inserty na kanal
+enum FxId : uint8_t { FX_NONE, FX_JUNI_CHORUS, FX_SISTER, FX_COUNT };  // efekty (inserty i AUX)
+enum CompType : uint8_t { COMP_OPTO, COMP_VCA, COMP_FET, COMP_TYPES };  // modele kompresora kanalu (w stylu LA-2A, dbx 160, 1176)
+// EQ 3-pasmowy: LOW = polka niska, MID = dzwon, HIGH = polka wysoka; wzmocnienia w dB, czestotliwosci w Hz
+struct MixEq {
+    bool on = true, max = false;  // max: MAX EQ (szerszy zakres +-18 dB i lekkie nasycenie)
+    float gain[3] = {0.f, 0.f, 0.f};
+    float freq[3] = {100.f, 1000.f, 10000.f};
+    float q[3] = {.7f, 1.f, .7f};
+    float out = 0.f;  // dB
+    bool flat() const { return !max && gain[0] == 0.f && gain[1] == 0.f && gain[2] == 0.f && out == 0.f; }
+};
+// Kompresor kanalu: p[] 0..1, znaczenie wg modelu (zob. core/audio/mixer.cpp)
+//   OPTO: PEAK REDUCTION, GAIN, LIMIT (>= .5), MIX     VCA: THRESHOLD, RATIO, OUTPUT, OVEREASY (>= .5)
+//   FET: INPUT, OUTPUT, ATTACK, RELEASE, RATIO (5 krokow: 4 8 12 20 ALL)
+struct MixComp {
+    bool on = false;
+    uint8_t type = COMP_OPTO;
+    float p[COMP_TYPES][5] = {{.35f, .4f, 0.f, 1.f, 0.f}, {.6f, .3f, .5f, 1.f, 0.f}, {.4f, .5f, .5f, .5f, 0.f}};
+};
+struct FxSlot { uint8_t fx = FX_NONE; int16_t w[8] = {}; };  // efekt + slowa galek (0..3 strona 1, 5..7 strona 2, jak OP-1)
+struct AuxBus { FxSlot fx; MixEq eq; float level = .8f; };
+// Kompresor szyny master (w stylu SSL G): prog, ratio 2/4/10, atak 0,1..30 ms, release 0,1..1,2 s / AUTO, makeup
+struct BusComp { bool on = false; float thresh = .6f; uint8_t ratio = 1, attack = 3, release = 4; float makeup = 0.f; };
+
 struct Track {
     uint8_t type = TRACK_MIDI;
     uint8_t color = 0;       // indeks w pal::track (0..31)
@@ -119,6 +146,12 @@ struct Track {
     GinSound gin[GIN_KIT_SOUNDS];  // GIN: biezace dzwieki zestawu (konce A/B, MORPH, strona edycji)
     char preset[16] = "";  // nazwa ostatnio wczytanego/zapisanego presetu (tylko do wyswietlania)
     int lastPattern = -1;    // ostatnio uzyty pattern (A na pustym polu wstawia go)
+    // mikser kanalu: panorama -1..1, EQ, kompresor, 2 inserty, 6 wysylek AUX (po tlumiku)
+    float pan = 0.f;
+    MixEq eq;
+    MixComp comp;
+    FxSlot ins[MIX_INSERTS];
+    float send[MIX_AUX] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
 };
 
 struct Clip {
@@ -137,6 +170,8 @@ struct Project {
     int loopIn = 0, loopOut = 0;
     int nTracks = 0;
     Track tracks[MAX_TRACKS];
+    AuxBus aux[MIX_AUX];  // powroty AUX A..F
+    BusComp bus;          // kompresor szyny master
     int nPatterns = 0;
     Pattern patterns[MAX_PATTERNS];
     int nClips = 0;

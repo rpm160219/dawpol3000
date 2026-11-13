@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-13 19:00 — MIKSER, etap 1: tor dźwięku, dane, efekty
+- **Co zmienione:** `core/audio/mixer.*` (nowy: kanał = 2 inserty → EQ 3-pasmowy RBJ z Q i częstotliwością, MAX EQ → kompresor OPTO / VCA / FET → tłumik + panorama → master; 6 wysyłek po tłumiku na szyny AUX z efektem, EQ i poziomem; master: kompresor szyny w stylu SSL G → głośność → ogranicznik; gniazda efektów z konwersją 48 ↔ 44,1 kHz), `core/audio/engine.*` (ścieżki renderowane do własnych buforów blokami ≤256, potem mikser; głośność i wyciszanie na tłumiku), `core/seq/project.h` (dane: pan, EQ, kompresor, inserty, wysyłki na ścieżce; AUX A–F i kompresor szyny w projekcie), `core/io/project_file.*` (linie `mix`, `aux`, `bus`), `core/fx/*` + `third_party/op1r_fx/` (JUNI CHORUS i SISTER z op1r jako wiele egzemplarzy), test `tools/test_fx.sh`.
+- Efekty zgodne bit w bit z oryginałem (2 egzemplarze na zmianę); utwory brzmią jak przedtem (RMS bez zmian). Ekran miksera — następny etap.
+- **Następny krok:** ekran MIXER (5 kanałów na stronę + master, powroty AUX), okna EQ / kompresora / efektów.
+
 ## 2026-11-13 17:20 — GRAND: przywrócona poprzednia wersja
 - **Co zmienione:** cofnięta zmiana „jasność jak w fortepianie” (szelest filcu w ataku, półka od 260 Hz, wyrównanie wg RMS, kompensacja HAMMER) — `core/synth/grand_dsp.c`, opisy. GRAND jest znów w wersji „bas bez buczenia” (płyta z długimi liniami, impedancja strun wg rejestru, strata alikwotów dobierana do nuty). Po co: Patryk — „brzmi źle, przywróć ostatnią wersję”.
 - **Następny krok:** Patryk decyduje, czy dalej szukamy realistycznego basu GRAND (inną drogą) czy zostawiamy. **Od Patryka:** decyzja.

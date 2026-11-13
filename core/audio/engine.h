@@ -21,6 +21,7 @@ static inline void dp_oxbowView(const OxbowCore* p, OxbowView* v) { oxbowView(p,
 static inline void dp_reactorView(const ReactorCore* p, ReactorView* v) { reactorView(p, v); }
 static inline void dp_mbiraView(const MbiraCore* p, MbiraView* v) { mbiraView(p, v); }
 static inline void dp_evaView(const EvaCore* p, EvaView* v) { evaView(p, v); }
+#include "audio/mixer.h"
 #include "util/spsc.h"
 #include "util/triple_buffer.h"
 
@@ -74,6 +75,12 @@ public:
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }
+    // mikser: wskazniki (watek UI czyta, audio pisze)
+    float chPeak(int t) const { return t >= 0 && t < MAX_TRACKS ? mixer_.ch[t].peak.load(std::memory_order_relaxed) : 0.f; }
+    float chGr(int t) const { return t >= 0 && t < MAX_TRACKS ? mixer_.ch[t].gr.load(std::memory_order_relaxed) : 0.f; }
+    float auxPeak(int a) const { return a >= 0 && a < MIX_AUX ? mixer_.aux[a].peak.load(std::memory_order_relaxed) : 0.f; }
+    float masterPeak() const { return mixer_.master.peak.load(std::memory_order_relaxed); }
+    float masterGr() const { return mixer_.master.gr.load(std::memory_order_relaxed); }
     float trackLevel(int t) const { return t >= 0 && t < MAX_TRACKS ? levelOut_[t].load(std::memory_order_relaxed) : 0.f; }
     // --- watek audio --- out = stereo przeplecione
     void process(float* out, int frames);
@@ -87,6 +94,9 @@ private:
     uint8_t eng_[MAX_TRACKS] = {};  // biezacy silnik sciezki
     NoteSink* sinks_[MAX_TRACKS];
     float master_ = 0.8f;
+    MixerDsp mixer_;
+    float trkBuf_[MAX_TRACKS][512];  // bufory sciezek (stereo przeplatane, do 256 ramek)
+    int nTracks_ = 0;
     float level_[MAX_TRACKS] = {};
     std::atomic<float> levelOut_[MAX_TRACKS];
     float sr_ = 48000.f;
