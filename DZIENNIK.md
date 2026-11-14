@@ -1,5 +1,10 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 17:22 — POLIVOKS: kolorowe obwiednie z punktami jak PARALLAX
+- **Co zmienione:** wyłącznie wizualizacja `envelope()` w `core/ui/synth_polivoks.cpp`: kolorowe odcinki A/D/S/R (niebieski/zielony/biały/czerwony), kulki r=3 na łączeniach, proporcje odcinków reagujące na ustawienia. Repeat pokazuje dwie pary A/D w kolorach niebieski/zielony.
+- **Wgrane:** build ARM na 192.168.50.239, suma lokalna i zdalna `32fe157510cff5f08f57385268349a93e89ee1eccc8bafb06fdf7e7c3ec83243`. Zgodnie z prośbą bez testów i renderów; DSP i sterowanie nie były zmieniane.
+- **Następny krok:** ponowne uruchomienie aplikacji i ocena FILTER ENV / AMP ENV. **Od Patryka:** ocena wyglądu.
+
 ## 2026-11-14 17:09 — POLIVOKS v3: SYNC do 1/128, VINTAGE, MONO/glide i dopracowanie UI
 - **Co zmienione:** `core/synth/polivoks_dsp.*`, `polivoks_synth.*`, `core/audio/engine.cpp`: 44 parametry v3; własny SYNC BPM/transport/START, 24 podziały do 1/128 z D/T; MONO last-note z powrotem do trzymanych klawiszy, glide obu VCO w MONO / I w DUO; VINTAGE tolerancji VCO/obwiedni/filtra i dryfu, domyślnie 0. `core/io/project_file.cpp`: migracja v1/v2, zachowane FREE i stare 41 wartości. Zaktualizowane kopie samodzielnego rdzenia i eksportery w katalogu nadrzędnym.
 - `core/ui/synth_polivoks.cpp`: nazwa presetu nad stroną z zachowaniem koloru/fontu; indeksowe pozycje gałek WAVE/RANGE/SHAPE/SYNC osiągają końce; pełne etykiety OSC 1/OSC 2/FLT/AMP; L3 FREE/SYNC; VINTAGE w VOICE, bez HIGH NOTE/LEGATO. `polivoks_screen.*`: planety w wydzielonych, wolnych strefach nieba, gwiazdy z własnym LFO→FLT, przeskakujące jasne iskry i krótkie przygasanie stale widocznych czerwonych piorunów podczas grania. Brak nowej bitmapy i wpływu losowości UI na audio.

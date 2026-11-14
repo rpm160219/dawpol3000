@@ -78,11 +78,19 @@ void value(int p,int word,char* out,int size) {
 }
 void envelope(Canvas& c,const int16_t* p,int base,bool repeat) {
     const float x=455,y=354,w=158,h=39,s=p[base+2]/32767.f;
-    float pts[]={x,y+h,x+w*.16f,y,x+w*.48f,y+h*(1-s),x+w*.74f,y+h*(1-s),x+w,y+h};
+    float ta=p[base]/32767.f+.05f,td=p[base+1]/32767.f+.05f,tr=p[base+3]/32767.f+.05f,ts=.35f;
+    float scale=w/(ta+td+ts+tr);
+    float pts[]={x,y+h,x+ta*scale,y,x+(ta+td)*scale,y+h*(1-s),x+(ta+td+ts)*scale,y+h*(1-s),x+w,y+h};
+    Color colors[]={pal::blue,pal::green,pal::white,pal::red};
     if(repeat && s==0) {
-        float loop[]={x,y+h,x+w*.14f,y,x+w*.49f,y+h,x+w*.64f,y,x+w,y+h};
-        c.polyline(loop,5,1.25f,pal::silver);
-    } else c.polyline(pts,5,1.25f,pal::silver);
+        float attack=w*.5f*ta/(ta+td);
+        float loop[]={x,y+h,x+attack,y,x+w*.5f,y+h,x+w*.5f+attack,y,x+w,y+h};
+        std::copy(loop,loop+10,pts);
+        colors[2]=pal::blue;colors[3]=pal::green;
+    }
+    c.line(x,y+h,x+w,y+h,1,pal::faint);
+    for(int i=0;i<4;++i) c.line(pts[2*i],pts[2*i+1],pts[2*i+2],pts[2*i+3],1.8f,colors[i]);
+    for(int i=1;i<4;++i) c.fillCircle(pts[2*i],pts[2*i+1],3,colors[i-1]);
     drawText(c,x+w,y+h+6,repeat?"REPEAT A-D":"ADSR",7,1,pal::dim,ALIGN_RIGHT);
 }
 void pageDiagram(Canvas& c,const int16_t* p,int page,int dest,float liveLfo) {

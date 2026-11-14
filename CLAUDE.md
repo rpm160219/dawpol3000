@@ -139,6 +139,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
   MONO last-note, glide obu VCO (DUO nadal high/low i glide I).
   Planety w wolnym tle, gwiazdy z LFO→FLT, ruchome iskry i migotanie piorunów.
   Nazwa presetu nad stroną; skrajne pozycje gałek domykają łuk.
+  FILTER ENV / AMP ENV: kolorowe segmenty i kulki na łączeniach jak PARALLAX,
+  z proporcjami zależnymi od kontrolek; poprawka wizualna wgrana na konsolę.
   Sprężyny: biały→kolor OSC wraz z LEVEL, SAW ma prawidłową piłę.
   Nie zastępować konturów uproszczoną ilustracją.
   Nie dodawać wspólnych obwiedni, LFO, AGE/unison ani decymacji WavetableSynth.

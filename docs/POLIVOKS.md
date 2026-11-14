@@ -205,3 +205,8 @@ Walidacja tej aktualizacji: build ARM i wysyłka ze zgodną sumą SHA-256.
 Na wyraźną prośbę Patryka nie wykonywano renderów ani testów; wcześniejsze
 wyniki powyżej dotyczą poprzedniej wersji. Dostosowano istniejące oczekiwania
 źródeł testów do nowego API/priorytetu, bez uruchamiania ich.
+
+Obwiednie FILTER ENV / AMP ENV mają styl PARALLAX: odcinki A/D/S/R
+niebieski/zielony/biały/czerwony, kulki o promieniu 3 px na łączeniach.
+Rozstaw punktów reaguje na kontrolki; Repeat powtarza kolory A/D. Poprawka
+wyłącznie wizualna, build ARM wgrany bez renderów/testów na prośbę Patryka.
