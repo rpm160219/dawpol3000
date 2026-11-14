@@ -326,9 +326,14 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 if (!strcmp(tok[i], "relic") && left >= 1) t.relic = atoi(tok[i + 1]) != 0;
                 if (!strcmp(tok[i], "oct") && left >= 1) { int v = atoi(tok[i + 1]); t.octave = (int8_t)(v < -3 ? -3 : v > 3 ? 3 : v); }
                 if (!strcmp(tok[i], "gink") && left >= 1) ginLoadKit(t, atoi(tok[i + 1]));
-                if (!strcmp(tok[i],"pfive") && left>=PROPHET_PARAMS+1 && atoi(tok[i+1])==PROPHET_VERSION) {
-                    for (int j=0;j<PROPHET_PARAMS;++j) { int x=atoi(tok[i+2+j]); t.prophet[j]=(int16_t)(x<0?0:x>32767?32767:x); }
-                    t.prophetSet=true;
+                if (!strcmp(tok[i],"pfive") && left>=PROPHET_V1_PARAMS+1) {
+                    const int version=atoi(tok[i+1]);
+                    const int count=version==1?PROPHET_V1_PARAMS:version==PROPHET_VERSION?PROPHET_PARAMS:0;
+                    if(count && left>=count+1){
+                        for (int j=0;j<count;++j) { int x=atoi(tok[i+2+j]); t.prophet[j]=(int16_t)(x<0?0:x>32767?32767:x); }
+                        if(version==1)t.prophet[P5_REVISION]=0;
+                        t.prophetSet=true;
+                    }
                 }
                 if (!strcmp(tok[i],"pvox") && left>=35) {
                     int version=atoi(tok[i+1]);

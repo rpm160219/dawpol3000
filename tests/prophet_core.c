@@ -16,27 +16,30 @@ int main(void) {
     double worst = 0;
     clock_t started = clock();
     double seconds = 0;
-    for (int patch = 0; patch < prophetPresetCount(); patch++) {
-        ProphetCore *c = prophetCreate();
-        assert(c);
-        prophetPreset(patch, p);
-        for (int n = 0; n < 5; n++)
-            prophetKeyDown(c, 48 + 3 * n, 100, p);
-        clock_t patchStart = clock();
-        double energy = 0;
-        for (int b = 0; b < 188; b++) {
-            block(c, p, 128, out);
-            for (int i = 0; i < 128; i++)
-                energy += out[i] * out[i];
+    for (int model = 0; model < 2; model++)
+        for (int patch = 0; patch < prophetPresetCount(); patch++) {
+            ProphetCore *c = prophetCreate();
+            assert(c);
+            prophetPreset(patch, p);
+            p[P5_REVISION] = model ? 32767 : 0;
+            for (int n = 0; n < 5; n++)
+                prophetKeyDown(c, 48 + 3 * n, 100, p);
+            clock_t patchStart = clock();
+            double energy = 0;
+            for (int b = 0; b < 188; b++) {
+                block(c, p, 128, out);
+                for (int i = 0; i < 128; i++)
+                    energy += out[i] * out[i];
+            }
+            assert(energy > 1e-6);
+            seconds += 188 * 128 / 48000.;
+            double usage = (clock() - patchStart) / (double)CLOCKS_PER_SEC / (188 * 128 / 48000.);
+            if (usage > worst)
+                worst = usage;
+            printf("REV %d %s RMS %.5f\n", model ? 2 : 3, prophetPresetName(patch),
+                   sqrt(energy / (188 * 128)));
+            prophetDestroy(c);
         }
-        assert(energy > 1e-6);
-        seconds += 188 * 128 / 48000.;
-        double usage = (clock() - patchStart) / (double)CLOCKS_PER_SEC / (188 * 128 / 48000.);
-        if (usage > worst)
-            worst = usage;
-        printf("%s RMS %.5f\n", prophetPresetName(patch), sqrt(energy / (188 * 128)));
-        prophetDestroy(c);
-    }
     ProphetCore *c = prophetCreate();
     prophetDefault(p);
     p[P5_UNISON] = 32767;
@@ -85,6 +88,7 @@ int main(void) {
     for (int test = 0; test < 12; test++) {
         prophetPanic(c);
         prophetDefault(p);
+        p[P5_REVISION] = test % 2 ? 32767 : 0;
         p[P5_RESONANCE] = 32767;
         p[P5_AWAVE] = 32767;
         p[P5_BWAVE] = 32767;
@@ -96,6 +100,16 @@ int main(void) {
         for (int b = 0; b < 40; b++)
             block(c, p, (b % 127) + 1, out);
     }
+    // Switching the revision while holding a note keeps the voice/envelopes.
+    prophetPanic(c);
+    prophetDefault(p);
+    prophetKeyDown(c, 60, 100, p);
+    for (int k = 0; k < 120; k++) {
+        p[P5_REVISION] = k < 40 || k >= 80 ? 0 : 32767;
+        block(c, p, 128, out);
+    }
+    prophetGetState(c, &s);
+    assert(s.held == 1 && s.amp[0] > 0);
     prophetDestroy(c);
     printf("PASS; core CPU / rendered seconds = %.3f; worst %.3f\n",
            (clock() - started) / (double)CLOCKS_PER_SEC / seconds, worst);

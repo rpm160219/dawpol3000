@@ -127,7 +127,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - [x] Nazwa projektu — DAW-POL 3000
 
 ## Aktualny stan
-- **PROPHET-5 (2026-11-14):** nowy niezależny silnik Rev 3/CEM, pięć głosów, 4× oversampling/FIR, nieliniowy LP24, oba ADSR, oryginalny Poly-Mod i Wheel-Mod z różowym szumem. UNISON lowest-note, glide tylko UNISON, TUNE/R3 na VOICE, A-440. 50 parametrów `pfive 1`, 11 stron, 24 autorskie presety w `presets/prophet5`. Grafika traced z referencji (1605 konturów), bez jej napisów. ROM jest prywatnym firmware Z80, nie samplami; nie trafia do repo/buildu. Oryginał DSP pozostaje w ignorowanym `slooped_engines`. ARM zbudowany, ukierunkowana diagnostyka DSP/hosta przeszła na konsoli, ASan/UBSan części C. Pięć głosów około 72% jednego rdzenia H700; wiele ścieżek ma duży koszt. Brak desktopowego buildu/renderów. To model inspirowany CEM, zgodność brzmienia z fizycznym P5 nie jest potwierdzona pomiarami. Szczegóły: `docs/PROPHET.md`. Build wgrany na 192.168.50.239, SHA-256 lokalna/zdalna identyczna (`745ac3daf53cc156b79749b943a940c0a1ad83a9bbbc18bf7dad2d4a3bfc1127`); strony OSC/FENV/LFO sprawdzone z binarki ARM. Następny krok: ponowne uruchomienie i odsłuch na konsoli. POLIVOKS pozostawiony bez zmian.
+- **PROPHET-5 (2026-11-14, aktualizacja v2):** niezależne pięć głosów, własny cały tor 4×/FIR, 24 zatwierdzone barwy. 51 parametrów `pfive 2`, migracja `pfive 1` zachowuje 50 pól i wybiera zatwierdzony REV 3. FILTER → L3 → REVISION wybiera Rev 3/CEM lub przybliżony Rev 2/SSM (asymetryczna pierwsza komórka filtra wewnątrz Newtona, zwiększony dryft z Vintage; brak pełnej emulacji chipów/ROM). Rom v7.0c rozpoznany jako trzy segmenty Z80 z powielonymi połówkami, zachowany prywatnie w `slooped_engines/prophet/rev2`, nigdy w gicie/buildzie. UI: LEVEL tylko MIXER, A/B/NOISE jako słupki, VINTAGE tylko VOICE; koło i jego sterowanie w WHEEL MOD/L3; Rev 2 zmienia kolory grafiki. Źrenica cutoff/rezonans, laski fala/PW/poziom, szaty z VCA. Gwiazdki losowe, bez przypisania do głosów/LFO; stałe iskry w istniejących piorunach, niezależne od Poly-Mod. ARM: oba tryby i migracja sprawdzone, 294 912 próbek Rev 3 identycznych z `3762cd4`. Koszt średnio 74%, maksimum 76% jednego rdzenia w przebiegu pięciogłosowym. Build wgrany na 192.168.50.239; SHA-256 `3991e0eee80040fa199e56a1dce52e303f410039bf3b0869f8e447665435b29b`. Szczegóły `docs/PROPHET.md`, podglądy `out/prophet/rev2`. Następny krok: restart aplikacji i ocena animacji/brzmienia Rev 2.
+
 
 - **POLIVOKS (2026-11-14):** zintegrowany jako niezależny `PolivoksSynth : NoteSink`
   w AudioEngine, poza DSP WavetableSynth. Własny cały tor, 4× oversampling,
@@ -137,7 +138,7 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
   24 presety: zatwierdzone pierwsze 12 bez zmian, 12 dodatków fabrycznych v2.
   42 kontrolki UI; EXTERNAL/OUTPUT schowane z zachowaniem pól i wartości.
   LFO: własne cztery równoległe głębokości, DEST wybiera edytowaną; L3 FREE/SYNC,
-  24 podziały do 1/128 z D/T, restart zegara przy START. VOICE: VINTAGE;
+  24 podziały do 1/128 z D/T, restart zegara przy START. Kulka wykresu LFO biegnie po fazie/fali jak w Prophecie (poprawka wyłącznie UI). VOICE: VINTAGE;
   MONO last-note, glide obu VCO (DUO nadal high/low i glide I).
   Planety w wolnym tle, gwiazdy z LFO→FLT, ruchome iskry i migotanie piorunów.
   Nazwa presetu nad stroną; skrajne pozycje gałek domykają łuk.

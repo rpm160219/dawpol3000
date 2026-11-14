@@ -93,7 +93,7 @@ void envelope(Canvas& c,const int16_t* p,int base,bool repeat) {
     for(int i=1;i<4;++i) c.fillCircle(pts[2*i],pts[2*i+1],3,colors[i-1]);
     drawText(c,x+w,y+h+6,repeat?"REPEAT A-D":"ADSR",7,1,pal::dim,ALIGN_RIGHT);
 }
-void pageDiagram(Canvas& c,const int16_t* p,int page,int dest,float liveLfo) {
+void pageDiagram(Canvas& c,const int16_t* p,int page,int dest,float liveLfo,float livePhase) {
     constexpr float x=455,y=350,w=158,h=38;
     if(page==PV_PAGE_FENV || page==PV_PAGE_AENV) {
         int base=page==PV_PAGE_AENV?PVX_AENV_ATTACK:PVX_FENV_ATTACK;
@@ -108,13 +108,15 @@ void pageDiagram(Canvas& c,const int16_t* p,int page,int dest,float liveLfo) {
         int shape=p[PVX_LFO_WAVE]*4/32768;
         float depth=p[lfoTargets[dest]]/32767.f,amp=14*(.25f+.75f*depth);
         float previous=0;
+        const int cursor=std::clamp((int)std::lround(livePhase*99),0,99),bucket=cursor/12;
+        const bool stochastic=shape==PVX_LFO_SH || shape==PVX_LFO_NOISE;
         for(int i=0;i<100;++i) {
-            float t=i/99.f,phase=std::fmod(t*2,1.f),v;
+            float t=i/99.f,phase=std::fmin(t,.999999f),v;
             if(shape==PVX_LFO_TRI) v=1-4*std::fabs(phase-.5f);
             else if(shape==PVX_LFO_SQUARE) v=phase<.5f?1:-1;
             else {
                 if(shape==PVX_LFO_NOISE || i%12==0) {seed=seed*1664525u+1013904223u;random=((seed>>8)/8388608.f)-1;}
-                v=random;
+                v=shape==PVX_LFO_SH && i/12==bucket ? liveLfo : i==cursor ? liveLfo : random;
             }
             float px=x+t*w;
             if(i && shape!=PVX_LFO_TRI) {pts[2*n]=px;pts[2*n+1]=y+h*.5f-previous*amp;++n;}
@@ -122,7 +124,8 @@ void pageDiagram(Canvas& c,const int16_t* p,int page,int dest,float liveLfo) {
         }
         c.line(x,y+h*.5f,x+w,y+h*.5f,1,pal::faint);
         c.polyline(pts,n,1.35f,depth>0?pal::green:pal::silver);
-        c.fillCircle(x+w+6,y+h*.5f-liveLfo*14,1.6f,pal::white);
+        float cursorValue=shape==PVX_LFO_TRI?1-4*std::fabs(livePhase-.5f):shape==PVX_LFO_SQUARE?(livePhase<.5f?1.f:-1.f):liveLfo;
+        c.fillCircle(x+w*(stochastic?cursor/99.f:livePhase),y+h*.5f-cursorValue*amp,2.5f,pal::white);
         char routes[48];std::snprintf(routes,sizeof(routes),"OSC 1:%d OSC 2:%d FLT:%d AMP:%d",p[lfoTargets[0]]*100/32767,p[lfoTargets[1]]*100/32767,p[lfoTargets[2]]*100/32767,p[lfoTargets[3]]*100/32767);
         drawText(c,x+w,y+h+6,routes,6,1,pal::dim,ALIGN_RIGHT);
     } else if(page==PV_PAGE_MIXER) {
@@ -222,7 +225,7 @@ void SynthView::renderPolivoks(Canvas& c,const Track& t) {
     drawText(c,137,372,"SELECT = NEXT PAGE",7,1,pal::dim);
     const char* hint=page==PV_PAGE_LFO ? hints[page][words[PVX_LFO_SYNC]>=16384?1:0] : hints[page][layer];
     drawText(c,20,397,hint,7,1,layer?pal::blue:pal::dim);
-    pageDiagram(c,words,page,pvLfoDest_,pvView_.state.lfo);
+    pageDiagram(c,words,page,pvLfoDest_,pvView_.state.lfo,pvView_.state.lfo_phase);
     if(t.octave) { char oct[20]; std::snprintf(oct,sizeof(oct),"OCT %+d",t.octave); drawText(c,400,368,oct,8,1,pal::white,ALIGN_RIGHT); }
     char text[4][24]; const char* values[4]; const char* controlLabels[4]; float positions[4];
     for(int i=0;i<4;++i) {

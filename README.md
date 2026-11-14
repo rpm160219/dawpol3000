@@ -43,3 +43,5 @@ oraz deploy, bez renderów/testów zgodnie z prośbą właściciela.
 ## PROPHET-5
 
 Nowy niezależny pięciogłosowy silnik w stylu Rev 3/CEM, 4× oversampling, własne VCO/ADSR/Poly-Mod/Wheel-Mod, grafika z referencji i 24 barwy. Wybierz **PROPHET-5** w ENGINE. Sterowanie, źródła, rola ROM-u i granice modelu: [docs/PROPHET.md](docs/PROPHET.md). POLIVOKS pozostaje punktem odniesienia i nie został zmieniony.
+
+Prophet v2: **FILTER → L3 → REVISION** przełącza zatwierdzony Rev 3/CEM i model Rev 2/SSM z inną kolorystyką. Stare barwy zachowują Rev 3. Mikser ma poziomy A/B/NOISE, koło modulacji jest widoczne i edytowalne na WHEEL MOD. ROM jest firmware’em sterującym, a nie bankiem sampli; nie jest wymagany na konsoli.

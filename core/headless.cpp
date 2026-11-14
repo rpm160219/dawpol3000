@@ -447,11 +447,16 @@ int headlessPng(const char* path, const char* screen) {
     } else if (!strncmp(screen,"prophet",7)) {
         Track& tr=app.project().tracks[1];tr.engine=ENG_PROPHET;
         prophetPreset(getenv("PROPHET_PRESET")?atoi(getenv("PROPHET_PRESET")):0,tr.prophet);tr.prophetSet=true;
+        if(getenv("PROPHET_REV2"))tr.prophet[P5_REVISION]=32767;
+        const char* p5Controls[]={getenv("PROPHET_CUTOFF"),getenv("PROPHET_RESONANCE"),getenv("PROPHET_WHEEL")};
+        const int p5Ids[]={P5_CUTOFF,P5_RESONANCE,P5_WHEEL};
+        for(int i=0;i<3;i++)if(p5Controls[i]){int w=atoi(p5Controls[i]);tr.prophet[p5Ids[i]]=(int16_t)(w<0?0:w>32767?32767:w);}
         snprintf(tr.preset,sizeof(tr.preset),"%s",prophetPresetName(getenv("PROPHET_PRESET")?atoi(getenv("PROPHET_PRESET")):0));
         app.openPresets("out/presets_demo");app.markDirty();app.openSynth(1);idle(app);
         const int pg=screen[7]?atoi(screen+7):0;app.synth.setPage(pg>=0&&pg<11?pg:0);
         if(getenv("PROPHET_ALT"))app.synth.setAlt(true);
         eng.send(EC_NOTE_ON,1,60,0,.85f);for(int i=0;i<60;i++)eng.process(buf,256);
+        Canvas p5Warmup;for(int i=0;i<24;i++)app.render(p5Warmup);
     } else if (!strncmp(screen,"polivoks",8)) {
         if (!strcmp(screen,"polivoksengine")) {
             Track& tr=app.project().tracks[1]; tr.engine=ENG_POLIVOKS; polivoksEnsure(tr);

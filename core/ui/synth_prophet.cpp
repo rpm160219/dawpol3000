@@ -13,38 +13,34 @@ const float signs[] = {1, -1, 1, -1};
 const char *pages[] = {"OSC A",    "OSC B", "FILTER",    "MIXER", "FILTER ENV", "AMP ENV",
                        "POLY MOD", "LFO",   "WHEEL MOD", "VOICE", "PRESETS"};
 const int ids[10][2][4] = {
-    {{P5_AWAVE, P5_AFREQ, P5_APW, P5_MIXA}, {P5_SYNC, -1, -1, -1}},
-    {{P5_BWAVE, P5_BFREQ, P5_BFINE, P5_BPW}, {P5_BLOW, P5_BKEY, P5_MIXB, -1}},
-    {{P5_CUTOFF, P5_RESONANCE, P5_ENVAMT, P5_KEYTRACK}, {-1, -1, -1, -1}},
-    {{P5_MIXA, P5_MIXB, P5_NOISE, P5_VINTAGE}, {-1, -1, -1, -1}},
+    {{P5_AWAVE, P5_AFREQ, P5_APW, P5_SYNC}, {-1, -1, -1, -1}},
+    {{P5_BWAVE, P5_BFREQ, P5_BFINE, P5_BPW}, {P5_BLOW, P5_BKEY, -1, -1}},
+    {{P5_CUTOFF, P5_RESONANCE, P5_ENVAMT, P5_KEYTRACK}, {P5_REVISION, -1, -1, -1}},
+    {{P5_MIXA, P5_MIXB, P5_NOISE, -1}, {-1, -1, -1, -1}},
     {{P5_FA, P5_FD, P5_FS, P5_FR}, {-1, -1, -1, -1}},
     {{P5_AA, P5_AD, P5_AS, P5_AR}, {P5_RELEASE, P5_VELOCITY, -1, -1}},
     {{P5_PMENV, P5_PMB, P5_PMFREQ, P5_PMPW}, {P5_PMFILTER, -1, -1, -1}},
     {{P5_LFORATE, P5_LFOWAVE, P5_WHEEL, P5_WMIX}, {P5_LFOSYNC, P5_LFODIV, -1, -1}},
-    {{P5_WFREQA, P5_WFREQB, P5_WPWA, P5_WPWB}, {P5_WFILTER, -1, -1, -1}},
+    {{P5_WFREQA, P5_WFREQB, P5_WPWA, P5_WPWB}, {P5_WHEEL, P5_WMIX, P5_WFILTER, -1}},
     {{P5_UNISON, P5_GLIDE, P5_TUNE, P5_VINTAGE}, {P5_RELEASE, P5_VELOCITY, P5_BEND, P5_A440}}};
 const char *labels[10][2][4] = {
-    {{"WAVE", "FREQUENCY", "PULSE WIDTH", "LEVEL"}, {"HARD SYNC", "", "", ""}},
-    {{"WAVE", "FREQUENCY", "FINE", "PULSE WIDTH"}, {"LO FREQ", "KEYBOARD", "LEVEL", ""}},
-    {{"CUTOFF", "RESONANCE", "ENV AMOUNT", "KEYBOARD"}, {"", "", "", ""}},
-    {{"OSC A LVL", "OSC B LVL", "WHITE NOISE", "VINTAGE"}, {"", "", "", ""}},
+    {{"WAVE", "FREQUENCY", "PULSE WIDTH", "HARD SYNC"}, {"", "", "", ""}},
+    {{"WAVE", "FREQUENCY", "FINE", "PULSE WIDTH"}, {"LO FREQ", "KEYBOARD", "", ""}},
+    {{"CUTOFF", "RESONANCE", "ENV AMOUNT", "KEYBOARD"}, {"REVISION", "", "", ""}},
+    {{"OSC A LVL", "OSC B LVL", "WHITE NOISE", ""}, {"", "", "", ""}},
     {{"ATTACK", "DECAY", "SUSTAIN", "RELEASE"}, {"", "", "", ""}},
     {{"ATTACK", "DECAY", "SUSTAIN", "RELEASE"}, {"RELEASE", "VELOCITY", "", ""}},
     {{"FILTER ENV", "OSC B", "FREQ A", "PW A"}, {"FILTER", "", "", ""}},
     {{"RATE", "SHAPES", "MOD WHEEL", "LFO / PINK"}, {"BPM SYNC", "DIVISION", "", ""}},
-    {{"FREQ A", "FREQ B", "PW A", "PW B"}, {"FILTER", "", "", ""}},
+    {{"FREQ A", "FREQ B", "PW A", "PW B"}, {"MOD WHEEL", "LFO / PINK", "FILTER", ""}},
     {{"UNISON", "GLIDE", "MASTER TUNE", "VINTAGE"}, {"RELEASE", "VELOCITY", "PITCH WHEEL", "A-440"}}};
-const char *hints[] = {"L3 = HARD SYNC   OSC B RESETS OSC A",
-                       "L3 = LO FREQ / KEYBOARD / LEVEL",
-                       "24 DB LOW-PASS   KEYBOARD = FULL TRACK",
-                       "WHITE NOISE = AUDIO   PINK NOISE = WHEEL MOD",
-                       "FILTER ENVELOPE ALSO FEEDS POLY MOD",
-                       "L3 = RELEASE SWITCH / VELOCITY EXTRA",
-                       "L3 = FILTER DESTINATION   ROUTES CAN COMBINE",
-                       "L3 = BPM SYNC / DIVISION TO 1/128",
-                       "L3 = FILTER DESTINATION   ALL FIVE ROUTES CAN COMBINE",
-                       "L3 = RELEASE / VELOCITY / PITCH / A-440   R3 = TUNE"};
-int layer(int page, bool alt) { return alt && (page == 0 || page == 1 || page == 5 || page >= 6) ? 1 : 0; }
+const char *hints[] = {
+    "OSC B RESETS OSC A WHEN HARD SYNC IS ON",      "L3 = LO FREQ / KEYBOARD",
+    "L3 = REVISION   REV 3 CEM / REV 2 SSM",        "WHITE NOISE = AUDIO   PINK NOISE = WHEEL MOD",
+    "FILTER ENVELOPE ALSO FEEDS POLY MOD",          "L3 = RELEASE SWITCH / VELOCITY EXTRA",
+    "L3 = FILTER DESTINATION   ROUTES CAN COMBINE", "L3 = BPM SYNC / DIVISION TO 1/128",
+    "L3 = MOD WHEEL / SOURCE MIX / FILTER",         "L3 = RELEASE / VELOCITY / PITCH / A-440   R3 = TUNE"};
+int layer(int page, bool alt) { return alt && (page == 1 || page == 2 || page == 5 || page >= 6) ? 1 : 0; }
 void diagram(Canvas &c, int page, const int16_t *p, const ProphetView &v) {
     const float x = 447, y = 350, w = 172, h = 40;
     if (page == 4 || page == 5) {
@@ -66,7 +62,17 @@ void diagram(Canvas &c, int page, const int16_t *p, const ProphetView &v) {
             c.line(xy[2 * i], xy[2 * i + 1], xy[2 * i + 2], xy[2 * i + 3], 1.6f, pal::enc[i]);
         for (int i = 1; i < 4; i++)
             c.fillCircle(xy[2 * i], xy[2 * i + 1], 3, pal::enc[i - 1]);
-    } else if (page == 7 || page == 8) {
+    } else if (page == 8) {
+        drawProphetWheel(c, p, x + 8, y + 1, 155, 45);
+    } else if (page == 3) {
+        const int ids[] = {P5_MIXA, P5_MIXB, P5_NOISE};
+        const char *names[] = {"A", "B", "NOISE"};
+        for (int i = 0; i < 3; i++) {
+            float level = p[ids[i]] / 32767.f, px = x + 30 + i * 49;
+            c.fillRect(px, y + 31 - 31 * level, 12, 31 * level, pal::enc[i]);
+            drawText(c, px + 6, y + 39, names[i], 7, 1, pal::dim, ALIGN_CENTER);
+        }
+    } else if (page == 7) {
         int bits = p[P5_LFOWAVE] * 8 / 32768;
         float xy[256];
         for (int j = 0; j < 128; j++) {
@@ -93,7 +99,9 @@ void diagram(Canvas &c, int page, const int16_t *p, const ProphetView &v) {
         float knee = x + 15 + 130 * p[P5_CUTOFF] / 32767.f, r = p[P5_RESONANCE] / 32767.f;
         float xy[] = {x, y + 15, knee - 8, y + 15, knee, y + 15 - 13 * r, knee + 10, y + 25, x + w, y + h};
         c.polyline(xy, 5, 1.5f, pal::silver);
-        drawText(c, x + w, y + 48, "FOUR POLES / CEM REV 3", 7, 1, pal::dim, ALIGN_RIGHT);
+        drawText(c, x + w, y + 48,
+                 p[P5_REVISION] >= 16384 ? "FOUR POLES / SSM REV 2" : "FOUR POLES / CEM REV 3", 7, 1,
+                 pal::dim, ALIGN_RIGHT);
     } else if (page == 6) {
         drawText(c, x + w, y + 4, "ENV + OSC B", 9, 1, pal::tan, ALIGN_RIGHT);
         char routes[40];
@@ -125,7 +133,7 @@ void SynthView::updateProphet(const Buttons &b, const InputState &in, float dt, 
         e->send(EC_PROPHET_TUNE, track_);
         app_->toast("OSCILLATORS TUNED");
     }
-    if (b.pressed(B_L3)) {
+    if (b.pressed(B_L3) && layer(page_, true)) {
         alt_ = !alt_;
         for (auto &v : stepP5_)
             v = RelEncoder();

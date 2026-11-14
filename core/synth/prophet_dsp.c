@@ -61,6 +61,7 @@ int prophetChoices(int p) {
     case P5_UNISON:
     case P5_LFOSYNC:
     case P5_A440:
+    case P5_REVISION:
         return 2;
     default:
         return 0;
@@ -366,17 +367,37 @@ static float ota(float x, float *derivative) {
     float value = p5Ota[i] + slope * (at - i);
     return x < 0 ? -value : value;
 }
+/* SSM2040 family: asymmetric input-cell saturation documented by its
+ * original designer in SSI2140 data sheet, Unity-Gain Overdrive. This is
+ * a deliberately approximate model, not coefficients extracted from ROM.
+ * Normalize the small-signal slope and remove the bias DC offset. */
+typedef struct FilterColor {
+    float drive, bias, zero, scale;
+} FilterColor;
+static FilterColor filterColor(float rev) {
+    FilterColor c = {1 + .32f * rev, .18f * rev, 0, 1};
+    float q = c.bias * c.bias, inv = 1 / (27 + 9 * q);
+    c.zero = c.bias * (27 + q) * inv;
+    float slope = (729 - 162 * q + 9 * q * q) * inv * inv;
+    c.scale = 1 / (c.drive * slope);
+    return c;
+}
 /* Four OTA-C stages. The scalar feedback root is solved against the same
  * nonlinear cascade subsequently committed to state (no mismatched predictor).
  * Rational bounded OTA characteristic avoids the unstable output cubic. */
-static float cascade(Voice *v, float input, float G, float K) {
+static float cascade(Voice *v, float input, float G, float K, const FilterColor *color) {
     float u = input - K * v->filter[3], y[4], deriv;
     for (int k = 0; k <= 4; k++) {
         float z = u;
         deriv = 1;
         for (int j = 0; j < 4; j++) {
             float slope;
-            float value = ota(z, &slope);
+            float value;
+            if (j == 0 && color->bias > 0) {
+                value = (ota(z * color->drive + color->bias, &slope) - color->zero) * color->scale;
+                slope *= color->drive * color->scale;
+            } else
+                value = ota(z, &slope);
             deriv *= G * slope;
             y[j] = G * value + (1 - G) * v->filter[j];
             z = y[j];
@@ -409,7 +430,8 @@ static float32x4_t vectorOta(float32x4_t x, float32x4_t *derivative) {
     return vmulq_f32(vmulq_f32(x, vaddq_f32(vdupq_n_f32(27), q)), inv);
 }
 #endif
-static void filterCards(Voice *voices, const float *input, const float *coeff, float k, float *output) {
+static void filterCards(Voice *voices, const float *input, const float *coeff, float k, float *output,
+                        const FilterColor *color) {
 #if defined(__aarch64__)
     float32x4_t state[4], y[4], in = vld1q_f32(input), G = vld1q_f32(coeff), K = vdupq_n_f32(k),
                                 one = vdupq_n_f32(1);
@@ -424,7 +446,14 @@ static void filterCards(Voice *voices, const float *input, const float *coeff, f
     for (int it = 0; it <= 4; it++) {
         float32x4_t z = u, deriv = one;
         for (int j = 0; j < 4; j++) {
-            float32x4_t slope, value = vectorOta(z, &slope);
+            float32x4_t slope, value;
+            if (j == 0 && color->bias > 0) {
+                float32x4_t biased = vaddq_f32(vmulq_n_f32(z, color->drive), vdupq_n_f32(color->bias));
+                value =
+                    vmulq_n_f32(vsubq_f32(vectorOta(biased, &slope), vdupq_n_f32(color->zero)), color->scale);
+                slope = vmulq_n_f32(slope, color->drive * color->scale);
+            } else
+                value = vectorOta(z, &slope);
             deriv = vmulq_f32(deriv, vmulq_f32(G, slope));
             y[j] = vaddq_f32(vmulq_f32(G, value), vmulq_f32(H, state[j]));
             z = y[j];
@@ -443,10 +472,10 @@ static void filterCards(Voice *voices, const float *input, const float *coeff, f
             voices[i].filter[j] = lim(lanes[i], -4, 4);
     }
     vst1q_f32(output, y[3]);
-    output[4] = cascade(&voices[4], input[4], coeff[4], k);
+    output[4] = cascade(&voices[4], input[4], coeff[4], k, color);
 #else
     for (int i = 0; i < 5; i++)
-        output[i] = cascade(&voices[i], input[i], coeff[i], k);
+        output[i] = cascade(&voices[i], input[i], coeff[i], k, color);
 #endif
 }
 void prophetTune(ProphetCore *p) {
@@ -569,6 +598,8 @@ void prophetRender(ProphetCore *restrict p, float *restrict out, int frames, con
                     v->drift[j] += (v->driftTarget[j] - v->drift[j]) * (delta * .7f);
                 float vint = s[P5_VINTAGE];
                 float trim = vint * (card[i] * .09f + v->drift[0] * .035f - v->calibration[0]);
+                if (s[P5_REVISION] > 0)
+                    trim *= 1 + .45f * s[P5_REVISION];
                 float bpitch = (on(w, P5_BKEY) ? v->pitch : 60) + bf + fine + tune + trim +
                                vint * (v->drift[1] * .04f - v->calibration[1]) +
                                (on(w, P5_WFREQB) ? wheel * 12 : 0);
@@ -617,7 +648,8 @@ void prophetRender(ProphetCore *restrict p, float *restrict out, int frames, con
                 filterCoeff[i] = poleG(fc / sr);
                 filterInput[i] = mix + white * .000002f;
             }
-            filterCards(p->v, filterInput, filterCoeff, 5.75f * s[P5_RESONANCE], filtered);
+            FilterColor color = filterColor(s[P5_REVISION]);
+            filterCards(p->v, filterInput, filterCoeff, 5.75f * s[P5_RESONANCE], filtered, &color);
             for (int i = 0; i < 5; i++) {
                 Voice *v = &p->v[i];
                 float vint = s[P5_VINTAGE];
@@ -665,7 +697,9 @@ void prophetGetState(const ProphetCore *p, ProphetState *s) {
 void prophetValue(int p, int w, char *out, int size) {
     float x = norm(w);
     int c = prophetChoices(p), i = c ? choice(w, c) : 0;
-    if (p == P5_AWAVE) {
+    if (p == P5_REVISION) {
+        snprintf(out, size, "%s", i ? "REV 2 SSM" : "REV 3 CEM");
+    } else if (p == P5_AWAVE) {
         const char *a[] = {"OFF", "SAW", "PULSE", "SAW+PLS"};
         snprintf(out, size, "%s", a[i]);
     } else if (p == P5_BWAVE || p == P5_LFOWAVE) {

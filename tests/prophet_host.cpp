@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
     p->nTracks = 1;
     p->tracks[0].engine = ENG_PROPHET;
     prophetEnsure(p->tracks[0]);
+    p->tracks[0].prophet[P5_REVISION] = 32767;
     char path[256], error[256];
     std::snprintf(path, sizeof(path), "%s/roundtrip.dpp", argv[1]);
     check(saveProjectFile(*p, path), "save project");
@@ -46,6 +47,21 @@ int main(int argc, char **argv) {
         check(!std::memcmp(words, t.prophet, sizeof(words)),
               "factory editor and browser use identical parameters");
     }
+    // Old 50-word patches migrate to Rev3, even into an edited Rev2 track.
+    char legacy[1024] = "pfive 1";
+    int len = 7;
+    int16_t oldWords[PROPHET_PARAMS];
+    prophetPreset(0, oldWords);
+    for (int j = 0; j < PROPHET_V1_PARAMS; j++)
+        len += std::snprintf(legacy + len, sizeof(legacy) - len, " %d", oldWords[j]);
+    char *tokens[80];
+    int nt = tokenize(legacy, tokens, 80);
+    Track migrated;
+    migrated.engine = ENG_PROPHET;
+    migrated.prophet[P5_REVISION] = 32767;
+    parseInstrument(migrated, tokens, nt, 0);
+    check(migrated.prophetSet && migrated.prophet[P5_REVISION] == 0, "v1 patches retain Rev3 model");
+    check(!std::memcmp(migrated.prophet, oldWords, sizeof(oldWords)), "v1 controls unchanged by migration");
     // Arbitrary sequencer segments cannot alter the waveform or LFO clock.
     ProphetSynth whole, split;
     whole.init(48000);

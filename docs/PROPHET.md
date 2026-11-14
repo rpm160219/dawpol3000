@@ -7,7 +7,7 @@ obwiedniach, modulacji, glide, unison, rozstrojeniu ani decymacji.
 
 ## Źródła i zakres zgodności
 
-Podstawa funkcjonalna to **oryginalna rodzina Rev 3 / CEM**:
+Podstawa funkcjonalna to **oryginalna rodzina Rev 3 / CEM**, rozszerzona o model Rev 2 / SSM:
 
 - [Operation Manual CM1000D, Rev 3.3, 2/82](https://synthfool.com/docs/SequentialCircuits/Prophet_Series/Sequential%20Circuits%20Prophet%205%20Owners%20Manual.pdf), strony drukowane 2-4…2-11: oscylatory, mikser, filtr, obie obwiednie, UNISON/GLIDE, Poly-Mod/Wheel-Mod. PDF jest skanem — strony przeczytano jako obrazy, nie z pustego wyniku pdftotext.
 - [Oryginalny Technical Manual Rev 3](https://www.synfo.nl/servicemanuals/Sequential/SEQUENTIAL_PROPHET-5-REV3_SERVICE_MANUAL.pdf).
@@ -76,15 +76,15 @@ kolory enkoderów, domknięte skraje przełączników, kolorowe ADSR z kulkami j
 
 | Strona | Główne gałki | L3 |
 |---|---|---|
-| OSC A | WAVE, FREQUENCY, PULSE WIDTH, LEVEL | HARD SYNC |
-| OSC B | WAVE, FREQUENCY, FINE, PULSE WIDTH | LO FREQ, KEYBOARD, LEVEL |
-| FILTER | CUTOFF, RESONANCE, ENV AMOUNT, KEYBOARD | — |
-| MIXER | OSC A, OSC B, WHITE NOISE, VINTAGE | — |
+| OSC A | WAVE, FREQUENCY, PULSE WIDTH, HARD SYNC | — |
+| OSC B | WAVE, FREQUENCY, FINE, PULSE WIDTH | LO FREQ, KEYBOARD |
+| FILTER | CUTOFF, RESONANCE, ENV AMOUNT, KEYBOARD | REVISION: REV 3 CEM / REV 2 SSM |
+| MIXER | OSC A, OSC B, WHITE NOISE | — |
 | FILTER ENV | ATTACK, DECAY, SUSTAIN, RELEASE | — |
 | AMP ENV | ATTACK, DECAY, SUSTAIN, RELEASE | RELEASE switch, VELOCITY |
 | POLY MOD | FILTER ENV source, OSC B source, FREQ A, PW A | FILTER destination |
 | LFO | RATE/SYNC division, SHAPES, MOD WHEEL, LFO/PINK mix | BPM SYNC, DIVISION |
-| WHEEL MOD | FREQ A, FREQ B, PW A, PW B | FILTER |
+| WHEEL MOD | FREQ A, FREQ B, PW A, PW B | MOD WHEEL, LFO/PINK, FILTER |
 | VOICE | UNISON, GLIDE, MASTER TUNE, VINTAGE | RELEASE, VELOCITY, PITCH WHEEL, A-440 |
 | PRESETS | standardowa przeglądarka DAW | zapis/odczyt jak w POLIVOKS |
 
@@ -117,7 +117,7 @@ PER VOICE PWM, SILVER NOISE, SINE TEMPLE, PINK MOTION, OCTAVE FANFARE,
 UNISON GLIDER, CLOCKWORK POLY, DARK ANALOG SEA.
 
 Bank instalowany automatycznie w `presets/prophet5`, zachowuje istniejące pliki.
-Projekt i preset: `engine prophet5 pfive 1` + 50 niezależnych wartości. Nie
+Projekt i preset: `engine prophet5 pfive 2` + 51 niezależnych wartości. Odczyt `pfive 1` zachowuje poprzednie 50 wartości i ustawia REVISION na Rev 3. Dotychczasowe 24 presety fabryczne zostają w swoim formacie v1, bez podmiany nastaw. Nie
 interpretujemy parametrów dostarczonego, nigdy wcześniej niewpiętego DSP jako
 istniejącego formatu projektów. Nie zmieniamy ID poprzednich silników ani banku POLIVOKS.
 
@@ -152,3 +152,62 @@ Ostateczna ocena barw i zgodności referencji należy do odsłuchu/oglądu na ko
 Końcowy build wgrany na `192.168.50.239:/userdata/dawpol3000/dawpol3000`.
 SHA-256 lokalnie i na urządzeniu: `745ac3daf53cc156b79749b943a940c0a1ad83a9bbbc18bf7dad2d4a3bfc1127`.
 Podglądy OSC/FILTER ENV/LFO wykonane binarką ARM: `out/prophet/{osc,env,lfo}.png`; obejrzane bez budowania aplikacji PC.
+
+## Aktualizacja Rev 2 / animacje (2026-11-14)
+
+**Wybór trybu:** FILTER → L3 → niebieski REVISION. Domyślny REV 3 CEM pozostaje
+zatwierdzonym brzmieniem. REV 2 SSM jest drugim charakterem tego samego niezależnego
+instrumentu; tryb zapisuje się w presecie/projekcie. Parametr P5_REVISION dopisany
+na końcu, format v2 ma 51 wartości. Stare projekty i banki v1 automatycznie zachowują Rev 3.
+
+Podstawy modelu SSM:
+
+- [Oryginalny Technical Manual TM1000C, styczeń 1980](https://manuals.fdiskc.com/tree/Sequential%20Circuits/Sequential%20Circuits%20Prophet%205%20Service%20Manual.pdf), m.in. schemat toru na stronie 2-9: filtr 2040, obwiednia 2050, VCA 2020.
+- [Sound Semiconductor SSI2140, dokumentacja oryginalnego projektanta SSM2040](https://www.soundsemiconductor.com/downloads/ssi2140datasheet.pdf), sekcja Unity-Gain Overdrive, strony 16–18. Dokument opisuje asymetryczne nasycenie pierwszej komórki i parzyste harmoniczne jako cechę rodziny SSM2040. SSI2140 jest nowszym układem; nie utożsamiamy jego parametrów pomiarowych z konkretnym starym P5.
+
+Tryb Rev 2 zmienia **pierwszą nieliniową komórkę wewnątrz pętli filtra**, nie
+nakłada saturatora na gotowe audio: sterowanie drive 1,32 i bias 0,18 przy pełnym
+Rev 2, usunięcie składowej stałej i normalizacja małosygnałowego nachylenia.
+Pochodna zmienionej komórki uczestniczy w tym samym rozwiązaniu Newtona, zarówno
+w NEON, jak i skalarze. Przełączenie płynnie zmienia współczynniki przez około 3 ms,
+zachowuje fazy i obwiednie. Przy VINTAGE zwiększa rozrzut/dryft VCO do 1,45×.
+To **przybliżenie charakteru rodziny SSM**, z dobranymi współczynnikami — nie
+pełna emulacja SSM2030/2040/2050, nie kalibracja pomiarowa i nie wykonanie firmware'u Z80.
+Sam kształt bazowych VCO i obwiedni pozostaje wspólny; nie dodajemy różnic bez uzasadnienia.
+
+ROM użytkownika: `Sequential Circuits Prophet 5 Rev 2.0 v7.0c.zip`. Zachowany w
+ignorowanym `slooped_engines/prophet/rev2`, bez zmian w Downloads. Trzy pliki po
+2048 bajtów, każdy ma identyczne połówki 1024 bajtów. To fragmenty firmware'u
+Z80, bez próbek oscylatorów; nie są wbudowane w binarkę ani repo.
+
+| Plik | SHA-256 |
+|---|---|
+| p5_v7.0c_0.bin | d26e3d4eb48fab7b2734b3a94f55dca48e85f35a2166520a673e84885144b4c4 |
+| p5_v7.0c_1.bin | 45efddcc25ba936f0b0cf7cb0635b23acecfd4aa2b05e030b27b960bd3914f7b |
+| p5_v7.0c_2.bin | 99b359bb47aa65d760b77b64c88ae893be5d26a30c376f8a147e8b0c5d9463c8 |
+
+Grafika Rev 2: bursztynowa laska A, fioletowa B, cyjanowe pioruny i chłodne szaty.
+Pozostają te same kontury postaci i dekoracji. Źrenica otwiera się z cutoffem, z zachowaniem oryginalnych powiek,
+tęczówka zmienia biel w czerwień z rezonansem; promienie reagują na obwiednię
+filtra i przypisany Wheel-Mod → FILTER. Wnętrza lasek przewijają wybraną falę/PW,
+jasność wiąże się z poziomem oscylatora, atak daje rozbłysk, szaty rozświetla VCA.
+Sześć gwiazdek mieni się **losowo**, niezależnie od głosów, LFO i Poly-Mod.
+Stałe jasne wyładowania przemieszczają się wyłącznie po istniejących piorunach,
+także w ciszy i przy wyłączonych trasach Poly-Mod; czerwone/cyjanowe podstawy nie gasną.
+
+MIXER pokazuje trzy poziomy A/B/NOISE, zgodnie ze stylem Polivoksa. LEVEL jest
+wyłącznie w mikserze; VINTAGE na VOICE. WHEEL MOD ma rzeczywisty rysunek koła,
+obrót/znacznik i procent zgodny z P5_WHEEL, mieszankę LFO/PINK i pięć tras.
+L3 na WHEEL MOD udostępnia koło, mieszankę i przełącznik FILTER. Miniatura koła
+jest też widoczna obok głównej ilustracji.
+
+Kontrole wykonano na ARM: 24 presety w obu trybach, skrajne ustawienia i zmiana
+rewizji przy trzymanej nucie, zapis Rev 2, migracja starych 50 pól do Rev 3,
+segmenty sekwencera i niezależny tor. Porównanie z zatwierdzonym commitem
+`3762cd4`: **294 912 próbek Rev 3, maksymalna różnica 0**. Ten sam patch/ziarno
+w SSM daje inny sygnał (suma bezwzględnych różnic 48,209 w porównanym przebiegu).
+Średni koszt obu trybów około 0,738 s CPU/s pięciogłosowego audio, maksimum
+0,756 w tym przebiegu. Podglądy ARM: `out/prophet/rev2`.
+
+Wgrany build: `3991e0eee80040fa199e56a1dce52e303f410039bf3b0869f8e447665435b29b`
+(SHA-256 lokalnie i na 192.168.50.239); nie wymaga instalowania ROM-u na konsoli.

@@ -8,8 +8,9 @@
 extern "C" {
 #endif
 #define PROPHET_VOICES 5
-#define PROPHET_PARAMS 50
-#define PROPHET_VERSION 1
+#define PROPHET_V1_PARAMS 50
+#define PROPHET_PARAMS 51
+#define PROPHET_VERSION 2
 #define PROPHET_DIVS 24
 enum ProphetParam {
     P5_AFREQ,
@@ -61,7 +62,8 @@ enum ProphetParam {
     P5_LEVEL,
     P5_VELOCITY,
     P5_BEND,
-    P5_A440
+    P5_A440,
+    P5_REVISION /* 0 = approved Rev 3/CEM; 32767 = Rev 2/SSM model */
 };
 typedef struct ProphetCore ProphetCore;
 typedef struct ProphetState {
@@ -77,7 +79,7 @@ int prophetChoices(int param);
 void prophetPanic(ProphetCore *p);
 void prophetKeyDown(ProphetCore *, int note, int velocity, const int16_t *words);
 void prophetKeyUp(ProphetCore *, int note, const int16_t *words);
-/* Mode changes reconcile held notes, and chord capture lives in the preset. */
+/* Mode changes reconcile held notes without borrowing host voice state. */
 void prophetConfigure(ProphetCore *, const int16_t *words);
 void prophetRender(ProphetCore *, float *mono, int frames, const int16_t *, float rate, float bpm);
 void prophetGetState(const ProphetCore *, ProphetState *);
