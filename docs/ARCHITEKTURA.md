@@ -194,3 +194,7 @@ pozycję i restart START; nie używa wspólnego LFO. SYNC: 24 podziały do 1/128
 z D/T. MONO używa stosu klawiszy i wspólnego glide VCO I/II; DUO zachowuje
 wysoka/niska z glide I. VINTAGE realizowane wyłącznie w rdzeniu Polivoksa.
 Animacje i planety: lokalny PRNG UI, synchronizacja gwiazd ze snapshotem LFO.
+
+## PROPHET-5 (2026-11-14)
+
+`ENG_PROPHET` dopisany na końcu ID. `AudioEngine::p5_[MAX_TRACKS]` posiada własne `ProphetSynth : NoteSink`, pięć kart VCO/filtr/ADSR, wspólne rodzime LFO, RNG na ścieżkę i własną decymację 4×. Gałąź opuszcza konfigurację i render WavetableSynth. Snapshot `ProphetView` jest przenoszony TripleBuffer z audio do UI; komenda TUNE przez kolejkę SPSC. Zapis `pfive 1` zawiera 50 wartości, fabryczne presety mają katalog `prophet5`. `SynthView` pm=15 ma 11 własnych stron; `ProphetScreen` buforuje geometrię źródłową. Cztery niezależne filtry liczone NEON na ARM, piąty skalarnie. Matematyczne tablice współczynników i geometria są wspólne/stałe, stan audio wyłącznie na ścieżkę. ROM nie jest ładowany ani dołączony; jest firmware’em panelu oryginału. Szczegóły i ograniczenia: [PROPHET.md](PROPHET.md).

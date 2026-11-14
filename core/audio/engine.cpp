@@ -14,6 +14,8 @@ void AudioEngine::init(float sr) {
         synth_[i].init(sr);
         wt_[i].init(sr);
         pv_[i].init(sr);
+        p5_[i].init(sr);
+        p5_[i].seed(0x519ab071u + 0x9e3779b9u * i);
         eng_[i] = ENG_WAVETABLE;
         sinks_[i] = &wt_[i];
     }
@@ -25,7 +27,7 @@ void AudioEngine::applyProject() {
     if (p.nTracks < nTracks_) {
         // Structural deletion invalidates track indices held by the sequencer.
         seq_.stop(sinks_);
-        for (int i=0;i<MAX_TRACKS;++i) { sinks_[i]->allOff(); pv_[i].reset(); }
+        for (int i=0;i<MAX_TRACKS;++i) { sinks_[i]->allOff(); pv_[i].reset(); p5_[i].reset(); }
     }
     seq_.setProject(&p);
     seq_.setTempo(p.bpm);
@@ -34,14 +36,21 @@ void AudioEngine::applyProject() {
         synth_[i].setVolume(1.f);
         wt_[i].setVolume(1.f);
         mixer_.setGain(i, i < p.nTracks ? p.tracks[i].volume : 0.f);
-        if (i >= p.nTracks) { if (eng_[i]==ENG_POLIVOKS) pv_[i].reset(); continue; }
+        if (i >= p.nTracks) { if (eng_[i]==ENG_POLIVOKS) pv_[i].reset(); if (eng_[i]==ENG_PROPHET) p5_[i].reset(); continue; }
         const Track& t = p.tracks[i];
         uint8_t e = t.engine < ENG_COUNT ? t.engine : (uint8_t)ENG_WAVETABLE;
         if (e != eng_[i]) {  // zmiana instrumentu: wycisz stary
             sinks_[i]->allOff();
             if (eng_[i]==ENG_POLIVOKS) pv_[i].reset();
+            if (eng_[i]==ENG_PROPHET) p5_[i].reset();
             eng_[i] = e;
-            sinks_[i] = e == ENG_POLIVOKS ? (NoteSink*)&pv_[i] : e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
+            sinks_[i] = e == ENG_PROPHET ? (NoteSink*)&p5_[i] : e == ENG_POLIVOKS ? (NoteSink*)&pv_[i] : e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
+        }
+        if (e==ENG_PROPHET) {
+            int16_t defaults[PROPHET_PARAMS];
+            if (!t.prophetSet) prophetPreset(0,defaults);
+            p5_[i].configure(t.prophetSet?t.prophet:defaults,t.octave);
+            continue; // independent VCO, ADSR, LFO, glide, oversampling
         }
         if (e==ENG_POLIVOKS) {
             int16_t defaults[POLIVOKS_NUM_PARAMS];
@@ -127,10 +136,11 @@ void AudioEngine::process(float* out, int frames) {
     EngineCmd c;
     while (q_.pop(c)) {
         switch (c.type) {
+        case EC_PROPHET_TUNE: if(c.track<MAX_TRACKS && eng_[c.track]==ENG_PROPHET) p5_[c.track].tune(); break;
         case EC_NOTE_ON: if (c.track < MAX_TRACKS) sinks_[c.track]->noteOn(c.pitch, c.value); break;
         case EC_NOTE_OFF: if (c.track < MAX_TRACKS) sinks_[c.track]->noteOff(c.pitch); break;
-        case EC_PLAY_SONG: seq_.playSong(sinks_); for(auto& pv:pv_) pv.restartLfo(); applyMutes(); break;
-        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); for(auto& pv:pv_) pv.restartLfo(); applyMutes(); break;
+        case EC_PLAY_SONG: seq_.playSong(sinks_); for(auto& pv:pv_) pv.restartLfo(); for(auto& p5:p5_) p5.restartLfo(); applyMutes(); break;
+        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); for(auto& pv:pv_) pv.restartLfo(); for(auto& p5:p5_) p5.restartLfo(); applyMutes(); break;
         case EC_STOP: seq_.stop(sinks_); for (int i=0;i<MAX_TRACKS;++i) sinks_[i]->allOff(); break;
         }
     }
@@ -148,7 +158,11 @@ void AudioEngine::process(float* out, int frames) {
             const bool pl = seq_.playing();
             const double bp = seq_.beatPos();
             for (int i = 0; i < MAX_TRACKS; i++) {
-                if (eng_[i]==ENG_POLIVOKS) {
+                if (eng_[i]==ENG_PROPHET) {
+                    p5_[i].setTransport(pl,bp,seq_.tempo());
+                    p5_[i].render(trk[i]+pos*2,n);
+                }
+                else if (eng_[i]==ENG_POLIVOKS) {
                     pv_[i].setTransport(pl,bp,seq_.tempo());
                     pv_[i].render(trk[i]+pos*2,n);
                 }
@@ -161,7 +175,7 @@ void AudioEngine::process(float* out, int frames) {
             seq_.advance(n, sinks_);
             pos += n;
         }
-        for (int i = 0; i < MAX_TRACKS; i++) act[i] = eng_[i]==ENG_POLIVOKS ? pv_[i].active()>0 : wt_[i].activeVoices()>0;
+        for (int i = 0; i < MAX_TRACKS; i++) act[i] = eng_[i]==ENG_PROPHET ? p5_[i].active()>0 : eng_[i]==ENG_POLIVOKS ? pv_[i].active()>0 : wt_[i].activeVoices()>0;
         mixer_.process(trk, act, nTracks_, out + done * 2, m);
         done += m;
     }

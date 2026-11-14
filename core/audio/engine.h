@@ -9,6 +9,7 @@
 #include "synth/saw_synth.h"
 #include "synth/wavetable_synth.h"
 #include "synth/polivoks_synth.h"
+#include "synth/prophet_synth.h"
 #include "synth/pew_dsp.h"
 #include "synth/elg_dsp.h"
 #include "synth/eva_dsp.h"
@@ -28,7 +29,7 @@ static inline void dp_evaView(const EvaCore* p, EvaView* v) { evaView(p, v); }
 
 namespace dp {
 
-enum EngineCmdType : uint8_t { EC_NOTE_ON, EC_NOTE_OFF, EC_PLAY_SONG, EC_PLAY_PATTERN, EC_STOP };
+enum EngineCmdType : uint8_t { EC_NOTE_ON, EC_NOTE_OFF, EC_PLAY_SONG, EC_PLAY_PATTERN, EC_STOP, EC_PROPHET_TUNE };
 struct EngineCmd { uint8_t type, track, pitch, pattern; float value; };
 
 class AudioEngine {
@@ -75,6 +76,7 @@ public:
     const ::SupersawCore* supersawCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].supersaw() : nullptr; }
     const ::VaporaCore* vaporaCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].vapora() : nullptr; }
     int32_t monolitEnv(int t) const { return t >= 0 && t < MAX_TRACKS && wt_[t].monolit() ? dp_monolitEnv(wt_[t].monolit()) : 0; }
+    bool prophetView(int t, ProphetView& view) { return t>=0 && t<MAX_TRACKS && p5_[t].view(view); }
     bool polivoksView(int t, PolivoksView& view) { return t>=0 && t<MAX_TRACKS && pv_[t].view(view); }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
@@ -102,6 +104,7 @@ private:
     SawSynth synth_[MAX_TRACKS];
     WavetableSynth wt_[MAX_TRACKS];
     PolivoksSynth pv_[MAX_TRACKS];
+    ProphetSynth p5_[MAX_TRACKS];
     uint8_t eng_[MAX_TRACKS] = {};  // biezacy silnik sciezki
     NoteSink* sinks_[MAX_TRACKS];
     float master_ = 0.8f;

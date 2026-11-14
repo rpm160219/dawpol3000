@@ -444,6 +444,14 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
+    } else if (!strncmp(screen,"prophet",7)) {
+        Track& tr=app.project().tracks[1];tr.engine=ENG_PROPHET;
+        prophetPreset(getenv("PROPHET_PRESET")?atoi(getenv("PROPHET_PRESET")):0,tr.prophet);tr.prophetSet=true;
+        snprintf(tr.preset,sizeof(tr.preset),"%s",prophetPresetName(getenv("PROPHET_PRESET")?atoi(getenv("PROPHET_PRESET")):0));
+        app.openPresets("out/presets_demo");app.markDirty();app.openSynth(1);idle(app);
+        const int pg=screen[7]?atoi(screen+7):0;app.synth.setPage(pg>=0&&pg<11?pg:0);
+        if(getenv("PROPHET_ALT"))app.synth.setAlt(true);
+        eng.send(EC_NOTE_ON,1,60,0,.85f);for(int i=0;i<60;i++)eng.process(buf,256);
     } else if (!strncmp(screen,"polivoks",8)) {
         if (!strcmp(screen,"polivoksengine")) {
             Track& tr=app.project().tracks[1]; tr.engine=ENG_POLIVOKS; polivoksEnsure(tr);

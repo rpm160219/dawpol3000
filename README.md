@@ -39,3 +39,7 @@ Polivoks v3: LFO FREE/SYNC (L3), podziały do 1/128 z kropką i triolą,
 VINTAGE we własnym DSP, MONO last-note i glide obu VCO. Starsze patche zachowane.
 Animacja gwiazd/iskier, mini planety w tle. Ta aktualizacja: tylko build ARM
 oraz deploy, bez renderów/testów zgodnie z prośbą właściciela.
+
+## PROPHET-5
+
+Nowy niezależny pięciogłosowy silnik w stylu Rev 3/CEM, 4× oversampling, własne VCO/ADSR/Poly-Mod/Wheel-Mod, grafika z referencji i 24 barwy. Wybierz **PROPHET-5** w ENGINE. Sterowanie, źródła, rola ROM-u i granice modelu: [docs/PROPHET.md](docs/PROPHET.md). POLIVOKS pozostaje punktem odniesienia i nie został zmieniony.

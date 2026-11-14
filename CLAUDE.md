@@ -127,6 +127,8 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - [x] Nazwa projektu — DAW-POL 3000
 
 ## Aktualny stan
+- **PROPHET-5 (2026-11-14):** nowy niezależny silnik Rev 3/CEM, pięć głosów, 4× oversampling/FIR, nieliniowy LP24, oba ADSR, oryginalny Poly-Mod i Wheel-Mod z różowym szumem. UNISON lowest-note, glide tylko UNISON, TUNE/R3 na VOICE, A-440. 50 parametrów `pfive 1`, 11 stron, 24 autorskie presety w `presets/prophet5`. Grafika traced z referencji (1605 konturów), bez jej napisów. ROM jest prywatnym firmware Z80, nie samplami; nie trafia do repo/buildu. Oryginał DSP pozostaje w ignorowanym `slooped_engines`. ARM zbudowany, ukierunkowana diagnostyka DSP/hosta przeszła na konsoli, ASan/UBSan części C. Pięć głosów około 72% jednego rdzenia H700; wiele ścieżek ma duży koszt. Brak desktopowego buildu/renderów. To model inspirowany CEM, zgodność brzmienia z fizycznym P5 nie jest potwierdzona pomiarami. Szczegóły: `docs/PROPHET.md`. Build wgrany na 192.168.50.239, SHA-256 lokalna/zdalna identyczna (`745ac3daf53cc156b79749b943a940c0a1ad83a9bbbc18bf7dad2d4a3bfc1127`); strony OSC/FENV/LFO sprawdzone z binarki ARM. Następny krok: ponowne uruchomienie i odsłuch na konsoli. POLIVOKS pozostawiony bez zmian.
+
 - **POLIVOKS (2026-11-14):** zintegrowany jako niezależny `PolivoksSynth : NoteSink`
   w AudioEngine, poza DSP WavetableSynth. Własny cały tor, 4× oversampling,
   mono/duo, ADSR/Repeat/LFO/glide, 44 parametry v3 (migracja v1/v2). Dziewięć stron (OSC 1/2, FILTER, MIXER, FENV, AENV, LFO, VOICE, PRESETS), L3,

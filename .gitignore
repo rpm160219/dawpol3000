@@ -8,3 +8,6 @@ ref/
 projects/
 presets/
 dist/
+
+# User-supplied source archives and private firmware (kept locally).
+/slooped_engines/

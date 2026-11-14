@@ -16,6 +16,7 @@ namespace dp {
 struct FactoryPreset { const char* name; int cat; int ver; const char* inst; };
 
 #include "polivoks_factory.inc"
+#include "prophet_factory.inc"
 
 static const FactoryPreset kWavetable[] = {
     {"INIT", CAT_OTHER, 1, ""},
@@ -828,6 +829,7 @@ static const FactoryPreset kVelour[] = {
 
 // Zestaw dla katalogu silnika: wskaznik i liczba pozycji
 const FactoryPreset* factoryList(const char* eng, int* n, int* engine) {
+    if (!__builtin_strcmp(eng,"prophet5")) { *n=sizeof(kProphet)/sizeof(kProphet[0]); *engine=ENG_PROPHET; return kProphet; }
     if (!__builtin_strcmp(eng,"polivoks")) { *n=sizeof(kPolivoks)/sizeof(kPolivoks[0]); *engine=ENG_POLIVOKS; return kPolivoks; }
     if (!__builtin_strcmp(eng, "taffy")) { *n = sizeof kTaffy / sizeof kTaffy[0]; *engine = ENG_TAFFY; return kTaffy; }
     if (!__builtin_strcmp(eng, "velour")) { *n = sizeof kVelour / sizeof kVelour[0]; *engine = ENG_VELOUR; return kVelour; }

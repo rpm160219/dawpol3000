@@ -20,3 +20,6 @@ g++ -std=c++17 -O2 -w -Icore -Ithird_party/pico_d50/include -c core/synth/linea_
 # project.cpp now initializes the independent Polivoks preset bank as well.
 gcc -std=c11 -O3 -Icore -c core/synth/polivoks_dsp.c -o "$T/gin_polivoks_dsp.o"
 gcc -std=c11 -O3 -Icore -c core/synth/polivoks_presets.c -o "$T/gin_polivoks_presets.o"
+
+gcc -std=c11 -O3 -Icore -c core/synth/prophet_dsp.c -o "$T/gin_prophet_dsp.o"
+gcc -std=c11 -O3 -Icore -c core/synth/prophet_presets.c -o "$T/gin_prophet_presets.o"
