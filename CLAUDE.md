@@ -130,9 +130,11 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
   Nie dodawać wspólnych obwiedni, LFO, AGE/unison ani decymacji WavetableSynth.
   Instrukcja: `docs/POLIVOKS.md`, test `tools/test_polivoks.sh`. Desktop/ARM
   budują się, porównanie 12 barw z samodzielnym DSP: różnica próbek 0.
-  SSH do 192.168.50.239 blokowane w aktualnym środowisku (`socket: Operation
-  not permitted`); paczka PortMaster jest gotowa lokalnie. Wgranie/odsłuch na
-  fizycznej konsoli pozostaje do wykonania przy dostępnym połączeniu.
+  Build wgrany na 192.168.50.239 do `/userdata/dawpol3000/dawpol3000`;
+  lokalna i zdalna suma SHA-256 identyczne. Dostęp SSH działa po włączeniu
+  sieci dla sesji Codexa. Paczka PortMaster gotowa lokalnie. Następny krok:
+  ponowne uruchomienie aplikacji i ocena UI/brzmienia na fizycznej konsoli;
+  wydajność DSP na urządzeniu pozostaje do zmierzenia.
 
 - Etap: 4 (silniki) w toku (29 silników, w tym pierwsza perkusja GIN) — **WAVETABLE z op1r przeniesiony 1:1** (DSP zgodny bit w bit z oryginałem, ekran przeniesiony). Etapy 2/3 (sekwencer, arrange) działają.
 - WAVETABLE ma też obwiednię filtra i 2 LFO z wyborem celu (dodatki DAW-POL; przy zerowych ustawieniach brzmi bit w bit jak oryginał).

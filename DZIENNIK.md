@@ -1,5 +1,11 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 13:05 — Wgranie buildu POLIVOKS na konsolę
+- **Co zmienione:** `tools/deploy.sh 192.168.50.239` zbudował ARM i wgrał aktualny program do `/userdata/dawpol3000/dawpol3000` oraz starter Ports. Dostęp sieciowy sesji działa; poprzednia blokada SSH ustąpiła po zmianie uprawnień uruchomienia Codexa.
+- **Sprawdzone:** SHA-256 lokalnej i zdalnej binarki identyczne: `d6bdeb5844f770c0322dd748bb7dd7f5a5a471ef978c489cc9f8c9da18a4d1e5`.
+- **Następny krok:** uruchomienie ponownie DAW-POL 3000 z Ports, wybór POLIVOKS i odsłuch/ocena UI na urządzeniu. Nie deklarujemy jeszcze pomiaru wydajności ani odsłuchu na fizycznej konsoli.
+- **Od Patryka:** uruchomienie i ocena wyglądu/brzmienia.
+
 ## 2026-11-14 12:55 — POLIVOKS: niezależny silnik, Cyber-Niedźwiedź i zatwierdzony bank
 - **Co zmienione:** `core/synth/polivoks_dsp.*`, `polivoks_presets.*`, `polivoks_synth.*`: cały samodzielny tor Polivoksa i adapter NoteSink poza WavetableSynth; dodane odcinki 1–128 próbek, panic i stan do telemetrii, bez zmiany równań brzmienia. `core/audio/engine.*`: osobne kierowanie nut/audio i bezpieczne migawki UI, stabilne Note Off po transpozycji, STOP puszcza odsłuch, usunięcie ścieżki zatrzymuje transport i resetuje Polivoksa.
 - `core/seq/project.*`, `core/io/project_file.cpp`, `preset_store.cpp`, `factory_presets.cpp`, `polivoks_factory.inc`, `core/ui/app.h`: nowy ENG_POLIVOKS, 41 parametrów v2 w projektach/presetach (`pvox`), migracja v1, 12 zatwierdzonych presetów w standardowej przeglądarce.
