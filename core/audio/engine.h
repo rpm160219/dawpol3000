@@ -24,6 +24,7 @@ static inline void dp_reactorView(const ReactorCore* p, ReactorView* v) { reacto
 static inline void dp_mbiraView(const MbiraCore* p, MbiraView* v) { mbiraView(p, v); }
 static inline void dp_evaView(const EvaCore* p, EvaView* v) { evaView(p, v); }
 #include "audio/mixer.h"
+#include "audio/track_workers.h"
 #include "util/spsc.h"
 #include "util/triple_buffer.h"
 
@@ -34,7 +35,9 @@ struct EngineCmd { uint8_t type, track, pitch, pattern; float value; };
 
 class AudioEngine {
 public:
-    void init(float sampleRate);
+    void init(float sampleRate, int renderThreads = 0);
+    int renderThreads() const { return workers_.threads(); }
+    static bool parallelSafe(int engine);
     // --- watek UI ---
     bool send(EngineCmdType t, int track = 0, int pitch = 0, int pattern = 0, float value = 0.f) {
         return q_.push({(uint8_t)t, (uint8_t)track, (uint8_t)pitch, (uint8_t)pattern, value});
@@ -118,6 +121,20 @@ private:
     std::atomic<bool> playingOut_{false};
     void applyProject();
     void applyMutes();
+    struct RenderBatch {
+        int position = 0, frames = 0;
+        bool playing = false;
+        double beat = 0;
+        float bpm = 120;
+    } batch_;
+    int parallel_[MAX_TRACKS] = {}, serial_[MAX_TRACKS] = {}, parallelCount_ = 0, serialCount_ = 0;
+    bool hasSerialWork_ = false;
+    void renderTrack(int track);
+    static void renderJob(void* context, int track) {
+        static_cast<AudioEngine*>(context)->renderTrack(track);
+    }
+    TrackWorkers workers_; // destroyed first, before synth state and descriptors
+
 };
 
 }  // namespace dp

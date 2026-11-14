@@ -98,6 +98,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Audio: %s\n", SDL_GetError());
     }
 
+    printf("Audio render: %d threads\n", gEngine.renderThreads());
     Canvas canvas;
     TestScreen app;
     app.init(&gSynth);

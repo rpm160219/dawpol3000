@@ -5,7 +5,8 @@
 
 namespace dp {
 
-void AudioEngine::init(float sr) {
+void AudioEngine::init(float sr, int renderThreads) {
+    workers_.stop();
     sr_ = sr;
     for (int i = 0; i < MAX_TRACKS; i++) { level_[i] = 0; levelOut_[i].store(0.f); }
     seq_.init(sr);
@@ -20,6 +21,7 @@ void AudioEngine::init(float sr) {
         sinks_[i] = &wt_[i];
     }
     seq_.setProject(&prj_.front());
+    workers_.start(renderThreads);
 }
 
 void AudioEngine::applyProject() {
@@ -115,6 +117,27 @@ void AudioEngine::applyProject() {
                           lfoDivBeats(t.lfo[l].div));
     }
     nTracks_ = p.nTracks < MAX_TRACKS ? p.nTracks : MAX_TRACKS;
+    parallelCount_ = serialCount_ = 0;
+    hasSerialWork_ = false;
+    for (int i = 0; i < MAX_TRACKS; i++) {
+        if (i < nTracks_ && parallelSafe(eng_[i]))
+            parallel_[parallelCount_++] = i;
+        else {
+            serial_[serialCount_++] = i;
+            if (i < nTracks_) hasSerialWork_ = true;
+        }
+    }
+    // Longest jobs first; equal-cost tracks retain their original order.
+    auto cost = [&](int i) {
+        return eng_[i] == ENG_PROPHET ? 100 : eng_[i] == ENG_POLIVOKS ? 70 : eng_[i] == ENG_FELT ? 30
+             : eng_[i] == ENG_LOUNGE ? 25 : eng_[i] == ENG_PARALLAX ? 20 : 10;
+    };
+    for (int i = 1; i < parallelCount_; i++)
+        for (int j = i; j > 0 && cost(parallel_[j]) > cost(parallel_[j - 1]); j--) {
+            int t = parallel_[j];
+            parallel_[j] = parallel_[j - 1];
+            parallel_[j - 1] = t;
+        }
     mixer_.apply(p);
     applyMutes();
     master_ = p.masterVol;
@@ -130,7 +153,30 @@ void AudioEngine::applyMutes() {
     }
 }
 
+bool AudioEngine::parallelSafe(int e) {
+    // Audited allowlist. GRAND's hammer has a global RNG; the older op1r
+    // wrappers use shared current-instance/scratch state and stay serial.
+    return e == ENG_PROPHET || e == ENG_POLIVOKS || e == ENG_WAVETABLE || e == ENG_SAW ||
+           e == ENG_PARALLAX || e == ENG_LOUNGE || e == ENG_FELT;
+}
+void AudioEngine::renderTrack(int i) {
+    const auto& b = batch_;
+    float* out = trkBuf_[i] + b.position * 2;
+    if (eng_[i] == ENG_PROPHET) {
+        p5_[i].setTransport(b.playing, b.beat, b.bpm);
+        p5_[i].render(out, b.frames);
+    } else if (eng_[i] == ENG_POLIVOKS) {
+        pv_[i].setTransport(b.playing, b.beat, b.bpm);
+        pv_[i].render(out, b.frames);
+    } else {
+        synth_[i].render(out, b.frames);
+        wt_[i].setTransport(b.playing, b.beat, b.bpm);
+        wt_[i].render(out, b.frames);
+    }
+}
+
 void AudioEngine::process(float* out, int frames) {
+    workers_.prepareCallback();
     memset(out, 0, sizeof(float) * 2 * frames);
     if (prj_.consume()) applyProject();
     EngineCmd c;
@@ -157,20 +203,15 @@ void AudioEngine::process(float* out, int frames) {
             if (n > m - pos) n = m - pos;
             const bool pl = seq_.playing();
             const double bp = seq_.beatPos();
-            for (int i = 0; i < MAX_TRACKS; i++) {
-                if (eng_[i]==ENG_PROPHET) {
-                    p5_[i].setTransport(pl,bp,seq_.tempo());
-                    p5_[i].render(trk[i]+pos*2,n);
-                }
-                else if (eng_[i]==ENG_POLIVOKS) {
-                    pv_[i].setTransport(pl,bp,seq_.tempo());
-                    pv_[i].render(trk[i]+pos*2,n);
-                }
-                else {
-                    synth_[i].render(trk[i] + pos * 2, n);
-                    wt_[i].setTransport(pl, bp, seq_.tempo());
-                    wt_[i].render(trk[i] + pos * 2, n);
-                }
+            batch_ = {pos, n, pl, bp, seq_.tempo()};
+            if (workers_.threads() > 1 && parallelCount_ > 0) {
+                workers_.begin(&AudioEngine::renderJob, this, parallel_, parallelCount_, hasSerialWork_);
+                // These ports share mutable global contexts/RNG: preserve their
+                // original order and never run two of them concurrently.
+                for (int k = 0; k < serialCount_; k++) renderTrack(serial_[k]);
+                workers_.finish();
+            } else {
+                for (int i = 0; i < MAX_TRACKS; i++) renderTrack(i);
             }
             seq_.advance(n, sinks_);
             pos += n;

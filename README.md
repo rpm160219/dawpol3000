@@ -4,9 +4,11 @@ Szkicownik muzyczny na Anbernic RG35XX Pro (Knulli), UI w duchu OP-1. Licencja: 
 
 - `./tools/build.sh` — build desktop (okno 640×480), `./tools/build.sh arm` — build na konsolę
 - `build/dawpol3000 --render-png out/x.png` / `--render-wav out/x.wav 5` — tryb bez okna
-- `./tools/deploy.sh <IP>` — wysyłka na konsolę i uruchomienie
+- `./tools/deploy.sh <IP>` — wysyłka na konsolę; nowa wersja działa po ponownym otwarciu aplikacji
 
 Opis budowy programu: [docs/ARCHITEKTURA.md](docs/ARCHITEKTURA.md).
+
+Audio domyślnie korzysta z maksymalnie czterech wątków do niezależnych ścieżek, m.in. Prophet i Polivoks. Trzy pięciogłosowe Prophety na H700: około 11,2 → 3,8 ms na bufor 256 ramek. Mikser i starsze porty ze współdzielonym stanem pozostają szeregowe. Tryb jednowątkowy: `DAWPOL_AUDIO_THREADS=1` przed startem. [Budowa, pomiary i ograniczenia](docs/AUDIO_MULTICORE.md).
 
 Zakładki PROJECT ↔ ARRANGE ↔ PIANO ROLL: L2 / R2 (na PC: klawisze 1 / 2). Start z ostatnim projektem.
 PROJECT: góra/dół = lista, X = nazwa, Y = zapisz, A = wczytaj / nowy, B = usuń. Projekty: `projects/<NAZWA>/project.dpp`.

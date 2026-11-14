@@ -11,6 +11,7 @@ endif()
 add_compile_options(-Wall -Wextra)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions> $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 
+find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 
@@ -24,7 +25,8 @@ add_library(dpcore STATIC
   core/ui/widgets.cpp core/ui/app.cpp core/ui/project_view.cpp core/ui/synth_view.cpp core/ui/wavetable_screen.cpp core/ui/taffy_screen.cpp core/ui/pew_screen.cpp core/ui/elg_screen.cpp core/ui/eva_screen.cpp core/ui/mbira_screen.cpp core/ui/reactor_screen.cpp core/ui/oxbow_screen.cpp core/ui/sid_screen.cpp core/ui/monolit_screen.cpp core/ui/vapora_screen.cpp core/ui/vapora_screen_c.c core/ui/supersaw_screen.cpp core/ui/mixtur_screen.cpp core/ui/brass_screen.cpp core/ui/hollowsaint_screen.cpp core/ui/bloodmoon_screen.cpp core/ui/blot_screen.cpp core/ui/aether_screen.cpp core/ui/aether_screen_c.c core/ui/arc_screen.cpp core/ui/arc_screen_c.c core/ui/dddd_screen.cpp core/ui/dddd_screen_c.c core/ui/juni_screen.cpp core/ui/juni_screen_c.c core/ui/outatime_screen.cpp core/ui/parallax_screen.cpp core/ui/lounge_screen.cpp core/ui/felt_screen.cpp core/ui/grand_screen.cpp core/ui/velour_screen.cpp core/ui/synth_velour.cpp core/ui/linea_screen.cpp core/ui/synth_linea.cpp core/ui/mixer_view.cpp core/ui/outatime_screen_c.c core/ui/splash.cpp
   core/headless.cpp)
 target_include_directories(dpcore PUBLIC core)
-target_sources(dpcore PRIVATE core/synth/prophet_dsp.c core/synth/prophet_presets.c core/synth/prophet_synth.cpp core/ui/prophet_screen.cpp core/ui/synth_prophet.cpp
+target_link_libraries(dpcore PUBLIC Threads::Threads)
+target_sources(dpcore PRIVATE core/audio/track_workers.cpp core/synth/prophet_dsp.c core/synth/prophet_presets.c core/synth/prophet_synth.cpp core/ui/prophet_screen.cpp core/ui/synth_prophet.cpp
   core/synth/polivoks_dsp.c core/synth/polivoks_presets.c core/synth/polivoks_synth.cpp
   core/ui/polivoks_screen.cpp core/ui/synth_polivoks.cpp)
 

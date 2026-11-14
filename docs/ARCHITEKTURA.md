@@ -5,7 +5,8 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 
 ## Wątki
 - **Wątek UI** (główny): wejście → logika ekranu → rysowanie do `Canvas` → wysłanie na ekran (SDL).
-- **Wątek audio** (callback SDL, 48 kHz, blok 256 ramek): `AudioEngine::process`. Zero alokacji, zero blokad.
+- **Wątek audio** (callback SDL, 48 kHz, blok 256 ramek): `AudioEngine::process`, komendy, sekwencer i mikser.
+- **Do trzech pomocniczych wątków audio**: równoległe renderowanie niezależnych ścieżek. Callback też renderuje. Stała pula powstaje w `init`, poza callbackiem; na końcu odcinka między tickami jest bariera atomowa/futex. To oczekiwanie na ukończenie DSP, nie bezwarunkowo nieblokujący callback. Szczegóły i lista silników: [AUDIO_MULTICORE.md](AUDIO_MULTICORE.md).
 - Komunikacja UI → audio: kolejka komend `Spsc` oraz `TripleBuffer<Project>` (szczegóły pod diagramem).
 - Audio → UI: zmienne atomowe (pozycja głowicy, czy gra).
 
@@ -71,7 +72,8 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 | `seq/demo_song.*` | Utwory demo budowane w kodzie: „ALL ENGINES” (A-moll, 96 BPM, 16 taktów; ELG dron, EVA chór, MBIRA arpeggio, WAVETABLE bas, WAVETABLE+ stopa i pluck, PEW organy, TAFFY melodia, REACTOR akcenty, OXBOW dęte, SID arpeggio, MONOLIT acid, VAPORA pad, SUPERSAW akordy, MIXTUR górny głos z undertonami, BRASSOPHONE zawołanie we wstępie; brzmienia z presetów fabrycznych). Dodawany raz do katalogu projektów (znacznik `_demo_all_engines_v10`; nowsza wersja zastępuje poprzednią, `ProjectStore::hasMarker/setMarker`); headless: `--render-wav plik.wav 42 allengines`, `--render-png plik.png allengines`. Drugi utwór: SYNTHWAVE (`buildDemoSynthwave`, 16 taktów, GIN / PARALLAX / JUNI / OXBOW). Trzeci: REVOLUTIONARY (`buildDemoEtude`, Chopin op. 10 nr 12, takty 1–37, 160 BPM, prawa i lewa ręka na osobnych ścieżkach GRAND; nuty z `demo_etude_data.h` wygenerowanego `tools/gen/midi_to_demo.py` z MIDI Mutopia). |
 | `seq/undo_stack.h` | Historia zmian: pierścień 32 migawek projektu (~7 MB, przydzielone raz); App ma dwie — undo i redo. |
 | `seq/sequencer.*` | (pozycja w ćwierćnutach dla LFO z synchronizacją) Odtwarzanie z dokładnością do próbki w dwóch trybach: SONG (pętla IN/OUT w taktach albo cały utwór; bez pętli gra raz i staje) i PATTERN (jeden pattern, opcjonalna pętla IN/OUT w krokach). Sam pamięta grające nuty, więc edycja w trakcie nie zawiesza dźwięku. |
-| `audio/engine.*` | Silnik audio (instrument wg ścieżki: WAVETABLE albo TEST SAW, przełączany z migawki projektu; + poziomy ścieżek do VU: szczyt z opadaniem ~24 dB/s, po głośności ścieżki): komendy z UI, migawka projektu, mute/solo (w trybie SONG; nie wyzwala nut i wycisza grające), instrument (SawSynth) na każdą ścieżkę, blok dzielony na odcinki między tickami, miks, master i łagodny ogranicznik. |
+| `audio/engine.*` | Komendy UI i migawki projektu, wybór niezależnych instrumentów na ścieżkach, sekwencer i odcinki między tickami. Audytowane silniki renderowane równolegle do osobnych buforów, starsze porty ze współdzielonym stanem w jednej grupie. Po barierze mikser/inserty/AUX/master w zachowanej kolejności. Poziomy VU przekazywane atomowo. |
+| `audio/track_workers.*` | Stała pula pthread: maksymalnie 3 pomocników i callback, atomowy przydział ścieżek, budzenie semaforem, bariera futex. Kopiuje środowisko FPU i priorytet callbacku; próbuje SCHED_FIFO/8, gdy system pozwala. `DAWPOL_AUDIO_THREADS=1` wybiera tryb szeregowy. |
 | `ui/input.h` | Logiczne przyciski i osie (niezależne od sprzętu). |
 | `ui/buttons.h` | Wciśnięcie / puszczenie / auto-powtarzanie przycisków dla ekranów. |
 | `ui/encoder.h` | Analog jako enkoder względny: martwa strefa, krzywa, tryb ciągły i „ząbkowy”. |
