@@ -35,6 +35,7 @@ void PresetStore::initInstrument(Track& t) {
         t.fenv[3] = oxbowPlusDecaySeconds(60);
     }
     t.movDiv = d.movDiv;
+    if (t.engine==ENG_POLIVOKS) { t.polivoksSet=false; polivoksEnsure(t); }
     if (t.engine == ENG_GIN) ginLoadKit(t, 0);  // GIN: INIT = pierwszy zestaw
     if (t.engine == ENG_VELOUR) { t.velourSet = false; velourEnsure(t); }  // VELOUR: INIT = FULL STRINGS
     t.mono = d.mono;

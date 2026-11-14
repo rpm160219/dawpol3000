@@ -1,5 +1,6 @@
 #include "seq/project.h"
 #include "fx/fx_registry.h"
+#include "synth/polivoks_presets.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -7,6 +8,7 @@ namespace dp {
 
 const char* engineName(int e) {
     switch (e) {
+    case ENG_POLIVOKS: return "POLIVOKS";
     case ENG_WAVETABLE: return "WAVETABLE";
     case ENG_SAW: return "TEST SAW";
     case ENG_TAFFY: return "TAFFY";
@@ -267,6 +269,7 @@ void ginLoadKit(Track& t, int kit) {
     for (int i = 0; i < GIN_KIT_SOUNDS; i++) ginFactorySound(kit, i, &t.gin[i]);
 }
 void ginEnsure(Track& t) { if (t.ginKit < 0) ginLoadKit(t, 0); }
+void polivoksEnsure(Track& t) { if (!t.polivoksSet) { polivoksLoadPreset(0,t.polivoks); t.polivoksSet=true; } }
 void velourEnsure(Track& t) { if (!t.velourSet) { velourProgramWords(2, t.velour); t.velourSet = true; } }  // FULL STRINGS
 bool ginSoundEdited(const Track& t, int s) {
     GinSound f;

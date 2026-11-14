@@ -8,6 +8,7 @@
 #include "seq/sequencer.h"
 #include "synth/saw_synth.h"
 #include "synth/wavetable_synth.h"
+#include "synth/polivoks_synth.h"
 #include "synth/pew_dsp.h"
 #include "synth/elg_dsp.h"
 #include "synth/eva_dsp.h"
@@ -74,6 +75,7 @@ public:
     const ::SupersawCore* supersawCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].supersaw() : nullptr; }
     const ::VaporaCore* vaporaCore(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].vapora() : nullptr; }
     int32_t monolitEnv(int t) const { return t >= 0 && t < MAX_TRACKS && wt_[t].monolit() ? dp_monolitEnv(wt_[t].monolit()) : 0; }
+    bool polivoksView(int t, PolivoksView& view) { return t>=0 && t<MAX_TRACKS && pv_[t].view(view); }
     int wtActive(int t) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].activeVoices() : 0; }
     // i: 0..3 galki, 4 = fala OSC 2 (tryb rozszerzony)
     int16_t wtModKnob(int t, int i) const { return t >= 0 && t < MAX_TRACKS ? wt_[t].modKnob(i) : 0; }
@@ -99,6 +101,7 @@ private:
     Sequencer seq_;
     SawSynth synth_[MAX_TRACKS];
     WavetableSynth wt_[MAX_TRACKS];
+    PolivoksSynth pv_[MAX_TRACKS];
     uint8_t eng_[MAX_TRACKS] = {};  // biezacy silnik sciezki
     NoteSink* sinks_[MAX_TRACKS];
     float master_ = 0.8f;

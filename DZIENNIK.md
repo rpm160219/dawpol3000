@@ -1,5 +1,14 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 12:55 — POLIVOKS: niezależny silnik, Cyber-Niedźwiedź i zatwierdzony bank
+- **Co zmienione:** `core/synth/polivoks_dsp.*`, `polivoks_presets.*`, `polivoks_synth.*`: cały samodzielny tor Polivoksa i adapter NoteSink poza WavetableSynth; dodane odcinki 1–128 próbek, panic i stan do telemetrii, bez zmiany równań brzmienia. `core/audio/engine.*`: osobne kierowanie nut/audio i bezpieczne migawki UI, stabilne Note Off po transpozycji, STOP puszcza odsłuch, usunięcie ścieżki zatrzymuje transport i resetuje Polivoksa.
+- `core/seq/project.*`, `core/io/project_file.cpp`, `preset_store.cpp`, `factory_presets.cpp`, `polivoks_factory.inc`, `core/ui/app.h`: nowy ENG_POLIVOKS, 41 parametrów v2 w projektach/presetach (`pvox`), migracja v1, 12 zatwierdzonych presetów w standardowej przeglądarce.
+- `core/ui/polivoks_screen.*`, `synth_polivoks.cpp`, `synth_view.*`, `dialogs.cpp`: wektorowy Cyber-Niedźwiedź na podstawie grafiki Patryka, cewki, oczy/rezonans, gwiazdy/Repeat, paszcza/cutoff i oscyloskop rzeczywistego wyjścia; osiem stron, L3 i ilustracja na karcie ENGINE. `core/headless.cpp`: podglądy polivoks* i demo WAV polivoks.
+- `CMakeLists.txt`, `tools/test_polivoks.sh`, `tests/polivoks_*`, `tools/gin_objs.sh`: build i testy nowego toru bez naruszania linkowania dotychczasowych testów. `tools/build.sh`: odświeżanie cache CMake po przeniesieniu kopii folderu. `tools/ssh_env.sh`: własna konfiguracja klienta LAN, z pominięciem wadliwego systemowego pliku SSH. Dokumentacja: README, ARCHITEKTURA, POLIVOKS, CLAUDE.
+- **Sprawdzone:** build desktop i aarch64; 12 presetów kontra DSP sprzed integracji (921 600 próbek, różnica 0); segmenty 1/37/61/113/128; projekty, presety, bank fabryczny, klawisze/oktawa/STOP/usuwanie; wszystkie strony i L3; ASan/UBSan nowego DSP i adaptera. Render dema 12 s bez clippingu PCM. Dotychczasowe demo synthwavefx: WAV identyczny bajtowo przed i po integracji.
+- **Następny krok:** ocena PNG/WAV i odsłuch na konsoli. SSH 192.168.50.239 blokowane przez środowisko (`socket: Operation not permitted`), więc nie deklarujemy wgrania ani pomiaru CPU na urządzeniu; build ARM i paczka PortMaster gotowe lokalnie.
+- **Od Patryka:** ocena wyglądu/brzmienia; do automatycznego wgrania potrzebny działający dostęp sieciowy środowiska.
+
 ## 2026-11-15 12:00 — Paczka do przekazania projektu
 - **Co zmienione:** `docs/PRZEKAZANIE.md` (podsumowanie całości: zasady, budowanie, testy, wgrywanie, zrobione rzeczy, otwarte sprawy), `GEMINI.md` (wskazówka startowa dla Gemini), paczka `dist/dawpol3000_przekazanie_2026-11-15.zip` (kod z gita, bez ROM-ów, banków i hasła).
 - **Następny krok:** Patryk może przekazać paczkę innemu asystentowi. **Od Patryka:** nic.

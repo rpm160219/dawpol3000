@@ -37,6 +37,7 @@ public:
     PresetStore& presets() { return presets_; }
     // presety wg silnika sciezki: WAVETABLE, WAVETABLE+ (osobny katalog), TAFFY
     PresetStore& presetsFor(int engine, bool alt) {
+        if (engine==ENG_POLIVOKS) return presetsPv_;
         return engine == ENG_TAFFY ? presetsTf_ : (engine == ENG_PEW ? presetsPw_ : (engine == ENG_ELG ? presetsEl_ : (engine == ENG_EVA ? presetsEv_ : (engine == ENG_MBIRA ? presetsMb_ : (engine == ENG_REACTOR ? presetsRx_ : (engine == ENG_OXBOW ? (alt ? presetsObp_ : presetsOb_) : (engine == ENG_SID ? presetsSid_ : (engine == ENG_MONOLIT ? presetsMn_ : (engine == ENG_VAPORA ? presetsVp_ : (engine == ENG_SUPERSAW ? presetsSs_ : (engine == ENG_MIXTUR ? presetsMx_ : (engine == ENG_BRASS ? presetsBr_ : (engine == ENG_HOLLOW ? presetsHs_ : (engine == ENG_BLOOD ? presetsBm_ : (engine == ENG_BLOT ? presetsBl_ : (engine == ENG_AETHER ? presetsAe_ : (engine == ENG_ARC ? presetsAr_ : (engine == ENG_DDDD ? presetsDd_ : (engine == ENG_JUNI ? presetsJn_ : (engine == ENG_OUTATIME ? presetsOt_ : (engine == ENG_GIN ? presetsGn_ : (engine == ENG_PARALLAX ? presetsPx_ : (engine == ENG_LOUNGE ? presetsLg_ : (engine == ENG_FELT ? presetsFt_ : (engine == ENG_GRAND ? presetsGd_ : (engine == ENG_VELOUR ? presetsVl_ : (alt ? presetsWp_ : presets_)))))))))))))))))))))))))));
     }
     void openPresets(const char* root) {
@@ -70,6 +71,7 @@ public:
         presetsFt_.init(root, "felt");
         presetsGd_.init(root, "grand");
         presetsVl_.init(root, "velour");
+        presetsPv_.init(root,"polivoks");
         lineaBanks().init(root, "roms/linea", "sysex");  // LINEA: banki SysEx (presets/linea/banks)
     }
     bool isModified() const { return modified_; }
@@ -107,7 +109,7 @@ private:
     AudioEngine* eng_ = nullptr;
     Project prj_;
     ProjectStore store_;
-    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_, presetsOb_, presetsObp_, presetsSid_, presetsMn_, presetsVp_, presetsSs_, presetsMx_, presetsBr_, presetsHs_, presetsBm_, presetsBl_, presetsAe_, presetsAr_, presetsDd_, presetsJn_, presetsOt_, presetsGn_, presetsPx_, presetsLg_, presetsFt_, presetsGd_, presetsVl_;
+    PresetStore presets_, presetsWp_, presetsTf_, presetsPw_, presetsEl_, presetsEv_, presetsMb_, presetsRx_, presetsOb_, presetsObp_, presetsSid_, presetsMn_, presetsVp_, presetsSs_, presetsMx_, presetsBr_, presetsHs_, presetsBm_, presetsBl_, presetsAe_, presetsAr_, presetsDd_, presetsJn_, presetsOt_, presetsGn_, presetsPx_, presetsLg_, presetsFt_, presetsGd_, presetsVl_, presetsPv_;
     char savedAs_[16] = "";  // nazwa, pod ktora projekt lezy na karcie
     bool modified_ = false;
     // Undo: stan przed biezacym gestem + historia

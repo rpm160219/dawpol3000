@@ -1,5 +1,6 @@
 #include "audio/engine.h"
 #include <math.h>
+#include "synth/polivoks_presets.h"
 #include <string.h>
 
 namespace dp {
@@ -12,6 +13,7 @@ void AudioEngine::init(float sr) {
     for (int i = 0; i < MAX_TRACKS; i++) {
         synth_[i].init(sr);
         wt_[i].init(sr);
+        pv_[i].init(sr);
         eng_[i] = ENG_WAVETABLE;
         sinks_[i] = &wt_[i];
     }
@@ -20,6 +22,11 @@ void AudioEngine::init(float sr) {
 
 void AudioEngine::applyProject() {
     const Project& p = prj_.front();
+    if (p.nTracks < nTracks_) {
+        // Structural deletion invalidates track indices held by the sequencer.
+        seq_.stop(sinks_);
+        for (int i=0;i<MAX_TRACKS;++i) { sinks_[i]->allOff(); pv_[i].reset(); }
+    }
     seq_.setProject(&p);
     seq_.setTempo(p.bpm);
     for (int i = 0; i < MAX_TRACKS; i++) {
@@ -27,13 +34,20 @@ void AudioEngine::applyProject() {
         synth_[i].setVolume(1.f);
         wt_[i].setVolume(1.f);
         mixer_.setGain(i, i < p.nTracks ? p.tracks[i].volume : 0.f);
-        if (i >= p.nTracks) continue;
+        if (i >= p.nTracks) { if (eng_[i]==ENG_POLIVOKS) pv_[i].reset(); continue; }
         const Track& t = p.tracks[i];
         uint8_t e = t.engine < ENG_COUNT ? t.engine : (uint8_t)ENG_WAVETABLE;
         if (e != eng_[i]) {  // zmiana instrumentu: wycisz stary
             sinks_[i]->allOff();
+            if (eng_[i]==ENG_POLIVOKS) pv_[i].reset();
             eng_[i] = e;
-            sinks_[i] = e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
+            sinks_[i] = e == ENG_POLIVOKS ? (NoteSink*)&pv_[i] : e == ENG_SAW ? (NoteSink*)&synth_[i] : (NoteSink*)&wt_[i];  // WAVETABLE i TAFFY: ten sam silnik glosow
+        }
+        if (e==ENG_POLIVOKS) {
+            int16_t defaults[POLIVOKS_NUM_PARAMS];
+            if (!t.polivoksSet) polivoksLoadPreset(0,defaults);
+            pv_[i].configure(t.polivoksSet ? t.polivoks : defaults,t.octave);
+            continue; // no WavetableSynth ADSR/LFO/glide/AGE/decimator
         }
         wt_[i].setKind(e == ENG_TAFFY ? 1 : e == ENG_PEW ? 2 : e == ENG_ELG ? 3 : e == ENG_EVA ? 4 : e == ENG_MBIRA ? 5 : e == ENG_REACTOR ? 6 : e == ENG_OXBOW ? (t.alt ? 8 : 7) : e == ENG_SID ? 9 : e == ENG_MONOLIT ? 10 : e == ENG_VAPORA ? 11 : e == ENG_SUPERSAW ? 12 : e == ENG_MIXTUR ? 13 : e == ENG_BRASS ? 14 : e == ENG_HOLLOW ? 15 : e == ENG_BLOOD ? 16 : e == ENG_BLOT ? 17 : e == ENG_AETHER ? 18 : e == ENG_ARC ? 19 : e == ENG_DDDD ? 20 : e == ENG_JUNI ? 21 : e == ENG_OUTATIME ? 22 : e == ENG_GIN ? 23 : e == ENG_PARALLAX ? 24 : e == ENG_LOUNGE ? 25 : e == ENG_FELT ? 26 : e == ENG_GRAND ? 27 : e == ENG_VELOUR ? 28 : e == ENG_LINEA ? 29 : 0);
         if (e == ENG_LINEA && t.lineaSet) wt_[i].setLinea(t.linea, t.lineaId, t.lineaCut, t.lineaRes);  // LINEA: patch D-50 sciezki
@@ -117,7 +131,7 @@ void AudioEngine::process(float* out, int frames) {
         case EC_NOTE_OFF: if (c.track < MAX_TRACKS) sinks_[c.track]->noteOff(c.pitch); break;
         case EC_PLAY_SONG: seq_.playSong(sinks_); applyMutes(); break;
         case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); applyMutes(); break;
-        case EC_STOP: seq_.stop(sinks_); break;
+        case EC_STOP: seq_.stop(sinks_); for (int i=0;i<MAX_TRACKS;++i) sinks_[i]->allOff(); break;
         }
     }
     // sciezki do wlasnych buforow (bloki do 256 ramek), potem mikser: kanaly -> AUX -> master
@@ -134,14 +148,17 @@ void AudioEngine::process(float* out, int frames) {
             const bool pl = seq_.playing();
             const double bp = seq_.beatPos();
             for (int i = 0; i < MAX_TRACKS; i++) {
-                synth_[i].render(trk[i] + pos * 2, n);
-                wt_[i].setTransport(pl, bp, seq_.tempo());
-                wt_[i].render(trk[i] + pos * 2, n);
+                if (eng_[i]==ENG_POLIVOKS) pv_[i].render(trk[i]+pos*2,n);
+                else {
+                    synth_[i].render(trk[i] + pos * 2, n);
+                    wt_[i].setTransport(pl, bp, seq_.tempo());
+                    wt_[i].render(trk[i] + pos * 2, n);
+                }
             }
             seq_.advance(n, sinks_);
             pos += n;
         }
-        for (int i = 0; i < MAX_TRACKS; i++) act[i] = wt_[i].activeVoices() > 0;
+        for (int i = 0; i < MAX_TRACKS; i++) act[i] = eng_[i]==ENG_POLIVOKS ? pv_[i].active()>0 : wt_[i].activeVoices()>0;
         mixer_.process(trk, act, nTracks_, out + done * 2, m);
         done += m;
     }

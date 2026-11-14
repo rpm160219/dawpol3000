@@ -25,3 +25,11 @@ Silniki: WAVETABLE / WAVETABLE+, TAFFY, PEW, ELG, EVA, MBIRA, REACTOR, SID, MONO
 Presety: ostatnia strona SYNTH (Select); pliki osobno dla silnika: `presets/wavetable/`, `presets/wavetableplus/`, `presets/taffy/`, `presets/pew/`, `presets/elg/`, `presets/eva/`, `presets/mbira/`, `presets/reactor/`, `presets/oxbow/`, `presets/oxbowplus/`, `presets/sid/`, `presets/monolit/` (na konsoli `/userdata/dawpol3000/presets`).
 
 Paczka PortMastera (do instalacji na innej konsoli): `./tools/package_portmaster.sh` → `dist/DAW-POL-3000_portmaster_<data>.zip` (rozpakować do folderu ports na karcie).
+
+## POLIVOKS
+
+Niezależny silnik z własnym DSP, mono/duo, filtrem LP/BP, obwiedniami Repeat
+i oversamplingiem 4×. Wybór: TRACK → ENGINE → POLIVOKS. Select przełącza osiem
+stron, L3 dodatkowe parametry. Bank: 12 presetów w `presets/polivoks/`.
+Ekran: wektorowy Cyber-Niedźwiedź z cewkami i oscyloskopem.
+[Opis integracji i testów](docs/POLIVOKS.md). Test: `./tools/test_polivoks.sh`.

@@ -1,4 +1,5 @@
 #include "headless.h"
+#include "synth/polivoks_presets.h"
 #include <chrono>
 #include "audio/mixer.h"
 #include "fx/fx_registry.h"
@@ -443,6 +444,31 @@ int headlessPng(const char* path, const char* screen) {
         tap(app, B_R2);
         for (int i = 0; i < 30; i++) tap(app, B_UP);
         for (int i = 0; i < 8; i++) tap(app, B_DOWN);  // GIN (alfabetycznie 9.)
+    } else if (!strncmp(screen,"polivoks",8)) {
+        if (!strcmp(screen,"polivoksengine")) {
+            Track& tr=app.project().tracks[1]; tr.engine=ENG_POLIVOKS; polivoksEnsure(tr);
+            app.markDirty(); app.arrange.setCursor(1,2);
+            tap(app,B_SELECT); tap(app,B_R2);
+        } else {
+            Track& tr=app.project().tracks[1]; tr.engine=ENG_POLIVOKS;
+            polivoksLoadPreset(!strcmp(screen,"polivoksloop")?5:!strcmp(screen,"polivoksbp")?4:1,tr.polivoks);
+            tr.polivoksSet=true;
+            if (!strcmp(screen,"polivoks")) {
+                tr.polivoks[PVX_FILT_CUTOFF]=27000; tr.polivoks[PVX_FILT_RES]=26869;
+                tr.polivoks[PVX_FILT_ENV_AMT]=16384;
+            }
+            if (getenv("POLIVOKS_PRESET")) polivoksLoadPreset(atoi(getenv("POLIVOKS_PRESET")),tr.polivoks);
+            app.openPresets("out/presets_demo"); app.markDirty(); app.openSynth(1); idle(app);
+            int pg=!strcmp(screen,"polivokspresets")?7:!strcmp(screen,"polivoksosc")?1:!strcmp(screen,"polivoksmixer")?2:!strcmp(screen,"polivoksenv")?3:!strcmp(screen,"polivoksamp")?4:!strcmp(screen,"polivokslfo")?5:!strcmp(screen,"polivokscontrol")?6:0;
+            app.synth.setPage(pg);
+            if (getenv("POLIVOKS_ALT")) app.synth.setAlt(true);
+            if (pg!=7) {
+                eng.send(EC_NOTE_ON,1,45,0,.9f);
+                if (tr.polivoks[PVX_DUOPHONY]>=16384) eng.send(EC_NOTE_ON,1,57,0,.9f);
+                for (int i=0;i<90;++i) eng.process(buf,256);
+                Canvas warmup; for (int i=0;i<24;++i) app.render(warmup);
+            }
+        }
     } else if (!strncmp(screen, "linea", 5)) {  // linea, lineatvf, lineacommon, lineabanks, lineaimport, lineaengine
         if (!strcmp(screen, "lineaengine")) {
             app.arrange.setCursor(1, 2);
@@ -894,6 +920,24 @@ int headlessWav(const char* path, float seconds, const char* song) {
         if (strcmp(song, "junipad")) { t.engine = ENG_VELOUR; t.velourSet = false; velourEnsure(t); }
         if (strcmp(song, "velourtest")) t.solo = true;
         app.markDirty(); app.update(InputState(), 0.016f);
+    }
+    else if (song && !strcmp(song,"polivoks")) {
+        Project& p=app.project(); p=Project(); p.bpm=120; p.masterVol=.72f; p.loopOn=true;
+        const int patches[]={1,5,7}; const char* names[]={"BASS","DUO","METAL"};
+        for (int i=0;i<3;++i) {
+            int tr=p.addTrack(TRACK_MIDI,names[i]); Track& t=p.tracks[tr];
+            t.engine=ENG_POLIVOKS; t.polivoksSet=true; polivoksLoadPreset(patches[i],t.polivoks);
+            t.volume=i==0?.43f:.25f; t.color=i;
+            int pat=p.addPattern(names[i],4); Pattern& pt=p.patterns[pat];
+            for(int bar=0;bar<4;++bar) {
+                int root=bar==1?41:bar==2?48:bar==3?43:45;
+                if(i==0) for(int step=0;step<8;++step) pt.add({(uint16_t)(bar*384+step*48),36,(uint8_t)(root+(step==4?12:0)),110});
+                if(i==1) { pt.add({(uint16_t)(bar*384),350,(uint8_t)(root+12),110}); pt.add({(uint16_t)(bar*384),350,(uint8_t)(root+19),110}); }
+                if(i==2) for(int step=0;step<4;++step) pt.add({(uint16_t)(bar*384+step*96),75,(uint8_t)(root+24+(step==1?3:step==2?7:0)),110});
+            }
+            p.addClip(tr,pat,0);
+        }
+        app.markDirty(); app.update(InputState(),.016f);
     }
     else if (song && !strcmp(song, "etude")) app.loadDemoEtude();
     else app.loadDemo();

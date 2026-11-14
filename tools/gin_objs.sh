@@ -16,3 +16,7 @@ for s in core/synth/velour_dsp.cpp third_party/pico_solina/src/*.cpp; do
 done
 # LINEA (silnik PicoFaceD5, naglowki) — wavetable_synth.cpp go wola; ROM-y niepotrzebne do linkowania
 g++ -std=c++17 -O2 -w -Icore -Ithird_party/pico_d50/include -c core/synth/linea_dsp.cpp -o "$T/gin_linea.o"
+
+# project.cpp now initializes the independent Polivoks preset bank as well.
+gcc -std=c11 -O3 -Icore -c core/synth/polivoks_dsp.c -o "$T/gin_polivoks_dsp.o"
+gcc -std=c11 -O3 -Icore -c core/synth/polivoks_presets.c -o "$T/gin_polivoks_presets.o"

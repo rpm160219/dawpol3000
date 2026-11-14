@@ -158,3 +158,17 @@ Aktualizowany przy każdej zmianie struktury. Kod: C++17 „C z klasami”, bez 
 ## Czas i jednostki
 - Tick = 1/96 ćwierćnuty. Szesnastka = 24 ticki. Takt 4/4 = 384 ticki.
 - Wysokość = numer MIDI (60 = C4). Velocity 1..127.
+
+## POLIVOKS — osobny tor instrumentu
+
+`AudioEngine::pv_[]` przechowuje `PolivoksSynth : NoteSink`, obok `wt_[]`.
+Dla ENG_POLIVOKS sekwencer i odsłuch kierują nuty do tego adaptera. Nie są
+wywoływane WavetableSynth::setEnvelope/setLfo/setVoice ani jego render/decymator.
+Własny rdzeń pracuje przy 4× fs hosta, zwraca float przy fs hosta bez dodatkowego
+ADSR i trafia do wspólnego kanału miksera. Adapter przetwarza odcinki 1–128
+próbek dokładnie na granicach zdarzeń. Telemetria audio→UI: TripleBuffer.
+
+Nowe moduły: `synth/polivoks_dsp.*`, `synth/polivoks_presets.*`,
+`synth/polivoks_synth.*`, `ui/polivoks_screen.*`, `ui/synth_polivoks.cpp`.
+Factory bank: `io/polivoks_factory.inc`. Dane projektu: komplet 41 parametrów v2
+w polu `pvox`. Szczegóły, strony i testy: [POLIVOKS.md](POLIVOKS.md).

@@ -3,6 +3,16 @@
 set -e
 cd "$(dirname "$0")/.."
 T=${1:-desktop}
+# A working-folder copy can contain caches referencing its previous location.
+BUILD_DIR=build
+[ "$T" = arm ] && BUILD_DIR=build-arm
+if [ -f "$BUILD_DIR/CMakeCache.txt" ]; then
+  BUILD_SOURCE=$(sed -n 's/^CMAKE_HOME_DIRECTORY:INTERNAL=//p' "$BUILD_DIR/CMakeCache.txt")
+  if [ "$BUILD_SOURCE" != "$(pwd)" ]; then
+    rm -f "$BUILD_DIR/CMakeCache.txt"
+    rm -rf "$BUILD_DIR/CMakeFiles"
+  fi
+fi
 if command -v cmake >/dev/null 2>&1; then
   if [ "$T" = arm ]; then
     cmake -S . -B build-arm -DCMAKE_TOOLCHAIN_FILE=cmake/aarch64.cmake && cmake --build build-arm -j

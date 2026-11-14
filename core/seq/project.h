@@ -2,6 +2,7 @@
 // Caly projekt to zwykla struktura bez wskaznikow — UI kopiuje ja do silnika audio jako migawke.
 #pragma once
 #include "synth/gin_dsp.h"
+#include "synth/polivoks_dsp.h"
 #include "synth/velour_dsp.h"
 #include "synth/linea_dsp.h"
 #include <stdint.h>
@@ -15,7 +16,7 @@ static const int MAX_PATTERNS = 64, MAX_CLIPS = 512, MAX_SONG_BARS = 256;
 
 enum TrackType : uint8_t { TRACK_MIDI, TRACK_AUDIO };
 // Silniki (instrumenty) sciezek MIDI
-enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_GIN, ENG_PARALLAX, ENG_LOUNGE, ENG_FELT, ENG_GRAND, ENG_VELOUR, ENG_LINEA, ENG_COUNT };
+enum EngineType : uint8_t { ENG_WAVETABLE, ENG_SAW, ENG_TAFFY, ENG_PEW, ENG_ELG, ENG_EVA, ENG_MBIRA, ENG_REACTOR, ENG_OXBOW, ENG_SID, ENG_MONOLIT, ENG_VAPORA, ENG_SUPERSAW, ENG_MIXTUR, ENG_BRASS, ENG_HOLLOW, ENG_BLOOD, ENG_BLOT, ENG_AETHER, ENG_ARC, ENG_DDDD, ENG_JUNI, ENG_OUTATIME, ENG_GIN, ENG_PARALLAX, ENG_LOUNGE, ENG_FELT, ENG_GRAND, ENG_VELOUR, ENG_LINEA, ENG_POLIVOKS, ENG_COUNT };
 const char* engineName(int e);
 // LFO: ksztalty i cele modulacji
 enum LfoShape : uint8_t { LFO_SINE, LFO_TRI, LFO_SAW, LFO_SQUARE, LFO_RANDOM, LFO_SHAPES };
@@ -70,6 +71,7 @@ void engineDefaultKnobs(int engine, int16_t k[4]);  // domyslne galki brzmienia 
 void engineDefaultPush(int engine, int16_t p[3]);
 void ginLoadKit(struct Track& t, int kit);       // GIN: dzwieki zestawu fabrycznego
 void ginEnsure(struct Track& t);                 // GIN: zestaw 0, gdy sciezka nie ma jeszcze zestawu
+void polivoksEnsure(struct Track& t);
 void velourEnsure(struct Track& t);              // VELOUR: program FULL STRINGS, gdy parametry nieustawione
 bool ginSoundEdited(const struct Track& t, int s);  // GIN: dzwiek rozni sie od fabrycznego  // strona 2 nowego silnika (HOLLOW SAINT: 0, 8192, 21064; inne 0)
 struct Lfo {
@@ -152,6 +154,8 @@ struct Track {
     // LINEA: biezacy patch D-50 (448 bajtow, z edycjami i wektorem), skad pochodzi (bank / slot), przesuniecia CUTOFF / RES
     bool lineaSet = false;
     uint8_t linea[LINEA_PATCH_BYTES] = {};
+    bool polivoksSet = false;
+    int16_t polivoks[POLIVOKS_NUM_PARAMS] = {}; // independent v2 engine parameters
     char lineaBank[24] = "";
     int16_t lineaSlot = -1;
     int8_t lineaCut = 0, lineaRes = 0;

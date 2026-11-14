@@ -28,6 +28,7 @@
 #include "ui/grand_screen.h"
 #include "ui/velour_screen.h"
 #include "ui/linea_screen.h"
+#include "ui/polivoks_screen.h"
 #include "synth/oxbow_plus_dsp.h"
 #include <stdio.h>
 #include <string.h>
@@ -48,7 +49,7 @@ static void pills(Canvas& c, const char* l0, const char* l1, const char* l2, con
 // ---------------- ENGINE ----------------
 
 struct EngineInfo { const char* name; const char* sub; const char* lines[7]; };
-static const int NENG = 32;
+static const int NENG = 33;
 static const EngineInfo kEngines[NENG] = {
     {"WAVETABLE", "ORIGINAL 1:1",
      {"PORT OF THE OP1R WAVETABLE ENGINE", "BY HUNDEKRAFT, BIT-EXACT.", "TWO DETUNED OSCILLATORS MORPH",
@@ -145,6 +146,8 @@ static const EngineInfo kEngines[NENG] = {
       "RING MOD, 3 LFO, EQ, CHORUS, REVERB.", "VECTOR + CUTOFF ON THE STICKS, 80S", "EDIT PAGES, SYSEX BANKS."}},
     {"TEST SAW", "UTILITY",
      {"SIMPLE POLYPHONIC SAW.", "FOR TESTING PATTERNS AND TIMING.", "NO SOUND PARAMETERS.", "", "", "", ""}},
+    {"POLIVOKS", "ANALOG BASS / LEAD",
+     {"TWO OSCILLATORS WITH CROSS-MOD,", "A DRIVEN LOW-PASS / BAND-PASS,", "TWO ENVELOPES WITH REPEAT,", "MONO / DUO, GLIDE AND FREE LFO.", "RING MOD, NOISE AND FINE TUNING.", "12 PATCHES: BASS, LEAD AND TEXTURE.", "CYBER-BEAR / TESLA COILS / SCOPE."}},
 };
 
 // kolejnosc na liscie: alfabetycznie po nazwie (indeksy silnikow w kEngines bez zmian)
@@ -173,18 +176,20 @@ static int engStep(int idx, int d) {
 }
 
 static int engineIndexOf(const Track& t) {
-    return t.engine == ENG_SAW ? 31 : t.engine == ENG_LINEA ? 30 : t.engine == ENG_VELOUR ? 29 : t.engine == ENG_GRAND ? 28 : t.engine == ENG_FELT ? 27 : t.engine == ENG_LOUNGE ? 26 : t.engine == ENG_PARALLAX ? 25 : t.engine == ENG_GIN ? 24 : t.engine == ENG_OUTATIME ? 23 : t.engine == ENG_JUNI ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
+    return t.engine==ENG_POLIVOKS ? 32 : t.engine == ENG_SAW ? 31 : t.engine == ENG_LINEA ? 30 : t.engine == ENG_VELOUR ? 29 : t.engine == ENG_GRAND ? 28 : t.engine == ENG_FELT ? 27 : t.engine == ENG_LOUNGE ? 26 : t.engine == ENG_PARALLAX ? 25 : t.engine == ENG_GIN ? 24 : t.engine == ENG_OUTATIME ? 23 : t.engine == ENG_JUNI ? 22 : t.engine == ENG_DDDD ? 21 : t.engine == ENG_ARC ? 20 : t.engine == ENG_AETHER ? 19 : t.engine == ENG_BLOT ? 18 : t.engine == ENG_BLOOD ? 17 : t.engine == ENG_HOLLOW ? 16 : t.engine == ENG_BRASS ? 15 : t.engine == ENG_MIXTUR ? 14 : t.engine == ENG_SUPERSAW ? 13 : t.engine == ENG_VAPORA ? 12 : t.engine == ENG_MONOLIT ? 11 : t.engine == ENG_SID ? 10 : t.engine == ENG_OXBOW ? (t.alt ? 9 : 8) : t.engine == ENG_REACTOR ? 7 : t.engine == ENG_MBIRA ? 6 : t.engine == ENG_EVA ? 5 : (t.engine == ENG_ELG ? 4 : t.engine == ENG_PEW ? 3 : (t.engine == ENG_TAFFY ? 2 : (t.alt ? 1 : 0)));
 }
 // Ustawia silnik ze wskazanej pozycji listy; przy zmianie silnika galki brzmienia = domyslne nowego silnika
 static void applyEngine(Track& t, int idx) {
-    int e = idx == 31 ? ENG_SAW : idx == 30 ? ENG_LINEA : idx == 29 ? ENG_VELOUR : idx == 28 ? ENG_GRAND : idx == 27 ? ENG_FELT : idx == 26 ? ENG_LOUNGE : idx == 25 ? ENG_PARALLAX : idx == 24 ? ENG_GIN : idx == 23 ? ENG_OUTATIME : idx == 22 ? ENG_JUNI : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
+    int e = idx==32 ? ENG_POLIVOKS : idx == 31 ? ENG_SAW : idx == 30 ? ENG_LINEA : idx == 29 ? ENG_VELOUR : idx == 28 ? ENG_GRAND : idx == 27 ? ENG_FELT : idx == 26 ? ENG_LOUNGE : idx == 25 ? ENG_PARALLAX : idx == 24 ? ENG_GIN : idx == 23 ? ENG_OUTATIME : idx == 22 ? ENG_JUNI : idx == 21 ? ENG_DDDD : idx == 20 ? ENG_ARC : idx == 19 ? ENG_AETHER : idx == 18 ? ENG_BLOT : idx == 17 ? ENG_BLOOD : idx == 16 ? ENG_HOLLOW : idx == 15 ? ENG_BRASS : idx == 14 ? ENG_MIXTUR : idx == 13 ? ENG_SUPERSAW : idx == 12 ? ENG_VAPORA : idx == 11 ? ENG_MONOLIT : idx == 10 ? ENG_SID : idx == 8 || idx == 9 ? ENG_OXBOW : idx == 7 ? ENG_REACTOR : idx == 6 ? ENG_MBIRA : idx == 5 ? ENG_EVA : idx == 4 ? ENG_ELG : (idx == 3 ? ENG_PEW : (idx == 2 ? ENG_TAFFY : ENG_WAVETABLE));
     if (e != t.engine) {  // nowy silnik: domyslne galki i strona 2 (np. SUPERSAW: filtr otwarty)
         engineDefaultKnobs(e, t.knob);
         engineDefaultPush(e, t.push);
         t.relic = false;
         t.tilt[0] = t.tilt[1] = t.tilt[2] = 0;
         t.preset[0] = 0;
+        if (e==ENG_POLIVOKS) t.polivoksSet=false;
     }
+    if (e==ENG_POLIVOKS) polivoksEnsure(t);
     if (e == ENG_GIN && t.ginKit < 0) ginLoadKit(t, 0);  // GIN: pierwszy zestaw
     if (e == ENG_VELOUR) velourEnsure(t);               // VELOUR: FULL STRINGS
     if (e == ENG_LINEA) lineaEnsure(t);                 // LINEA: pierwszy patch pierwszego banku
@@ -377,6 +382,7 @@ void TrackDialog::renderEngineCard(Canvas& c) {
     else if (engSel_ == 27) drawFeltIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 28) drawGrandIllustration(c, 280, 68, 336, 190);
     else if (engSel_ == 29) drawVelourIllustration(c, 280, 68, 336, 190);
+    else if (engSel_ == 32) drawPolivoksIllustration(c,280,68,336,190);
     else if (engSel_ == 30) drawLineaIllustration(c, 280, 68, 336, 190);
     else drawEngineIllustration(c, engSel_, 280, 68, 336, 190);
     for (int l = 0; l < 7; l++)

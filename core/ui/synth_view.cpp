@@ -51,6 +51,7 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind blk[4] = {K_SOUND, K_VOICE, K_AMP, K_PRESETS};  // BLOT: slide = MODE + GLIDE
     static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
+    if (pm == 14) return p==7 ? K_PRESETS : K_SOUND;
     if (pm == 13) return K_SOUND;  // LINEA: wlasne strony (BANKS = przegladarka presetow)
     if (pm == 12) return p == 6 ? K_PRESETS : K_SOUND;  // VELOUR: 6 stron galek, PRESETS
     if (pm == 11) return p == 10 ? K_PRESETS : K_SOUND;  // GIN: SOUND, 8 stron edytora, ABOUT, PRESETS
@@ -88,6 +89,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
 
     if (b.pressed(B_SELECT) && !b.down(B_MENU) && !ed_.active()) {
         page_ = (page_ + 1) % pageCount(pm);
+        if (t.engine==ENG_POLIVOKS) alt_=false;
         confirm_ = 0;
         savePending_ = false;
     }
@@ -99,6 +101,7 @@ void SynthView::update(const Buttons& b, const InputState& in, float dt) {
         if (b.pressed(B_START)) app_->togglePlaySong();
         return;
     }
+    if (t.engine==ENG_POLIVOKS) { updatePolivoks(b,in,dt,t); return; }
     if (t.engine == ENG_GIN) { updateGin(b, in, dt, t); return; }
     if (t.engine == ENG_VELOUR) { updateVelour(b, in, dt, t); return; }
     if (t.engine == ENG_LINEA) { updateLinea(b, in, dt, t); return; }
@@ -474,6 +477,7 @@ void SynthView::render(Canvas& c) {
     const Kind k = kind(pm);
     char b[64];
 
+    if (k != K_PRESETS && t.engine==ENG_POLIVOKS) { renderPolivoks(c,t); return; }
     if (k != K_PRESETS && t.engine == ENG_GIN) { renderGin(c, t); return; }
     if (k != K_PRESETS && t.engine == ENG_VELOUR) { renderVelour(c, t); return; }
     if (t.engine == ENG_LINEA) { renderLinea(c, t); return; }
