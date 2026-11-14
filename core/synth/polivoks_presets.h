@@ -16,7 +16,7 @@ struct PolivoksPresetInfo {
 };
 int polivoksPresetCount(void);
 const struct PolivoksPresetInfo* polivoksPresetInfo(int index);
-/* Copies a complete v2 parameter array. Invalid index/pointer: returns 0,
+/* Copies a complete current-version parameter array. Invalid index/pointer: returns 0,
  * leaving the destination untouched. No allocation or audio-engine changes. */
 int polivoksLoadPreset(int index, int16_t params[POLIVOKS_NUM_PARAMS]);
 #ifdef __cplusplus

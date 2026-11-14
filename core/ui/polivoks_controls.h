@@ -1,0 +1,8 @@
+#pragma once
+namespace dp {
+enum PolivoksPage {
+    PV_PAGE_OSC1, PV_PAGE_OSC2, PV_PAGE_FILTER, PV_PAGE_MIXER,
+    PV_PAGE_FENV, PV_PAGE_AENV, PV_PAGE_LFO, PV_PAGE_VOICE,
+    PV_PAGE_PRESETS, PV_PAGE_COUNT
+};
+}

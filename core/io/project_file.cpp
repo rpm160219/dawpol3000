@@ -322,11 +322,12 @@ void parseInstrument(Track& t, char** tok, int n, int start) {
                 if (!strcmp(tok[i], "gink") && left >= 1) ginLoadKit(t, atoi(tok[i + 1]));
                 if (!strcmp(tok[i],"pvox") && left>=35) {
                     int version=atoi(tok[i+1]);
-                    int count=version==1 ? 34 : version==POLIVOKS_PARAM_VERSION ? POLIVOKS_NUM_PARAMS : 0;
+                    int count=version==1 ? 34 : version==2 ? POLIVOKS_V2_PARAMS : version==POLIVOKS_PARAM_VERSION ? POLIVOKS_NUM_PARAMS : 0;
                     if (count && left>=count+1) {
                         int16_t words[POLIVOKS_NUM_PARAMS]={};
                         for (int j=0;j<count;++j) { int x=atoi(tok[i+2+j]); words[j]=(int16_t)(x<0 ? 0 : x>32767 ? 32767 : x); }
                         if (version==1) polivoksMigrateV1(words,t.polivoks);
+                        else if(version==2) polivoksMigrateV2(words,t.polivoks);
                         else memcpy(t.polivoks,words,sizeof(t.polivoks));
                         t.polivoksSet=true;
                     }

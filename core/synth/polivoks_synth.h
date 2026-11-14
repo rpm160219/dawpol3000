@@ -20,6 +20,8 @@ public:
     void noteOff(int pitch) override;
     void allOff() override;
     void reset();
+    void setTransport(bool playing,double beat,float bpm) { playing_=playing;beat_=beat;tempo_=bpm; }
+    void restartLfo() { polivoksResetLfoClock(core_); }
     void render(float* stereo, int frames);
     int active() const { return active_.load(std::memory_order_relaxed); }
     bool view(PolivoksView& out) { if (!view_.consume()) return false; out=view_.front(); return true; }
@@ -30,7 +32,8 @@ private:
     int octave_ = 0, map_[128] = {}, references_[128] = {};
     float scope_[128] = {};
     unsigned scopePos_ = 0, scopeClock_ = 0;
-    bool live_ = false;
+    bool live_ = false, playing_ = false;
+    double beat_ = 0; float tempo_ = 120;
     std::atomic<int> active_{0};
     TripleBuffer<PolivoksView> view_;
 };

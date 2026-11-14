@@ -129,16 +129,26 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 ## Aktualny stan
 - **POLIVOKS (2026-11-14):** zintegrowany jako niezależny `PolivoksSynth : NoteSink`
   w AudioEngine, poza DSP WavetableSynth. Własny cały tor, 4× oversampling,
-  mono/duo, ADSR/Repeat/LFO/glide, 41 parametrów v2. Osiem stron, warstwy L3,
+  mono/duo, ADSR/Repeat/LFO/glide, 44 parametry v3 (migracja v1/v2). Dziewięć stron (OSC 1/2, FILTER, MIXER, FENV, AENV, LFO, VOICE, PRESETS), L3,
   Cyber-Niedźwiedź: kontury bezpośrednio z referencji Patryka (`polivoks_art.inc`),
   paszcza = wyłącznie cutoff, oczy = biały→czerwony z rezonansem.
-  12 zatwierdzonych presetów. Nie zastępować konturów uproszczoną ilustracją.
+  24 presety: zatwierdzone pierwsze 12 bez zmian, 12 dodatków fabrycznych v2.
+  42 kontrolki UI; EXTERNAL/OUTPUT schowane z zachowaniem pól i wartości.
+  LFO: własne cztery równoległe głębokości, DEST wybiera edytowaną; L3 FREE/SYNC,
+  24 podziały do 1/128 z D/T, restart zegara przy START. VOICE: VINTAGE;
+  MONO last-note, glide obu VCO (DUO nadal high/low i glide I).
+  Planety w wolnym tle, gwiazdy z LFO→FLT, ruchome iskry i migotanie piorunów.
+  Nazwa presetu nad stroną; skrajne pozycje gałek domykają łuk.
+  Sprężyny: biały→kolor OSC wraz z LEVEL, SAW ma prawidłową piłę.
+  Nie zastępować konturów uproszczoną ilustracją.
   Nie dodawać wspólnych obwiedni, LFO, AGE/unison ani decymacji WavetableSynth.
   Instrukcja: `docs/POLIVOKS.md`, test `tools/test_polivoks.sh`. Desktop/ARM
-  budują się, porównanie 12 barw z samodzielnym DSP: różnica próbek 0.
+  budują się. Poprzednie porównania próbek dotyczą wcześniejszej wersji.
+  Aktualizacja v3: na prośbę Patryka tylko build ARM + wysyłka; bez renderów/testów.
   Build wgrany na 192.168.50.239 do `/userdata/dawpol3000/dawpol3000`;
   lokalna i zdalna suma SHA-256 identyczne. Najnowszy build zawiera kontury
-  referencyjne i animację cutoff/rezonans; render PNG sprawdzony także na ARM.
+  referencyjne i animację cutoff/rezonans, oczyszczoną wiązkę, poziomy sprężyn,
+  nowy układ sekcji oraz 24 presety. Render PNG i bank sprawdzone także na ARM.
   Dostęp SSH działa po włączeniu
   sieci dla sesji Codexa. Paczka PortMaster gotowa lokalnie. Następny krok:
   ponowne uruchomienie aplikacji i ocena UI/brzmienia na fizycznej konsoli;

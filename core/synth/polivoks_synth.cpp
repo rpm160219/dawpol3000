@@ -47,6 +47,7 @@ void PolivoksSynth::render(float* stereo,int frames) {
     for (int pos=0;pos<frames;) {
         const int n=frames-pos<POLIVOKS_BLOCK ? frames-pos : POLIVOKS_BLOCK;
         float mono[POLIVOKS_BLOCK];
+        polivoksSetTransport(core_,tempo_,playing_,beat_+(playing_?pos*tempo_/(60.0*rate_):0));
         polivoksBeginFrames(core_,params_,rate_,n);
         polivoksRenderFrames(core_,0,mono,nullptr,params_,0,rate_,n);
         for (int i=0;i<n;++i) {
@@ -59,6 +60,7 @@ void PolivoksSynth::render(float* stereo,int frames) {
         }
         pos+=n;
     }
+    if(playing_) beat_+=frames*tempo_/(60.0*rate_);
     PolivoksView& v=view_.back();
     polivoksGetState(core_,0,&v.state); v.peak=peak;
     for (unsigned i=0;i<128;++i) v.scope[i]=scope_[(scopePos_+i)%128];

@@ -12,7 +12,9 @@ extern "C" {
 #define POLIVOKS_VOICES 6
 #define POLIVOKS_BLOCK 128
 #define POLIVOKS_OVERSAMPLE 4
-#define POLIVOKS_PARAM_VERSION 2
+#define POLIVOKS_PARAM_VERSION 3
+#define POLIVOKS_V2_PARAMS 41
+#define POLIVOKS_LFO_DIVISIONS 24
 
 enum PolivoksParam {
     /* Existing parameter indices are retained. Octave switches now have FIVE
@@ -49,7 +51,7 @@ enum PolivoksParam {
     PVX_LFO_TO_PITCH,    /* Oscillator I modulation; II has its own depth below */
     PVX_LFO_TO_FILT,
     PVX_LFO_TO_AMP,
-    PVX_GLIDE,           /* Oscillator I only, 0..1.5 s time constant */
+    PVX_GLIDE,           /* MONO: both VCOs; DUO: I. 0..1.5 s time constant */
     PVX_DUOPHONY,        /* Keyboard: highest note -> I, lowest -> II */
     /* v2 additions, appended to preserve the original 34 IDs. */
     PVX_MASTER_TUNE,     /* Bipolar +/-2 semitones, center 16384 */
@@ -59,6 +61,10 @@ enum PolivoksParam {
     PVX_MASTER_LEVEL,
     PVX_VELOCITY,        /* Software extension. 0 = original, velocity insensitive */
     PVX_VCA_HOLD,        /* Open VCA without a held key (drone / external filter) */
+    /* v3: appended; old patches load FREE, quarter-note division, VINTAGE=0. */
+    PVX_VINTAGE,
+    PVX_LFO_SYNC,
+    PVX_LFO_DIV,
     POLIVOKS_NUM_PARAMS
 };
 enum PolivoksWave { PVX_TRI, PVX_SAW, PVX_SQUARE, PVX_PULSE25, PVX_PULSE12 };
@@ -70,6 +76,7 @@ struct PolivoksCore* polivoksCreate(void);
 void polivoksDestroy(struct PolivoksCore* p);
 void polivoksDefaultParams(int16_t params[POLIVOKS_NUM_PARAMS]);
 int16_t polivoksChoice(int position, int positions);
+void polivoksMigrateV2(const int16_t oldParams[POLIVOKS_V2_PARAMS], int16_t params[POLIVOKS_NUM_PARAMS]);
 void polivoksMigrateV1(const int16_t oldParams[34], int16_t params[POLIVOKS_NUM_PARAMS]);
 
 /* Low-level host-managed voices. inc = frequency/rate * 2^32, conventionally
@@ -80,7 +87,7 @@ void polivoksNoteOn(struct PolivoksCore* p, int voice, int midiNote, int velocit
 void polivoksNoteOff(struct PolivoksCore* p, int voice);
 void polivoksSetDuoNote(struct PolivoksCore* p, int voice, int midiNoteGen2);
 
-/* Original mono/duo keyboard behavior on voice 0, including held-key fallback
+/* MONO last-note priority; DUO highest/lowest, including held-key fallback
  * and legato envelopes. Use inc=0 when rendering keyboard-managed notes. */
 void polivoksKeyDown(struct PolivoksCore* p, int note, int velocity,
                     const int16_t params[POLIVOKS_NUM_PARAMS]);
@@ -113,11 +120,16 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
 void polivoksPanic(struct PolivoksCore* p); /* immediate all-off, no allocation */
 struct PolivoksState {
     float filter_env, amp_env, lfo, phase[2], note1, note2;
+    float lfo_phase, lfo_hz;
     int held_keys;
 };
 /* Read in the AUDIO thread; copy to a synchronized snapshot before UI access. */
 void polivoksGetState(const struct PolivoksCore* p, int voice, struct PolivoksState* out);
 
+void polivoksSetTransport(struct PolivoksCore* p, float bpm, int playing, double beat);
+void polivoksResetLfoClock(struct PolivoksCore* p);
+float polivoksLfoHz(const int16_t params[POLIVOKS_NUM_PARAMS], float bpm);
+const char* polivoksLfoDivisionName(int knob);
 float polivoksCutoffHz(int knob);
 int polivoksWaveName(int knob, char* out, int n);
 void polivoksScope(const int16_t params[POLIVOKS_NUM_PARAMS], float* out, int n, uint32_t seed);

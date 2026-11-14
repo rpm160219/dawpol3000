@@ -155,7 +155,7 @@ struct Track {
     bool lineaSet = false;
     uint8_t linea[LINEA_PATCH_BYTES] = {};
     bool polivoksSet = false;
-    int16_t polivoks[POLIVOKS_NUM_PARAMS] = {}; // independent v2 engine parameters
+    int16_t polivoks[POLIVOKS_NUM_PARAMS] = {}; // independent v3 engine parameters
     char lineaBank[24] = "";
     int16_t lineaSlot = -1;
     int8_t lineaCut = 0, lineaRes = 0;

@@ -192,6 +192,7 @@ void PresetStore::writeFactory() {
     char* tok[192];
     for (int i = 0; i < n; i++) {
         const FactoryPreset& p = list[i];
+        if (engine==ENG_POLIVOKS && p.ver==2 && find(p.name)>=0) continue; // additions preserve same-name user patches
         if (p.ver <= had || (find(p.name) >= 0 && had == 0)) continue;  // nowsza wersja istniejacego presetu fabrycznego go zastepuje
         Track t;
         t.engine = (uint8_t)engine;

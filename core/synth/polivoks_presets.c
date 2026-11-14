@@ -13,7 +13,19 @@ static const struct PolivoksPresetInfo presets[] = {
     {"sample_factory", "SAMPLE FACTORY", "MOD", "Sample-and-hold movement, moderate depth, low-pass with retained body.", PVX_DEMO_LEAD, 0},
     {"slow_copper", "SLOW COPPER", "DUO", "Slow two-note texture, beating oscillators, no chorus or reverb.", PVX_DEMO_SLOW, 0},
     {"noise_press", "NOISE PRESS", "PERC", "Short filtered noise hits with a small low oscillator component.", PVX_DEMO_DRUM, 0},
-    {"low_orbit", "LOW ORBIT", "SUB", "32-foot triangle plus 16-foot saw to keep the sub audible on smaller speakers.", PVX_DEMO_BASS, 0}
+    {"low_orbit", "LOW ORBIT", "SUB", "32-foot triangle plus 16-foot saw to keep the sub audible on smaller speakers.", PVX_DEMO_BASS, 0},
+    {"red_hammer", "RED HAMMER", "BASS", "Punchy saw and sub-pulse bass with a fast filter strike.", PVX_DEMO_BASS, 0},
+    {"pulse_engine", "PULSE ENGINE", "BASS", "Narrow pulse bass with slow motion in oscillator II's pulse width.", PVX_DEMO_BASS, 1},
+    {"buried_copper", "BURIED COPPER", "SUB", "Deep 32-foot triangle/saw bass, low resonance and a long round tail.", PVX_DEMO_BASS, 0},
+    {"razor_fifth", "RAZOR FIFTH", "LEAD", "High saw fifth above a pulse lead, with cross-mod bite and glide.", PVX_DEMO_LEAD, 0},
+    {"glass_current", "GLASS CURRENT", "BELL", "Decaying triangle FM and ring bell with a falling amplifier contour.", PVX_DEMO_LEAD, 1},
+    {"vowel_press", "VOWEL PRESS", "LEAD", "Band-pass pulse voice with an inverted envelope and a closing vowel.", PVX_DEMO_LEAD, 0},
+    {"duo_brass", "DUO BRASS", "DUO", "Two-note square/saw brass with a rounded attack and independent vibrato.", PVX_DEMO_DUO, 0},
+    {"pwm_horizon", "PWM HORIZON", "PAD", "Slow duophonic pulse-width texture with gentle filter breathing.", PVX_DEMO_SLOW, 1},
+    {"radio_steps", "RADIO STEPS", "MOD", "Dusty stepped pitch/filter motion and restrained metallic cross-mod.", PVX_DEMO_LEAD, 1},
+    {"geiger_heart", "GEIGER HEART", "FX", "Both envelopes repeat: short resonant noise pulses under a held key.", PVX_DEMO_DRUM, 0},
+    {"steel_clap", "STEEL CLAP", "PERC", "Tight band-pass noise hit with a small pitched metallic edge.", PVX_DEMO_DRUM, 1},
+    {"snow_circuit", "SNOW CIRCUIT", "PAD", "Slow noisy duophonic band-pass texture with irregular filter modulation.", PVX_DEMO_SLOW, 0}
 };
 static int16_t knob(float x) {
     if (x < 0) x = 0;
@@ -144,6 +156,80 @@ int polivoksLoadPreset(int index, int16_t p[POLIVOKS_NUM_PARAMS]) {
         cutoff(p,480); p[PVX_FILT_RES]=knob(0.25f); p[PVX_XMOD_DEPTH]=knob(0.02f);
         filterEnv(p,2.2f,0.008f,0.45f,0.3f,0.3f);
         ampEnv(p,0.006f,0.4f,0.9f,0.3f);
+        break;
+    case 12:
+        oscillators(p,PVX_16,PVX_SAW,PVX_32,PVX_PULSE25,.82f,.4f,-3);
+        cutoff(p,150); p[PVX_FILT_RES]=knob(.5f);
+        filterEnv(p,3.8f,.001f,.2f,.18f,.14f); ampEnv(p,.002f,.25f,.83f,.16f);
+        break;
+    case 13:
+        oscillators(p,PVX_16,PVX_PULSE12,PVX_16,PVX_SQUARE,.72f,.55f,-4);
+        cutoff(p,400); p[PVX_FILT_RES]=knob(.58f);
+        filterEnv(p,2.7f,.003f,.38f,.25f,.24f); ampEnv(p,.004f,.4f,.88f,.24f);
+        lfo(p,PVX_LFO_TRI,.7f,0,0,.08f);p[PVX_OSC2_PWM]=knob(.35f);glide(p,.02f);
+        break;
+    case 14:
+        oscillators(p,PVX_32,PVX_TRI,PVX_32,PVX_SAW,.78f,.3f,2);
+        cutoff(p,400);p[PVX_FILT_RES]=knob(.18f);
+        filterEnv(p,1.3f,.008f,.5f,.3f,.45f);ampEnv(p,.01f,.7f,.9f,.5f);
+        break;
+    case 15:
+        oscillators(p,PVX_8,PVX_PULSE25,PVX_4,PVX_SAW,.7f,.4f,5);
+        p[PVX_OSC2_DETUNE]=32767;p[PVX_XMOD_DEPTH]=knob(.025f);
+        cutoff(p,1800);p[PVX_FILT_RES]=knob(.43f);
+        filterEnv(p,1.5f,.004f,.4f,.55f,.3f);ampEnv(p,.004f,.4f,.88f,.3f);
+        lfo(p,PVX_LFO_TRI,4.6f,4,3,0);glide(p,.1f);
+        break;
+    case 16:
+        oscillators(p,PVX_4,PVX_TRI,PVX_4,PVX_TRI,.62f,.32f,0);
+        p[PVX_OSC2_DETUNE]=32767;p[PVX_XMOD_DEPTH]=knob(.2f);p[PVX_MIX_RING]=knob(.25f);
+        cutoff(p,4300);p[PVX_FILT_RES]=knob(.3f);
+        filterEnv(p,-1,.002f,1.1f,0,.8f);ampEnv(p,.002f,1.3f,0,.9f);
+        break;
+    case 17:
+        oscillators(p,PVX_8,PVX_SQUARE,PVX_4,PVX_PULSE12,.75f,.4f,-5);
+        p[PVX_OSC2_DETUNE]=centered(-5.f/7);p[PVX_XMOD_DEPTH]=knob(.03f);
+        cutoff(p,1200);p[PVX_FILT_MODE]=32767;p[PVX_FILT_RES]=knob(.72f);
+        filterEnv(p,-1.8f,.02f,.55f,.1f,.3f);ampEnv(p,.004f,.5f,.9f,.3f);
+        lfo(p,PVX_LFO_TRI,2.3f,5,0,.15f);
+        break;
+    case 18:
+        oscillators(p,PVX_8,PVX_SQUARE,PVX_8,PVX_SAW,.7f,.65f,9);
+        cutoff(p,750);p[PVX_FILT_RES]=knob(.3f);p[PVX_DUOPHONY]=32767;
+        filterEnv(p,2.4f,.12f,.65f,.3f,.45f);ampEnv(p,.045f,.5f,.9f,.55f);
+        lfo(p,PVX_LFO_TRI,5.5f,2,4,.05f);glide(p,.08f);
+        break;
+    case 19:
+        oscillators(p,PVX_8,PVX_SAW,PVX_8,PVX_SQUARE,.62f,.68f,-8);
+        cutoff(p,1000);p[PVX_FILT_RES]=knob(.4f);p[PVX_DUOPHONY]=32767;
+        filterEnv(p,1.6f,.85f,1.2f,.65f,1.7f);ampEnv(p,.55f,1.5f,.9f,1.6f);
+        lfo(p,PVX_LFO_TRI,.18f,3,2,.22f);p[PVX_OSC2_PWM]=knob(.7f);
+        break;
+    case 20:
+        oscillators(p,PVX_8,PVX_PULSE25,PVX_4,PVX_TRI,.65f,.24f,2);
+        cutoff(p,1250);p[PVX_FILT_RES]=knob(.65f);
+        p[PVX_XMOD_DEPTH]=knob(.08f);p[PVX_MIX_RING]=knob(.15f);p[PVX_MIX_NOISE]=knob(.08f);
+        filterEnv(p,.6f,.007f,.6f,.7f,.4f);ampEnv(p,.005f,.6f,.88f,.4f);
+        lfo(p,PVX_LFO_SH,3.8f,120,30,1);
+        break;
+    case 21:
+        oscillators(p,PVX_32,PVX_SQUARE,PVX_16,PVX_TRI,.25f,.1f,0);
+        p[PVX_MIX_NOISE]=knob(.55f);cutoff(p,850);p[PVX_FILT_RES]=knob(.8f);
+        filterEnv(p,4,.003f,.085f,0,.1f);ampEnv(p,.003f,.16f,0,.1f);
+        p[PVX_FENV_REPEAT]=p[PVX_AENV_REPEAT]=32767;
+        break;
+    case 22:
+        oscillators(p,PVX_32,PVX_TRI,PVX_4,PVX_SQUARE,.1f,.12f,0);
+        p[PVX_MIX_NOISE]=knob(.9f);p[PVX_MIX_RING]=knob(.08f);
+        cutoff(p,1600);p[PVX_FILT_MODE]=32767;p[PVX_FILT_RES]=knob(.3f);
+        filterEnv(p,2.1f,.001f,.09f,0,.08f);ampEnv(p,.001f,.12f,0,.09f);
+        break;
+    case 23:
+        oscillators(p,PVX_16,PVX_PULSE25,PVX_8,PVX_TRI,.22f,.12f,3);
+        p[PVX_MIX_NOISE]=knob(.45f);p[PVX_DUOPHONY]=32767;
+        cutoff(p,900);p[PVX_FILT_MODE]=32767;p[PVX_FILT_RES]=knob(.72f);
+        filterEnv(p,.4f,1.4f,2,.85f,1.4f);ampEnv(p,.6f,1.5f,.8f,1.8f);
+        lfo(p,PVX_LFO_NOISE,.8f,0,0,.6f);
         break;
     }
     return 1;

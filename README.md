@@ -29,8 +29,13 @@ Paczka PortMastera (do instalacji na innej konsoli): `./tools/package_portmaster
 ## POLIVOKS
 
 Niezależny silnik z własnym DSP, mono/duo, filtrem LP/BP, obwiedniami Repeat
-i oversamplingiem 4×. Wybór: TRACK → ENGINE → POLIVOKS. Select przełącza osiem
-stron, L3 dodatkowe parametry. Bank: 12 presetów w `presets/polivoks/`.
+i oversamplingiem 4×. Wybór: TRACK → ENGINE → POLIVOKS. Select przełącza dziewięć
+stron, L3 dodatkowe parametry. Bank: 24 presety w `presets/polivoks/`.
 Ekran: kontury Cyber-Niedźwiedzia z referencji, cewki i oscyloskop. Cutoff
 otwiera paszczę, rezonans płynnie barwi oczy od białego do czerwonego.
 [Opis integracji i testów](docs/POLIVOKS.md). Test: `./tools/test_polivoks.sh`.
+
+Polivoks v3: LFO FREE/SYNC (L3), podziały do 1/128 z kropką i triolą,
+VINTAGE we własnym DSP, MONO last-note i glide obu VCO. Starsze patche zachowane.
+Animacja gwiazd/iskier, mini planety w tle. Ta aktualizacja: tylko build ARM
+oraz deploy, bez renderów/testów zgodnie z prośbą właściciela.

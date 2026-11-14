@@ -51,7 +51,8 @@ SynthView::Kind SynthView::kind(int pm) const {
     static const Kind blk[4] = {K_SOUND, K_VOICE, K_AMP, K_PRESETS};  // BLOT: slide = MODE + GLIDE
     static const Kind mxk[5] = {K_SOUND, K_AMP, K_MENV, K_LFO1, K_PRESETS};  // MIXTUR: MOD ENV i jedno LFO
     static const Kind ssk[9] = {K_SOUND, K_FILTER, K_VOICE, K_AMP, K_FENV, K_MENV, K_LFO1, K_LFO2, K_PRESETS};  // SUPERSAW
-    if (pm == 14) return p==7 ? K_PRESETS : K_SOUND;
+    static const Kind pvk[PV_PAGE_COUNT] = {K_OSC1,K_OSC2,K_FILTER,K_SOUND,K_FENV,K_AMP,K_LFO1,K_VOICE,K_PRESETS};
+    if (pm == 14) return pvk[p];
     if (pm == 13) return K_SOUND;  // LINEA: wlasne strony (BANKS = przegladarka presetow)
     if (pm == 12) return p == 6 ? K_PRESETS : K_SOUND;  // VELOUR: 6 stron galek, PRESETS
     if (pm == 11) return p == 10 ? K_PRESETS : K_SOUND;  // GIN: SOUND, 8 stron edytora, ABOUT, PRESETS
@@ -67,6 +68,11 @@ void SynthView::setPageKind(int kd) {
 
 void SynthView::open(int track) {
     if (track != track_) releaseAll();
+    int engine=app_->project().tracks[track].engine;
+    if(engine==ENG_POLIVOKS && (track!=track_ || pvOpenedEngine_!=ENG_POLIVOKS)) {
+        page_=PV_PAGE_OSC1;alt_=false;pvUiPage_=-1;
+    }
+    pvOpenedEngine_=engine;
     track_ = track;
 }
 

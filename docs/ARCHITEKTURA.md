@@ -178,3 +178,19 @@ z referencji (offline `tools/art/trace_polivoks.py`). Wspólny cache Canvas słu
 ekranowi i karcie ENGINE; lokalne odkształcenie szczęki sterowane jest wyłącznie
 cutoffem, optyka oczu płynnie przechodzi biały→czerwony z rezonansem. Obwiednia
 nie steruje paszczą. Oscyloskop nadal korzysta z migawki wyjścia DSP.
+
+POLIVOKS — sterowanie: `ui/polivoks_controls.h` definiuje dziewięć stron:
+OSC 1/OSC 2/FILTER/MIXER/FILTER ENV/AMP ENV/LFO/VOICE/PRESETS.
+`SynthView::syncPolivoksUi` wybiera do edycji najsilniejszą natywną głębokość
+LFO po wejściu na jego stronę. Zmiana DEST nie modyfikuje routingu DSP.
+Udostępniono 39 pól, zachowując EXTERNAL i OUTPUT w serializacji. Sprężyny
+reagują na poziomy VCO. Bank ma 24 pozycje: dopiski v2 zachowują zmienione
+barwy v1 i własne pliki o tych samych nazwach. Generator tabeli:
+`tools/export_polivoks_factory.py`; zatwierdzone tablice: `tests/polivoks_approved.inc`.
+
+POLIVOKS v3: 44 pola (dopiski VINTAGE / LFO SYNC / LFO DIV). Migracja v1/v2
+ustawia dopiski domyślnie. AudioEngine przekazuje własnemu PolivoksSynth BPM,
+pozycję i restart START; nie używa wspólnego LFO. SYNC: 24 podziały do 1/128
+z D/T. MONO używa stosu klawiszy i wspólnego glide VCO I/II; DUO zachowuje
+wysoka/niska z glide I. VINTAGE realizowane wyłącznie w rdzeniu Polivoksa.
+Animacje i planety: lokalny PRNG UI, synchronizacja gwiazd ze snapshotem LFO.

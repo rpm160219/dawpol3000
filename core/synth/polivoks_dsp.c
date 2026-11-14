@@ -19,7 +19,7 @@ typedef struct { EnvStage stage; float level; } Envelope;
 typedef struct {
     double phase[2];
     uint32_t rng;
-    float cur_oct1, target_oct1, target_oct2;
+    float cur_oct1, cur_oct2, target_oct1, target_oct2;
     int has_note, gate;
     Envelope fenv, aenv;
     float velocity;
@@ -32,6 +32,8 @@ typedef struct {
     float fir[PVX_FIR];
     unsigned fir_pos;
     float external_prev;
+    float vintage_trim[2], vintage_filter, vintage_res, vintage_drive;
+    float vintage_env[6];
 } Voice;
 struct PolivoksCore {
     Voice v[POLIVOKS_VOICES];
@@ -44,7 +46,11 @@ struct PolivoksCore {
     int block_ready;
     int block_frames;
     float block_rate;
-    unsigned char keys[128];
+    unsigned char keys[128], key_order[128];
+    unsigned key_count;
+    float tempo_bpm, lfo_hz;
+    double transport_beat, sync_origin;
+    int transport_playing, sync_pending, clock_restart;
 };
 static float clampf(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); }
 static uint32_t random32(uint32_t* s) { *s = *s * 1664525u + 1013904223u; return *s; }
@@ -154,6 +160,33 @@ int16_t polivoksChoice(int position, int positions) {
     if (position >= positions) position = positions-1;
     return (int16_t)(((2*position+1)*32768)/(2*positions));
 }
+static const float lfo_beats[POLIVOKS_LFO_DIVISIONS]={
+    6,4,3,8.f/3,2,1.5f,4.f/3,1,.75f,2.f/3,.5f,.375f,
+    1.f/3,.25f,.1875f,1.f/6,.125f,.09375f,1.f/12,.0625f,
+    .046875f,1.f/24,.03125f,1.f/48
+};
+static const char* lfo_div_names[POLIVOKS_LFO_DIVISIONS]={
+    "1/1 D","1/1","1/2 D","1/1 T","1/2","1/4 D","1/2 T","1/4",
+    "1/8 D","1/4 T","1/8","1/16 D","1/8 T","1/16","1/32 D","1/16 T",
+    "1/32","1/64 D","1/32 T","1/64","1/128 D","1/64 T","1/128","1/128 T"
+};
+const char* polivoksLfoDivisionName(int knob) { return lfo_div_names[choice(knob,POLIVOKS_LFO_DIVISIONS)]; }
+float polivoksLfoHz(const int16_t params[POLIVOKS_NUM_PARAMS],float bpm) {
+    if(!params) return 0;
+    if(params[PVX_LFO_SYNC]<16384) return .1f*powf(350.f,norm(params[PVX_LFO_RATE]));
+    if(!isfinite(bpm)) bpm=120;
+    return clampf(bpm,20,400)/(60*lfo_beats[choice(params[PVX_LFO_DIV],POLIVOKS_LFO_DIVISIONS)]);
+}
+void polivoksSetTransport(struct PolivoksCore* p,float bpm,int playing,double beat) {
+    if(!p) return;
+    if(playing && (!p->transport_playing || p->clock_restart)) {
+        p->sync_origin=isfinite(beat)?beat:0;p->sync_pending=1;p->clock_restart=0;
+    }
+    p->tempo_bpm=isfinite(bpm)?clampf(bpm,20,400):120;
+    p->transport_beat=isfinite(beat)?beat:0;
+    p->transport_playing=playing!=0;
+}
+void polivoksResetLfoClock(struct PolivoksCore* p) { if(p) {p->sync_pending=1;p->clock_restart=1;} }
 void polivoksDefaultParams(int16_t p[POLIVOKS_NUM_PARAMS]) {
     if (!p) return;
     memset(p,0,POLIVOKS_NUM_PARAMS*sizeof(*p));
@@ -170,6 +203,12 @@ void polivoksDefaultParams(int16_t p[POLIVOKS_NUM_PARAMS]) {
     p[PVX_AENV_ATTACK] = 400; p[PVX_AENV_DECAY] = 13000;
     p[PVX_AENV_SUSTAIN] = 25000; p[PVX_AENV_RELEASE] = 9000;
     p[PVX_LFO_RATE] = 14000; p[PVX_MASTER_LEVEL] = 26000;
+    p[PVX_LFO_DIV] = polivoksChoice(7,POLIVOKS_LFO_DIVISIONS);
+}
+void polivoksMigrateV2(const int16_t old[POLIVOKS_V2_PARAMS],int16_t p[POLIVOKS_NUM_PARAMS]) {
+    if(!old || !p) return;
+    int16_t saved[POLIVOKS_V2_PARAMS];memcpy(saved,old,sizeof(saved));
+    polivoksDefaultParams(p);memcpy(p,saved,sizeof(saved));
 }
 void polivoksMigrateV1(const int16_t old[34], int16_t p[POLIVOKS_NUM_PARAMS]) {
     if (!old || !p) return;
@@ -183,6 +222,7 @@ void polivoksMigrateV1(const int16_t old[34], int16_t p[POLIVOKS_NUM_PARAMS]) {
 struct PolivoksCore* polivoksCreate(void) {
     struct PolivoksCore* p = calloc(1,sizeof(*p));
     if (!p) return NULL;
+    p->tempo_bpm=120;p->sync_pending=1;p->clock_restart=1;
     p->lfo_rng = 0x5a17c903u; p->lfo_sh = noise(&p->lfo_rng);
     /* 97-tap Blackman-windowed sinc, cutoff 0.1125 cycles/oversample.
      * Unity DC gain. Passband and latency are documented in README. */
@@ -205,6 +245,12 @@ struct PolivoksCore* polivoksCreate(void) {
         v->filter_trim = noise(&v->rng)*0.018f;
         v->velocity = 1; v->supply = 1;
         v->drift_timer = 0.1f;
+        /* A separate stream leaves the accepted baseline noise/drift intact. */
+        uint32_t vintage_seed=(uint32_t)((uintptr_t)p>>4)^((uint32_t)i+1)*0x9e3779b9u;
+        v->vintage_trim[0]=noise(&vintage_seed)*.006f;v->vintage_trim[1]=noise(&vintage_seed)*.006f;
+        v->vintage_filter=noise(&vintage_seed)*.12f;v->vintage_res=noise(&vintage_seed)*.035f;
+        v->vintage_drive=noise(&vintage_seed)*.04f;
+        for(int j=0;j<6;++j) v->vintage_env[j]=noise(&vintage_seed)*.12f;
     }
     return p;
 }
@@ -212,7 +258,9 @@ void polivoksDestroy(struct PolivoksCore* p) { free(p); }
 static void targets(Voice* v, int note1, int note2, int retrigger, int velocity) {
     v->target_oct1 = (clampf((float)note1,0,127)-60)/12;
     v->target_oct2 = (clampf((float)note2,0,127)-60)/12;
-    if (!v->has_note) { v->cur_oct1 = v->target_oct1; v->has_note = 1; }
+    if (!v->has_note || (!v->gate && v->aenv.stage==ENV_IDLE)) {
+        v->cur_oct1=v->target_oct1;v->cur_oct2=v->target_oct2;v->has_note=1;
+    }
     v->velocity = clampf((float)velocity,1,127)/127;
     v->gate = 1;
     if (retrigger) { v->fenv.stage = ENV_ATTACK; v->aenv.stage = ENV_ATTACK; }
@@ -234,17 +282,27 @@ static void updateKeyboard(struct PolivoksCore* p, const int16_t params[POLIVOKS
     int lo=-1, hi=-1;
     for (int i=0; i<128; ++i) if (p->keys[i]) { if (lo<0) lo=i; hi=i; }
     if (lo<0) { polivoksNoteOff(p,0); return; }
-    targets(&p->v[0],hi,params[PVX_DUOPHONY]>=16384 ? lo : hi,!p->v[0].gate,p->keys[hi]);
+    int duo=params[PVX_DUOPHONY]>=16384;
+    int lead=duo || !p->key_count ? hi : p->key_order[p->key_count-1];
+    targets(&p->v[0],lead,duo?lo:lead,!p->v[0].gate,p->keys[lead]);
 }
 void polivoksKeyDown(struct PolivoksCore* p, int note, int velocity, const int16_t params[POLIVOKS_NUM_PARAMS]) {
     if (!p || !params || note<0 || note>127) return;
     if (velocity<=0) { polivoksKeyUp(p,note,params); return; }
+    for(unsigned i=0;i<p->key_count;++i) if(p->key_order[i]==note) {
+        memmove(p->key_order+i,p->key_order+i+1,--p->key_count-i);break;
+    }
+    if(p->key_count<128) p->key_order[p->key_count++]=(unsigned char)note;
     p->keys[note] = (unsigned char)(velocity>127 ? 127 : velocity);
     updateKeyboard(p,params);
 }
 void polivoksKeyUp(struct PolivoksCore* p, int note, const int16_t params[POLIVOKS_NUM_PARAMS]) {
     if (!p || !params || note<0 || note>127) return;
-    p->keys[note] = 0; updateKeyboard(p,params);
+    p->keys[note]=0;
+    for(unsigned i=0;i<p->key_count;++i) if(p->key_order[i]==note) {
+        memmove(p->key_order+i,p->key_order+i+1,--p->key_count-i);break;
+    }
+    updateKeyboard(p,params);
 }
 void polivoksBeginFrames(struct PolivoksCore* p, const int16_t params[POLIVOKS_NUM_PARAMS], float rate, int frames) {
     if (!p || !params || !validRate(rate) || frames < 1 || frames > POLIVOKS_BLOCK) { if (p) p->block_ready=0; return; }
@@ -252,7 +310,18 @@ void polivoksBeginFrames(struct PolivoksCore* p, const int16_t params[POLIVOKS_N
         updateKeyboard(p,params); break;
     }
     float fs = rate*POLIVOKS_OVERSAMPLE;
-    float hz = 0.1f*powf(350.0f,norm(params[PVX_LFO_RATE]));
+    float hz=polivoksLfoHz(params,p->tempo_bpm);p->lfo_hz=hz;
+    if(params[PVX_LFO_SYNC]>=16384) {
+        if(p->sync_pending) {
+            p->lfo_phase=0;
+            p->lfo_rng=0x5a17c903u;p->lfo_sh=noise(&p->lfo_rng);p->lfo_smooth=0;
+            p->sync_pending=0;
+        }
+        if(p->transport_playing) {
+            double cycles=(p->transport_beat-p->sync_origin)/lfo_beats[choice(params[PVX_LFO_DIV],POLIVOKS_LFO_DIVISIONS)];
+            p->lfo_phase=cycles-floor(cycles);
+        }
+    }
     int wave = choice(params[PVX_LFO_WAVE],4);
     float smooth = coefficient(0.00035f,fs);
     for (int i=0; i<frames*POLIVOKS_OVERSAMPLE; ++i) {
@@ -271,7 +340,8 @@ static int continuous(int i) {
     switch (i) {
     case PVX_OSC1_OCT: case PVX_OSC2_OCT: case PVX_OSC1_WAVE: case PVX_OSC2_WAVE:
     case PVX_FILT_MODE: case PVX_FILT_AUTOOSC: case PVX_FENV_REPEAT:
-    case PVX_AENV_REPEAT: case PVX_LFO_WAVE: case PVX_DUOPHONY: case PVX_VCA_HOLD: return 0;
+    case PVX_AENV_REPEAT: case PVX_LFO_WAVE: case PVX_DUOPHONY: case PVX_VCA_HOLD:
+    case PVX_LFO_SYNC: case PVX_LFO_DIV: return 0;
     default: return 1;
     }
 }
@@ -304,6 +374,15 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
     float aa=coefficient(envelopeTime(target[PVX_AENV_ATTACK],0.001f,3)/logf(5),fs);
     float ad=coefficient(envelopeTime(target[PVX_AENV_DECAY],0.002f,12)/logf(1000),fs);
     float ar=coefficient(envelopeTime(target[PVX_AENV_RELEASE],0.002f,12)/logf(1000),fs);
+    float vintage=norm(params[PVX_VINTAGE]);
+    if(vintage>0) {
+        fa=coefficient(envelopeTime(target[PVX_FENV_ATTACK],.001f,3)*(1+vintage*v->vintage_env[0])/logf(5),fs);
+        fd=coefficient(envelopeTime(target[PVX_FENV_DECAY],.002f,12)*(1+vintage*v->vintage_env[1])/logf(1000),fs);
+        fr=coefficient(envelopeTime(target[PVX_FENV_RELEASE],.002f,12)*(1+vintage*v->vintage_env[2])/logf(1000),fs);
+        aa=coefficient(envelopeTime(target[PVX_AENV_ATTACK],.001f,3)*(1+vintage*v->vintage_env[3])/logf(5),fs);
+        ad=coefficient(envelopeTime(target[PVX_AENV_DECAY],.002f,12)*(1+vintage*v->vintage_env[4])/logf(1000),fs);
+        ar=coefficient(envelopeTime(target[PVX_AENV_RELEASE],.002f,12)*(1+vintage*v->vintage_env[5])/logf(1000),fs);
+    }
     int wave1=choice(params[PVX_OSC1_WAVE],5), wave2=choice(params[PVX_OSC2_WAVE],5);
     float reg1=(float)(choice(params[PVX_OSC1_OCT],5)-2);
     float reg2=(float)(choice(params[PVX_OSC2_OCT],5)-2);
@@ -317,6 +396,8 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
             float glide=norm((int)q[PVX_GLIDE]);
             float glide_c=glide<0.001f ? 1 : coefficient(0.001f+1.5f*glide*glide,fs);
             v->cur_oct1+=(v->target_oct1-v->cur_oct1)*glide_c;
+            v->cur_oct2+=(v->target_oct2-v->cur_oct2)*(params[PVX_DUOPHONY]>=16384?1:glide_c);
+            vintage=norm((int)q[PVX_VINTAGE]);
             float envf=stepEnvelope(&v->fenv,v->gate,params[PVX_FENV_REPEAT]>=16384,
                                    fa,fd,norm((int)q[PVX_FENV_SUSTAIN]),fr);
             float enva=stepEnvelope(&v->aenv,v->gate,params[PVX_AENV_REPEAT]>=16384,
@@ -330,9 +411,10 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
             }
             for (int j=0;j<2;++j) v->drift[j]+=(v->drift_target[j]-v->drift[j])*drift_c;
             float tune=bipolar(q[PVX_MASTER_TUNE])/6;
-            float duo=params[PVX_DUOPHONY]>=16384 ? v->target_oct2-v->target_oct1 : 0;
+            float duo=(params[PVX_DUOPHONY]>=16384 ? v->target_oct2 : v->cur_oct2)-v->target_oct1;
             float oct2=reg2+duo+(7*bipolar(q[PVX_OSC2_DETUNE])+0.5f*bipolar(q[PVX_OSC2_FINE]))/12
                        +tune+v->trim[1]+v->drift[1]+1.5f*lfo*norm((int)q[PVX_LFO_TO_OSC2]);
+            if(vintage>0) oct2+=vintage*(v->vintage_trim[1]+5*v->drift[1]);
             float hz2=clampf(ref_hz*exp2f(clampf(oct2,-20,20)),0.01f,fs*0.45f);
             float dt2=hz2/fs;
             float raw2=oscillator(wave2,v->phase[1],dt2,v->trim[1]*0.4f,
@@ -344,6 +426,7 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
             float oct1=reg1+v->cur_oct1-v->target_oct1+tune+v->trim[0]+v->drift[0]
                        +1.5f*lfo*norm((int)q[PVX_LFO_TO_PITCH])
                        +3.5f*osc2*norm((int)q[PVX_XMOD_DEPTH]);
+            if(vintage>0) oct1+=vintage*(v->vintage_trim[0]+5*v->drift[0]);
             float hz1=clampf(ref_hz*exp2f(clampf(oct1,-20,20)),0.01f,fs*0.45f);
             float dt1=hz1/fs;
             float raw1=oscillator(wave1,v->phase[0],dt1,v->trim[0]*0.4f,0);
@@ -367,11 +450,14 @@ void polivoksRenderFrames(struct PolivoksCore* p, int voice, float* out, const f
                           +v->cur_oct1*norm((int)q[PVX_FILT_KEYTRACK])
                           +4.5f*lfo*norm((int)q[PVX_LFO_TO_FILT])
                           +v->filter_trim+0.025f*saturate(v->bp,2,2,NULL);
+            if(vintage>0) cut_oct+=vintage*v->vintage_filter;
             float cutoff=clampf(18*exp2f(clampf(cut_oct,-12,12)),8,fminf(22000,rate*0.45f));
             float g=tanf((float)PVX_PI*cutoff/fs);
             float res=norm((int)q[PVX_FILT_RES]);
             float damping=1.8f-2.12f*res;
-            filterStep(v,mix,g,damping,v->supply);
+            float supply=v->supply;
+            if(vintage>0) {damping-=vintage*v->vintage_res;supply*=1+vintage*v->vintage_drive;}
+            filterStep(v,mix,g,damping,supply);
             float filtered=params[PVX_FILT_MODE]>=16384 ? v->bp : v->lp;
             v->filter_dc+=(filtered-v->filter_dc)*dc_c;
             filtered-=v->filter_dc;
@@ -403,7 +489,7 @@ void polivoksRenderFloat(struct PolivoksCore* p,int voice,float* out,const float
 }
 void polivoksPanic(struct PolivoksCore* p) {
     if (!p) return;
-    memset(p->keys,0,sizeof(p->keys));
+    memset(p->keys,0,sizeof(p->keys));p->key_count=0;
     for (int i=0;i<POLIVOKS_VOICES;++i) {
         Voice* v=&p->v[i];
         v->gate=0; v->has_note=0;
@@ -421,6 +507,7 @@ void polivoksGetState(const struct PolivoksCore* p,int voice,struct PolivoksStat
     memset(out,0,sizeof(*out));
     if (!p || voice<0 || voice>=POLIVOKS_VOICES) return;
     const Voice* v=&p->v[voice];
+    out->lfo_phase=(float)p->lfo_phase;out->lfo_hz=p->lfo_hz;
     out->filter_env=v->fenv.level; out->amp_env=v->aenv.level;
     out->phase[0]=(float)v->phase[0]; out->phase[1]=(float)v->phase[1];
     out->lfo=p->block_ready ? p->lfo[p->block_frames*POLIVOKS_OVERSAMPLE-1] : 0;

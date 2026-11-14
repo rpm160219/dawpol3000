@@ -15,7 +15,8 @@ Wyjściem są współrzędne złożonych konturów i ich kolory dla natywnego Ca
 Pomijane są napisy/kontrolki makiety. Prawa część postaci zasłonięta źródłowym
 oscyloskopem jest uzupełniana z widocznej lewej strony. Paleta ma 32 kolory;
 kontury mają jednopikselowe zakładki w rozdzielczości źródła, co zapobiega
-ciemnym szwom po rasteryzacji 1:4. Rezultat: 2387 konturów, 58 533 punkty.
+ciemnym szwom po rasteryzacji 1:4. Liczby konturów i punktów są wypisywane po eksporcie. Paleta jest stała,
+pochodzi z zatwierdzonej wersji grafiki; lokalna korekta nie zmienia kolorów głowy.
 Jest to wierna geometria referencji z kwantyzacją kolorów, nie pikselowa
 identyczność z JPEG. Zachować kształty przy kolejnych zmianach UI.
 
@@ -29,3 +30,8 @@ Podglądy skrajnych wartości:
 POLIVOKS_CUTOFF=0 POLIVOKS_RESONANCE=0 build/dawpol3000 --render-png out/polivoks_closed.png polivoks
 POLIVOKS_CUTOFF=32767 POLIVOKS_RESONANCE=32767 build/dawpol3000 --render-png out/polivoks_open.png polivoks
 ```
+
+Oryginalny oscyloskop jest usuwany z całej części centralnej, również w etapie
+przypisania palety. Samo usunięcie jasnych pikseli pozostawiało słabą poświatę,
+która po kwantyzacji wracała jako kolorowe odnogi. Prawy dolny obszar zasłonięty
+wiązką jest uzupełniany z lewej połowy przed wydzieleniem konturów.

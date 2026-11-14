@@ -458,17 +458,17 @@ int headlessPng(const char* path, const char* screen) {
                 tr.polivoks[PVX_FILT_ENV_AMT]=16384;
             }
             if (getenv("POLIVOKS_PRESET")) polivoksLoadPreset(atoi(getenv("POLIVOKS_PRESET")),tr.polivoks);
-            const char* pvControl[]={getenv("POLIVOKS_CUTOFF"),getenv("POLIVOKS_RESONANCE")};
-            const int pvParam[]={PVX_FILT_CUTOFF,PVX_FILT_RES};
-            for(int i=0;i<2;++i) if(pvControl[i]) {
+            const char* pvControl[]={getenv("POLIVOKS_CUTOFF"),getenv("POLIVOKS_RESONANCE"),getenv("POLIVOKS_LEVEL1"),getenv("POLIVOKS_LEVEL2"),getenv("POLIVOKS_LFO_WAVE")};
+            const int pvParam[]={PVX_FILT_CUTOFF,PVX_FILT_RES,PVX_MIX_OSC1,PVX_MIX_OSC2,PVX_LFO_WAVE};
+            for(int i=0;i<5;++i) if(pvControl[i]) {
                 int value=atoi(pvControl[i]);
                 tr.polivoks[pvParam[i]]=(int16_t)(value<0?0:value>32767?32767:value);
             }
             app.openPresets("out/presets_demo"); app.markDirty(); app.openSynth(1); idle(app);
-            int pg=!strcmp(screen,"polivokspresets")?7:!strcmp(screen,"polivoksosc")?1:!strcmp(screen,"polivoksmixer")?2:!strcmp(screen,"polivoksenv")?3:!strcmp(screen,"polivoksamp")?4:!strcmp(screen,"polivokslfo")?5:!strcmp(screen,"polivokscontrol")?6:0;
+            int pg=!strcmp(screen,"polivokspresets")?PV_PAGE_PRESETS:!strcmp(screen,"polivoksosc2")?PV_PAGE_OSC2:!strcmp(screen,"polivoksmixer")?PV_PAGE_MIXER:!strcmp(screen,"polivoksenv")?PV_PAGE_FENV:!strcmp(screen,"polivoksamp")?PV_PAGE_AENV:!strcmp(screen,"polivokslfo")?PV_PAGE_LFO:!strcmp(screen,"polivokscontrol")?PV_PAGE_VOICE:(!strcmp(screen,"polivoksosc") || !strcmp(screen,"polivoksosc1"))?PV_PAGE_OSC1:PV_PAGE_FILTER;
             app.synth.setPage(pg);
             if (getenv("POLIVOKS_ALT")) app.synth.setAlt(true);
-            if (pg!=7) {
+            if (pg!=PV_PAGE_PRESETS) {
                 eng.send(EC_NOTE_ON,1,45,0,.9f);
                 if (tr.polivoks[PVX_DUOPHONY]>=16384) eng.send(EC_NOTE_ON,1,57,0,.9f);
                 for (int i=0;i<90;++i) eng.process(buf,256);

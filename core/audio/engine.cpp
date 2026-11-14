@@ -129,8 +129,8 @@ void AudioEngine::process(float* out, int frames) {
         switch (c.type) {
         case EC_NOTE_ON: if (c.track < MAX_TRACKS) sinks_[c.track]->noteOn(c.pitch, c.value); break;
         case EC_NOTE_OFF: if (c.track < MAX_TRACKS) sinks_[c.track]->noteOff(c.pitch); break;
-        case EC_PLAY_SONG: seq_.playSong(sinks_); applyMutes(); break;
-        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); applyMutes(); break;
+        case EC_PLAY_SONG: seq_.playSong(sinks_); for(auto& pv:pv_) pv.restartLfo(); applyMutes(); break;
+        case EC_PLAY_PATTERN: seq_.playPattern(c.pattern, c.track, sinks_); for(auto& pv:pv_) pv.restartLfo(); applyMutes(); break;
         case EC_STOP: seq_.stop(sinks_); for (int i=0;i<MAX_TRACKS;++i) sinks_[i]->allOff(); break;
         }
     }
@@ -148,7 +148,10 @@ void AudioEngine::process(float* out, int frames) {
             const bool pl = seq_.playing();
             const double bp = seq_.beatPos();
             for (int i = 0; i < MAX_TRACKS; i++) {
-                if (eng_[i]==ENG_POLIVOKS) pv_[i].render(trk[i]+pos*2,n);
+                if (eng_[i]==ENG_POLIVOKS) {
+                    pv_[i].setTransport(pl,bp,seq_.tempo());
+                    pv_[i].render(trk[i]+pos*2,n);
+                }
                 else {
                     synth_[i].render(trk[i] + pos * 2, n);
                     wt_[i].setTransport(pl, bp, seq_.tempo());
