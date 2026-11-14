@@ -458,6 +458,12 @@ int headlessPng(const char* path, const char* screen) {
                 tr.polivoks[PVX_FILT_ENV_AMT]=16384;
             }
             if (getenv("POLIVOKS_PRESET")) polivoksLoadPreset(atoi(getenv("POLIVOKS_PRESET")),tr.polivoks);
+            const char* pvControl[]={getenv("POLIVOKS_CUTOFF"),getenv("POLIVOKS_RESONANCE")};
+            const int pvParam[]={PVX_FILT_CUTOFF,PVX_FILT_RES};
+            for(int i=0;i<2;++i) if(pvControl[i]) {
+                int value=atoi(pvControl[i]);
+                tr.polivoks[pvParam[i]]=(int16_t)(value<0?0:value>32767?32767:value);
+            }
             app.openPresets("out/presets_demo"); app.markDirty(); app.openSynth(1); idle(app);
             int pg=!strcmp(screen,"polivokspresets")?7:!strcmp(screen,"polivoksosc")?1:!strcmp(screen,"polivoksmixer")?2:!strcmp(screen,"polivoksenv")?3:!strcmp(screen,"polivoksamp")?4:!strcmp(screen,"polivokslfo")?5:!strcmp(screen,"polivokscontrol")?6:0;
             app.synth.setPage(pg);

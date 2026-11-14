@@ -12,6 +12,52 @@
 #include <string>
 using namespace dp;
 static void check(bool x,const char* text) { if(!x) { std::fprintf(stderr,"FAIL %s\n",text); std::exit(1); } }
+// Check visible behavior with an identical audio snapshot: resonance changes
+// the optical circuits alone, and cutoff moves the actual reference jaw.
+static void checkBearControls() {
+    int16_t p[POLIVOKS_NUM_PARAMS]; polivoksLoadPreset(0,p);
+    p[PVX_FILT_CUTOFF]=32767; p[PVX_FILT_RES]=0;
+    PolivoksView telemetry;
+    PolivoksScreen bear;
+    Canvas white,red,closed,modulated;
+    for(int i=0;i<12;++i) bear.draw(white,p,telemetry,.1f);
+    p[PVX_FILT_RES]=32767; bear.draw(red,p,telemetry,.1f);
+    int changed=0;
+    for(int y=44;y<334;++y) for(int x=0;x<640;++x) {
+        const uint8_t* a=white.pixels()+4*(y*640+x);
+        const uint8_t* b=red.pixels()+4*(y*640+x);
+        if(std::memcmp(a,b,3)) {
+            ++changed;
+            check(x>=214 && x<426 && y>=157 && y<224,"resonance changes only the eyes and their optical glow");
+        }
+    }
+    check(changed>300,"resonance visibly changes eye color");
+    for(int x:{290,350}) {
+        const uint8_t* a=white.pixels()+4*(186*640+x);
+        const uint8_t* b=red.pixels()+4*(186*640+x);
+        check(a[0]>200 && a[0]==a[1] && a[1]==a[2],"minimum resonance has white eyes");
+        check(b[0]>200 && b[0]>b[1]+120 && b[0]>b[2]+120,"maximum resonance has red eyes");
+    }
+    p[PVX_FILT_CUTOFF]=0;
+    for(int i=0;i<12;++i) bear.draw(closed,p,telemetry,.1f);
+    auto lowerTeethHeight=[](const Canvas& canvas) {
+        double sum=0; int count=0;
+        for(int y=245;y<305;++y) for(int x=305;x<335;++x) {
+            const uint8_t* pixel=canvas.pixels()+4*(y*640+x);
+            int low=std::min({pixel[0],pixel[1],pixel[2]}),high=std::max({pixel[0],pixel[1],pixel[2]});
+            if(low>140 && high-low<45) {sum+=y; ++count;}
+        }
+        check(count>50,"lower jaw retains the reference teeth and fur");
+        return sum/count;
+    };
+    check(lowerTeethHeight(red)>lowerTeethHeight(closed)+12,"cutoff opens the reference jaw");
+    for(int y=100;y<225;++y) for(int x=250;x<390;++x)
+        check(!std::memcmp(red.pixels()+4*(y*640+x),closed.pixels()+4*(y*640+x),3),"cutoff preserves hat, eyes, nose and upper face");
+    telemetry.state.filter_env=1; p[PVX_FILT_ENV_AMT]=32767;
+    bear.draw(modulated,p,telemetry,.1f);
+    check(!std::memcmp(closed.pixels()+44*640*4,modulated.pixels()+44*640*4,290*640*4),"jaw follows cutoff alone, independent of the envelope");
+    puts("PASS reference bear: cutoff jaw, white-to-red eyes, unchanged upper face and envelope independence");
+}
 int main(int argc,char** argv) {
     check(argc==3,"golden.raw and writable directory arguments");
     FILE* ref=std::fopen(argv[1],"rb"); check(ref,"open reference");
@@ -104,5 +150,6 @@ int main(int argc,char** argv) {
     InputState load; load.btn[B_A]=true; app.update(load,.016f); app.update(InputState(),.016f);
     check(app.project().tracks[0].engine==ENG_POLIVOKS,"preset browser preserves independent engine type");
     puts("PASS all seven control pages, L3 layers, rendering and preset browser");
+    checkBearControls();
     return 0;
 }

@@ -172,3 +172,9 @@ Nowe moduły: `synth/polivoks_dsp.*`, `synth/polivoks_presets.*`,
 `synth/polivoks_synth.*`, `ui/polivoks_screen.*`, `ui/synth_polivoks.cpp`.
 Factory bank: `io/polivoks_factory.inc`. Dane projektu: komplet 41 parametrów v2
 w polu `pvox`. Szczegóły, strony i testy: [POLIVOKS.md](POLIVOKS.md).
+
+Grafika Polivoksa: `ui/polivoks_art.inc` przechowuje kontury natywne pochodzące
+z referencji (offline `tools/art/trace_polivoks.py`). Wspólny cache Canvas służy
+ekranowi i karcie ENGINE; lokalne odkształcenie szczęki sterowane jest wyłącznie
+cutoffem, optyka oczu płynnie przechodzi biały→czerwony z rezonansem. Obwiednia
+nie steruje paszczą. Oscyloskop nadal korzysta z migawki wyjścia DSP.

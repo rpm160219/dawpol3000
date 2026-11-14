@@ -1,5 +1,12 @@
 # Dziennik DAW-POL 3000
 
+## 2026-11-14 13:25 — POLIVOKS: kontury niedźwiedzia z referencji, szczęka i kolor oczu
+- **Co zmienione:** `core/ui/polivoks_art.inc`, `polivoks_screen.*`: dokładna geometria referencyjnego rysunku zamiast wcześniejszej uproszczonej ilustracji, 2387 konturów / 58 533 punkty / 32 kolory, wspólny cache natywnego Canvas dla SYNTH i ENGINE. Cutoff sam steruje otwarciem pyska (bez wpływu obwiedni), rezonans płynnie barwi oczy biały→czerwony. Nos, czapka, oczy, górne kły i ramiona zachowują kontury. Fragment zasłonięty w źródle oscyloskopem uzupełniony z widocznej lewej strony.
+- `tools/art/trace_polivoks.py`, `README.md`: narzędzie odtwarzania geometrii, zależności wyłącznie offline; JPEG nie jest zasobem wykonawczym. `core/headless.cpp`: POLIVOKS_CUTOFF / POLIVOKS_RESONANCE do podglądów skrajnych ustawień. `tests/polivoks_integration.cpp`: widoczny ruch dolnej szczęki, białe/czerwone oczy, ograniczenie zmian koloru do optyki, zachowanie górnej twarzy i niezależność od obwiedni. Dokumentacja: README, CLAUDE, ARCHITEKTURA, POLIVOKS.
+- **Sprawdzone:** pełny test integracji Polivoksa i ASan/UBSan nowego kodu UI; dotychczasowy 12-sekundowy WAV identyczny bajtowo. Desktop i ARM zbudowane. Nowy build wgrany na 192.168.50.239; SHA-256 lokalnie i na urządzeniu: `e1d430288e80f83c1d4ea58245c9f3874cecbed5d7061c66589e7fea8df123e2`. Render PNG wykonany również binarką ARM na konsoli, pobrany do `out/polivoks/console_open_red.png`. Paczka PortMaster odświeżona.
+- **Następny krok:** ponowne uruchomienie aplikacji i ocena nowego wyglądu oraz animacji na urządzeniu.
+- **Od Patryka:** ocena zgodności z referencją; bez zmian w DSP ani zatwierdzonym banku.
+
 ## 2026-11-14 13:05 — Wgranie buildu POLIVOKS na konsolę
 - **Co zmienione:** `tools/deploy.sh 192.168.50.239` zbudował ARM i wgrał aktualny program do `/userdata/dawpol3000/dawpol3000` oraz starter Ports. Dostęp sieciowy sesji działa; poprzednia blokada SSH ustąpiła po zmianie uprawnień uruchomienia Codexa.
 - **Sprawdzone:** SHA-256 lokalnej i zdalnej binarki identyczne: `d6bdeb5844f770c0322dd748bb7dd7f5a5a471ef978c489cc9f8c9da18a4d1e5`.

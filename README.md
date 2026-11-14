@@ -31,5 +31,6 @@ Paczka PortMastera (do instalacji na innej konsoli): `./tools/package_portmaster
 Niezależny silnik z własnym DSP, mono/duo, filtrem LP/BP, obwiedniami Repeat
 i oversamplingiem 4×. Wybór: TRACK → ENGINE → POLIVOKS. Select przełącza osiem
 stron, L3 dodatkowe parametry. Bank: 12 presetów w `presets/polivoks/`.
-Ekran: wektorowy Cyber-Niedźwiedź z cewkami i oscyloskopem.
+Ekran: kontury Cyber-Niedźwiedzia z referencji, cewki i oscyloskop. Cutoff
+otwiera paszczę, rezonans płynnie barwi oczy od białego do czerwonego.
 [Opis integracji i testów](docs/POLIVOKS.md). Test: `./tools/test_polivoks.sh`.

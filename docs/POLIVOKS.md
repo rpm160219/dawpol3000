@@ -40,12 +40,26 @@ z audio do UI przez potrójny bufor. UI nie odczytuje bezpośrednio stanu DSP.
 
 ## UI
 
-Rysunek wektorowy inspirowany przekazanym projektem: niedźwiedź-cyborg, uszanka
-CCCP, konstelacja gwiazd, dwie cewki, błyskawice oraz stożek oscyloskopu.
-Paszcza śledzi cutoff i obwiednię filtra, oczy/łuki reagują na rezonans, błyskawice
-na poziomy miksera i modulację. Gwiazdy reagują na klawisze i Repeat. W stożku
-jest próbka rzeczywistego wyjścia instrumentu; BP zwęża wiązkę.
-Statyczna ilustracja jest buforowana po stronie UI.
+Kontury wektorowe pochodzą bezpośrednio z referencji Gemini przekazanej przez
+Patryka (2400×1792): zachowane detale futra, uszanki/CCCP, nosa, zębów,
+mechaniki, kurtek, gwiazd, cewek i błyskawic. `ui/polivoks_art.inc` zawiera
+2387 złożonych konturów, 58 533 wierzchołki i 32 kolory. Używany jest natywny
+Canvas z antyaliasingiem; obie ilustracje (instrument i karta ENGINE) korzystają
+z tego samego bufora konturów, inicjalizowanego raz po stronie UI.
+
+Paszcza reaguje wyłącznie na parametr CUTOFF, ze złagodzeniem ruchu między
+klatkami. Malejący cutoff podnosi dolne zęby i brodę, rosnący otwiera pysk.
+Czapka, brwi, oczy, nos, górne kły i ramiona zachowują swoje kontury.
+Obwiednia ani poziom dźwięku nie sterują ruchem szczęki. REZONANS płynnie
+barwi optykę oczu oraz jej poświatę: biały przy 0%, czerwony przy 100%.
+W stożku jest próbka rzeczywistego wyjścia instrumentu; BP zwęża wiązkę.
+
+Narzędzie odtwarzania geometrii: `tools/art/trace_polivoks.py` (instrukcja
+w `tools/art/README.md`). Źródłowe napisy UI są pomijane. Fragment prawego
+policzka, brody i kurtki zasłonięty oscyloskopem w pliku źródłowym odtworzono
+z widocznej lewej połowy; aplikacja nakłada własny oscyloskop. JPEG nie jest
+potrzebny do budowania ani uruchamiania. Przy skalowaniu do 640×480 używana
+jest paleta konturów, więc nie deklarujemy identyczności pikseli z JPEG.
 
 Select: osiem stron. L3: druga warstwa, kolory enkoderów jak w reszcie aplikacji.
 
@@ -93,6 +107,8 @@ build/dawpol3000 --render-wav out/polivoks.wav 12 polivoks
 Dodatkowe ekrany: `polivoksosc`, `polivoksmixer`, `polivoksenv`, `polivoksamp`,
 `polivokslfo`, `polivokscontrol`, `polivoksloop`, `polivoksbp`.
 `POLIVOKS_ALT=1` pokazuje drugą warstwę, `POLIVOKS_PRESET=0..11` wybiera preset.
+`POLIVOKS_CUTOFF=0..32767` i `POLIVOKS_RESONANCE=0..32767` ustawiają kontrolki
+w podglądzie PNG, żeby porównać skrajne ustawienia animacji.
 Główny podgląd `polivoks` otwiera filtr i zwiększa rezonans dla ilustracji;
 nie zmienia to fabrycznych danych banku.
 
@@ -107,3 +123,8 @@ Wierność z fizycznym Polivoksem nadal wymaga odrębnej kalibracji sprzętowej.
 
 Regresja wspólnego toru: 8-sekundowy `synthwavefx` porównany z renderem
 sprzed integracji — pliki WAV identyczne bajtowo.
+
+Testy obrazu kontrolują biały/czerwony kolor obu oczu, ograniczenie zmian
+rezonansu do optyki, zmianę wysokości dolnej szczęki przez cutoff, stałość górnej
+części twarzy oraz niezależność szczęki od obwiedni. Po zmianie grafiki render
+dema Polivoksa jest identyczny bajtowo z poprzednim WAV (12 s).

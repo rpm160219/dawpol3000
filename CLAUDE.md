@@ -74,6 +74,10 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - Ilustracje w oknach dialogowych: zawsze 196×150 przy (24, 84), elementy liczone od obudowy.
 - Grafiki wzorcowe od Patryka: folder `ref/` (poza gitem — mogą być cudze materiały; tylko inspiracja, nie kopiujemy 1:1). Ikony/ilustracje rysujemy wektorowo w kodzie; obrazki z generatorów (np. Gemini) tylko jako szkic do przerysowania.
 - 4 kolory = 4 „enkodery”: **niebieski, zielony, biały, czerwony** — każdy parametr na ekranie ma kolor swojego enkodera.
+- **POLIVOKS — wyraźna decyzja Patryka (2026-11-14):** niedźwiedź z przekazanej
+  własnej referencji Gemini ma zachować dokładny wygląd. Kontury odtworzono
+  w `core/ui/polivoks_art.inc`; narzędzie w `tools/art/`. Ta konkretna referencja
+  jest wzorem do wiernego odtworzenia, zgodnie z najnowszą instrukcją użytkownika.
 - Inspiracja OP-1, ale **własne grafiki i ilustracje**. Nie kopiować 1:1 ekranów, ilustracji (bokser, krowa itp.), nazw ani logo Teenage Engineering. Nazwy silników/efektów własne.
 
 ## Założenia produktowe (od Patryka)
@@ -126,12 +130,16 @@ Nazwa projektu: **DAW-POL 3000** (repo/binarka: `dawpol3000`).
 - **POLIVOKS (2026-11-14):** zintegrowany jako niezależny `PolivoksSynth : NoteSink`
   w AudioEngine, poza DSP WavetableSynth. Własny cały tor, 4× oversampling,
   mono/duo, ADSR/Repeat/LFO/glide, 41 parametrów v2. Osiem stron, warstwy L3,
-  wektorowy Cyber-Niedźwiedź według grafiki Patryka, 12 zatwierdzonych presetów.
+  Cyber-Niedźwiedź: kontury bezpośrednio z referencji Patryka (`polivoks_art.inc`),
+  paszcza = wyłącznie cutoff, oczy = biały→czerwony z rezonansem.
+  12 zatwierdzonych presetów. Nie zastępować konturów uproszczoną ilustracją.
   Nie dodawać wspólnych obwiedni, LFO, AGE/unison ani decymacji WavetableSynth.
   Instrukcja: `docs/POLIVOKS.md`, test `tools/test_polivoks.sh`. Desktop/ARM
   budują się, porównanie 12 barw z samodzielnym DSP: różnica próbek 0.
   Build wgrany na 192.168.50.239 do `/userdata/dawpol3000/dawpol3000`;
-  lokalna i zdalna suma SHA-256 identyczne. Dostęp SSH działa po włączeniu
+  lokalna i zdalna suma SHA-256 identyczne. Najnowszy build zawiera kontury
+  referencyjne i animację cutoff/rezonans; render PNG sprawdzony także na ARM.
+  Dostęp SSH działa po włączeniu
   sieci dla sesji Codexa. Paczka PortMaster gotowa lokalnie. Następny krok:
   ponowne uruchomienie aplikacji i ocena UI/brzmienia na fizycznej konsoli;
   wydajność DSP na urządzeniu pozostaje do zmierzenia.
